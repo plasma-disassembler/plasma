@@ -1,0 +1,19 @@
+0x400506: push rbp
+0x400507: mov rbp, rsp
+0x40050a: sub rsp, 0x10
+0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+0x400515: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
+# 0x400519: jle 0x400527
+if > {
+    0x40051b: mov edi, 0x4005d4  "1"
+    0x400520: call 0x4003e0 <puts@plt>
+    0x400525: jmp 0x400531
+} else <= {
+    0x400527: mov edi, 0x4005d6  "2"
+    0x40052c: call 0x4003e0 <puts@plt>
+}
+0x400531: mov edi, 0x4005d8  "3"
+0x400536: call 0x4003e0 <puts@plt>
+0x40053b: mov eax, 0
+0x400540: leave 
+0x400541: ret 

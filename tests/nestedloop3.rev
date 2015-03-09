@@ -1,0 +1,22 @@
+0x4004b6: push rbp
+0x4004b7: mov rbp, rsp
+0x4004ba: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+0x4004c1: var2 = 5 # mov dword ptr [rbp - 8], 5
+0x4004c8: var3 = 1 # mov dword ptr [rbp - 0xc], 1
+0x4004cf: jmp 0x4004df
+loop {
+    0x4004df: var1 cmp 4 # cmp dword ptr [rbp - 4], 4
+    if >  goto 0x4004e5 # 0x4004e3: jle 0x4004d1
+    0x4004d1: jmp 0x4004d9
+    loop {
+        0x4004d9: var2 cmp 1 # cmp dword ptr [rbp - 8], 1
+        if >  goto 0x4004df # 0x4004dd: jle 0x4004d3
+        loop {
+            0x4004d3: var3 cmp 3 # cmp dword ptr [rbp - 0xc], 3
+            if >  goto 0x4004d9 # 0x4004d7: jle 0x4004d3
+        }
+    }
+}
+0x4004e5: mov eax, 0
+0x4004ea: pop rbp
+0x4004eb: ret 

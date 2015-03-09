@@ -1,0 +1,64 @@
+0x400546: push rbp
+0x400547: mov rbp, rsp
+0x40054a: sub rsp, 0x10
+0x40054e: var1 = 0 # mov dword ptr [rbp - 4], 0
+0x400555: var1 = 0 # mov dword ptr [rbp - 4], 0
+0x40055c: jmp 0x4005e9
+loop {
+    0x4005e9: var1 cmp 999 # cmp dword ptr [rbp - 4], 0x3e7
+    if >  goto 0x4005f6 # 0x4005f0: jle 0x400561
+    0x400561: mov edi, 0x400694  "1"
+    0x400566: call 0x400410 <puts@plt>
+    0x40056b: call 0x400440 <rand@plt>
+    0x400570: var2 = eax # mov dword ptr [rbp - 8], eax
+    0x400573: var2 cmp 1 # cmp dword ptr [rbp - 8], 1
+    if ==  goto 0x400579 # 0x400577: jne 0x4005db
+    0x4005db: mov edi, 0x4006ab  "5"
+    0x4005e0: call 0x400410 <puts@plt>
+    0x4005e5: var1 += 1 # add dword ptr [rbp - 4], 1
+}
+# warning not sure multi endloop is correct !!
+# endloop 1
+0x400579: var1 cmp 499 # cmp dword ptr [rbp - 4], 0x1f3
+# 0x400580: jg 0x4005cf
+if <= {
+    0x400582: mov edi, 0x400696  "2"
+    0x400587: call 0x400410 <puts@plt>
+    0x40058c: var1 cmp 199 # cmp dword ptr [rbp - 4], 0xc7
+    # 0x400593: jg 0x4005bd
+    if <= {
+        0x400595: mov edi, 0x400698  "3"
+        0x40059a: call 0x400410 <puts@plt>
+        0x40059f: var1 cmp 1 # cmp dword ptr [rbp - 4], 1
+        # 0x4005a3: je 0x4005b1
+        if != {
+            0x4005a5: var1 cmp 2 # cmp dword ptr [rbp - 4], 2
+            and if != # 0x4005a9: je 0x4005b1
+            0x4005ab: var1 cmp 3 # cmp dword ptr [rbp - 4], 3
+            and if != # 0x4005af: jne 0x4005cf
+        } else == {
+            0x4005b1: mov edi, 0x40069a  "4"
+            0x4005b6: call 0x400410 <puts@plt>
+            0x4005bb: jmp 0x4005cf
+        }
+    } else > {
+        0x4005bd: var1 cmp 42 # cmp dword ptr [rbp - 4], 0x2a
+        # 0x4005c1: jne 0x4005cf
+        if == {
+            infiniteloop {
+                0x4005c3: mov edi, 0x40069c  "loooop!"
+                0x4005c8: call 0x400410 <puts@plt>
+                0x4005cd: jmp 0x4005c3
+            }
+        }
+    }
+}
+0x4005cf: mov edi, 0x4006a4  "break!"
+0x4005d4: call 0x400410 <puts@plt>
+0x4005d9: jmp 0x4005f6
+# endloop 2
+0x4005f6: mov edi, 0x4006ad  "6"
+0x4005fb: call 0x400410 <puts@plt>
+0x400600: mov eax, 0
+0x400605: leave 
+0x400606: ret 

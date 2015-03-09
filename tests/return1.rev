@@ -1,0 +1,32 @@
+0x400506: push rbp
+0x400507: mov rbp, rsp
+0x40050a: sub rsp, 0x10
+0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
+0x40051c: jmp 0x400550
+loop {
+    0x400550: var1 cmp 99 # cmp dword ptr [rbp - 4], 0x63
+    if >  goto 0x400556 # 0x400554: jle 0x40051e
+    0x40051e: var1 cmp 5 # cmp dword ptr [rbp - 4], 5
+    if ==  goto 0x400524 # 0x400522: jne 0x400535
+    0x400535: var1 cmp 6 # cmp dword ptr [rbp - 4], 6
+    if ==  goto 0x40053b # 0x400539: jne 0x40054c
+    0x40054c: var1 += 1 # add dword ptr [rbp - 4], 1
+}
+# warning not sure multi endloop is correct !!
+# endloop 1
+0x400524: mov edi, 0x4005f4  "1"
+0x400529: call 0x4003e0 <puts@plt>
+0x40052e: mov eax, 1
+0x400533: jmp 0x400565
+# endloop 2
+0x40053b: mov edi, 0x4005f6  "2"
+0x400540: call 0x4003e0 <puts@plt>
+0x400545: mov eax, 2
+0x40054a: jmp 0x400565
+# endloop 3
+0x400556: mov edi, 0x4005f8  "3"
+0x40055b: call 0x4003e0 <puts@plt>
+0x400560: mov eax, 0
+0x400565: leave 
+0x400566: ret 
