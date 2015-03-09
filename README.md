@@ -26,7 +26,7 @@ You need a terminal with 256 colors, otherwise use the option `-nc`
 ![reverse](http://hippersoft.fr/projects/rev.jpg)
 
 
-By opening `d3/index.html` you will able to see the flow graph :
+By opening `d3/index.html` you will be able to see the flow graph :
 
 ![graph](http://hippersoft.fr/projects/graph.jpg)
 
