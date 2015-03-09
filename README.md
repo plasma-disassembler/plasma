@@ -4,6 +4,8 @@ Reverse
 Reverse engineering for x86 binaries (elf-format). Will generate a more
 readable code will colored syntax.
 
+Warning, the project is still in development, use it at your own risks.
+
 ## Requirements
 
     python3
