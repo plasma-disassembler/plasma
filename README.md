@@ -6,6 +6,9 @@ readable code will colored syntax.
 
 Warning, the project is still in development, use it at your own risks.
 
+The script `reverse.py` will disassemble the fonction `main` in the segment
+`.text` (modify `reverse.py` otherwise). It will be later passed by arguments.
+
 ## Requirements
 
     python3
