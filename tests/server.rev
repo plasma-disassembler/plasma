@@ -1,0 +1,100 @@
+0x4009c6: push rbp
+0x4009c7: mov rbp, rsp
+0x4009ca: sub rsp, 0x60
+0x4009ce: var1 = edi # mov dword ptr [rbp - 0x54], edi
+0x4009d1: var2 = rsi # mov qword ptr [rbp - 0x60], rsi
+0x4009d5: mov edx, 0
+0x4009da: mov esi, 1
+0x4009df: mov edi, 2
+0x4009e4: call 0x4008c0 <socket@plt>
+0x4009e9: var3 = eax # mov dword ptr [rbp - 4], eax
+0x4009ec: var3 cmp -1 # cmp dword ptr [rbp - 4], -1
+# 0x4009f0: jne 0x400a06
+if == {
+    0x4009f2: mov edi, 0x400ca8  "Could not create socket"
+    0x4009f7: call 0x4008a0 <perror@plt>
+    0x4009fc: mov eax, 1
+    0x400a01: jmp 0x400b1c
+} else != {
+    0x400a06: mov edi, 0x400cc0  "Socket created"
+    0x400a0b: call 0x400800 <puts@plt>
+    0x400a10: var4 = 2 # mov word ptr [rbp - 0x30], 2
+    0x400a16: var5 = 0 # mov dword ptr [rbp - 0x2c], 0
+    0x400a1d: mov edi, 0x22b8
+    0x400a22: call 0x400830 <htons@plt>
+    0x400a27: var6 = ax # mov word ptr [rbp - 0x2e], ax
+    0x400a2b: lea rcx, qword ptr [rbp - 0x30]  [var4]
+    0x400a2f: eax = var3 # mov eax, dword ptr [rbp - 4]
+    0x400a32: mov edx, 0x10
+    0x400a37: mov rsi, rcx
+    0x400a3a: mov edi, eax
+    0x400a3c: call 0x400890 <bind@plt>
+    0x400a41: test eax, eax
+    # 0x400a43: jns 0x400a59
+    if < 0 {
+        0x400a45: mov edi, 0x400ccf  "bind failed. Error"
+        0x400a4a: call 0x4008a0 <perror@plt>
+        0x400a4f: mov eax, 1
+        0x400a54: jmp 0x400b1c
+    } else > 0 {
+        0x400a59: mov edi, 0x400ce2  "bind done"
+        0x400a5e: call 0x400800 <puts@plt>
+        0x400a63: eax = var3 # mov eax, dword ptr [rbp - 4]
+        0x400a66: mov esi, 3
+        0x400a6b: mov edi, eax
+        0x400a6d: call 0x400880 <listen@plt>
+        0x400a72: mov edi, 0x400cf0  "Waiting for incoming connections..."
+        0x400a77: call 0x400800 <puts@plt>
+        0x400a7c: var7 = 16 # mov dword ptr [rbp - 0x14], 0x10
+        0x400a83: jmp 0x400ae2
+        loop {
+            0x400ae2: lea rdx, qword ptr [rbp - 0x14]  [var7]
+            0x400ae6: lea rcx, qword ptr [rbp - 0x40]  [var8]
+            0x400aea: eax = var3 # mov eax, dword ptr [rbp - 4]
+            0x400aed: mov rsi, rcx
+            0x400af0: mov edi, eax
+            0x400af2: call 0x4008b0 <accept@plt>
+            0x400af7: var9 = eax # mov dword ptr [rbp - 8], eax
+            0x400afa: var9 cmp 0 # cmp dword ptr [rbp - 8], 0
+            if ==  goto 0x400b00 # 0x400afe: jne 0x400a85
+            0x400a85: mov edi, 0x400d14  "Connection accepted"
+            0x400a8a: call 0x400800 <puts@plt>
+            0x400a8f: mov edi, 1
+            0x400a94: call 0x400860 <malloc@plt>
+            0x400a99: var10 = rax # mov qword ptr [rbp - 0x10], rax
+            0x400a9d: rax = var10 # mov rax, qword ptr [rbp - 0x10]
+            0x400aa1: edx = var9 # mov edx, dword ptr [rbp - 8]
+            0x400aa4: mov dword ptr [rax], edx
+            0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
+            0x400aaa: lea rax, qword ptr [rbp - 0x48]  [var11]
+            0x400aae: mov rcx, rdx
+            0x400ab1: mov edx, 0x400b1e
+            0x400ab6: mov esi, 0
+            0x400abb: mov rdi, rax
+            0x400abe: call 0x4007f0 <pthread_create@plt>
+            0x400ac3: test eax, eax
+            if < 0  goto 0x400ac7 # 0x400ac5: jns 0x400ad8
+            0x400ad8: mov edi, 0x400d40  "Handler assigned"
+            0x400add: call 0x400800 <puts@plt>
+        }
+        # warning not sure multi endloop is correct !!
+        # endloop 1
+        0x400ac7: mov edi, 0x400d28  "could not create thread"
+        0x400acc: call 0x4008a0 <perror@plt>
+        0x400ad1: mov eax, 1
+        0x400ad6: jmp 0x400b1c
+        # endloop 2
+        0x400b00: var9 cmp 0 # cmp dword ptr [rbp - 8], 0
+        # 0x400b04: jns 0x400b17
+        if < 0 {
+            0x400b06: mov edi, 0x400d51  "accept failed"
+            0x400b0b: call 0x4008a0 <perror@plt>
+            0x400b10: mov eax, 1
+            0x400b15: jmp 0x400b1c
+        } else > 0 {
+            0x400b17: mov eax, 0
+        }
+    }
+}
+0x400b1c: leave 
+0x400b1d: ret 

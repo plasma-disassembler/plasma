@@ -313,7 +313,7 @@ def extract_loop_paths(paths):
     curr_loop = paths[0][0]
 
     # ------------------------------------------------------
-    # Separation of loop-paths and endloops
+    # Separation of loop-paths / endloops
     # ------------------------------------------------------
 
     for p in paths:
@@ -343,15 +343,6 @@ def extract_loop_paths(paths):
     # Remove dupplicate code
     # ------------------------------------------------------
 
-    # endloop.sort()
-    # Don't dupplicate code with the last endloop
-    # for i, el in enumerate(endloop[:-1]):
-        # for addr in reversed(endloop[-1]):
-            # idx = index(el, addr)
-            # if idx != -1:
-                # endloop[i] = el[:idx]
-    # rm_empty_paths(endloop)
-
     common = {}
 
     # Search dupplicate address
@@ -377,6 +368,24 @@ def extract_loop_paths(paths):
 
 
     # ------------------------------------------------------
+    # Regroup paths if they start with the same addr
+    # ------------------------------------------------------
+
+    group_endloop = []
+    seen = {}
+
+    for el in endloop:
+        try:
+            idx = seen[el[0]]
+            group_endloop[idx].append(el)
+        except:
+            seen[el[0]] = len(group_endloop)
+            group_endloop.append([el])
+
+    endloop = group_endloop
+
+
+    # ------------------------------------------------------
     # Sort endloops
     # ------------------------------------------------------
 
@@ -384,21 +393,25 @@ def extract_loop_paths(paths):
     no_jump = {}
         
     # Search the next address of each endloops
-    for i, el in enumerate(endloop):
-        queue = el[-1]
-        inst = gph.nodes[queue][0]
-        if is_uncond_jump(inst):
-            with_jump.append(i)
-        else:
-            try:
-                # TODO
-                # is it possible to have a conditional jump here ?
-                # if true, need to check BRANCH_NEXT_JUMP
-                no_jump[i] = gph.link_out[queue][BRANCH_NEXT]
-            except:
-                no_jump[i] = -1
+    for i, els in enumerate(endloop):
+        all_jmp = True
 
-    # print_list(endloop)
+        for el in els:
+            queue = el[-1]
+            inst = gph.nodes[queue][0]
+            if not is_uncond_jump(inst):
+                try:
+                    # TODO
+                    # is it possible to have a conditional jump here ?
+                    # if true, need to check BRANCH_NEXT_JUMP
+                    no_jump[i] = gph.link_out[queue][BRANCH_NEXT]
+                except:
+                    no_jump[i] = -1
+                all_jmp = False
+
+        if all_jmp:
+            with_jump.append(i)
+
     # print("no jump ", end=""); print_dict(no_jump)
     # print("with jump ", end=""); print_list(with_jump)
 
@@ -426,28 +439,12 @@ def extract_loop_paths(paths):
     endloop = new_endloop
     # print_list(endloop)
 
-
-    # ------------------------------------------------------
-    # Regroup paths if they start with the same addr
-    # ------------------------------------------------------
-
-    group_endloop = []
-    seen = {}
-
-    for el in endloop:
-        try:
-            idx = seen[el[0]]
-            group_endloop[idx].append(el)
-        except:
-            seen[el[0]] = len(group_endloop)
-            group_endloop.append([el])
-
     debug__("loop paths: ", end="")
     debug__(loop_paths)
     debug__("endloop: ", end="")
-    debug__(group_endloop)
+    debug__(endloop)
 
-    return loop_paths, group_endloop
+    return loop_paths, endloop
 
 
 def is_in_paths(paths, addr):
@@ -697,7 +694,7 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     #
 
     if last_else != -1:
-        # TOOD not sure about endpoint == -1
+        # TODO not sure about endpoint == -1
         # tests/or4
         if if_addr == last_else and endpoint == -1:
             return (Ast_AndIf(inst_jump, inst_jump.id), else_addr)

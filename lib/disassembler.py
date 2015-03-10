@@ -58,9 +58,12 @@ class Disassembler():
         self.disas = []
         self.deep = 0
         self.code = {}
+        self.load_static_sym()
+        self.load_dyn_sym()
+        self.load_rodata()
 
 
-        # load static symbols
+    def load_static_sym(self):
         symtab = self.elf.get_section_by_name(b".symtab")
         for sy in symtab.iter_symbols():
             if sy.entry.st_value != 0 and sy.name != b"":
@@ -69,8 +72,7 @@ class Disassembler():
             # print("%x\t%s" % (sy.entry.st_value, sy.name.decode()))
 
 
-        # load dynamic symbols
-
+    def load_dyn_sym(self):
         rel = self.elf.get_section_by_name(b".rela.plt")
         dyn = self.elf.get_section_by_name(b".dynsym")
 
@@ -90,6 +92,8 @@ class Disassembler():
             off += plt_entry_size
             k += 1
 
+
+    def load_rodata(self):
         self.rodata = self.elf.get_section_by_name(b".rodata")
         self.rodata_data = self.rodata.data()
 
@@ -216,11 +220,11 @@ class Disassembler():
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
-                        nxt_true = self.code[curr.operands[0].value.imm]
-                        nxt_false = self.code[curr.address + curr.size]
-                        gph.set_cond_next(curr, nxt_true, nxt_false)
-                        rest.append(nxt_true.address)
-                        rest.append(nxt_false.address)
+                        nxt_jump = self.code[curr.operands[0].value.imm]
+                        direct_nxt = self.code[curr.address + curr.size]
+                        gph.set_cond_next(curr, nxt_jump, direct_nxt)
+                        rest.append(nxt_jump.address)
+                        rest.append(direct_nxt.address)
 
                 elif is_ret(curr):
                     gph.add_node(curr)

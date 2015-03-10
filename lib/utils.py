@@ -127,7 +127,7 @@ def cond_sign_str(ty):
     except:
         return "UNKNOWN"
 
-    # TODO
+    # TODO : invert_cond need to be updated too
     # X86_INS_JAE
     # X86_INS_JA
     # X86_INS_JBE
@@ -136,11 +136,9 @@ def cond_sign_str(ty):
     # X86_INS_JECXZ
     # X86_INS_JNO
     # X86_INS_JNP
-    # X86_INS_JNS
     # X86_INS_JO
     # X86_INS_JP
     # X86_INS_JRCXZ
-    # X86_INS_JS
 
 
 
