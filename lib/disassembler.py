@@ -47,7 +47,6 @@ from utils import *
 # X86_OP_FP = 4
 
 
-
 class Disassembler():
     def __init__(self, filename):
         fd = open(filename, "rb")

@@ -68,7 +68,7 @@ if == {
             0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
             0x400aaa: lea rax, qword ptr [rbp - 0x48]  [var11]
             0x400aae: mov rcx, rdx
-            0x400ab1: mov edx, 0x400b1e
+            0x400ab1: mov edx, 0x400b1e  <connection_handler>
             0x400ab6: mov esi, 0
             0x400abb: mov rdi, rax
             0x400abe: call 0x4007f0 <pthread_create@plt>

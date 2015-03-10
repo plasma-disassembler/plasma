@@ -26,8 +26,6 @@ gph = None
 dbg = False
 
 
-
-
 def debug__(obj, end="\n"):
     global dbg
     if dbg:
@@ -37,7 +35,6 @@ def debug__(obj, end="\n"):
             print_list(obj)
         elif type(obj) == dict:
             print_dict(obj)
-
 
 
 def loop_start_by(addr):

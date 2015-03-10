@@ -23,11 +23,11 @@ from utils import *
 from capstone.x86 import *
 
 
+# Here, I don't use string.printable because it contains \r \n \t
+# and I want to print backslashed strings.
 printable = {}
-
 for c in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ ":
     printable[ord(c)] = 1
-
 
 
 jumps = {}
@@ -39,7 +39,6 @@ color_counter = 112
 dis = None
 
 nocolor = False
-
 
 
 def pick_color():
@@ -163,6 +162,16 @@ def print_inst(i, tab, prefix=""):
 
         return prefix + addr_str
 
+    def print_addr_func():
+        global dis
+        nonlocal i
+
+        for o in i.operands:
+            if o.type == X86_OP_IMM:
+                addr = o.value.imm
+                if addr in dis.reverse_symbols:
+                    print_no_end("  " + color_string("<" + dis.reverse_symbols[addr] + ">"))
+                    
     def print_rodata():
         global dis, printable
         nonlocal i
@@ -278,6 +287,7 @@ def print_inst(i, tab, prefix=""):
 
     print_tabbed_no_end(get_addr_str() + get_inst_str(), tab)
     print_access_local_vars()
+    print_addr_func()
     print_rodata()
     print()
 

@@ -14,13 +14,13 @@ echo -n "$name "
 if [ -f "tests/${name}.rev" ]; then
     ./reverse.py "tests/${name}.bin" --nocolor --nograph >tmp 2>/dev/null
     if [ $? -eq 0 ]; then
-            diff -q tmp "tests/${name}.rev" >/dev/null
-            rm tmp
+        diff -q tmp "tests/${name}.rev" >/dev/null
         if [ $? -eq 0 ]; then
             green "[OK]\n"
         else
             red "[FAIL]\n"
         fi
+        rm tmp
     else
         red "[EXCEPTION]\n"
     fi
