@@ -15,6 +15,10 @@ The script `reverse.py` will disassemble the fonction `main` in the segment
     python-capstone (>= 3.0.1)
     python-pyelftools
 
+For Python binding of [Capstone engine](http://www.capstone-engine.org), you can install it from PyPi, like followings: 
+
+    sudo pip3 install capstone
+
 You need a terminal with 256 colors, otherwise use the option `-nc`
 (or `--nocolor`).
 
