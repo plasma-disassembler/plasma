@@ -90,6 +90,11 @@ def color_string(text):
     return color(text, 144)
 
 
+def print_block(blk, tab):
+    for i in blk:
+        print_inst(i, tab)
+
+
 # If reg_base_l is the base of an address access
 # ex: mov [rbp + 1], 123
 def pattern_lbase(inst, lst_inst_id, reg_base_l, op_r):
@@ -119,19 +124,95 @@ def print_tabbed(string, tab):
 
 def print_tabbed_no_end(string, tab):
     print("    " * tab, end="")
-    if string[0] == "#":
-        print(color_comment(string), end="")
-    else:
-        print(string, end="")
+    print(string, end="")
 
 
 def print_no_end(text):
     print(text, end="")
 
 
-def print_block(blk, tab):
-    for i in blk:
-        print_inst(i, tab)
+def print_operand(i, num_op, hexa=False):
+    op = i.operands[num_op]
+    if op.type == X86_OP_IMM:
+        # TODO print strings (see print_rodata)
+        imm = op.value.imm
+        if imm in dis.reverse_symbols:
+            print_no_end("0x%x " % imm)
+            print_no_end(color_string("<" + dis.reverse_symbols[imm] + ">"))
+        else:
+            if hexa:
+                print_no_end("0x%x" % imm)
+            else:
+                print_no_end(str(imm))
+    elif op.type == X86_OP_REG:
+        print_no_end(i.reg_name(op.value.reg))
+
+
+def print_rodata(i):
+    global dis, printable
+
+    for o in i.operands:
+        if o.type == X86_OP_IMM and dis.is_rodata(o.value.imm):
+            addr = o.value.imm
+
+            off = addr - dis.rodata.header.sh_addr
+            txt = "\""
+
+            i = 0
+            while i < 20:
+                v = dis.rodata_data[off]
+                if v == 0:
+                    break
+                if v in printable:
+                    txt += chr(v)
+                else:
+                    if v == 10:
+                        txt += "\\n"
+                    elif v == 9:
+                        txt += "\\t"
+                    elif v == 13:
+                        txt += "\\r"
+                    else:
+                        txt += "\\x%02x" % v
+                off += 1
+
+            if v != 0:
+                txt += "..."
+
+            print_no_end("  " + color_string(txt + "\""))
+
+
+def print_access_local_vars(i):
+    v = []
+    for k, o in enumerate(i.operands):
+        if o.type == X86_OP_MEM and o.mem.base == X86_REG_RBP:
+            v.append(k)
+
+    if len(v) > 0:
+        print_no_end("  [")
+        for k in v[:-1]:
+            print_no_end(color_var(get_var_name(i, k)) + ", ")
+        print_no_end(color_var(get_var_name(i, v[-1])))
+        print_no_end("]")
+
+
+def get_var_name(i, op_num):
+    global vars_counter, local_vars
+    try:
+        return local_vars[i.operands[op_num].mem.disp]
+    except:
+        local_vars[i.operands[op_num].mem.disp] = "var" + str(vars_counter)
+        vars_counter += 1
+        return local_vars[i.operands[op_num].mem.disp]
+
+
+def print_symbols(i):
+    global dis
+    for o in i.operands:
+        if o.type == X86_OP_IMM:
+            addr = o.value.imm
+            if addr in dis.reverse_symbols:
+                print_no_end("  " + color_string("<" + dis.reverse_symbols[addr] + ">"))
 
 
 def print_inst(i, tab, prefix=""):
@@ -139,105 +220,34 @@ def print_inst(i, tab, prefix=""):
         nonlocal i
         return "%s %s" % (i.mnemonic, i.op_str)
 
-    def get_var_name(op_num):
-        global vars_counter, local_vars
-        nonlocal i
-        try:
-            return local_vars[i.operands[op_num].mem.disp]
-        except:
-            local_vars[i.operands[op_num].mem.disp] = "var" + str(vars_counter)
-            vars_counter += 1
-            return local_vars[i.operands[op_num].mem.disp]
-
     def get_addr_str():
+        nonlocal i
         global jumps
-        nonlocal i, prefix
-
         addr_str = "0x%x: " % i.address
-
         if i.address in jumps:
             addr_str = color(addr_str, jumps[i.address])
         elif prefix == "":
             addr_str = color_comment(addr_str)
+        return addr_str
 
-        return prefix + addr_str
 
-    def print_addr_func():
-        global dis
-        nonlocal i
+    if prefix == "# ":
+        print_tabbed(color_comment(prefix + get_addr_str() + get_inst_str()), tab)
+        return
 
-        for o in i.operands:
-            if o.type == X86_OP_IMM:
-                addr = o.value.imm
-                if addr in dis.reverse_symbols:
-                    print_no_end("  " + color_string("<" + dis.reverse_symbols[addr] + ">"))
-                    
-    def print_rodata():
-        global dis, printable
-        nonlocal i
-
-        for o in i.operands:
-            if o.type == X86_OP_IMM and dis.is_rodata(o.value.imm):
-                addr = o.value.imm
-
-                off = addr - dis.rodata.header.sh_addr
-                txt = "\""
-
-                i = 0
-                while i < 20:
-                    v = dis.rodata_data[off]
-                    if v == 0:
-                        break
-                    if v in printable:
-                        txt += chr(v)
-                    else:
-                        if v == 10:
-                            txt += "\\n"
-                        elif v == 9:
-                            txt += "\\t"
-                        elif v == 13:
-                            txt += "\\r"
-                        else:
-                            txt += "\\x%02x" % v
-                    off += 1
-
-                if v != 0:
-                    txt += "..."
-
-                print_no_end("  " + color_string(txt + "\""))
-
-    def print_access_local_vars():
-        nonlocal i
-        v = []
-        for k, o in enumerate(i.operands):
-            if o.type == X86_OP_MEM and o.mem.base == X86_REG_RBP:
-                v.append(k)
-
-        if len(v) > 0:
-            print_no_end("  [")
-            for k in v[:-1]:
-                print_no_end(color_var(get_var_name(k)) + ", ")
-            print_no_end(color_var(get_var_name(v[-1])))
-            print_no_end("]")
+    print_tabbed_no_end(get_addr_str(), tab)
 
     if is_ret(i):
-        print_tabbed(get_addr_str() + color_keyword(get_inst_str()), tab)
+        print(color_keyword(get_inst_str()))
         return
 
     if is_call(i):
-        print_tabbed_no_end(get_addr_str() + get_inst_str(), tab)
-        if i.operands[0].type != X86_OP_IMM:
-            print()
-            return
-        try:
-            addr = i.operands[0].value.imm
-            print(" " + color_string("<" + dis.reverse_symbols[addr] + ">"))
-        except:
-            print()
+        print_no_end(i.mnemonic + " ")
+        print_operand(i, 0, hexa=True)
+        print()
         return
 
     if is_uncond_jump(i):
-        print_tabbed_no_end(get_addr_str(), tab)
         if i.operands[0].type != X86_OP_IMM:
             print(get_inst_str())
             return
@@ -254,41 +264,44 @@ def print_inst(i, tab, prefix=""):
     inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP]
 
     if pattern_lbase(i, inst_check, X86_REG_RBP, X86_OP_IMM):
-        print_tabbed_no_end(get_addr_str(), tab)
-        print_no_end(color_var(get_var_name(0)))
+        print_no_end(color_var(get_var_name(i, 0)))
         print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(str(i.operands[1].value.imm))
+        print_operand(i, 1)
         print(color_comment(" # " + get_inst_str()))
         return
 
     if pattern_lbase(i, inst_check, X86_REG_RBP, X86_OP_REG):
-        print_tabbed_no_end(get_addr_str(), tab)
-        print_no_end(color_var(get_var_name(0)))
+        print_no_end(color_var(get_var_name(i, 0)))
         print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(i.reg_name(i.operands[1].value.reg))
+        print_operand(i, 1)
         print(color_comment(" # " + get_inst_str()))
         return
 
     if pattern_rbase(i, inst_check, X86_OP_IMM, X86_REG_RBP):
-        print_tabbed_no_end(get_addr_str(), tab)
-        print_no_end(str(i.operands[0].value.imm))
+        print_operand(i, 0)
         print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(color_var(get_var_name(1)))
+        print_no_end(color_var(get_var_name(i, 1)))
         print(color_comment(" # " + get_inst_str()))
         return
 
     if pattern_rbase(i, inst_check, X86_OP_REG, X86_REG_RBP):
-        print_tabbed_no_end(get_addr_str(), tab)
-        print_no_end(i.reg_name(i.operands[0].value.reg))
+        print_operand(i, 0)
         print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(color_var(get_var_name(1)))
+        print_no_end(color_var(get_var_name(i, 1)))
         print(color_comment(" # " + get_inst_str()))
         return
 
-    print_tabbed_no_end(get_addr_str() + get_inst_str(), tab)
-    print_access_local_vars()
-    print_addr_func()
-    print_rodata()
+    if i.id == X86_INS_CMP:
+        print_operand(i, 0)
+        print_no_end(" " + cond_sign_str(i.id) + " ")
+        print_operand(i, 1)
+        print(color_comment(" # " + get_inst_str()))
+        return
+
+    print_no_end(get_inst_str())
+    print_access_local_vars(i)
+    print_symbols(i)
+    print_rodata(i)
     print()
 
 
