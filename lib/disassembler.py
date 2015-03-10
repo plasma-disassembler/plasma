@@ -68,15 +68,25 @@ class Disassembler():
                 self.symbols[sy.name.decode()] = sy.entry.st_value
             # print("%x\t%s" % (sy.entry.st_value, sy.name.decode()))
 
+
         # load dynamic symbols
+
+        rel = self.elf.get_section_by_name(b".rela.plt")
         dyn = self.elf.get_section_by_name(b".dynsym")
-        plt = self.elf.get_section_by_name(b".plt") 
+
+        relitems = list(rel.iter_relocations())
         dynsym = list(dyn.iter_symbols())
+
+        plt = self.elf.get_section_by_name(b".plt") 
         plt_entry_size = 16 # TODO
+
         off = plt.header.sh_addr + plt_entry_size
-        k = 1
+        k = 0
+
         while off < plt.header.sh_addr + plt.header.sh_size :
-            self.reverse_symbols[off] = dynsym[k].name.decode() + "@plt"
+            idx = relitems[k].entry.r_info_sym
+            name = dynsym[idx].name.decode()
+            self.reverse_symbols[off] = name + "@plt"
             off += plt_entry_size
             k += 1
 
