@@ -5,6 +5,7 @@ BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
 .PHONY : all check compile FORCE
 
 FLAGS[tests/server.c] = "-lpthread"
+SYMBOLS[tests/server.rev] = "main" "connection_handler"
 
 all: check
 
@@ -14,7 +15,7 @@ all: check
 check: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
-	@./diff.sh $@
+	@./diff.sh $@ $(SYMBOLS[$@])
 	
 
 compile: $(BIN)

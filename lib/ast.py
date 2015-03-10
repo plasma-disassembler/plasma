@@ -34,6 +34,7 @@ jumps = {}
 local_vars = {}
 vars_counter = 1
 color_counter = 112
+MAX_STRING_RODATA = 30
 
 # Disassembler
 dis = None
@@ -134,9 +135,11 @@ def print_no_end(text):
 def print_operand(i, num_op, hexa=False):
     op = i.operands[num_op]
     if op.type == X86_OP_IMM:
-        # TODO print strings (see print_rodata)
         imm = op.value.imm
-        if imm in dis.reverse_symbols:
+        if dis.is_rodata(imm):
+            print_no_end("0x%x " % imm)
+            print_no_end(color_string(get_str_rodata(imm)))
+        elif imm in dis.reverse_symbols:
             print_no_end("0x%x " % imm)
             print_no_end(color_string("<" + dis.reverse_symbols[imm] + ">"))
         else:
@@ -146,40 +149,46 @@ def print_operand(i, num_op, hexa=False):
                 print_no_end(str(imm))
     elif op.type == X86_OP_REG:
         print_no_end(i.reg_name(op.value.reg))
+    else:
+        print_no_end("TODO OPERAND")
+
+
+def get_str_rodata(addr):
+    global printable
+
+    off = addr - dis.rodata.header.sh_addr
+    txt = "\""
+
+    i = 0
+    while i < MAX_STRING_RODATA:
+        v = dis.rodata_data[off]
+        if v == 0:
+            break
+        if v in printable:
+            txt += chr(v)
+        else:
+            if v == 10:
+                txt += "\\n"
+            elif v == 9:
+                txt += "\\t"
+            elif v == 13:
+                txt += "\\r"
+            else:
+                txt += "\\x%02x" % v
+        off += 1
+        i += 1
+
+    if v != 0:
+        txt += "..."
+
+    return txt + "\""
 
 
 def print_rodata(i):
-    global dis, printable
-
+    global dis
     for o in i.operands:
         if o.type == X86_OP_IMM and dis.is_rodata(o.value.imm):
-            addr = o.value.imm
-
-            off = addr - dis.rodata.header.sh_addr
-            txt = "\""
-
-            i = 0
-            while i < 20:
-                v = dis.rodata_data[off]
-                if v == 0:
-                    break
-                if v in printable:
-                    txt += chr(v)
-                else:
-                    if v == 10:
-                        txt += "\\n"
-                    elif v == 9:
-                        txt += "\\t"
-                    elif v == 13:
-                        txt += "\\r"
-                    else:
-                        txt += "\\x%02x" % v
-                off += 1
-
-            if v != 0:
-                txt += "..."
-
-            print_no_end("  " + color_string(txt + "\""))
+            print_no_end("  " + color_string(get_str_rodata(o.value.imm)))
 
 
 def print_access_local_vars(i):

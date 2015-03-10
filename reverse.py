@@ -101,6 +101,7 @@ if __name__ == '__main__':
     dis = Disassembler(filename)
     dis.disasm_section(section.encode(), bits)
     ast.dis = dis
+    ast.MAX_STRING_RODATA = 30
 
     if addr[:2] == "0x":
         addr = int(addr, 16)
