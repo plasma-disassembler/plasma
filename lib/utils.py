@@ -70,6 +70,7 @@ def invert_cond(ty):
         [X86_INS_JE, X86_INS_JNE],
         [X86_INS_JGE, X86_INS_JL],
         [X86_INS_JLE, X86_INS_JG],
+        [X86_INS_JNS, X86_INS_JS],
     ]
 
     for c in conds:
@@ -117,6 +118,8 @@ def cond_sign_str(ty):
         X86_INS_MOV: "=",
         X86_INS_SUB: "-=",
         X86_INS_CMP: "cmp",
+        X86_INS_JNS: "> 0",
+        X86_INS_JS: "< 0"
     }
 
     try:
