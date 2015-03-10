@@ -18,6 +18,7 @@
 #
 
 import sys
+from capstone import *
 from capstone.x86 import *
 
 # X86_INS_JAE = 257
@@ -49,20 +50,20 @@ BRANCH_NEXT_JUMP = 1   # or for the else part
 
 
 def is_jump(i):
-    return X86_INS_JAE <= i.id <= X86_INS_JS
+    return i.group(CS_GRP_JUMP)
 
 def is_cond_jump(i):
-    return X86_INS_JAE <= i.id <= X86_INS_JS and i.id != X86_INS_JMP
+    return i.group(CS_GRP_JUMP) and i.id != X86_INS_JMP
 
 def is_uncond_jump(i):
     return i.id == X86_INS_JMP
 
 def is_ret(i):
     # TODO more ret  ??
-    return i.id == X86_INS_RET
+    return i.group(CS_GRP_RET)
 
 def is_call(i):
-    return i.id == X86_INS_CALL
+    return i.group(CS_GRP_CALL)
 
 
 def invert_cond(ty):
