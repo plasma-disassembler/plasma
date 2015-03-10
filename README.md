@@ -9,6 +9,8 @@ Warning, the project is still in development, use it at your own risks.
 This tool try to disassemble one function (by default `main`). The address
 of the function, or its symbol, can be passed by argument.
 
+The `Makefile` is used only for checking tests.
+
 ## Requirements
 
     python3
@@ -34,9 +36,4 @@ You need a terminal with 256 colors, otherwise use the option `-nc`
 By opening `d3/index.html` you will be able to see the flow graph :
 
 ![graph](http://hippersoft.fr/projects/graph.jpg)
-
-
-## Tests
-
-The script `check.sh`  verify if all tests are correct.
 
