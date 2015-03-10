@@ -6,8 +6,8 @@ readable code will colored syntax.
 
 Warning, the project is still in development, use it at your own risks.
 
-The script `reverse.py` will disassemble the fonction `main` in the segment
-`.text` (modify `reverse.py` otherwise). It will be later passed by arguments.
+This tool try to disassemble one function (by default `main`). The address
+of the function, or its symbol, can be passed by argument.
 
 ## Requirements
 
@@ -15,7 +15,8 @@ The script `reverse.py` will disassemble the fonction `main` in the segment
     python-capstone (>= 3.0.1)
     python-pyelftools
 
-For Python binding of [Capstone engine](http://www.capstone-engine.org), you can install it from PyPi, like followings: 
+For Python binding of [Capstone engine](http://www.capstone-engine.org), you 
+can install it from PyPi, like followings: 
 
     sudo pip3 install capstone
 

@@ -19,6 +19,7 @@
 
 import sys
 import os
+import os.path
 
 REVERSEFILE = os.path.abspath(os.path.expanduser(__file__))
 if os.path.islink(REVERSEFILE):
@@ -31,12 +32,6 @@ from utils import *
 from generate_ast import *
 
 
-# TODO options
-symbol = "main"
-section = b".text"
-bits = 64
-
-
 def usage():
     print("reverse.py FILENAME [OPTIONS]")
     print()
@@ -44,46 +39,87 @@ def usage():
     print("     --nocolor, -nc")
     print("     --nograph, -ng")
     print("     --debug, -d")
-    # print("     --sy=SYMBOLNAME  (default=main)")
-    # print("     --section=SECTIONNAME  (default=.text)")
+    print("     -x=SYMBOLNAME|0xNNNN  (default=main)")
+    print("     -b=64|32  (default=64)")
+    print("     -s,--section=SECTIONNAME  (default=.text)")
     sys.exit(0)
 
 
-filename = "a.out"
-gen_graph = True
-debug = False
-print_help = False
+if __name__ == '__main__':
+    filename = "a.out"
+    gen_graph = True
+    debug = False
+    print_help = False
+    addr = "main"
+    bits = 64
+    section = ".text"
 
-for i in sys.argv[1:]:
-    if i == "--help" or  i == "-h":
-        usage()
+    # Parse arguments
+    for i in sys.argv[1:]:
+        arg = i.split("=")
 
-    if i == "--nocolor" or i == "-nc":
-        ast.nocolor = True
-    elif i == "--debug" or i == "-d":
-        debug = True
-    elif i == "--nograph" or i == "-ng":
-        gen_graph = False
+        if len(arg) == 1:
+            if arg[0] == "--help" or arg[0] == "-h":
+                usage()
+            if arg[0] == "--nocolor" or arg[0] == "-nc":
+                ast.nocolor = True
+            elif arg[0] == "--debug" or arg[0] == "-d":
+                debug = True
+            elif arg[0] == "--nograph" or arg[0] == "-ng":
+                gen_graph = False
+            elif arg[0][0] == "-":
+                usage()
+            else:
+                filename = i
+
+        elif len(arg) == 2:
+            if arg[0] == "-x":
+                if len(arg[1]) <= 2:
+                    usage()
+                addr = arg[1]
+
+            elif arg[0] == "-b":
+                if arg[1] not in ["64", "32"]:
+                    usage()
+                bits = int(arg[1])
+
+            elif arg[0] == "-s" or arg[0] == "--section":
+                section = arg[1]
+
+            else:
+                usage()
+
+        else:
+            usage()
+
+    if not os.path.exists(filename):
+        die("%s doesn't exists" % filename)
+
+
+    # Reverse !
+
+    dis = Disassembler(filename)
+    dis.disasm_section(section.encode(), bits)
+    ast.dis = dis
+
+    if addr[:2] == "0x":
+        addr = int(addr, 16)
     else:
-        filename = i
+        try:
+            addr = dis.symbols[addr]
+        except:
+            die("symbol %s not found" % addr)
 
+    gph = dis.extract_func(addr)
+    gph.simplify()
+    gph.detect_loops()
 
-dis = Disassembler(filename)
-dis.disasm_section(section, bits)
-ast.dis = dis
+    if gen_graph:
+        gph.generate_graph()
 
-addr = dis.symbols[symbol]
-
-gph = dis.extract_func(addr)
-gph.simplify()
-gph.detect_loops()
-
-if gen_graph:
-    gph.generate_graph()
-
-code_ast = generate_ast(gph, debug)
-ast.gph = gph
-if not ast.nocolor:
-    code_ast.assign_colors()
-code_ast.print()
+    code_ast = generate_ast(gph, debug)
+    ast.gph = gph
+    if not ast.nocolor:
+        code_ast.assign_colors()
+    code_ast.print()
 

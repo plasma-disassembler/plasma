@@ -532,8 +532,7 @@ def get_ast_branch(paths, curr_loop=-1, last_else=-1):
                 c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
                 c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
                 if c1 and c2:
-                    print("ERROR can't have a ifelse here     %x" % inst.address)
-                    sys.exit(0)
+                    die("can't have a ifelse here     %x" % inst.address)
 
                 # If the address of the jump is inside the loop, we
                 # invert the conditions. example :

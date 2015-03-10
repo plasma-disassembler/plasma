@@ -17,6 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 from capstone.x86 import *
 
 # X86_INS_JAE = 257
@@ -179,4 +180,9 @@ def index(L, obj, k=0):
         return L.index(obj, k)
     except ValueError:
         return -1
+
+
+def die(txt):
+    print("ERROR: " + txt, file=sys.stderr)
+    sys.exit(1)
 
