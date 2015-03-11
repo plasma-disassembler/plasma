@@ -38,6 +38,9 @@ MAX_STRING_RODATA = 30
 # Disassembler
 dis = None
 
+# Don't print comments or commented instructions
+nocomment = False
+
 
 def print_block(blk, tab):
     for i in blk:
@@ -46,10 +49,7 @@ def print_block(blk, tab):
 
 def print_tabbed(string, tab):
     print("    " * tab, end="")
-    if string[0] == "#":
-        print(color_comment(string))
-    else:
-        print(string)
+    print(string)
 
 
 def print_tabbed_no_end(string, tab):
@@ -196,7 +196,8 @@ def print_inst(i, tab, prefix=""):
 
 
     if prefix == "# ":
-        print_tabbed(color_comment(prefix + get_addr_str() + get_inst_str()), tab)
+        if not nocomment:
+            print_tabbed(color_comment(prefix + get_addr_str() + get_inst_str()), tab)
         return
 
     print_tabbed_no_end(get_addr_str(), tab)
@@ -222,7 +223,7 @@ def print_inst(i, tab, prefix=""):
             print("jmp 0x%x" % addr)
         return
     
-    print_comment = False
+    modified = False
 
     inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP]
 
@@ -230,18 +231,18 @@ def print_inst(i, tab, prefix=""):
         print_operand(i, 0)
         print_no_end(" " + cond_sign_str(i.id) + " ")
         print_operand(i, 1)
-        print_comment = True
+        modified = True
     else:
         print_no_end("%s " % i.mnemonic)
         if len(i.operands) > 0:
-            print_comment = print_operand(i, 0)
+            modified = print_operand(i, 0)
             k = 1
             while k < len(i.operands):
                 print_no_end(", ")
-                print_comment |= print_operand(i, k)
+                modified |= print_operand(i, k)
                 k += 1
 
-    if print_comment:
+    if modified and not nocomment:
         print_no_end(color_comment(" # " + get_inst_str()))
 
     print()

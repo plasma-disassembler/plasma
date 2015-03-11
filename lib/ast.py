@@ -23,6 +23,7 @@ from lib.colors import pick_color, addr_color
 from lib.output import *
 
 gph = None
+nocomment = False
 
 
 class Ast_Branch:
@@ -66,7 +67,10 @@ class Ast_IfGoto:
             print_no_end(color("0x%x ", c) % self.addr_jump)
         except:
             print_no_end("0x%x " % self.addr_jump)
-        print_inst(self.orig_jump, 0, "# ")
+        if nocomment:
+            print()
+        else:
+            print_inst(self.orig_jump, 0, "# ")
 
     def assign_colors(self):
         pick_color(self.addr_jump)
@@ -80,7 +84,10 @@ class Ast_AndIf:
     def print(self, tab=0):
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if ") + \
                 cond_sign_str(self.cond_id) + " ", tab)
-        print_inst(self.orig_jump, 0, "# ")
+        if nocomment:
+            print()
+        else:
+            print_inst(self.orig_jump, 0, "# ")
 
     def assign_colors(self):
         return
@@ -93,7 +100,9 @@ class Ast_Ifelse:
         self.br_next_jump = br_next_jump
 
     def print(self, tab=0):
-        print_inst(self.inst_jump, tab, "# ")
+        if not nocomment:
+            print_inst(self.inst_jump, tab, "# ")
+
         print_tabbed(color_keyword("if ") + 
                 cond_sign_str(invert_cond(self.inst_jump.id)) + " {", tab)
 
@@ -155,7 +164,8 @@ class Ast_Comment:
         self.text = text
 
     def print(self, tab=0):
-        print_tabbed("# " + self.text, tab)
+        if not nocomment:
+            print_tabbed("# " + self.text, tab)
 
     def assign_colors(self):
         return

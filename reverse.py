@@ -35,6 +35,7 @@ def usage():
     print("     --nocolor, -nc")
     print("     --nograph, -ng")
     print("     --debug, -d")
+    print("     --nocomment  don't print comments")
     print("     -x=SYMBOLNAME|0xNNNN  (default=main)")
     print("     -b=64|32  (default=64)")
     print("     -s,--section=SECTIONNAME  (default=.text)")
@@ -63,6 +64,9 @@ if __name__ == '__main__':
                 debug = True
             elif arg[0] == "--nograph" or arg[0] == "-ng":
                 gen_graph = False
+            elif arg[0] == "--nocomment":
+                lib.output.nocomment = True
+                lib.ast.nocomment = True
             elif arg[0][0] == "-":
                 usage()
             else:
