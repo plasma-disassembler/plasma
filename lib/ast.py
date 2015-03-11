@@ -96,25 +96,6 @@ def print_block(blk, tab):
         print_inst(i, tab)
 
 
-# If reg_base_l is the base of an address access
-# ex: mov [rbp + 1], 123
-def pattern_lbase(inst, lst_inst_id, reg_base_l, op_r):
-    if inst.id in lst_inst_id and len(inst.operands) == 2:
-        if inst.operands[0].type == X86_OP_MEM and inst.operands[1].type == op_r:
-            if inst.operands[0].mem.base == reg_base_l:
-                return True
-    return False
-
-
-# ex: mov eax, [rbp + 1]
-def pattern_rbase(inst, lst_inst_id, op_l, reg_base_r):
-    if inst.id in lst_inst_id and len(inst.operands) == 2:
-        if inst.operands[1].type == X86_OP_MEM and inst.operands[0].type == op_l:
-            if inst.operands[1].mem.base == reg_base_r:
-                return True
-    return False
-
-
 def print_tabbed(string, tab):
     print("    " * tab, end="")
     if string[0] == "#":
@@ -383,10 +364,10 @@ class Ast_AndIf:
 
 
 class Ast_Ifelse:
-    def __init__(self, inst_jump, brtrue, brfalse):
+    def __init__(self, inst_jump, br_next, br_next_jump):
         self.inst_jump = inst_jump
-        self.brtrue = brtrue
-        self.brfalse = brfalse
+        self.br_next = br_next
+        self.br_next_jump = br_next_jump
 
     def print(self, tab=0):
         print_inst(self.inst_jump, tab, "# ")
@@ -396,20 +377,20 @@ class Ast_Ifelse:
         # Start with the false branch : it's directly after the jump
         # false branch == jump is not taken, so it means that the If 
         # is true !!
-        self.brfalse.print(tab+1)
+        self.br_next_jump.print(tab+1)
 
-        if len(self.brtrue.nodes) > 0:
+        if len(self.br_next.nodes) > 0:
             print_tabbed("} " + color_keyword("else ") + 
                     cond_sign_str(self.inst_jump.id) + " {", tab)
         
             # Print the true branch, the jump is taken (the if is false)
-            self.brtrue.print(tab+1)
+            self.br_next.print(tab+1)
 
         print_tabbed("}", tab)
 
     def assign_colors(self):
-        self.brfalse.assign_colors()
-        self.brtrue.assign_colors()
+        self.br_next_jump.assign_colors()
+        self.br_next.assign_colors()
 
 
 class Ast_Loop:
