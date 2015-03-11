@@ -1,71 +1,71 @@
 0x400b1e: push rbp
-0x400b1f: mov rbp, rsp
-0x400b22: sub rsp, 0x800
+0x400b1f: rbp = rsp # mov rbp, rsp
+0x400b22: rsp -= 2048 # sub rsp, 0x800
 0x400b29: var1 = rdi # mov qword ptr [rbp - 0x7f8], rdi
 0x400b30: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
-0x400b37: mov eax, dword ptr [rax]
+0x400b37: eax = [rax] # mov eax, dword ptr [rax]
 0x400b39: var2 = eax # mov dword ptr [rbp - 4], eax
 0x400b3c: var3 = 0x400d60 "Greetings! I am your connectio..." # mov qword ptr [rbp - 0x10], 0x400d60
 0x400b44: rax = var3 # mov rax, qword ptr [rbp - 0x10]
-0x400b48: mov rdi, rax
+0x400b48: rdi = rax # mov rdi, rax
 0x400b4b: call 0x400820 <strlen@plt>
-0x400b50: mov rdx, rax
+0x400b50: rdx = rax # mov rdx, rax
 0x400b53: rcx = var3 # mov rcx, qword ptr [rbp - 0x10]
 0x400b57: eax = var2 # mov eax, dword ptr [rbp - 4]
-0x400b5a: mov rsi, rcx
-0x400b5d: mov edi, eax
+0x400b5a: rsi = rcx # mov rsi, rcx
+0x400b5d: edi = eax # mov edi, eax
 0x400b5f: call 0x400810 <write@plt>
 0x400b64: var3 = 0x400d90 "Now type something and i shall..." # mov qword ptr [rbp - 0x10], 0x400d90
 0x400b6c: rax = var3 # mov rax, qword ptr [rbp - 0x10]
-0x400b70: mov rdi, rax
+0x400b70: rdi = rax # mov rdi, rax
 0x400b73: call 0x400820 <strlen@plt>
-0x400b78: mov rdx, rax
+0x400b78: rdx = rax # mov rdx, rax
 0x400b7b: rcx = var3 # mov rcx, qword ptr [rbp - 0x10]
 0x400b7f: eax = var2 # mov eax, dword ptr [rbp - 4]
-0x400b82: mov rsi, rcx
-0x400b85: mov edi, eax
+0x400b82: rsi = rcx # mov rsi, rcx
+0x400b85: edi = eax # mov edi, eax
 0x400b87: call 0x400810 <write@plt>
 0x400b8c: jmp 0x400bb4
 loop {
-    0x400bb4: lea rsi, qword ptr [rbp - 0x7f0]  [var4]
+    0x400bb4: lea rsi, var4 # lea rsi, qword ptr [rbp - 0x7f0]
     0x400bbb: eax = var2 # mov eax, dword ptr [rbp - 4]
-    0x400bbe: mov ecx, 0
-    0x400bc3: mov edx, 0x7d0
-    0x400bc8: mov edi, eax
+    0x400bbe: ecx = 0 # mov ecx, 0
+    0x400bc3: edx = 2000 # mov edx, 0x7d0
+    0x400bc8: edi = eax # mov edi, eax
     0x400bca: call 0x4007e0 <recv@plt>
     0x400bcf: var5 = eax # mov dword ptr [rbp - 0x14], eax
     0x400bd2: var5 cmp 0 # cmp dword ptr [rbp - 0x14], 0
     if <=  goto 0x400bd8 # 0x400bd6: jg 0x400b8e
-    0x400b8e: lea rax, qword ptr [rbp - 0x7f0]  [var4]
-    0x400b95: mov rdi, rax
+    0x400b8e: lea rax, var4 # lea rax, qword ptr [rbp - 0x7f0]
+    0x400b95: rdi = rax # mov rdi, rax
     0x400b98: call 0x400820 <strlen@plt>
-    0x400b9d: mov rdx, rax
-    0x400ba0: lea rcx, qword ptr [rbp - 0x7f0]  [var4]
+    0x400b9d: rdx = rax # mov rdx, rax
+    0x400ba0: lea rcx, var4 # lea rcx, qword ptr [rbp - 0x7f0]
     0x400ba7: eax = var2 # mov eax, dword ptr [rbp - 4]
-    0x400baa: mov rsi, rcx
-    0x400bad: mov edi, eax
+    0x400baa: rsi = rcx # mov rsi, rcx
+    0x400bad: edi = eax # mov edi, eax
     0x400baf: call 0x400810 <write@plt>
 }
 0x400bd8: var5 cmp 0 # cmp dword ptr [rbp - 0x14], 0
 # 0x400bdc: jne 0x400bf9
 if == {
-    0x400bde: mov edi, 0x400dc6  "Client disconnected"
+    0x400bde: edi = 0x400dc6 "Client disconnected" # mov edi, 0x400dc6
     0x400be3: call 0x400800 <puts@plt>
-    0x400be8: mov rax, qword ptr [rip + 0x2006b9]
-    0x400bef: mov rdi, rax
+    0x400be8: rax = [rip + 2098873] # mov rax, qword ptr [rip + 0x2006b9]
+    0x400bef: rdi = rax # mov rdi, rax
     0x400bf2: call 0x400870 <fflush@plt>
     0x400bf7: jmp 0x400c09
 } else != {
     0x400bf9: var5 cmp -1 # cmp dword ptr [rbp - 0x14], -1
     # 0x400bfd: jne 0x400c09
     if == {
-        0x400bff: mov edi, 0x400dda  "recv failed"
+        0x400bff: edi = 0x400dda "recv failed" # mov edi, 0x400dda
         0x400c04: call 0x4008a0 <perror@plt>
     }
 }
 0x400c09: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
-0x400c10: mov rdi, rax
+0x400c10: rdi = rax # mov rdi, rax
 0x400c13: call 0x4007d0 <free@plt>
-0x400c18: mov eax, 0
+0x400c18: eax = 0 # mov eax, 0
 0x400c1d: leave 
 0x400c1e: ret 

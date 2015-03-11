@@ -146,7 +146,10 @@ def cond_sign_str(ty):
 def print_dict(dic, end="\n"):
     print("[")
     for i in dic:
-        print("%x: " % i, end="")
+        if type(i) == str:
+            print("%s: " % i, end="")
+        else:
+            print("%x: " % i, end="")
         v = dic[i]
         if type(v) is list:
             print_list(v)

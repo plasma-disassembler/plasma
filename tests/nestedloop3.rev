@@ -1,5 +1,5 @@
 0x4004b6: push rbp
-0x4004b7: mov rbp, rsp
+0x4004b7: rbp = rsp # mov rbp, rsp
 0x4004ba: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x4004c1: var2 = 5 # mov dword ptr [rbp - 8], 5
 0x4004c8: var3 = 1 # mov dword ptr [rbp - 0xc], 1
@@ -17,6 +17,6 @@ loop {
         }
     }
 }
-0x4004e5: mov eax, 0
+0x4004e5: eax = 0 # mov eax, 0
 0x4004ea: pop rbp
 0x4004eb: ret 

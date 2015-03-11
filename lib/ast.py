@@ -132,25 +132,81 @@ def print_no_end(text):
     print(text, end="")
 
 
+# Return True if the operand is a variable
+# (The original instruction will be printed later)
 def print_operand(i, num_op, hexa=False):
+    def inv(n):
+        return n == X86_OP_INVALID
+
     op = i.operands[num_op]
+
     if op.type == X86_OP_IMM:
         imm = op.value.imm
+
         if dis.is_rodata(imm):
             print_no_end("0x%x " % imm)
             print_no_end(color_string(get_str_rodata(imm)))
+
         elif imm in dis.reverse_symbols:
             print_no_end("0x%x " % imm)
             print_no_end(color_string("<" + dis.reverse_symbols[imm] + ">"))
+
         else:
             if hexa:
                 print_no_end("0x%x" % imm)
             else:
                 print_no_end(str(imm))
+        return False
+
     elif op.type == X86_OP_REG:
         print_no_end(i.reg_name(op.value.reg))
-    else:
-        print_no_end("TODO OPERAND")
+        return False
+
+    elif op.type == X86_OP_FP:
+        print_no_end("%f" % op.value.fp)
+        return False
+
+    elif op.type == X86_OP_MEM:
+        mm = op.mem
+
+        if not inv(mm.base) and mm.disp != 0 \
+            and inv(mm.segment) and inv(mm.index) \
+            and mm.base == X86_REG_RBP:
+            print_no_end(color_var(get_var_name(i, num_op)))
+            return True
+
+        printed = False
+        print_no_end("[")
+
+        if not inv(mm.base):
+            print_no_end("%s" % i.reg_name(mm.base))
+            printed = True
+
+        elif not inv(mm.segment):
+            print_no_end("%s" % i.reg_name(mm.segment))
+            printed = True
+
+        if not inv(mm.index):
+            if printed:
+                print_no_end(" + ")
+            if mm.scale == 1:
+                print_no_end("%s" % i.reg_name(mm.index))
+            else:
+                print_no_end("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
+            printed = True
+
+        if mm.disp != 0:
+            if mm.disp < 0:
+                if printed:
+                    print_no_end(" - ")
+                print_no_end(-mm.disp)
+            else:
+                if printed:
+                    print_no_end(" + ")
+                print_no_end(mm.disp)
+
+        print_no_end("]")
+        return True
 
 
 def get_str_rodata(addr):
@@ -184,27 +240,6 @@ def get_str_rodata(addr):
     return txt + "\""
 
 
-def print_rodata(i):
-    global dis
-    for o in i.operands:
-        if o.type == X86_OP_IMM and dis.is_rodata(o.value.imm):
-            print_no_end("  " + color_string(get_str_rodata(o.value.imm)))
-
-
-def print_access_local_vars(i):
-    v = []
-    for k, o in enumerate(i.operands):
-        if o.type == X86_OP_MEM and o.mem.base == X86_REG_RBP:
-            v.append(k)
-
-    if len(v) > 0:
-        print_no_end("  [")
-        for k in v[:-1]:
-            print_no_end(color_var(get_var_name(i, k)) + ", ")
-        print_no_end(color_var(get_var_name(i, v[-1])))
-        print_no_end("]")
-
-
 def get_var_name(i, op_num):
     global vars_counter, local_vars
     try:
@@ -213,15 +248,6 @@ def get_var_name(i, op_num):
         local_vars[i.operands[op_num].mem.disp] = "var" + str(vars_counter)
         vars_counter += 1
         return local_vars[i.operands[op_num].mem.disp]
-
-
-def print_symbols(i):
-    global dis
-    for o in i.operands:
-        if o.type == X86_OP_IMM:
-            addr = o.value.imm
-            if addr in dis.reverse_symbols:
-                print_no_end("  " + color_string("<" + dis.reverse_symbols[addr] + ">"))
 
 
 def print_inst(i, tab, prefix=""):
@@ -267,52 +293,29 @@ def print_inst(i, tab, prefix=""):
             print("jmp 0x%x" % addr)
         return
     
-    # Detection of local variables : rewrite the instruction 
-    # to be more readdable
+    print_comment = False
 
     inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP]
 
-    if pattern_lbase(i, inst_check, X86_REG_RBP, X86_OP_IMM):
-        print_no_end(color_var(get_var_name(i, 0)))
-        print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_operand(i, 1)
-        print(color_comment(" # " + get_inst_str()))
-        return
-
-    if pattern_lbase(i, inst_check, X86_REG_RBP, X86_OP_REG):
-        print_no_end(color_var(get_var_name(i, 0)))
-        print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_operand(i, 1)
-        print(color_comment(" # " + get_inst_str()))
-        return
-
-    if pattern_rbase(i, inst_check, X86_OP_IMM, X86_REG_RBP):
-        print_operand(i, 0)
-        print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(color_var(get_var_name(i, 1)))
-        print(color_comment(" # " + get_inst_str()))
-        return
-
-    if pattern_rbase(i, inst_check, X86_OP_REG, X86_REG_RBP):
-        print_operand(i, 0)
-        print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_no_end(color_var(get_var_name(i, 1)))
-        print(color_comment(" # " + get_inst_str()))
-        return
-
-    if i.id == X86_INS_CMP:
+    if i.id in inst_check:
         print_operand(i, 0)
         print_no_end(" " + cond_sign_str(i.id) + " ")
         print_operand(i, 1)
-        print(color_comment(" # " + get_inst_str()))
-        return
+        print_comment = True
+    else:
+        print_no_end("%s " % i.mnemonic)
+        if len(i.operands) > 0:
+            print_comment = print_operand(i, 0)
+            k = 1
+            while k < len(i.operands):
+                print_no_end(", ")
+                print_comment |= print_operand(i, k)
+                k += 1
 
-    print_no_end(get_inst_str())
-    print_access_local_vars(i)
-    print_symbols(i)
-    print_rodata(i)
+    if print_comment:
+        print_no_end(color_comment(" # " + get_inst_str()))
+
     print()
-
 
 
 

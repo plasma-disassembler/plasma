@@ -1,8 +1,8 @@
 0x400546: push rbp
-0x400547: mov rbp, rsp
-0x40054a: sub rsp, 0x10
-0x40054e: mov edi, 0
-0x400553: mov eax, 0
+0x400547: rbp = rsp # mov rbp, rsp
+0x40054a: rsp -= 16 # sub rsp, 0x10
+0x40054e: edi = 0 # mov edi, 0
+0x400553: eax = 0 # mov eax, 0
 0x400558: call 0x400440 <time@plt>
 0x40055d: var1 = eax # mov dword ptr [rbp - 4], eax
 0x400560: jmp 0x400570
@@ -17,12 +17,12 @@ loop {
         0x400582: var1 cmp 4 # cmp dword ptr [rbp - 4], 4
         if >  goto 0x400588 # 0x400586: jle 0x400562
     }
-    0x400562: mov edi, 0x400624  "1"
+    0x400562: edi = 0x400624 "1" # mov edi, 0x400624
     0x400567: call 0x400410 <puts@plt>
     0x40056c: var1 += 1 # add dword ptr [rbp - 4], 1
 }
-0x400588: mov edi, 0x400626  "2"
+0x400588: edi = 0x400626 "2" # mov edi, 0x400626
 0x40058d: call 0x400410 <puts@plt>
-0x400592: mov eax, 0
+0x400592: eax = 0 # mov eax, 0
 0x400597: leave 
 0x400598: ret 

@@ -9,7 +9,7 @@ green() {
 }
 
 
-diff() {
+__diff() {
     local name=$1
     local suffix=""
     local more_opt=""
@@ -24,7 +24,12 @@ diff() {
     if [ -f "tests/${name}${suffix}.rev" ]; then
         ./reverse.py "tests/${name}.bin" $more_opt --nocolor --nograph >tmp 2>/dev/null
         if [ $? -eq 0 ]; then
-            diff -q tmp "tests/${name}${suffix}.rev" >/dev/null
+            if [ $verbose -eq 1 ]; then
+                diff -b tmp "tests/${name}${suffix}.rev"
+            else
+                diff -b tmp "tests/${name}${suffix}.rev" >/dev/null
+            fi
+
             if [ $? -eq 0 ]; then
                 green "[OK]\n"
             else
@@ -39,14 +44,20 @@ diff() {
     fi
 }
 
+verbose=0
 name=`basename "$1" .rev`
 shift
 
+if [ "$1" == "verbose" ]; then
+    verbose=1
+    shift
+fi
+
 if [ "$1" == "" ]; then
-    diff "$name"
+    __diff "$name"
 else
     while [ "$1" != "" ]; do
-        diff "$name" "$1"
+        __diff "$name" "$1"
         shift
     done
 fi

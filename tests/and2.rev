@@ -1,6 +1,6 @@
 0x400506: push rbp
-0x400507: mov rbp, rsp
-0x40050a: sub rsp, 0x10
+0x400507: rbp = rsp # mov rbp, rsp
+0x40050a: rsp -= 16 # sub rsp, 0x10
 0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
 infiniteloop {
@@ -12,16 +12,16 @@ infiniteloop {
         0x400528: eax = var1 # mov eax, dword ptr [rbp - 4]
         0x40052b: eax cmp var2 # cmp eax, dword ptr [rbp - 8]
         and if != # 0x40052e: je 0x40053a
-        0x400530: mov edi, 0x4005e4  "1"
+        0x400530: edi = 0x4005e4 "1" # mov edi, 0x4005e4
         0x400535: call 0x4003e0 <puts@plt>
     }
-    0x40053a: mov edi, 0x4005e6  "2"
+    0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
     0x40053f: call 0x4003e0 <puts@plt>
     0x400544: var1 += 1 # add dword ptr [rbp - 4], 1
     0x400548: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
     # 0x40054c: jne 0x400558
     if == {
-        0x40054e: mov edi, 0x4005e8  "3"
+        0x40054e: edi = 0x4005e8 "3" # mov edi, 0x4005e8
         0x400553: call 0x4003e0 <puts@plt>
     }
     0x400558: var2 += 1 # add dword ptr [rbp - 8], 1

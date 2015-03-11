@@ -1,13 +1,13 @@
 0x400546: push rbp
-0x400547: mov rbp, rsp
-0x40054a: sub rsp, 0x10
+0x400547: rbp = rsp # mov rbp, rsp
+0x40054a: rsp -= 16 # sub rsp, 0x10
 0x40054e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x400555: var2 = 5 # mov dword ptr [rbp - 8], 5
 0x40055c: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
 # 0x400560: je 0x400596
 if != {
-    0x400562: mov edi, 0
-    0x400567: mov eax, 0
+    0x400562: edi = 0 # mov edi, 0
+    0x400567: eax = 0 # mov eax, 0
     0x40056c: call 0x400440 <time@plt>
     0x400571: eax cmp var1 # cmp eax, dword ptr [rbp - 4]
     and if < # 0x400574: jge 0x400596
@@ -18,15 +18,15 @@ if != {
     and if > # 0x400582: jle 0x400596
     0x400584: var2 cmp 9 # cmp dword ptr [rbp - 8], 9
     and if <= # 0x400588: jg 0x400596
-    0x40058a: mov edi, 0x400644  "1"
+    0x40058a: edi = 0x400644 "1" # mov edi, 0x400644
     0x40058f: call 0x400410 <puts@plt>
     0x400594: jmp 0x4005a0
 } else == {
-    0x400596: mov edi, 0x400646  "2"
+    0x400596: edi = 0x400646 "2" # mov edi, 0x400646
     0x40059b: call 0x400410 <puts@plt>
 }
-0x4005a0: mov edi, 0x400648  "3"
+0x4005a0: edi = 0x400648 "3" # mov edi, 0x400648
 0x4005a5: call 0x400410 <puts@plt>
-0x4005aa: mov eax, 0
+0x4005aa: eax = 0 # mov eax, 0
 0x4005af: leave 
 0x4005b0: ret 

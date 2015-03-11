@@ -1,6 +1,6 @@
 0x400506: push rbp
-0x400507: mov rbp, rsp
-0x40050a: sub rsp, 0x10
+0x400507: rbp = rsp # mov rbp, rsp
+0x40050a: rsp -= 16 # sub rsp, 0x10
 0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x400515: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
 # 0x400519: jle 0x40055b
@@ -8,32 +8,32 @@ if > {
     0x40051b: var1 cmp 5 # cmp dword ptr [rbp - 4], 5
     # 0x40051f: jne 0x40052d
     if == {
-        0x400521: mov edi, 0x4005f4  "1"
+        0x400521: edi = 0x4005f4 "1" # mov edi, 0x4005f4
         0x400526: call 0x4003e0 <puts@plt>
         0x40052b: jmp 0x40055b
     } else != {
         0x40052d: var1 cmp 6 # cmp dword ptr [rbp - 4], 6
         # 0x400531: jne 0x40053f
         if == {
-            0x400533: mov edi, 0x4005f6  "2"
+            0x400533: edi = 0x4005f6 "2" # mov edi, 0x4005f6
             0x400538: call 0x4003e0 <puts@plt>
             0x40053d: jmp 0x40055b
         } else != {
             0x40053f: var1 cmp 7 # cmp dword ptr [rbp - 4], 7
             # 0x400543: jne 0x400551
             if == {
-                0x400545: mov edi, 0x4005f8  "3"
+                0x400545: edi = 0x4005f8 "3" # mov edi, 0x4005f8
                 0x40054a: call 0x4003e0 <puts@plt>
                 0x40054f: jmp 0x40055b
             } else != {
-                0x400551: mov edi, 0x4005fa  "4"
+                0x400551: edi = 0x4005fa "4" # mov edi, 0x4005fa
                 0x400556: call 0x4003e0 <puts@plt>
             }
         }
     }
 }
-0x40055b: mov edi, 0x4005fc  "5"
+0x40055b: edi = 0x4005fc "5" # mov edi, 0x4005fc
 0x400560: call 0x4003e0 <puts@plt>
-0x400565: mov eax, 0
+0x400565: eax = 0 # mov eax, 0
 0x40056a: leave 
 0x40056b: ret 

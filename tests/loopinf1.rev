@@ -1,6 +1,6 @@
 0x400506: push rbp
-0x400507: mov rbp, rsp
-0x40050a: sub rsp, 0x10
+0x400507: rbp = rsp # mov rbp, rsp
+0x40050a: rsp -= 16 # sub rsp, 0x10
 0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x400515: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
 # 0x400519: jle 0x400534
@@ -9,15 +9,15 @@ if > {
         0x40051b: var1 cmp 456 # cmp dword ptr [rbp - 4], 0x1c8
         # 0x400522: jne 0x40052e
         if == {
-            0x400524: mov edi, 0x4005d4  "1"
+            0x400524: edi = 0x4005d4 "1" # mov edi, 0x4005d4
             0x400529: call 0x4003e0 <puts@plt>
         }
         0x40052e: var1 += 1 # add dword ptr [rbp - 4], 1
         0x400532: jmp 0x40051b
     }
 }
-0x400534: mov edi, 0x4005d6  "2"
+0x400534: edi = 0x4005d6 "2" # mov edi, 0x4005d6
 0x400539: call 0x4003e0 <puts@plt>
-0x40053e: mov eax, 0
+0x40053e: eax = 0 # mov eax, 0
 0x400543: leave 
 0x400544: ret 
