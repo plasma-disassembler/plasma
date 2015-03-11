@@ -18,8 +18,8 @@
 #
 
 import sys
-from ast import *
-from utils import *
+from lib.ast import *
+from lib.utils import *
 
 
 gph = None
@@ -56,9 +56,8 @@ def loop_contains(loop_start, addr):
 # Returns all paths
 def paths_explore(start_addr):
     def save_step(k, addr, create):
-        nonlocal paths, looping, new_paths, has_move
-        # Prevent looping on already seen node : the branch
-        # will be deleted later.
+        nonlocal paths, looping, new_paths, moved
+        # Prevent looping on seen node : the branch will be deleted later.
         if addr in paths[k]:
             if create:
                 # Future path
@@ -67,7 +66,7 @@ def paths_explore(start_addr):
             else:
                 looping[k] = True
             return
-        has_move = True
+        moved = True
         if create:
             new_paths.append(paths[k] + [addr])
         else:
@@ -75,12 +74,12 @@ def paths_explore(start_addr):
 
     # Compute all paths to the end
     paths = [[start_addr]]
-    has_move = True
+    moved = True
     looping = {}
 
-    while has_move:
+    while moved:
         new_paths = []
-        has_move = False
+        moved = False
 
         # Next step for each branch
         # - Looping branchs will be deleted

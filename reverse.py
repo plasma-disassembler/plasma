@@ -21,15 +21,11 @@ import sys
 import os
 import os.path
 
-REVERSEFILE = os.path.abspath(os.path.expanduser(__file__))
-if os.path.islink(REVERSEFILE):
-    REVERSEFILE = os.readlink(REVERSEFILE)
-sys.path = [os.path.dirname(REVERSEFILE) + "/lib/"] + sys.path
-
-import ast
-from disassembler import Disassembler
-from utils import *
-from generate_ast import *
+import lib.ast
+import lib.output
+import lib.colors
+from lib.disassembler import Disassembler
+from lib.generate_ast import generate_ast
 
 
 def usage():
@@ -62,7 +58,7 @@ if __name__ == '__main__':
             if arg[0] == "--help" or arg[0] == "-h":
                 usage()
             if arg[0] == "--nocolor" or arg[0] == "-nc":
-                ast.nocolor = True
+                lib.colors.nocolor = True
             elif arg[0] == "--debug" or arg[0] == "-d":
                 debug = True
             elif arg[0] == "--nograph" or arg[0] == "-ng":
@@ -100,8 +96,8 @@ if __name__ == '__main__':
 
     dis = Disassembler(filename)
     dis.disasm_section(section.encode(), bits)
-    ast.dis = dis
-    ast.MAX_STRING_RODATA = 30
+    lib.output.dis = dis
+    lib.output.MAX_STRING_RODATA = 30
 
     if addr[:2] == "0x":
         addr = int(addr, 16)
@@ -114,13 +110,16 @@ if __name__ == '__main__':
     gph = dis.extract_func(addr)
     gph.simplify()
     gph.detect_loops()
+    lib.output.gph = gph
+    lib.ast.gph = gph
 
     if gen_graph:
         gph.generate_graph()
 
-    code_ast = generate_ast(gph, debug)
-    ast.gph = gph
-    if not ast.nocolor:
-        code_ast.assign_colors()
-    code_ast.print()
+    ast = generate_ast(gph, debug)
+
+    if not lib.colors.nocolor:
+        ast.assign_colors()
+
+    ast.print()
 

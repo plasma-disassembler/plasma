@@ -22,8 +22,9 @@ from capstone.x86 import *
 from elftools.common.py3compat import bytes2str
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import *
-from graph import *
-from utils import *
+
+from lib.graph import Graph
+from lib.utils import *
 
 
 # SHF_WRITE=0x1
