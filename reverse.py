@@ -33,12 +33,14 @@ def usage():
     print()
     print("OPTIONS:")
     print("     --nocolor, -nc")
-    print("     --graph, -g")
+    print("     --graph, -g             Generate an html flow graph. See d3/index.html.")
+    print("     --nocomment             Don't print comments")
+    print("     --strsize=N             default 30, maximum of chars to display for")
+    print("                             rodata strings.")
+    print("     -x=SYMBOLNAME|0xXXXXX   default main")
+    print("     -s,--section=NAME       default .text")
+    print("     -b=64|32                default 64")
     print("     --debug, -d")
-    print("     --nocomment  don't print comments")
-    print("     -x=SYMBOLNAME|0xNNNN  (default=main)")
-    print("     -b=64|32  (default=64)")
-    print("     -s,--section=SECTIONNAME  (default=.text)")
     sys.exit(0)
 
 
@@ -50,6 +52,7 @@ if __name__ == '__main__':
     addr = "main"
     bits = 64
     section = ".text"
+    lib.output.MAX_STRING_RODATA = 30
 
     # Parse arguments
     for i in sys.argv[1:]:
@@ -86,6 +89,9 @@ if __name__ == '__main__':
             elif arg[0] == "-s" or arg[0] == "--section":
                 section = arg[1]
 
+            elif arg[0] == "--strsize":
+                lib.output.MAX_STRING_RODATA = int(arg[1])
+
             else:
                 usage()
 
@@ -101,7 +107,6 @@ if __name__ == '__main__':
     dis = Disassembler(filename)
     dis.disasm_section(section.encode(), bits)
     lib.output.dis = dis
-    lib.output.MAX_STRING_RODATA = 30
 
     if addr[:2] == "0x":
         addr = int(addr, 16)
