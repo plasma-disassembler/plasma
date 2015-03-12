@@ -24,6 +24,7 @@ import os.path
 import lib.ast
 import lib.output
 import lib.colors
+from lib.utils import die
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
 
