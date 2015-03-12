@@ -103,10 +103,10 @@ def print_operand(i, num_op, hexa=False):
 
             if mm.base == X86_REG_RBP:
                 print_no_end(color_var(get_var_name(i, num_op)))
+                return True
             elif mm.base == X86_REG_RIP:
                 print_no_end("[" + "0x%x" % (i.address + mm.disp) + "]")
-
-            return True
+                return True
 
         printed = False
         print_no_end("[")
