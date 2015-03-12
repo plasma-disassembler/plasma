@@ -192,3 +192,8 @@ class Graph:
                     if addr not in self.nested_loops[l[0]]:
                         self.nested_loops[l[0]].append(addr)
 
+        self.nested_loops[-1] = []
+        for l in self.loops:
+            if l[0] not in self.nested_loops[-1]:
+                self.nested_loops[-1].append(l[0])
+

@@ -38,10 +38,13 @@ def debug__(obj, end="\n"):
 
 
 def loop_start_by(addr):
-    for l in gph.loops:
-        if addr == l[0]:
-            return True
-    return False
+    # normally addr != -1
+    # nested_loops[-1] contains all sub-loops
+    return addr in gph.nested_loops
+    # for l in gph.loops:
+        # if addr == l[0]:
+            # return True
+    # return False
 
 
 def loop_contains(loop_start, addr):
@@ -193,46 +196,50 @@ def head_last_common(paths, curr_loop):
     return last, False, False
 
 
-def is_looping(path):
+# Return True if the path is looping (it means that the next of the
+# last address is a loop)
+# 
+# If curr_loop is given :
+#       if the path is looping on the current loop, return False
+#       tests/if3
+def is_looping(path, curr_loop=None):
     last = path[-1]
     if last not in gph.link_out:
         return False
+    
     nxt = gph.link_out[last]
-    c1 = loop_start_by(nxt[BRANCH_NEXT])
+
+    if not loop_start_by(nxt[BRANCH_NEXT]):
+        return False
+
+    if nxt[BRANCH_NEXT] == curr_loop:
+        return False
+
     if len(nxt) == 2:
-        return c1 and loop_start_by(nxt[BRANCH_NEXT_JUMP])
-    return c1
-
-
-def are_all_looping(paths):
-    for p in paths:
-        if not is_looping(p):
+        if not loop_start_by(nxt[BRANCH_NEXT_JUMP]):
             return False
+
+        if nxt[BRANCH_NEXT_JUMP] == curr_loop:
+            return False
+
     return True
 
 
-def first_common(paths, else_addr, start=0):
+def are_all_looping(paths, curr_loop, start, check_equal):
+    if check_equal:
+        for p in paths:
+            if p[0] == start and not is_looping(p, curr_loop):
+                return False
+    else:
+        for p in paths:
+            if p[0] != start and not is_looping(p, curr_loop):
+                return False
+    return True
+
+
+def first_common(paths, curr_loop, else_addr, start=0):
     if len(paths) <= 1:
         return -1
-
-    # Check if the if-part is looping
-    all_looping_if = False
-    for p in paths:
-        if p[0] != else_addr:
-            # at least a path with p[0] != else_addr
-            all_looping_if = True
-            if not is_looping(p):
-                all_looping_if = False
-                break
-
-    # Check if the else-part is looping
-    all_looping_else = False
-    for p in paths:
-        if p[0] == else_addr:
-            all_looping_else = True
-            if not is_looping(p):
-                all_looping_else = False
-                break
 
     #
     # if () { 
@@ -249,20 +256,23 @@ def first_common(paths, else_addr, start=0):
     # ...
     #
 
+    all_looping_if = are_all_looping(paths, curr_loop, else_addr, True)
+    all_looping_else = are_all_looping(paths, curr_loop, else_addr, False)
+
     if all_looping_if or all_looping_else:
-        debug__("one is looping")
+        debug__("all looping : if %d   else %d" % (all_looping_if, all_looping_else))
         return else_addr
+
 
     found = False
     k = start
     val = -1
-    # all_looping = are_all_looping(paths)
     while not found and k < len(paths[0]):
         val = paths[0][k]
         i = 0
         found = True
         while i < len(paths):
-            if not is_looping(paths[i]):
+            if not is_looping(paths[i], curr_loop):
                 if index(paths[i], val, start) == -1:
                     found = False
                     break
@@ -647,7 +657,7 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     # If endpoint == -1, it means we are in a sub-if and the endpoint 
     # is after. When we create_split, only address inside current
     # if and else are kept.
-    endpoint = first_common(paths, else_addr)
+    endpoint = first_common(paths, curr_loop, else_addr)
     debug__("endpoint %x" % endpoint)
     split, else_addr = create_split(addr, paths, endpoint)
 
