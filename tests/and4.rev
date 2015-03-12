@@ -5,17 +5,21 @@
 0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
 0x40051c: jmp 0x400532
 loop {
-    0x400532: var1 cmp 99 # cmp dword ptr [rbp - 4], 0x63
-    if >  goto 0x40054a # 0x400536: jg 0x40054a
-    0x400538: var1 cmp 49 # cmp dword ptr [rbp - 4], 0x31
-    if >  goto 0x40054a # 0x40053c: jg 0x40054a
-    0x40053e: var1 cmp 19 # cmp dword ptr [rbp - 4], 0x13
-    if >  goto 0x40054a # 0x400542: jg 0x40054a
-    0x400544: var1 cmp 9 # cmp dword ptr [rbp - 4], 9
-    if >  goto 0x40054a # 0x400548: jle 0x40051e
-    0x40051e: var1 cmp 5 # cmp dword ptr [rbp - 4], 5
+    # 0x400532: cmp dword ptr [rbp - 4], 0x63
+    # 0x400536: jg 0x40054a
+    if (var1 > 99)  goto 0x40054a 
+    # 0x400538: cmp dword ptr [rbp - 4], 0x31
+    # 0x40053c: jg 0x40054a
+    if (var1 > 49)  goto 0x40054a 
+    # 0x40053e: cmp dword ptr [rbp - 4], 0x13
+    # 0x400542: jg 0x40054a
+    if (var1 > 19)  goto 0x40054a 
+    # 0x400544: cmp dword ptr [rbp - 4], 9
+    # 0x400548: jle 0x40051e
+    if (var1 > 9)  goto 0x40054a 
+    # 0x40051e: cmp dword ptr [rbp - 4], 5
     # 0x400522: jne 0x40052e
-    if == {
+    if (var1 == 5) {
         0x400524: edi = 0x4005e4 "1" # mov edi, 0x4005e4
         0x400529: call 0x4003e0 <puts@plt>
     }

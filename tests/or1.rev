@@ -3,24 +3,28 @@
 0x40054a: rsp -= 16 # sub rsp, 0x10
 0x40054e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
 0x400555: var2 = 5 # mov dword ptr [rbp - 8], 5
-0x40055c: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
+# 0x40055c: cmp dword ptr [rbp - 4], 0
 # 0x400560: jne 0x40058a
-if == {
+if (var1 == 0) {
     0x400562: edi = 0 # mov edi, 0
     0x400567: eax = 0 # mov eax, 0
     0x40056c: call 0x400440 <time@plt>
-    0x400571: eax cmp var1 # cmp eax, dword ptr [rbp - 4]
-    and if >= # 0x400574: jl 0x40058a
+    # 0x400571: cmp eax, dword ptr [rbp - 4]
+    # 0x400574: jl 0x40058a
+    and if (eax >= var1)
     0x400576: eax = var1 # mov eax, dword ptr [rbp - 4]
-    0x400579: eax cmp var2 # cmp eax, dword ptr [rbp - 8]
-    and if == # 0x40057c: jne 0x40058a
-    0x40057e: var1 cmp 5 # cmp dword ptr [rbp - 4], 5
-    and if <= # 0x400582: jg 0x40058a
-    0x400584: var2 cmp 9 # cmp dword ptr [rbp - 8], 9
-    and if > # 0x400588: jg 0x400596
+    # 0x400579: cmp eax, dword ptr [rbp - 8]
+    # 0x40057c: jne 0x40058a
+    and if (eax == var2)
+    # 0x40057e: cmp dword ptr [rbp - 4], 5
+    # 0x400582: jg 0x40058a
+    and if (var1 <= 5)
+    # 0x400584: cmp dword ptr [rbp - 8], 9
+    # 0x400588: jg 0x400596
+    and if (var2 > 9)
     0x400596: edi = 0x400646 "2" # mov edi, 0x400646
     0x40059b: call 0x400410 <puts@plt>
-} else != {
+} else {
     0x40058a: edi = 0x400644 "1" # mov edi, 0x400644
     0x40058f: call 0x400410 <puts@plt>
     0x400594: jmp 0x4005a0

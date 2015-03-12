@@ -638,7 +638,7 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     addr = pop(paths)
     rm_empty_paths(paths)
     debug__(paths)
-    inst_jump = gph.nodes[addr][0]
+    jump_inst = gph.nodes[addr][0]
     nxt = gph.link_out[addr]
 
     if_addr = nxt[BRANCH_NEXT]
@@ -693,11 +693,11 @@ def get_ast_ifelse(paths, curr_loop, last_else):
         # TODO not sure about endpoint == -1
         # tests/or4
         if if_addr == last_else and endpoint == -1:
-            return (Ast_AndIf(inst_jump, inst_jump.id), else_addr)
+            return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
 
         if else_addr == -1 or else_addr == last_else:
             endpoint = gph.link_out[addr][BRANCH_NEXT]
-            return (Ast_AndIf(inst_jump, invert_cond(inst_jump.id)), endpoint)
+            return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
 
     if else_addr == -1:
         else_addr = last_else
@@ -705,7 +705,7 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     a1 = get_ast_branch(split[BRANCH_NEXT_JUMP], curr_loop, -1)
     a2 = get_ast_branch(split[BRANCH_NEXT], curr_loop, else_addr)
 
-    return (Ast_Ifelse(inst_jump, a1, a2), endpoint)
+    return (Ast_Ifelse(jump_inst, a1, a2), endpoint)
 
 
 def create_split(ifaddr, paths, endpoint):

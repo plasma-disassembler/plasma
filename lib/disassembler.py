@@ -51,7 +51,11 @@ from lib.utils import *
 class Disassembler():
     def __init__(self, filename):
         fd = open(filename, "rb")
-        self.elf = ELFFile(fd)
+        try:
+            self.elf = ELFFile(fd)
+        except:
+            die("it seems that the file is not an elf-binary")
+
         self.reverse_symbols = {}
         self.symbols = {}
         self.section_addr = {}

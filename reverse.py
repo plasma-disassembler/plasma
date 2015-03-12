@@ -121,6 +121,7 @@ if __name__ == '__main__':
         gph.generate_graph()
 
     ast = generate_ast(gph, debug)
+    ast.fuse_cmp_if()
 
     if not lib.colors.nocolor:
         ast.assign_colors()

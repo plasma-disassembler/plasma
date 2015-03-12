@@ -2,19 +2,21 @@
 0x400507: rbp = rsp # mov rbp, rsp
 0x40050a: rsp -= 16 # sub rsp, 0x10
 0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
-0x400515: var1 cmp 199 # cmp dword ptr [rbp - 4], 0xc7
+# 0x400515: cmp dword ptr [rbp - 4], 0xc7
 # 0x40051c: jg 0x400544
-if <= {
+if (var1 <= 199) {
     0x40051e: edi = 0x4005e4 "1" # mov edi, 0x4005e4
     0x400523: call 0x4003e0 <puts@plt>
-    0x400528: var1 cmp 1 # cmp dword ptr [rbp - 4], 1
+    # 0x400528: cmp dword ptr [rbp - 4], 1
     # 0x40052c: je 0x40053a
-    if != {
-        0x40052e: var1 cmp 2 # cmp dword ptr [rbp - 4], 2
-        and if != # 0x400532: je 0x40053a
-        0x400534: var1 cmp 3 # cmp dword ptr [rbp - 4], 3
-        and if != # 0x400538: jne 0x400544
-    } else == {
+    if (var1 != 1) {
+        # 0x40052e: cmp dword ptr [rbp - 4], 2
+        # 0x400532: je 0x40053a
+        and if (var1 != 2)
+        # 0x400534: cmp dword ptr [rbp - 4], 3
+        # 0x400538: jne 0x400544
+        and if (var1 != 3)
+    } else {
         0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
         0x40053f: call 0x4003e0 <puts@plt>
     }

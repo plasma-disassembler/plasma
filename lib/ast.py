@@ -26,6 +26,9 @@ gph = None
 nocomment = False
 
 
+
+
+
 class Ast_Branch:
     def __init__(self):
         self.nodes = []
@@ -52,59 +55,85 @@ class Ast_Branch:
             else:
                 n.assign_colors()
 
+    def fuse_cmp_if(self):
+        del_nodes_idx = []
+        types_ast = [Ast_Ifelse, Ast_IfGoto, Ast_AndIf]
+
+        for i, n in enumerate(self.nodes):
+            if type(n) == list:
+                if n[-1].id == X86_INS_CMP and i+1 < len(self.nodes) \
+                            and type(self.nodes[i+1]) in types_ast:
+                    self.nodes[i+1].cmp_inst = n[-1]
+                    if len(n) == 1:
+                        del_nodes_idx.append(i)
+                    else:
+                        n.pop(-1)
+
+            else: # ast
+                n.fuse_cmp_if()
+
+        del_nodes_idx.sort()
+        for i in reversed(del_nodes_idx):
+            del self.nodes[i]
+
 
 class Ast_IfGoto:
     def __init__(self, orig_jump, cond_id, addr_jump):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
         self.addr_jump = addr_jump
+        self.cmp_inst = None
 
     def print(self, tab=0):
-        print_tabbed_no_end(color_keyword("if ") + cond_sign_str(self.cond_id), tab)
+        print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
+        print_tabbed_no_end(color_keyword("if "), tab)
+        print_cmp_in_if(self.cmp_inst, self.cond_id)
         print_no_end(color_keyword("  goto "))
+
         try:
             c = addr_color[self.addr_jump]
-            print_no_end(color("0x%x ", c) % self.addr_jump)
+            print(color("0x%x ", c) % self.addr_jump)
         except:
-            print_no_end("0x%x " % self.addr_jump)
-        if nocomment:
-            print()
-        else:
-            print_inst(self.orig_jump, 0, "# ")
+            print("0x%x " % self.addr_jump)
 
     def assign_colors(self):
         pick_color(self.addr_jump)
+
+    def fuse_cmp_if(self):
+        return
 
 
 class Ast_AndIf:
     def __init__(self, orig_jump, cond_id):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
+        self.cmp_inst = None
 
     def print(self, tab=0):
-        print_tabbed_no_end(color_keyword("and ") + color_keyword("if ") + \
-                cond_sign_str(self.cond_id) + " ", tab)
-        if nocomment:
-            print()
-        else:
-            print_inst(self.orig_jump, 0, "# ")
+        print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
+        print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
+        print_cmp_in_if(self.cmp_inst, self.cond_id)
+        print()
 
     def assign_colors(self):
         return
 
+    def fuse_cmp_if(self):
+        return
+
 
 class Ast_Ifelse:
-    def __init__(self, inst_jump, br_next, br_next_jump):
-        self.inst_jump = inst_jump
+    def __init__(self, jump_inst, br_next, br_next_jump):
+        self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
+        self.cmp_inst = None
 
     def print(self, tab=0):
-        if not nocomment:
-            print_inst(self.inst_jump, tab, "# ")
-
-        print_tabbed(color_keyword("if ") + 
-                cond_sign_str(invert_cond(self.inst_jump.id)) + " {", tab)
+        print_cmp_jump_commented(self.cmp_inst, self.jump_inst, tab)
+        print_tabbed_no_end(color_keyword("if "), tab)
+        print_cmp_in_if(self.cmp_inst, invert_cond(self.jump_inst.id))
+        print(" {")
 
         # Start with the false branch : it's directly after the jump
         # false branch == jump is not taken, so it means that the If 
@@ -112,8 +141,7 @@ class Ast_Ifelse:
         self.br_next_jump.print(tab+1)
 
         if len(self.br_next.nodes) > 0:
-            print_tabbed("} " + color_keyword("else ") + 
-                    cond_sign_str(self.inst_jump.id) + " {", tab)
+            print_tabbed("} " + color_keyword("else ") + "{", tab)
         
             # Print the true branch, the jump is taken (the if is false)
             self.br_next.print(tab+1)
@@ -123,6 +151,10 @@ class Ast_Ifelse:
     def assign_colors(self):
         self.br_next_jump.assign_colors()
         self.br_next.assign_colors()
+
+    def fuse_cmp_if(self):
+        self.br_next_jump.fuse_cmp_if()
+        self.br_next.fuse_cmp_if()
 
 
 class Ast_Loop:
@@ -158,6 +190,11 @@ class Ast_Loop:
         if self.epilog != None:
             self.epilog.assign_colors()
 
+    def fuse_cmp_if(self):
+        self.branch.fuse_cmp_if()
+        if self.epilog != None:
+            self.epilog.fuse_cmp_if()
+
 
 class Ast_Comment:
     def __init__(self, text):
@@ -165,8 +202,11 @@ class Ast_Comment:
 
     def print(self, tab=0):
         if not nocomment:
-            print_tabbed("# " + self.text, tab)
+            print_comment("# " + self.text, tab)
 
     def assign_colors(self):
+        return
+
+    def fuse_cmp_if(self):
         return
 

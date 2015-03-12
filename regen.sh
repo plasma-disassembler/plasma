@@ -7,5 +7,8 @@ if [ "$1" == "force" ]; then
       name=`basename "$file" .bin`
      ./reverse.py --nograph --nocolor "tests/${name}.bin" >"tests/${name}.rev"
   done
+else
+    echo "Are you sure ?"
+    echo "if yes add 'force' in argument"
 fi
 

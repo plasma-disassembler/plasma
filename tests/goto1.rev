@@ -3,22 +3,23 @@
 0x40054a: rsp -= 16 # sub rsp, 0x10
 0x40054e: call 0x400440 <rand@plt>
 0x400553: var1 = eax # mov dword ptr [rbp - 4], eax
-0x400556: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
+# 0x400556: cmp dword ptr [rbp - 4], 0
 # 0x40055a: jne 0x40056b
-if == {
+if (var1 == 0) {
     0x40055c: edi = 0x400694 "NULL" # mov edi, 0x400694
     0x400561: call 0x400410 <puts@plt>
     0x400566: jmp 0x4005f6
     0x4005f6: edi = 0x4006b1 "err exit" # mov edi, 0x4006b1
     0x4005fb: call 0x400410 <puts@plt>
     0x400600: eax = 1 # mov eax, 1
-} else != {
+} else {
     loop {
         0x40056b: var1 = 5 # mov dword ptr [rbp - 4], 5
         0x400572: jmp 0x4005d5
         loop {
-            0x4005d5: var1 cmp 99 # cmp dword ptr [rbp - 4], 0x63
-            if >  goto 0x4005db # 0x4005d9: jle 0x400574
+            # 0x4005d5: cmp dword ptr [rbp - 4], 0x63
+            # 0x4005d9: jle 0x400574
+            if (var1 > 99)  goto 0x4005db 
             0x400574: edi = 0x400699 "1" # mov edi, 0x400699
             0x400579: call 0x400410 <puts@plt>
             0x40057e: edi = 0x40069b "2" # mov edi, 0x40069b
@@ -26,16 +27,19 @@ if == {
             0x400588: var2 = 0 # mov dword ptr [rbp - 8], 0
             0x40058f: jmp 0x4005cb
             loop {
-                0x4005cb: var2 cmp 49 # cmp dword ptr [rbp - 8], 0x31
-                if >  goto 0x4005d1 # 0x4005cf: jle 0x400591
+                # 0x4005cb: cmp dword ptr [rbp - 8], 0x31
+                # 0x4005cf: jle 0x400591
+                if (var2 > 49)  goto 0x4005d1 
                 0x400591: edi = 0x40069d "3" # mov edi, 0x40069d
                 0x400596: call 0x400410 <puts@plt>
                 0x40059b: call 0x400440 <rand@plt>
                 0x4005a0: var3 = eax # mov dword ptr [rbp - 0xc], eax
-                0x4005a3: var3 cmp 1 # cmp dword ptr [rbp - 0xc], 1
-                if ==  goto 0x4005a9 # 0x4005a7: jne 0x4005b5
-                0x4005b5: var3 cmp 2 # cmp dword ptr [rbp - 0xc], 2
-                if ==  goto 0x4005bb # 0x4005b9: jne 0x4005c7
+                # 0x4005a3: cmp dword ptr [rbp - 0xc], 1
+                # 0x4005a7: jne 0x4005b5
+                if (var3 == 1)  goto 0x4005a9 
+                # 0x4005b5: cmp dword ptr [rbp - 0xc], 2
+                # 0x4005b9: jne 0x4005c7
+                if (var3 == 2)  goto 0x4005bb 
                 0x4005c7: var2 += 1 # add dword ptr [rbp - 8], 1
             }
             0x4005d1: var1 += 1 # add dword ptr [rbp - 4], 1

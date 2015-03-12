@@ -107,7 +107,7 @@ def cond_inst_str(ty):
     return conds[ty]
 
 
-def cond_sign_str(ty):
+def cond_sign_str(ty, has_cmp=False):
     conds = {
         X86_INS_JE: "==",
         X86_INS_JNE: "!=",
@@ -123,8 +123,26 @@ def cond_sign_str(ty):
         X86_INS_JS: "< 0"
     }
 
+    conds_cmp = {
+        X86_INS_JE: "==",
+        X86_INS_JNE: "!=",
+        X86_INS_JGE: ">=",
+        X86_INS_JL: "<",
+        X86_INS_JLE: "<=",
+        X86_INS_JG: ">",
+        X86_INS_ADD: "+=",
+        X86_INS_MOV: "=",
+        X86_INS_SUB: "-=",
+        X86_INS_CMP: "cmp",
+        X86_INS_JNS: ">",
+        X86_INS_JS: "<"
+    }
+
     try:
-        return conds[ty]
+        if has_cmp:
+            return conds_cmp[ty]
+        else:
+            return conds[ty]
     except:
         return "UNKNOWN"
 

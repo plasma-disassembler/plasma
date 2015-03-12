@@ -99,9 +99,13 @@ def print_operand(i, num_op, hexa=False):
         mm = op.mem
 
         if not inv(mm.base) and mm.disp != 0 \
-            and inv(mm.segment) and inv(mm.index) \
-            and mm.base == X86_REG_RBP:
-            print_no_end(color_var(get_var_name(i, num_op)))
+            and inv(mm.segment) and inv(mm.index):
+
+            if mm.base == X86_REG_RBP:
+                print_no_end(color_var(get_var_name(i, num_op)))
+            elif mm.base == X86_REG_RIP:
+                print_no_end("[" + "0x%x" % (i.address + mm.disp) + "]")
+
             return True
 
         printed = False
@@ -179,28 +183,78 @@ def get_var_name(i, op_num):
         return local_vars[i.operands[op_num].mem.disp]
 
 
+def get_addr_str(i):
+    global addr_color
+    addr_str = "0x%x: " % i.address
+    if i.address in addr_color:
+        addr_str = color(addr_str, addr_color[i.address])
+    else:
+        addr_str = color_addr(addr_str)
+    return addr_str
+
+
+# Only used when --nocomment is enabled and a jump point to this instruction
+def print_addr_if_req(i, tab):
+    global addr_color
+    if i.address in addr_color:
+        print_tabbed(get_addr_str(i), tab)
+
+
+def print_comment_no_end(txt, tab=-1):
+    if tab == -1:
+        print_no_end(color_comment(txt))
+    else:
+        print_tabbed_no_end(color_comment(txt), tab)
+
+
+
+def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
+    if not nocomment:
+        if cmp_inst != None:
+            print_inst(cmp_inst, tab, "# ")
+        print_inst(jump_inst, tab, "# ")
+    else:
+        # Otherwise print only the address if referenced
+        if cmp_inst != None:
+            print_addr_if_req(cmp_inst, tab)
+        print_addr_if_req(jump_inst, tab)
+
+
+def print_cmp_in_if(cmp_inst, jump_id):
+    if cmp_inst != None:
+        print_no_end("(")
+        print_operand(cmp_inst, 0)
+        print_no_end(" ")
+
+    print_no_end(cond_sign_str(jump_id, cmp_inst != None))
+
+    if cmp_inst != None:
+        print_no_end(" ")
+        print_operand(cmp_inst, 1)
+        print_no_end(")")
+
+
+def print_comment(txt, tab=-1):
+    if tab == -1:
+        print(color_comment(txt))
+    else:
+        print_tabbed(color_comment(txt), tab)
+
+
 def print_inst(i, tab, prefix=""):
     def get_inst_str():
         nonlocal i
         return "%s %s" % (i.mnemonic, i.op_str)
 
-    def get_addr_str():
-        nonlocal i
-        global addr_color
-        addr_str = "0x%x: " % i.address
-        if i.address in addr_color:
-            addr_str = color(addr_str, addr_color[i.address])
-        elif prefix == "":
-            addr_str = color_comment(addr_str)
-        return addr_str
-
 
     if prefix == "# ":
         if not nocomment:
-            print_tabbed(color_comment(prefix + get_addr_str() + get_inst_str()), tab)
+            print_comment_no_end(prefix, tab)
+            print_no_end(get_addr_str(i))
+            print_comment(get_inst_str())
         return
 
-    print_tabbed_no_end(get_addr_str(), tab)
+    print_tabbed_no_end(get_addr_str(i), tab)
 
     if is_ret(i):
         print(color_keyword(get_inst_str()))
@@ -243,7 +297,7 @@ def print_inst(i, tab, prefix=""):
                 k += 1
 
     if modified and not nocomment:
-        print_no_end(color_comment(" # " + get_inst_str()))
+        print_comment_no_end(" # " + get_inst_str())
 
     print()
 

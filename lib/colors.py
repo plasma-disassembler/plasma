@@ -81,6 +81,12 @@ def color_comment(text):
     return color(text, 242)
 
 
+def color_addr(text):
+    if nocolor:
+        return text
+    return color(text, 242)
+
+
 def color_string(text):
     if nocolor:
         return text

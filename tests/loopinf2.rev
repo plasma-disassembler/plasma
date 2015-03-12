@@ -2,13 +2,13 @@
 0x400507: rbp = rsp # mov rbp, rsp
 0x40050a: rsp -= 16 # sub rsp, 0x10
 0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
-0x400515: var1 cmp 0 # cmp dword ptr [rbp - 4], 0
+# 0x400515: cmp dword ptr [rbp - 4], 0
 # 0x400519: jle 0x400534
-if > {
+if (var1 > 0) {
     infiniteloop {
-        0x40051b: var1 cmp 456 # cmp dword ptr [rbp - 4], 0x1c8
+        # 0x40051b: cmp dword ptr [rbp - 4], 0x1c8
         # 0x400522: jne 0x40052e
-        if == {
+        if (var1 == 456) {
             0x400524: edi = 0x4005d4 "1" # mov edi, 0x4005d4
             0x400529: call 0x4003e0 <puts@plt>
         }
@@ -17,9 +17,9 @@ if > {
     }
 }
 infiniteloop {
-    0x400534: var1 cmp 123 # cmp dword ptr [rbp - 4], 0x7b
+    # 0x400534: cmp dword ptr [rbp - 4], 0x7b
     # 0x400538: jne 0x400544
-    if == {
+    if (var1 == 123) {
         0x40053a: edi = 0x4005d6 "2" # mov edi, 0x4005d6
         0x40053f: call 0x4003e0 <puts@plt>
     }

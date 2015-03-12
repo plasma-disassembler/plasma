@@ -7,15 +7,18 @@
 0x40055d: var1 = eax # mov dword ptr [rbp - 4], eax
 0x400560: jmp 0x400570
 loop {
-    0x400570: var1 cmp 99 # cmp dword ptr [rbp - 4], 0x63
+    # 0x400570: cmp dword ptr [rbp - 4], 0x63
     # 0x400574: jle 0x400562
-    if > {
-        0x400576: var1 cmp 19 # cmp dword ptr [rbp - 4], 0x13
-        and if > # 0x40057a: jle 0x400562
-        0x40057c: var1 cmp 9 # cmp dword ptr [rbp - 4], 9
-        and if > # 0x400580: jle 0x400562
-        0x400582: var1 cmp 4 # cmp dword ptr [rbp - 4], 4
-        if >  goto 0x400588 # 0x400586: jle 0x400562
+    if (var1 > 99) {
+        # 0x400576: cmp dword ptr [rbp - 4], 0x13
+        # 0x40057a: jle 0x400562
+        and if (var1 > 19)
+        # 0x40057c: cmp dword ptr [rbp - 4], 9
+        # 0x400580: jle 0x400562
+        and if (var1 > 9)
+        # 0x400582: cmp dword ptr [rbp - 4], 4
+        # 0x400586: jle 0x400562
+        if (var1 > 4)  goto 0x400588 
     }
     0x400562: edi = 0x400624 "1" # mov edi, 0x400624
     0x400567: call 0x400410 <puts@plt>
