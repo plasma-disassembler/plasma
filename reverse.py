@@ -33,7 +33,7 @@ def usage():
     print()
     print("OPTIONS:")
     print("     --nocolor, -nc")
-    print("     --nograph, -ng")
+    print("     --graph, -g")
     print("     --debug, -d")
     print("     --nocomment  don't print comments")
     print("     -x=SYMBOLNAME|0xNNNN  (default=main)")
@@ -44,7 +44,7 @@ def usage():
 
 if __name__ == '__main__':
     filename = "a.out"
-    gen_graph = True
+    gen_graph = False
     debug = False
     print_help = False
     addr = "main"
@@ -62,8 +62,8 @@ if __name__ == '__main__':
                 lib.colors.nocolor = True
             elif arg[0] == "--debug" or arg[0] == "-d":
                 debug = True
-            elif arg[0] == "--nograph" or arg[0] == "-ng":
-                gen_graph = False
+            elif arg[0] == "--graph" or arg[0] == "-g":
+                gen_graph = True
             elif arg[0] == "--nocomment":
                 lib.output.nocomment = True
                 lib.ast.nocomment = True

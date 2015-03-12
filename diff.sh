@@ -22,7 +22,7 @@ __diff() {
     echo -n "$name$suffix "
 
     if [ -f "tests/${name}${suffix}.rev" ]; then
-        ./reverse.py "tests/${name}.bin" $more_opt --nocolor --nograph >tmp 2>/dev/null
+        ./reverse.py "tests/${name}.bin" $more_opt --nocolor >tmp 2>/dev/null
         if [ $? -eq 0 ]; then
             if [ $verbose -eq 1 ]; then
                 diff -b tmp "tests/${name}${suffix}.rev"
