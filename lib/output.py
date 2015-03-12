@@ -302,3 +302,13 @@ def print_inst(i, tab, prefix=""):
     print()
 
 
+def print_ast(entry, ast):
+    print_no_end(color_keyword("function "))
+    try:
+        print_no_end(dis.reverse_symbols[entry])
+    except:
+        print_no_end("0%x" % entry)
+    print(" {")
+    ast.print(1)
+    print("}")
+

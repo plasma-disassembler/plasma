@@ -115,7 +115,7 @@ class Graph:
 
 
     # Check d3/index.html !
-    def generate_graph(self):
+    def html_graph(self):
         output = open("d3/graph.js", "w+")
         output.write("mygraph = \"digraph {\\\n")
 

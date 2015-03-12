@@ -124,7 +124,7 @@ if __name__ == '__main__':
     lib.ast.gph = gph
 
     if gen_graph:
-        gph.generate_graph()
+        gph.html_graph()
 
     ast = generate_ast(gph, debug)
     ast.fuse_cmp_if()
@@ -132,5 +132,4 @@ if __name__ == '__main__':
     if not lib.colors.nocolor:
         ast.assign_colors()
 
-    ast.print()
-
+    lib.output.print_ast(addr, ast)
