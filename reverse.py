@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 #
 # Reverse : reverse engineering for x86 binaries
 # Copyright (C) 2015    Joel
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     dis = Disassembler(filename)
 
-    if addr[:2] == "0x":
+    if addr.startswith("0x"):
         addr = int(addr, 16)
     else:
         try:

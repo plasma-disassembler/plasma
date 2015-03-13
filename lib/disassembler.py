@@ -82,7 +82,8 @@ class Disassembler():
 
 
     def load_dyn_sym(self):
-        rel = self.elf.get_section_by_name(b".rela.plt")
+        rel = (self.elf.get_section_by_name(b".rela.plt") or
+                self.elf.get_section_by_name(b".rel.plt"))
         dyn = self.elf.get_section_by_name(b".dynsym")
 
         relitems = list(rel.iter_relocations())
