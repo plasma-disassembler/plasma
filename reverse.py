@@ -129,6 +129,7 @@ if __name__ == '__main__':
         gph.html_graph()
 
     ast = generate_ast(gph, debug)
+    lib.ast.search_local_vars(ast)
     lib.ast.fuse_cmp_if(ast)
 
     if not lib.colors.nocolor:

@@ -75,6 +75,12 @@ def color_var(text):
     return bold(color(text, 208))
 
 
+def color_type(text):
+    if nocolor:
+        return text
+    return color(text, 81)
+
+
 def color_comment(text):
     if nocolor:
         return text

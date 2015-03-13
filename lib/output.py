@@ -18,6 +18,7 @@
 #
 
 
+import lib.ast
 from lib.colors import *
 from lib.utils import *
 from capstone.x86 import *
@@ -29,8 +30,6 @@ PRINTABLE = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
     "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "))
 
 
-local_vars = {}
-vars_counter = 1
 MAX_STRING_RODATA = 30
 
 
@@ -176,13 +175,7 @@ def get_str_rodata(addr):
 
 
 def get_var_name(i, op_num):
-    global vars_counter
-    try:
-        return local_vars[i.operands[op_num].mem.disp]
-    except:
-        local_vars[i.operands[op_num].mem.disp] = "var" + str(vars_counter)
-        vars_counter += 1
-        return local_vars[i.operands[op_num].mem.disp]
+    return lib.ast.local_vars_name[i.operands[op_num].mem.disp]
 
 
 def get_addr_str(i):
@@ -308,5 +301,13 @@ def print_ast(entry, ast):
     except:
         print_no_end("0x%x" % entry)
     print(" {")
+    print_vars_type()
     ast.print(1)
     print("}")
+
+
+def print_vars_type():
+    for disp in lib.ast.local_vars_size:
+        sz = lib.ast.local_vars_size[disp]
+        name = lib.ast.local_vars_name[disp]
+        print_tabbed(color_type("int%d_t " % (sz*8)) + color_var(name), 1)

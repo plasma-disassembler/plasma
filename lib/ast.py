@@ -26,6 +26,11 @@ gph = None
 nocomment = False
 
 
+local_vars_size = {}
+local_vars_name = {}
+vars_counter = 1
+
+
 class Ast_Branch:
     def __init__(self):
         self.nodes = []
@@ -197,3 +202,44 @@ def fuse_cmp_if(ast):
         fuse_cmp_if(ast.branch)
         if ast.epilog != None:
             fuse_cmp_if(ast.epilog)
+
+
+def search_local_vars(ast):
+    def inv(n):
+        return n == X86_OP_INVALID
+
+    def save_vars(i):
+        global vars_counter
+        for op in inst.operands:
+            mm = op.mem
+            if not inv(mm.base) and mm.disp != 0 \
+                    and inv(mm.segment) and inv(mm.index) \
+                    and mm.base == X86_REG_RBP:
+                if mm.disp not in local_vars_name:
+                    local_vars_name[mm.disp] = "var%d" % vars_counter
+                    local_vars_size[mm.disp] = op.size
+                    vars_counter += 1
+
+
+    if isinstance(ast, Ast_Branch):
+        for i, n in enumerate(ast.nodes):
+            if isinstance(n, list):
+                for inst in n:
+                    save_vars(inst)
+            else: # ast
+                search_local_vars(n)
+
+    elif isinstance(ast, Ast_Ifelse):
+        if ast.cmp_inst != None:
+            save_vars(ast.cmp_inst)
+        search_local_vars(ast.br_next_jump)
+        search_local_vars(ast.br_next)
+
+    elif isinstance(ast, Ast_IfGoto):
+        if ast.cmp_inst != None:
+            save_vars(ast.cmp_inst)
+
+    elif isinstance(ast, Ast_Loop):
+        search_local_vars(ast.branch)
+        if ast.epilog != None:
+            search_local_vars(ast.epilog)
