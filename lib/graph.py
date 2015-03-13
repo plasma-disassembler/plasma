@@ -17,6 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import os.path
 import sys
 from lib.utils import *
 
@@ -116,7 +118,8 @@ class Graph:
 
     # Check d3/index.html !
     def html_graph(self):
-        output = open("d3/graph.js", "w+")
+        revpath = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
+        output = open(revpath + "/../d3/graph.js", "w+")
         output.write("mygraph = \"digraph {\\\n")
 
         for k, lst_i in self.nodes.items():
