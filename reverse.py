@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     dis = Disassembler(filename)
 
-    if addr[:2] == "0x":
+    if addr.startswith("0x"):
         addr = int(addr, 16)
     else:
         try:
