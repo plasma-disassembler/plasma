@@ -45,7 +45,7 @@ def usage():
 
 
 if __name__ == '__main__':
-    filename = "a.out"
+    filename = ""
     gen_graph = False
     debug = False
     print_help = False
@@ -93,6 +93,9 @@ if __name__ == '__main__':
 
         else:
             usage()
+
+    if filename == "":
+        die("file not specified")
 
     if not os.path.exists(filename):
         die("%s doesn't exists" % filename)

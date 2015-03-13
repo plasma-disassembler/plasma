@@ -2,12 +2,8 @@ Reverse
 =======
 
 Reverse engineering for x86 binaries (elf-format). Generate a more
-readable code (pseudo-C) with colored syntax.
-
-Warning, the project is still in development, use it at your own risks.
-
-This tool try to disassemble one function (by default `main`). The address
-of the function, or its symbol, can be passed by argument.
+readable code (pseudo-C) with colored syntax. See `./reverse.py --help`
+for available options.
 
 The `Makefile` is used only for checking tests.
 
@@ -22,18 +18,19 @@ can install it from PyPi, like followings:
 
     sudo pip3 install capstone
 
-You need a terminal with 256 colors, otherwise use the option `-nc`
-(or `--nocolor`).
+You also need a terminal with 256 colors, otherwise use the option `-nc`
+(or `--nocolor`). Check `$ tput colors`.
 
 
-## Screenshots
+## Example
 
     $ ./reverse.py tests/nestedloop1.bin
 
 ![reverse](http://hippersoft.fr/projects/rev.jpg)
 
 
-By opening `d3/index.html` you will be able to see the flow graph :
+By opening `d3/index.html` (with the option `--graph`) you will be able to
+see the flow graph :
 
 ![graph](http://hippersoft.fr/projects/graph.jpg)
 
