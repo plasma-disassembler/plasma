@@ -307,7 +307,7 @@ def print_ast(entry, ast):
     try:
         print_no_end(dis.reverse_symbols[entry])
     except:
-        print_no_end("0%x" % entry)
+        print_no_end("0x%x" % entry)
     print(" {")
     ast.print(1)
     print("}")

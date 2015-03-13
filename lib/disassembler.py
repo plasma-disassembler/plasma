@@ -69,6 +69,11 @@ class Disassembler():
 
     def load_static_sym(self):
         symtab = self.elf.get_section_by_name(b".symtab")
+        try:
+            if symtab == None:
+                return
+        except:
+            pass
         for sy in symtab.iter_symbols():
             if sy.entry.st_value != 0 and sy.name != b"":
                 self.reverse_symbols[sy.entry.st_value] = sy.name.decode()
