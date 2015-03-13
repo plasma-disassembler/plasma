@@ -25,7 +25,7 @@ from capstone.x86 import *
 
 # Here, I don't use string.printable because it contains \r \n \t
 # and I want to print backslashed strings.
-printable = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
+PRINTABLE = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
     "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "))
 
 
@@ -150,7 +150,7 @@ def get_str_rodata(addr):
         v = dis.rodata_data[off]
         if v == 0:
             break
-        if v in printable:
+        if v in PRINTABLE:
             txt += chr(v)
         else:
             if v == 10:
