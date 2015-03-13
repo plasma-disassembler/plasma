@@ -221,6 +221,8 @@ class Disassembler():
                         nxt = self.code[addr]
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
+                    else:
+                        die("failed on 0x%x: %s %s\nSorry, I can't generate the flow graph." % (curr.address, curr.mnemonic, curr.op_str))
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
@@ -229,6 +231,8 @@ class Disassembler():
                         gph.set_cond_next(curr, nxt_jump, direct_nxt)
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
+                    else:
+                        die("failed on 0x%x: %s %s\nSorry, I can't generate the flow graph." % (curr.address, curr.mnemonic, curr.op_str))
 
                 elif is_ret(curr):
                     gph.add_node(curr)
