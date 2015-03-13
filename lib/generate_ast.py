@@ -27,7 +27,6 @@ dbg = False
 
 
 def debug__(obj, end="\n"):
-    global dbg
     if dbg:
         if type(obj) == str:
             print(obj, end=end)

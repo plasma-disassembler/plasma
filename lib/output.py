@@ -143,8 +143,6 @@ def print_operand(i, num_op, hexa=False):
 
 
 def get_str_rodata(addr):
-    global printable
-
     off = addr - dis.rodata.header.sh_addr
     txt = "\""
 
@@ -174,7 +172,7 @@ def get_str_rodata(addr):
 
 
 def get_var_name(i, op_num):
-    global vars_counter, local_vars
+    global vars_counter
     try:
         return local_vars[i.operands[op_num].mem.disp]
     except:
@@ -184,7 +182,6 @@ def get_var_name(i, op_num):
 
 
 def get_addr_str(i):
-    global addr_color
     addr_str = "0x%x: " % i.address
     if i.address in addr_color:
         addr_str = color(addr_str, addr_color[i.address])
@@ -195,7 +192,6 @@ def get_addr_str(i):
 
 # Only used when --nocomment is enabled and a jump point to this instruction
 def print_addr_if_req(i, tab):
-    global addr_color
     if i.address in addr_color:
         print_tabbed(get_addr_str(i), tab)
 

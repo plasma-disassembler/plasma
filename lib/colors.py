@@ -25,7 +25,7 @@ addr_color = {}
 
 
 def pick_color(addr):
-    global color_counter, addr_color
+    global color_counter
 
     if addr in addr_color:
         return
