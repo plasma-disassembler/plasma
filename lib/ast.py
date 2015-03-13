@@ -32,21 +32,21 @@ class Ast_Branch:
         self.nodes = []
 
     def add(self, node):
-        if type(node) == Ast_Branch:
+        if isinstance(node, Ast_Branch):
             self.nodes += node.nodes
         else:
             self.nodes.append(node)
 
     def print(self, tab=0):
         for n in self.nodes:
-            if type(n) == list:
+            if isinstance(n, list):
                 print_block(n, tab)
             else: # ast
                 n.print(tab)
 
     def assign_colors(self):
         for n in self.nodes:
-            if type(n) == list:
+            if isinstance(n, list):
                 if is_uncond_jump(n[0]):
                     nxt = gph.link_out[n[0].address][BRANCH_NEXT]
                     pick_color(nxt)
@@ -55,12 +55,12 @@ class Ast_Branch:
 
     def fuse_cmp_if(self):
         del_nodes_idx = []
-        types_ast = [Ast_Ifelse, Ast_IfGoto, Ast_AndIf]
+        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
 
         for i, n in enumerate(self.nodes):
-            if type(n) == list:
+            if isinstance(n, list):
                 if n[-1].id == X86_INS_CMP and i+1 < len(self.nodes) \
-                            and type(self.nodes[i+1]) in types_ast:
+                            and isinstance(self.nodes[i+1], types_ast):
                     self.nodes[i+1].cmp_inst = n[-1]
                     if len(n) == 1:
                         del_nodes_idx.append(i)

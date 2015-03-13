@@ -66,19 +66,16 @@ def is_call(i):
     return i.group(CS_GRP_CALL)
 
 
-def invert_cond(ty):
-    conds = [
+OPPOSITES = [
         [X86_INS_JE, X86_INS_JNE],
         [X86_INS_JGE, X86_INS_JL],
         [X86_INS_JLE, X86_INS_JG],
         [X86_INS_JNS, X86_INS_JS],
     ]
+OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
 
-    for c in conds:
-        if ty in c:
-            if ty == c[0]:
-                return c[1]
-            return c[0]
+def invert_cond(ty):
+    return OPPOSITES[ty]
 
 
 def cond_inst_str(ty):
@@ -164,14 +161,14 @@ def cond_sign_str(ty, has_cmp=False):
 def print_dict(dic, end="\n"):
     print("[")
     for i in dic:
-        if type(i) == str:
+        if isinstance(i, str):
             print("%s: " % i, end="")
         else:
             print("%x: " % i, end="")
         v = dic[i]
-        if type(v) is list:
+        if isinstance(v, list):
             print_list(v)
-        elif type(v) is dict:
+        elif isinstance(v, dict):
             print_dict(v)
         else:
             print("0x%x" % v)
@@ -183,14 +180,14 @@ def print_dict(dic, end="\n"):
 def print_list(lst, end="\n"):
     print("[", end="")
     for i in lst[:-1]:
-        if type(i) is list:
+        if isinstance(i, list):
             print_list(i, "")
             print(", ", end="")
         else:
             print("0x%x, " % i, end="")
 
     if len(lst) > 0:
-        if type(lst[-1]) is list:
+        if isinstance(lst[-1], list):
             print_list(lst[-1], "")
         else:
             print("0x%x" % lst[-1], end="")
@@ -208,4 +205,3 @@ def index(L, obj, k=0):
 def die(txt):
     print("ERROR: " + txt, file=sys.stderr)
     sys.exit(1)
-

@@ -135,4 +135,3 @@ if __name__ == '__main__':
         ast.assign_colors()
 
     lib.output.print_ast(addr, ast)
-

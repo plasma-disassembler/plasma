@@ -27,13 +27,12 @@ dbg = False
 
 
 def debug__(obj, end="\n"):
-    global dbg
     if dbg:
-        if type(obj) == str:
+        if isinstance(obj, str):
             print(obj, end=end)
-        elif type(obj) == list:
+        elif isinstance(obj, list):
             print_list(obj)
-        elif type(obj) == dict:
+        elif isinstance(obj, dict):
             print_dict(obj)
 
 
@@ -750,4 +749,3 @@ def generate_ast(graph, debug):
     paths = paths_explore(gph.entry_point_addr)
     debug__(paths)
     return get_ast_branch(paths)
-
