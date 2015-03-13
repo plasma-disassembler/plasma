@@ -119,17 +119,18 @@ class Disassembler():
         return  start <= addr <= end
 
 
-    def find_exec_section(self):
+    def print_exec_section(self):
         for s in self.elf.iter_sections():
-            if s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR:
+            if self.section_is_exec(s):
                 print(s.name)
 
 
-    def disasm_section(self, name, mode):
-        s = self.elf.get_section_by_name(name)
+    def section_is_exec(self, s):
+        return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
+
+    def disasm_section(self, s, mode):
         mode = CS_MODE_64 if mode == 64 else CS_MODE_32
-
         md = Cs(CS_ARCH_X86, mode)
         md.detail = True
 
@@ -137,31 +138,8 @@ class Disassembler():
             self.code[i.address] = i
 
 
-    def get_disasm_section(self, name, mode):
-        s = self.elf.get_section_by_name(name)
-
-        mode = CS_MODE_64 if mode == 64 else CS_MODE_32
-
-        md = Cs(CS_ARCH_X86, mode)
-        md.detail = True
-        code = []
-
-        for i in md.disasm(s.data(), s.header.sh_addr):
-            code.append(i)
-
-        return code
-
-
-    def dump_code(self, code): #, code):
-        # addr = code[0].address
-        # addr_sy = self.find_symbol(addr)
-        # addr_str = "<%s+%d>" % (self.reverse_symbols[addr_sy], addr - addr_sy)
-        # print(addr_str)
-
-        for i in code:
-            # if is_call(i) or is_uncond_jump(i):
-                # self.print_address(i)
-            # else:
+    def dump_code(self):
+        for i in self.code:
             print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
 
 

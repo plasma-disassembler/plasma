@@ -39,7 +39,6 @@ def usage():
     print("     --strsize=N             default 30, maximum of chars to display for")
     print("                             rodata strings.")
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
-    print("     -s,--section=NAME       default .text")
     print("     -b=64|32                default 64")
     print("     --debug, -d")
     sys.exit(0)
@@ -52,7 +51,6 @@ if __name__ == '__main__':
     print_help = False
     addr = "main"
     bits = 64
-    section = ".text"
     lib.output.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -87,9 +85,6 @@ if __name__ == '__main__':
                     usage()
                 bits = int(arg[1])
 
-            elif arg[0] == "-s" or arg[0] == "--section":
-                section = arg[1]
-
             elif arg[0] == "--strsize":
                 lib.output.MAX_STRING_RODATA = int(arg[1])
 
@@ -106,8 +101,6 @@ if __name__ == '__main__':
     # Reverse !
 
     dis = Disassembler(filename)
-    dis.disasm_section(section.encode(), bits)
-    lib.output.dis = dis
 
     if addr[:2] == "0x":
         addr = int(addr, 16)
@@ -116,6 +109,12 @@ if __name__ == '__main__':
             addr = dis.symbols[addr]
         except:
             die("symbol %s not found" % addr)
+
+    s = dis.find_section(addr)
+    if not dis.section_is_exec(s):
+        die("the address 0x%x is not in an executable section" % addr)
+    dis.disasm_section(s, bits)
+    lib.output.dis = dis
 
     gph = dis.extract_func(addr)
     gph.simplify()
@@ -133,3 +132,4 @@ if __name__ == '__main__':
         ast.assign_colors()
 
     lib.output.print_ast(addr, ast)
+
