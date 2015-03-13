@@ -60,8 +60,20 @@ def print_no_end(text):
     print(text, end="")
 
 
-# Return True if the operand is a variable
-# (The original instruction will be printed later)
+def get_char(c):
+    if c in PRINTABLE:
+        return chr(c)
+    if c == 10:
+        return "\\n"
+    if c == 9:
+        return "\\t"
+    if c == 13:
+        return "\\r"
+    return "\\x%02x" % (c % 256)
+
+
+# Return True if the operand is a variable (because the output is
+# modified, we reprint the original instruction later)
 def print_operand(i, num_op, hexa=False):
     def inv(n):
         return n == X86_OP_INVALID
@@ -83,7 +95,10 @@ def print_operand(i, num_op, hexa=False):
             if hexa:
                 print_no_end("0x%x" % imm)
             else:
-                print_no_end(str(imm))
+                if op.size == 1:
+                    print_no_end(color_string("'%s'" % get_char(imm)))
+                else:
+                    print_no_end(str(imm))
         return False
 
     elif op.type == X86_OP_REG:
@@ -147,24 +162,14 @@ def get_str_rodata(addr):
 
     i = 0
     while i < MAX_STRING_RODATA:
-        v = dis.rodata_data[off]
-        if v == 0:
+        c = dis.rodata_data[off]
+        if c == 0:
             break
-        if v in PRINTABLE:
-            txt += chr(v)
-        else:
-            if v == 10:
-                txt += "\\n"
-            elif v == 9:
-                txt += "\\t"
-            elif v == 13:
-                txt += "\\r"
-            else:
-                txt += "\\x%02x" % v
+        txt += get_char(c)
         off += 1
         i += 1
 
-    if v != 0:
+    if c != 0:
         txt += "..."
 
     return txt + "\""
