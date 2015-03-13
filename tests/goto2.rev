@@ -1,0 +1,33 @@
+function main {
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
+    0x400515: var2 = 0 # mov dword ptr [rbp - 8], 0
+    0x40051c: var3 = 0 # mov dword ptr [rbp - 0xc], 0
+    # 0x400523: cmp dword ptr [rbp - 4], 0
+    # 0x400527: jne 0x40053d
+    if (var1 == 0) {
+        # 0x400529: cmp dword ptr [rbp - 0xc], 5
+        # 0x40052d: jne 0x40053b
+        if (var3 == 5) {
+            0x40052f: edi = 0x4005f4 "1" # mov edi, 0x4005f4
+            0x400534: call 0x4003e0 <puts@plt>
+            0x400539: jmp 0x400551
+            0x400551: edi = 0x4005fa "4" # mov edi, 0x4005fa
+            0x400556: call 0x4003e0 <puts@plt>
+        } else {
+            0x40053b: jmp 0x40055b
+        }
+    } else {
+        0x40053d: edi = 0x4005f6 "2" # mov edi, 0x4005f6
+        0x400542: call 0x4003e0 <puts@plt>
+        0x400547: edi = 0x4005f8 "3" # mov edi, 0x4005f8
+        0x40054c: call 0x4003e0 <puts@plt>
+        0x400551: edi = 0x4005fa "4" # mov edi, 0x4005fa
+        0x400556: call 0x4003e0 <puts@plt>
+    }
+    0x40055b: eax = 0 # mov eax, 0
+    0x400560: leave 
+    0x400561: ret 
+}
