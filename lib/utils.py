@@ -66,19 +66,16 @@ def is_call(i):
     return i.group(CS_GRP_CALL)
 
 
-def invert_cond(ty):
-    conds = [
+OPPOSITES = [
         [X86_INS_JE, X86_INS_JNE],
         [X86_INS_JGE, X86_INS_JL],
         [X86_INS_JLE, X86_INS_JG],
         [X86_INS_JNS, X86_INS_JS],
     ]
+OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
 
-    for c in conds:
-        if ty in c:
-            if ty == c[0]:
-                return c[1]
-            return c[0]
+def invert_cond(ty):
+    return OPPOSITES[ty]
 
 
 def cond_inst_str(ty):
