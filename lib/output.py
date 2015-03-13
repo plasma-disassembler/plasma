@@ -306,4 +306,3 @@ def print_ast(entry, ast):
     print(" {")
     ast.print(1)
     print("}")
-

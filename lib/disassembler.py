@@ -232,5 +232,3 @@ class Disassembler():
                 break
 
         return gph
-
-

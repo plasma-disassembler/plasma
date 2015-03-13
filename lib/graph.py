@@ -199,4 +199,3 @@ class Graph:
         for l in self.loops:
             if l[0] not in self.nested_loops[-1]:
                 self.nested_loops[-1].append(l[0])
-

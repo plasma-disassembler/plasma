@@ -749,4 +749,3 @@ def generate_ast(graph, debug):
     paths = paths_explore(gph.entry_point_addr)
     debug__(paths)
     return get_ast_branch(paths)
-

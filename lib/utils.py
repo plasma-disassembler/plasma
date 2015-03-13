@@ -208,4 +208,3 @@ def index(L, obj, k=0):
 def die(txt):
     print("ERROR: " + txt, file=sys.stderr)
     sys.exit(1)
-
