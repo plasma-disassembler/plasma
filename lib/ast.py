@@ -26,7 +26,6 @@ gph = None
 nocomment = False
 
 
-
 class Ast_Branch:
     def __init__(self):
         self.nodes = []
@@ -43,36 +42,6 @@ class Ast_Branch:
                 print_block(n, tab)
             else: # ast
                 n.print(tab)
-
-    def assign_colors(self):
-        for n in self.nodes:
-            if isinstance(n, list):
-                if is_uncond_jump(n[0]):
-                    nxt = gph.link_out[n[0].address][BRANCH_NEXT]
-                    pick_color(nxt)
-            else:
-                n.assign_colors()
-
-    def fuse_cmp_if(self):
-        del_nodes_idx = []
-        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
-
-        for i, n in enumerate(self.nodes):
-            if isinstance(n, list):
-                if n[-1].id == X86_INS_CMP and i+1 < len(self.nodes) \
-                            and isinstance(self.nodes[i+1], types_ast):
-                    self.nodes[i+1].cmp_inst = n[-1]
-                    if len(n) == 1:
-                        del_nodes_idx.append(i)
-                    else:
-                        n.pop(-1)
-
-            else: # ast
-                n.fuse_cmp_if()
-
-        del_nodes_idx.sort()
-        for i in reversed(del_nodes_idx):
-            del self.nodes[i]
 
 
 class Ast_IfGoto:
@@ -94,12 +63,6 @@ class Ast_IfGoto:
         except:
             print("0x%x " % self.addr_jump)
 
-    def assign_colors(self):
-        pick_color(self.addr_jump)
-
-    def fuse_cmp_if(self):
-        return
-
 
 class Ast_AndIf:
     def __init__(self, orig_jump, cond_id):
@@ -112,12 +75,6 @@ class Ast_AndIf:
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
         print_cmp_in_if(self.cmp_inst, self.cond_id)
         print()
-
-    def assign_colors(self):
-        return
-
-    def fuse_cmp_if(self):
-        return
 
 
 class Ast_Ifelse:
@@ -145,14 +102,6 @@ class Ast_Ifelse:
             self.br_next.print(tab+1)
 
         print_tabbed("}", tab)
-
-    def assign_colors(self):
-        self.br_next_jump.assign_colors()
-        self.br_next.assign_colors()
-
-    def fuse_cmp_if(self):
-        self.br_next_jump.fuse_cmp_if()
-        self.br_next.fuse_cmp_if()
 
 
 class Ast_Loop:
@@ -183,16 +132,6 @@ class Ast_Loop:
         if self.epilog != None:
             self.epilog.print(tab)
 
-    def assign_colors(self):
-        self.branch.assign_colors()
-        if self.epilog != None:
-            self.epilog.assign_colors()
-
-    def fuse_cmp_if(self):
-        self.branch.fuse_cmp_if()
-        if self.epilog != None:
-            self.epilog.fuse_cmp_if()
-
 
 class Ast_Comment:
     def __init__(self, text):
@@ -202,9 +141,59 @@ class Ast_Comment:
         if not nocomment:
             print_comment("# " + self.text, tab)
 
-    def assign_colors(self):
-        return
 
-    def fuse_cmp_if(self):
-        return
+# Functions for processing ast
 
+def assign_colors(ast):
+    if isinstance(ast, Ast_Branch):
+        for n in ast.nodes:
+            if isinstance(n, list):
+                if is_uncond_jump(n[0]):
+                    nxt = gph.link_out[n[0].address][BRANCH_NEXT]
+                    pick_color(nxt)
+            else: # ast
+                assign_colors(n)
+
+    elif isinstance(ast, Ast_IfGoto):
+        pick_color(ast.addr_jump)
+
+    elif isinstance(ast, Ast_Ifelse):
+        assign_colors(ast.br_next_jump)
+        assign_colors(ast.br_next)
+
+    elif isinstance(ast, Ast_Loop):
+        assign_colors(ast.branch)
+        if ast.epilog != None:
+            assign_colors(ast.epilog)
+
+
+def fuse_cmp_if(ast):
+    if isinstance(ast, Ast_Branch):
+        del_nodes_idx = []
+        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
+
+        for i, n in enumerate(ast.nodes):
+            if isinstance(n, list):
+                if n[-1].id == X86_INS_CMP and i+1 < len(ast.nodes) \
+                            and isinstance(ast.nodes[i+1], types_ast):
+                    ast.nodes[i+1].cmp_inst = n[-1]
+                    if len(n) == 1:
+                        del_nodes_idx.append(i)
+                    else:
+                        n.pop(-1)
+
+            else: # ast
+                fuse_cmp_if(n)
+
+        del_nodes_idx.sort()
+        for i in reversed(del_nodes_idx):
+            del ast.nodes[i]
+
+    elif isinstance(ast, Ast_Ifelse):
+        fuse_cmp_if(ast.br_next_jump)
+        fuse_cmp_if(ast.br_next)
+
+    elif isinstance(ast, Ast_Loop):
+        fuse_cmp_if(ast.branch)
+        if ast.epilog != None:
+            fuse_cmp_if(ast.epilog)

@@ -202,7 +202,6 @@ def print_comment_no_end(txt, tab=-1):
         print_tabbed_no_end(color_comment(txt), tab)
 
 
-
 def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
     if not nocomment:
         if cmp_inst != None:
