@@ -28,11 +28,11 @@ dbg = False
 
 def debug__(obj, end="\n"):
     if dbg:
-        if type(obj) == str:
+        if isinstance(obj, str):
             print(obj, end=end)
-        elif type(obj) == list:
+        elif isinstance(obj, list):
             print_list(obj)
-        elif type(obj) == dict:
+        elif isinstance(obj, dict):
             print_dict(obj)
 
 

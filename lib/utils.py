@@ -161,14 +161,14 @@ def cond_sign_str(ty, has_cmp=False):
 def print_dict(dic, end="\n"):
     print("[")
     for i in dic:
-        if type(i) == str:
+        if isinstance(i, str):
             print("%s: " % i, end="")
         else:
             print("%x: " % i, end="")
         v = dic[i]
-        if type(v) is list:
+        if isinstance(v, list):
             print_list(v)
-        elif type(v) is dict:
+        elif isinstance(v, dict):
             print_dict(v)
         else:
             print("0x%x" % v)
@@ -180,14 +180,14 @@ def print_dict(dic, end="\n"):
 def print_list(lst, end="\n"):
     print("[", end="")
     for i in lst[:-1]:
-        if type(i) is list:
+        if isinstance(i, list):
             print_list(i, "")
             print(", ", end="")
         else:
             print("0x%x, " % i, end="")
 
     if len(lst) > 0:
-        if type(lst[-1]) is list:
+        if isinstance(lst[-1], list):
             print_list(lst[-1], "")
         else:
             print("0x%x" % lst[-1], end="")
