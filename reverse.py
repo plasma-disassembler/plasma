@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 #
 # Reverse : reverse engineering for x86 binaries
 # Copyright (C) 2015    Joel
