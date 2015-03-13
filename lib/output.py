@@ -25,9 +25,8 @@ from capstone.x86 import *
 
 # Here, I don't use string.printable because it contains \r \n \t
 # and I want to print backslashed strings.
-printable = {}
-for c in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ ":
-    printable[ord(c)] = 1
+printable = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
+    "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "))
 
 
 local_vars = {}
