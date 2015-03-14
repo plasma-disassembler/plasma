@@ -28,7 +28,7 @@ class Disassembler():
     def __init__(self, filename, str_start_addr, bits):
         self.code = {}
         self.binary = Binary(filename)
-        self.start_addr = ""
+        self.start_addr = 0
 
         if str_start_addr.startswith("0x"):
             self.start_addr = int(str_start_addr, 16)

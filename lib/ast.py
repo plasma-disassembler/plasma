@@ -26,8 +26,9 @@ gph = None
 nocomment = False
 
 
-local_vars_size = {}
-local_vars_name = {}
+local_vars_idx = {}
+local_vars_size = []
+local_vars_name = []
 vars_counter = 1
 
 
@@ -215,9 +216,10 @@ def search_local_vars(ast):
             if not inv(mm.base) and mm.disp != 0 \
                     and inv(mm.segment) and inv(mm.index) \
                     and mm.base == X86_REG_RBP:
-                if mm.disp not in local_vars_name:
-                    local_vars_name[mm.disp] = "var%d" % vars_counter
-                    local_vars_size[mm.disp] = op.size
+                if mm.disp not in local_vars_idx:
+                    local_vars_idx[mm.disp] = len(local_vars_name)
+                    local_vars_name.append("var%d" % vars_counter)
+                    local_vars_size.append(op.size)
                     vars_counter += 1
 
 

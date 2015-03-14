@@ -174,7 +174,8 @@ def get_str_rodata(addr):
 
 
 def get_var_name(i, op_num):
-    return lib.ast.local_vars_name[i.operands[op_num].mem.disp]
+    idx = lib.ast.local_vars_idx[i.operands[op_num].mem.disp]
+    return lib.ast.local_vars_name[idx]
 
 
 def get_addr_str(i):
@@ -306,7 +307,8 @@ def print_ast(entry, ast):
 
 
 def print_vars_type():
-    for disp in lib.ast.local_vars_size:
-        sz = lib.ast.local_vars_size[disp]
-        name = lib.ast.local_vars_name[disp]
+    idx = 0
+    for sz in lib.ast.local_vars_size:
+        name = lib.ast.local_vars_name[idx]
         print_tabbed(color_type("int%d_t " % (sz*8)) + color_var(name), 1)
+        idx += 1

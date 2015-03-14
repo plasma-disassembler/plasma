@@ -1,15 +1,15 @@
 function main {
-    int64_t var2
-    int16_t var4
-    int16_t var6
-    int64_t var11
-    int32_t var5
-    int64_t var8
-    int64_t var10
-    int32_t var9
     int32_t var1
+    int64_t var2
     int32_t var3
+    int16_t var4
+    int32_t var5
+    int16_t var6
     int32_t var7
+    int64_t var8
+    int32_t var9
+    int64_t var10
+    int64_t var11
     0x4009c6: push rbp
     0x4009c7: rbp = rsp # mov rbp, rsp
     0x4009ca: rsp -= 96 # sub rsp, 0x60
