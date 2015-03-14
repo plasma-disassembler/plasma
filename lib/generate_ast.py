@@ -106,27 +106,6 @@ def paths_explore(start_addr):
     return paths
 
 
-# Stop on first difference (ifelse)
-# def head_last_common_simple(paths):
-    # if len(paths) == 1:
-        # return paths[0][-1]
-    # k = 0
-    # common = True
-    # last = -1
-    # while common and k < len(paths[0]):
-        # addr = paths[0][k]
-        # i = 1
-        # while i < len(paths):
-            # if index(paths[i], addr) == -1:
-                # common = False
-                # break
-            # i += 1
-        # k += 1
-        # if common:
-            # last = addr
-    # return last
-
-
 # The second value returned indicates if we have stop on a loop.
 # Stop on :
 # - first difference (ifelse), but not on jumps which are 
@@ -269,7 +248,7 @@ def first_common(paths, curr_loop, else_addr, start=0):
     val = -1
     while not found and k < len(paths[0]):
         val = paths[0][k]
-        i = 0
+        i = 1
         found = True
         while i < len(paths):
             if not is_looping(paths[i], curr_loop):
@@ -287,17 +266,18 @@ def first_common(paths, curr_loop, else_addr, start=0):
 # For a loop : check if the path need to be kept (the loop 
 # contains the path). For this we see the last address of the path.
 def keep_path(curr_loop, path):
-    addr = path[-1]
+    last = path[-1]
 
-    if addr not in gph.link_out:
+    if last not in gph.link_out:
         return False 
 
-    nxt = gph.link_out[addr]
+    nxt = gph.link_out[last]
 
     # may be a nested or current loop
     n = nxt[BRANCH_NEXT]
     if loop_start_by(n):
-        if loop_contains(curr_loop, n) or loop_contains(curr_loop, addr):
+        if n == curr_loop or n in gph.nested_loops[curr_loop] or \
+              loop_contains(curr_loop, last):
             return True
 
     if len(nxt) == 1:
@@ -305,7 +285,8 @@ def keep_path(curr_loop, path):
 
     n = nxt[BRANCH_NEXT_JUMP]
     if loop_start_by(n):
-        if loop_contains(curr_loop, n) or loop_contains(curr_loop, addr):
+        if n == curr_loop or n in gph.nested_loops[curr_loop] or \
+                loop_contains(curr_loop, last):
             return True
 
     return False

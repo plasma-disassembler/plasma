@@ -180,6 +180,8 @@ class Graph:
                 curr = self.nodes[nxt[BRANCH_NEXT]][0]
 
         rec_explore([], self.nodes[self.entry_point_addr][0])
+
+        # Compute nested loops (sub-nested, ... etc)
         
         self.nested_loops = {}
         
@@ -190,12 +192,31 @@ class Graph:
             for addr in l[1:]:
                 # check if addr is a beginning of a loop (we have inited 
                 # nested_loops : all keys corresponds to a loop)
-                if addr in self.nested_loops: 
+                if addr in self.nested_loops:
                     # don't dupplicate addr in the list
                     if addr not in self.nested_loops[l[0]]:
                         self.nested_loops[l[0]].append(addr)
 
+        # "main loop" : not really a loop, but contains all the loops
         self.nested_loops[-1] = []
         for l in self.loops:
             if l[0] not in self.nested_loops[-1]:
                 self.nested_loops[-1].append(l[0])
+
+        # Warning : sometimes a sub-nested-loop didn't appear in a
+        # parent-parent-loop. So we search for new nested.
+        # See tests/nestedloop5 :
+        # the path of the third loop is not in the first one
+
+        while 1:
+            moved = False
+            for parent in self.nested_loops:
+                l_par = self.nested_loops[parent]
+                for nest in l_par:
+                    l_nest = self.nested_loops[nest]
+                    for subnest in l_nest:
+                        if subnest not in l_par:
+                            l_par.append(subnest)
+                            moved = True
+            if not moved:
+                break
