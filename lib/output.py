@@ -33,8 +33,7 @@ PRINTABLE = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
 MAX_STRING_RODATA = 30
 
 
-# Disassembler
-dis = None
+binary = None
 
 # Don't print comments or commented instructions
 nocomment = False
@@ -82,13 +81,13 @@ def print_operand(i, num_op, hexa=False):
     if op.type == X86_OP_IMM:
         imm = op.value.imm
 
-        if dis.is_rodata(imm):
+        if binary.is_rodata(imm):
             print_no_end("0x%x " % imm)
             print_no_end(color_string(get_str_rodata(imm)))
 
-        elif imm in dis.reverse_symbols:
+        elif imm in binary.reverse_symbols:
             print_no_end("0x%x " % imm)
-            print_no_end(color_string("<" + dis.reverse_symbols[imm] + ">"))
+            print_no_end(color_string("<" + binary.reverse_symbols[imm] + ">"))
 
         else:
             if hexa:
@@ -156,12 +155,12 @@ def print_operand(i, num_op, hexa=False):
 
 
 def get_str_rodata(addr):
-    off = addr - dis.rodata.header.sh_addr
+    off = addr - binary.rodata.header.sh_addr
     txt = "\""
 
     i = 0
     while i < MAX_STRING_RODATA:
-        c = dis.rodata_data[off]
+        c = binary.rodata_data[off]
         if c == 0:
             break
         txt += get_char(c)
@@ -297,7 +296,7 @@ def print_inst(i, tab, prefix=""):
 def print_ast(entry, ast):
     print_no_end(color_keyword("function "))
     try:
-        print_no_end(dis.reverse_symbols[entry])
+        print_no_end(binary.reverse_symbols[entry])
     except:
         print_no_end("0x%x" % entry)
     print(" {")

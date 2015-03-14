@@ -103,36 +103,14 @@ if __name__ == '__main__':
 
     # Reverse !
 
-    dis = Disassembler(filename)
+    dis = Disassembler(filename, addr, bits)
 
-    if addr.startswith("0x"):
-        addr = int(addr, 16)
-    else:
-        try:
-            addr = dis.symbols[addr]
-        except:
-            die("symbol %s not found" % addr)
-
-    s = dis.find_section(addr)
-    if not dis.section_is_exec(s):
-        die("the address 0x%x is not in an executable section" % addr)
-    dis.disasm_section(s, bits)
-    lib.output.dis = dis
-
-    gph = dis.extract_func(addr)
-    gph.simplify()
-    gph.detect_loops()
-    lib.output.gph = gph
-    lib.ast.gph = gph
+    lib.output.binary = dis.binary
+    lib.output.gph    = dis.graph
+    lib.ast.gph       = dis.graph
 
     if gen_graph:
-        gph.html_graph()
+        dis.graph.html_graph()
 
-    ast = generate_ast(gph, debug)
-    lib.ast.search_local_vars(ast)
-    lib.ast.fuse_cmp_if(ast)
-
-    if not lib.colors.nocolor:
-        lib.ast.assign_colors(ast)
-
-    lib.output.print_ast(addr, ast)
+    ast = generate_ast(dis.graph, debug)
+    lib.output.print_ast(dis.start_addr, ast)

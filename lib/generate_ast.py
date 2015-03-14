@@ -18,6 +18,7 @@
 #
 
 import sys
+import lib.colors
 from lib.ast import *
 from lib.utils import *
 
@@ -748,4 +749,14 @@ def generate_ast(graph, debug):
     dbg = debug
     paths = paths_explore(gph.entry_point_addr)
     debug__(paths)
-    return get_ast_branch(paths)
+
+    ast = get_ast_branch(paths)
+
+    # Process ast
+    search_local_vars(ast)
+    fuse_cmp_if(ast)
+
+    if not lib.colors.nocolor:
+        assign_colors(ast)
+
+    return ast

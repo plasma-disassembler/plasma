@@ -19,174 +19,44 @@
 from capstone import *
 from capstone.x86 import *
 
-from elftools.common.py3compat import bytes2str
-from elftools.elf.elffile import ELFFile
-from elftools.elf.constants import *
-
 from lib.graph import Graph
 from lib.utils import *
-
-
-# SHF_WRITE=0x1
-# SHF_ALLOC=0x2
-# SHF_EXECINSTR=0x4
-# SHF_MERGE=0x10
-# SHF_STRINGS=0x20
-# SHF_INFO_LINK=0x40
-# SHF_LINK_ORDER=0x80
-# SHF_OS_NONCONFORMING=0x100
-# SHF_GROUP=0x200
-# SHF_TLS=0x400
-# SHF_MASKOS=0x0ff00000
-# SHF_EXCLUDE=0x80000000
-# SHF_MASKPROC=0xf0000000
-
-# X86_OP_INVALID = 0
-# X86_OP_REG = 1
-# X86_OP_IMM = 2
-# X86_OP_MEM = 3
-# X86_OP_FP = 4
+from lib.binary import Binary
 
 
 class Disassembler():
-    def __init__(self, filename):
-        fd = open(filename, "rb")
-        try:
-            self.elf = ELFFile(fd)
-        except:
-            die("it seems that the file is not an elf-binary")
-
-        self.reverse_symbols = {}
-        self.symbols = {}
-        self.section_addr = {}
-        self.disas = []
-        self.deep = 0
+    def __init__(self, filename, str_start_addr, bits):
         self.code = {}
-        self.load_static_sym()
-        self.load_dyn_sym()
-        self.load_rodata()
+        self.binary = Binary(filename)
+        self.start_addr = ""
 
+        if str_start_addr.startswith("0x"):
+            self.start_addr = int(str_start_addr, 16)
+        else:
+            try:
+                self.start_addr = self.binary.symbols[str_start_addr]
+            except:
+                die("symbol %s not found" % str_start_addr)
 
-    def load_static_sym(self):
-        symtab = self.elf.get_section_by_name(b".symtab")
-        try:
-            if symtab == None:
-                return
-        except:
-            pass
-        for sy in symtab.iter_symbols():
-            if sy.entry.st_value != 0 and sy.name != b"":
-                self.reverse_symbols[sy.entry.st_value] = sy.name.decode()
-                self.symbols[sy.name.decode()] = sy.entry.st_value
-            # print("%x\t%s" % (sy.entry.st_value, sy.name.decode()))
+        (data, size, is_exec) = self.binary.get_section(self.start_addr)
 
+        if not is_exec:
+            die("the address 0x%x is not in an executable section" % self.start_addr)
 
-    def load_dyn_sym(self):
-        rel = (self.elf.get_section_by_name(b".rela.plt") or
-                self.elf.get_section_by_name(b".rel.plt"))
-        dyn = self.elf.get_section_by_name(b".dynsym")
-
-        relitems = list(rel.iter_relocations())
-        dynsym = list(dyn.iter_symbols())
-
-        plt = self.elf.get_section_by_name(b".plt") 
-        plt_entry_size = 16 # TODO
-
-        off = plt.header.sh_addr + plt_entry_size
-        k = 0
-
-        while off < plt.header.sh_addr + plt.header.sh_size :
-            idx = relitems[k].entry.r_info_sym
-            name = dynsym[idx].name.decode()
-            self.reverse_symbols[off] = name + "@plt"
-            off += plt_entry_size
-            k += 1
-
-
-    def load_rodata(self):
-        self.rodata = self.elf.get_section_by_name(b".rodata")
-        self.rodata_data = self.rodata.data()
-
-
-    def is_rodata(self, addr):
-        start = self.rodata.header.sh_addr
-        end = start + self.rodata.header.sh_size
-        return  start <= addr <= end
-
-
-    def is_in_section(self, addr, sect):
-        start = sect.header.sh_addr
-        end = start + sect.header.sh_size
-        return  start <= addr <= end
-
-
-    def print_exec_section(self):
-        for s in self.elf.iter_sections():
-            if self.section_is_exec(s):
-                print(s.name)
-
-
-    def section_is_exec(self, s):
-        return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
-
-
-    def disasm_section(self, s, mode):
-        mode = CS_MODE_64 if mode == 64 else CS_MODE_32
+        mode = CS_MODE_64 if bits == 64 else CS_MODE_32
         md = Cs(CS_ARCH_X86, mode)
         md.detail = True
 
-        for i in md.disasm(s.data(), s.header.sh_addr):
+        for i in md.disasm(data, size):
             self.code[i.address] = i
+
+        self.graph = self.extract_func(self.start_addr)
+        self.graph.simplify()
+        self.graph.detect_loops()
 
 
     def dump_code(self):
         for i in self.code:
-            print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
-
-
-    def find_section(self, addr):
-        for s in self.elf.iter_sections():
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if  start <= addr <= end:
-                return s
-        return None
-
-
-    # Can take any address. The nearest symbol is returned.
-    def find_symbol(self, addr):
-        found = False
-        key = 0
-        
-        if addr in self.reverse_symbols:
-            return addr
-
-        for s in self.reverse_symbols:
-            if key <= s <= addr:
-                key = s
-                found = True
-
-        if found:
-            return key
-        return None
-
-
-    def print_address(self, i):
-        if i.operands[0].type == X86_OP_IMM:
-            print("0x%x:\t%s\t" % (i.address, red(i.mnemonic)), end="")
-
-            addr = i.operands[0].value.imm
-
-            addr_sy = self.find_symbol(addr)
-            addr_str = "<%s+%d>" % (self.reverse_symbols[addr_sy], addr - addr_sy)
-
-            # if addr_sy == None:
-                # sect = self.find_section(addr)
-                # addr_str = "<%s+%d>" % (sect.name.decode(), addr - sect.header.sh_addr)
-            # else:
-
-            print(("0x%x " % addr) + addr_str)
-        else:
             print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
 
 
