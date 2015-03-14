@@ -24,18 +24,7 @@ from lib.utils import *
 from capstone.x86 import *
 
 
-# Here, I don't use string.printable because it contains \r \n \t
-# and I want to print backslashed strings.
-PRINTABLE = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
-    "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "))
-
-
-MAX_STRING_RODATA = 30
-
-
 binary = None
-
-# Don't print comments or commented instructions
 nocomment = False
 
 
@@ -58,18 +47,6 @@ def print_no_end(text):
     print(text, end="")
 
 
-def get_char(c):
-    if c in PRINTABLE:
-        return chr(c)
-    if c == 10:
-        return "\\n"
-    if c == 9:
-        return "\\t"
-    if c == 13:
-        return "\\r"
-    return "\\x%02x" % (c % 256)
-
-
 # Return True if the operand is a variable (because the output is
 # modified, we reprint the original instruction later)
 def print_operand(i, num_op, hexa=False):
@@ -83,7 +60,7 @@ def print_operand(i, num_op, hexa=False):
 
         if binary.is_rodata(imm):
             print_no_end("0x%x " % imm)
-            print_no_end(color_string(get_str_rodata(imm)))
+            print_no_end(color_string(binary.get_string(imm)))
 
         elif imm in binary.reverse_symbols:
             print_no_end("0x%x " % imm)
@@ -113,10 +90,10 @@ def print_operand(i, num_op, hexa=False):
         if not inv(mm.base) and mm.disp != 0 \
             and inv(mm.segment) and inv(mm.index):
 
-            if mm.base == X86_REG_RBP:
+            if mm.base == X86_REG_RBP or mm.base == X86_REG_EBP:
                 print_no_end(color_var(get_var_name(i, num_op)))
                 return True
-            elif mm.base == X86_REG_RIP:
+            elif mm.base == X86_REG_RIP or mm.base == X86_REG_EBP:
                 print_no_end("[" + "0x%x" % (i.address + mm.disp) + "]")
                 return True
 
@@ -152,25 +129,6 @@ def print_operand(i, num_op, hexa=False):
 
         print_no_end("]")
         return True
-
-
-def get_str_rodata(addr):
-    off = addr - binary.rodata.header.sh_addr
-    txt = "\""
-
-    i = 0
-    while i < MAX_STRING_RODATA:
-        c = binary.rodata_data[off]
-        if c == 0:
-            break
-        txt += get_char(c)
-        off += 1
-        i += 1
-
-    if c != 0:
-        txt += "..."
-
-    return txt + "\""
 
 
 def get_var_name(i, op_num):

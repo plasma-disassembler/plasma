@@ -215,7 +215,7 @@ def search_local_vars(ast):
             mm = op.mem
             if not inv(mm.base) and mm.disp != 0 \
                     and inv(mm.segment) and inv(mm.index) \
-                    and mm.base == X86_REG_RBP:
+                    and (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP):
                 if mm.disp not in local_vars_idx:
                     local_vars_idx[mm.disp] = len(local_vars_name)
                     local_vars_name.append("var%d" % vars_counter)
