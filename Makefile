@@ -5,6 +5,7 @@ BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
 .PHONY : all check compile FORCE
 
 FLAGS[tests/server.c] = "-lpthread"
+FLAGS[tests/canary_plt.c] = "-fstack-protector"
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
 
 all: check

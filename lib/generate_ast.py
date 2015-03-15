@@ -765,6 +765,7 @@ def generate_ast(graph, debug):
     # Process ast
     search_local_vars(ast)
     fuse_cmp_if(ast)
+    search_canary_plt() 
 
     if not lib.colors.nocolor:
         assign_colors(ast)

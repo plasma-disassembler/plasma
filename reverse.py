@@ -116,6 +116,8 @@ if __name__ == '__main__':
     lib.output.binary = dis.binary
     lib.output.gph    = dis.graph
     lib.ast.gph       = dis.graph
+    lib.ast.binary    = dis.binary
+    lib.ast.dis       = dis
 
     if gen_graph:
         dis.graph.html_graph()

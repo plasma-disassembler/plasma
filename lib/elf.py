@@ -80,6 +80,7 @@ class ELF:
             idx = relitems[k].entry.r_info_sym
             name = dynsym[idx].name.decode()
             self.classbinary.reverse_symbols[off] = name + "@plt"
+            self.classbinary.symbols[name + "@plt"] = off
             off += plt_entry_size
             k += 1
 

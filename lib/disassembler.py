@@ -27,6 +27,7 @@ from lib.binary import Binary
 class Disassembler():
     def __init__(self, filename, str_start_addr, bits):
         self.code = {}
+        self.code_idx = []
         self.binary = Binary(filename)
         self.start_addr = 0
 
@@ -49,6 +50,7 @@ class Disassembler():
 
         for i in md.disasm(data, virtual_addr):
             self.code[i.address] = i
+            self.code_idx.append(i.address)
 
         self.graph = self.extract_func(self.start_addr)
         self.graph.simplify()
