@@ -97,3 +97,10 @@ def color_string(text):
     if nocolor:
         return text
     return color(text, 144)
+
+
+def color_retcall(text):
+    if nocolor:
+        return text
+    return color(text, 161)
+

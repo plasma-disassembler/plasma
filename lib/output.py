@@ -207,11 +207,11 @@ def print_inst(i, tab, prefix=""):
     print_tabbed_no_end(get_addr_str(i), tab)
 
     if is_ret(i):
-        print(color_keyword(get_inst_str()))
+        print(color_retcall(get_inst_str()))
         return
 
     if is_call(i):
-        print_no_end(i.mnemonic + " ")
+        print_no_end(color_retcall(i.mnemonic) + " ")
         print_operand(i, 0, hexa=True)
         print()
         return
