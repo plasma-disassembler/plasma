@@ -45,18 +45,6 @@ def color(text, c):
     return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"
 
 
-def yellow(text):
-    if nocolor:
-        return text
-    return "\x1b[;33m" + text + "\x1b[0m"
-
-
-def red(text):
-    if nocolor:
-        return text
-    return "\x1b[;31m" + text + "\x1b[0m"
-
-
 def bold(text):
     if nocolor:
         return text
@@ -64,43 +52,28 @@ def bold(text):
 
 
 def color_keyword(text):
-    if nocolor:
-        return text
     return bold(color(text, 161))
 
 
 def color_var(text):
-    if nocolor:
-        return text
     return bold(color(text, 208))
 
 
 def color_type(text):
-    if nocolor:
-        return text
     return color(text, 81)
 
 
 def color_comment(text):
-    if nocolor:
-        return text
     return color(text, 242)
 
 
 def color_addr(text):
-    if nocolor:
-        return text
     return color(text, 242)
 
 
 def color_string(text):
-    if nocolor:
-        return text
     return color(text, 144)
 
 
 def color_retcall(text):
-    if nocolor:
-        return text
     return color(text, 161)
-
