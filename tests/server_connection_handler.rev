@@ -62,13 +62,12 @@ function connection_handler {
         0x400bef: rdi = rax # mov rdi, rax
         0x400bf2: call 0x400870 <fflush@plt>
         0x400bf7: jmp 0x400c09
-    } else {
-        # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
-        # 0x400bfd: jne 0x400c09
-        if (var5 == -1) {
-            0x400bff: edi = 0x400dda "recv failed" # mov edi, 0x400dda
-            0x400c04: call 0x4008a0 <perror@plt>
-        }
+    } 
+    # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
+    # 0x400bfd: jne 0x400c09
+    else if (var5 == -1) {
+        0x400bff: edi = 0x400dda "recv failed" # mov edi, 0x400dda
+        0x400c04: call 0x4008a0 <perror@plt>
     }
     0x400c09: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
     0x400c10: rdi = rax # mov rdi, rax

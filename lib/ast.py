@@ -84,28 +84,58 @@ class Ast_AndIf:
 
 
 class Ast_Ifelse:
-    def __init__(self, jump_inst, br_next, br_next_jump):
+    def __init__(self, jump_inst, br_next_jump, br_next):
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
         self.cmp_inst = None
 
-    def print(self, tab=0):
+    def print(self, tab=0, print_else_keyword=False):
         print_cmp_jump_commented(self.cmp_inst, self.jump_inst, tab)
-        print_tabbed_no_end(color_keyword("if "), tab)
+
+        if print_else_keyword:
+            print_tabbed_no_end(color_keyword("else if "), tab)
+        else:
+            print_tabbed_no_end(color_keyword("if "), tab)
+
         print_cmp_in_if(self.cmp_inst, invert_cond(self.jump_inst.id))
         print(" {")
 
-        # Start with the false branch : it's directly after the jump
-        # false branch == jump is not taken, so it means that the If 
-        # is true !!
-        self.br_next_jump.print(tab+1)
+        # if-part
+        self.br_next.print(tab+1)
 
-        if len(self.br_next.nodes) > 0:
-            print_tabbed("} " + color_keyword("else ") + "{", tab)
-        
-            # Print the true branch, the jump is taken (the if is false)
-            self.br_next.print(tab+1)
+        # else-part
+        if len(self.br_next_jump.nodes) > 0:
+            print_tabbed_no_end("} ", tab)
+            
+            # 
+            # if {
+            #   ...
+            # } else {
+            #   if {
+            #     ...
+            #   }
+            # }
+            #
+            # become :
+            #
+            # if {
+            #   ...
+            # }
+            # else if {
+            #   ...
+            # }
+            #
+
+            if len(self.br_next_jump.nodes) == 1 \
+                    and isinstance(self.br_next_jump.nodes[0], Ast_Ifelse):
+                print()
+                self.br_next_jump.nodes[0].print(tab, True)
+                return
+
+            else:
+                print(color_keyword("else ") + "{")
+                self.br_next_jump.print(tab+1)
 
         print_tabbed("}", tab)
 
@@ -196,8 +226,8 @@ def fuse_cmp_if(ast):
             del ast.nodes[i]
 
     elif isinstance(ast, Ast_Ifelse):
-        fuse_cmp_if(ast.br_next_jump)
         fuse_cmp_if(ast.br_next)
+        fuse_cmp_if(ast.br_next_jump)
 
     elif isinstance(ast, Ast_Loop):
         fuse_cmp_if(ast.branch)
@@ -234,8 +264,8 @@ def search_local_vars(ast):
     elif isinstance(ast, Ast_Ifelse):
         if ast.cmp_inst != None:
             save_vars(ast.cmp_inst)
-        search_local_vars(ast.br_next_jump)
         search_local_vars(ast.br_next)
+        search_local_vars(ast.br_next_jump)
 
     elif isinstance(ast, Ast_IfGoto):
         if ast.cmp_inst != None:

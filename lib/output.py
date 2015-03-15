@@ -136,7 +136,7 @@ def get_var_name(i, op_num):
     return lib.ast.local_vars_name[idx]
 
 
-def get_addr_str(i):
+def get_addr(i):
     addr_str = "0x%x: " % i.address
     if i.address in addr_color:
         addr_str = color(addr_str, addr_color[i.address])
@@ -148,7 +148,7 @@ def get_addr_str(i):
 # Only used when --nocomment is enabled and a jump point to this instruction
 def print_addr_if_req(i, tab):
     if i.address in addr_color:
-        print_tabbed(get_addr_str(i), tab)
+        print_tabbed(get_addr(i), tab)
 
 
 def print_comment_no_end(txt, tab=-1):
@@ -200,11 +200,11 @@ def print_inst(i, tab, prefix=""):
     if prefix == "# ":
         if not nocomment:
             print_comment_no_end(prefix, tab)
-            print_no_end(get_addr_str(i))
+            print_no_end(get_addr(i))
             print_comment(get_inst_str())
         return
 
-    print_tabbed_no_end(get_addr_str(i), tab)
+    print_tabbed_no_end(get_addr(i), tab)
 
     if is_ret(i):
         print(color_retcall(get_inst_str()))
