@@ -27,6 +27,10 @@ gph = None
 dbg = False
 
 
+# Contains for each looping path, the last address in the path
+last_addr_loop = []
+
+
 def debug__(obj, end="\n"):
     if dbg:
         if isinstance(obj, str):
@@ -102,6 +106,10 @@ def paths_explore(start_addr):
             save_step(k, nxt[BRANCH_NEXT], False)
 
         paths += new_paths
+
+    global last_addr_loop
+    for k in looping:
+        last_addr_loop.append(paths[k][-1])
 
     return paths
 
@@ -183,24 +191,30 @@ def head_last_common(paths, curr_loop):
 #       tests/if3
 def is_looping(path, curr_loop=None):
     last = path[-1]
+
+    debug__("")
+    debug__(path)
+
     if last not in gph.link_out:
+        debug__("false 1")
         return False
-    
+
+    if last not in last_addr_loop:
+        debug__("false 2")
+        return False
+
     nxt = gph.link_out[last]
 
-    if not loop_start_by(nxt[BRANCH_NEXT]):
-        return False
-
     if nxt[BRANCH_NEXT] == curr_loop:
+        debug__("false 3")
         return False
 
     if len(nxt) == 2:
-        if not loop_start_by(nxt[BRANCH_NEXT_JUMP]):
-            return False
-
         if nxt[BRANCH_NEXT_JUMP] == curr_loop:
+            debug__("false 4")
             return False
-
+        
+    debug__("true")
     return True
 
 
@@ -235,28 +249,45 @@ def first_common(paths, curr_loop, else_addr, start=0):
     # ...
     #
 
-    all_looping_if = are_all_looping(paths, curr_loop, else_addr, True)
-    all_looping_else = are_all_looping(paths, curr_loop, else_addr, False)
+    all_looping_if = are_all_looping(paths, curr_loop, else_addr, False)
+    all_looping_else = are_all_looping(paths, curr_loop, else_addr, True)
 
     if all_looping_if or all_looping_else:
         debug__("all looping : if %d   else %d" % (all_looping_if, all_looping_else))
         return else_addr
 
+    # Take a non looping-path as a reference :
+    # we want to search a common address between other paths
+    refpath = 0
+    i = 0
+    while i < len(paths):
+        if not is_looping(paths[i], curr_loop):
+            refpath = i
+            break
+        i += 1
+
+    # Compare
+
+    debug__("refpath %d" % refpath)
 
     found = False
     k = start
     val = -1
-    while not found and k < len(paths[0]):
-        val = paths[0][k]
-        i = 1
+    while not found and k < len(paths[refpath]):
+        val = paths[refpath][k]
+        i = 0
         found = True
         while i < len(paths):
-            if not is_looping(paths[i], curr_loop):
-                if index(paths[i], val, start) == -1:
-                    found = False
-                    break
+            if i != refpath:
+                if not is_looping(paths[i], curr_loop):
+                    if index(paths[i], val, start) == -1:
+                        found = False
+                        break
             i += 1
         k += 1
+
+    # if paths[0][0] == 0x40051b:
+        # sys.exit(0)
 
     if found:
         return val
@@ -269,25 +300,23 @@ def keep_path(curr_loop, path):
     last = path[-1]
 
     if last not in gph.link_out:
-        return False 
+        return False
 
     nxt = gph.link_out[last]
 
     # may be a nested or current loop
     n = nxt[BRANCH_NEXT]
-    if loop_start_by(n):
-        if n == curr_loop or n in gph.nested_loops[curr_loop] or \
-              loop_contains(curr_loop, last):
-            return True
+    if n == curr_loop or n in gph.nested_loops[curr_loop] or \
+          loop_contains(curr_loop, last):
+        return True
 
     if len(nxt) == 1:
         return False
 
     n = nxt[BRANCH_NEXT_JUMP]
-    if loop_start_by(n):
-        if n == curr_loop or n in gph.nested_loops[curr_loop] or \
-                loop_contains(curr_loop, last):
-            return True
+    if n == curr_loop or n in gph.nested_loops[curr_loop] or \
+            loop_contains(curr_loop, last):
+        return True
 
     return False
 

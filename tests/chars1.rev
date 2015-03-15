@@ -1,51 +1,48 @@
 function main {
     int8_t var1
-    0x400546: push rbp
-    0x400547: rbp = rsp # mov rbp, rsp
-    0x40054a: rsp -= 16 # sub rsp, 0x10
-    0x40054e: edi = 0 # mov edi, 0
-    0x400553: eax = 0 # mov eax, 0
-    0x400558: call 0x400440 <time@plt>
-    0x40055d: var1 = al # mov byte ptr [rbp - 1], al
-    # 0x400560: cmp byte ptr [rbp - 1], 0x61
-    # 0x400564: jne 0x400572
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x40050e: var1 = '\x00' # mov byte ptr [rbp - 1], 0
+    # 0x400512: cmp byte ptr [rbp - 1], 0x61
+    # 0x400516: jne 0x400524
     if (var1 == 'a') {
-        0x400566: edi = 0x400644 "1" # mov edi, 0x400644
-        0x40056b: call 0x400410 <puts@plt>
-        0x400570: jmp 0x4005b8
+        0x400518: edi = 0x400604 "1" # mov edi, 0x400604
+        0x40051d: call 0x4003e0 <puts@plt>
+        0x400522: jmp 0x40056a
     } else {
-        # 0x400572: cmp byte ptr [rbp - 1], 0x62
-        # 0x400576: jne 0x400584
+        # 0x400524: cmp byte ptr [rbp - 1], 0x62
+        # 0x400528: jne 0x400536
         if (var1 == 'b') {
-            0x400578: edi = 0x400646 "2" # mov edi, 0x400646
-            0x40057d: call 0x400410 <puts@plt>
-            0x400582: jmp 0x4005b8
+            0x40052a: edi = 0x400606 "2" # mov edi, 0x400606
+            0x40052f: call 0x4003e0 <puts@plt>
+            0x400534: jmp 0x40056a
         } else {
-            # 0x400584: cmp byte ptr [rbp - 1], 0x63
-            # 0x400588: jne 0x400596
+            # 0x400536: cmp byte ptr [rbp - 1], 0x63
+            # 0x40053a: jne 0x400548
             if (var1 == 'c') {
-                0x40058a: edi = 0x400648 "3" # mov edi, 0x400648
-                0x40058f: call 0x400410 <puts@plt>
-                0x400594: jmp 0x4005b8
+                0x40053c: edi = 0x400608 "3" # mov edi, 0x400608
+                0x400541: call 0x4003e0 <puts@plt>
+                0x400546: jmp 0x40056a
             } else {
-                # 0x400596: cmp byte ptr [rbp - 1], -6
-                # 0x40059a: jne 0x4005a8
+                # 0x400548: cmp byte ptr [rbp - 1], -6
+                # 0x40054c: jne 0x40055a
                 if (var1 == '\xfa') {
-                    0x40059c: edi = 0x40064a "4" # mov edi, 0x40064a
-                    0x4005a1: call 0x400410 <puts@plt>
-                    0x4005a6: jmp 0x4005b8
+                    0x40054e: edi = 0x40060a "4" # mov edi, 0x40060a
+                    0x400553: call 0x4003e0 <puts@plt>
+                    0x400558: jmp 0x40056a
                 } else {
-                    # 0x4005a8: cmp byte ptr [rbp - 1], 0xa
-                    # 0x4005ac: jne 0x4005b8
+                    # 0x40055a: cmp byte ptr [rbp - 1], 0xa
+                    # 0x40055e: jne 0x40056a
                     if (var1 == '\n') {
-                        0x4005ae: edi = 0x40064c "5" # mov edi, 0x40064c
-                        0x4005b3: call 0x400410 <puts@plt>
+                        0x400560: edi = 0x40060c "5" # mov edi, 0x40060c
+                        0x400565: call 0x4003e0 <puts@plt>
                     }
                 }
             }
         }
     }
-    0x4005b8: eax = 0 # mov eax, 0
-    0x4005bd: leave 
-    0x4005be: ret 
+    0x40056a: eax = 0 # mov eax, 0
+    0x40056f: leave 
+    0x400570: ret 
 }

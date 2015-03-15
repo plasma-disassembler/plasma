@@ -1,0 +1,38 @@
+function main {
+    int32_t var1
+    int32_t var2
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+    0x400515: var1 = 0 # mov dword ptr [rbp - 4], 0
+    0x40051c: jmp 0x400551
+    loop {
+        # 0x400551: cmp dword ptr [rbp - 4], 9
+        # 0x400555: jle 0x40051e
+        if (var1 > 9)  goto 0x400557 
+        0x40051e: var2 = 0 # mov dword ptr [rbp - 8], 0
+        loop {
+            0x400525: edi = 0x4005f4 "1" # mov edi, 0x4005f4
+            0x40052a: call 0x4003e0 <puts@plt>
+            0x40052f: var2 += 1 # add dword ptr [rbp - 8], 1
+            # 0x400533: cmp dword ptr [rbp - 8], 9
+            # 0x400537: jle 0x400525
+            if (var2 > 9)  goto 0x400539 
+        }
+        loop {
+            0x400539: edi = 0x4005f6 "2" # mov edi, 0x4005f6
+            0x40053e: call 0x4003e0 <puts@plt>
+            0x400543: var2 += 1 # add dword ptr [rbp - 8], 1
+            # 0x400547: cmp dword ptr [rbp - 8], 0x13
+            # 0x40054b: jle 0x400539
+            if (var2 > 19)  goto 0x40054d 
+        }
+        0x40054d: var1 += 1 # add dword ptr [rbp - 4], 1
+    }
+    0x400557: edi = 0x4005f8 "3" # mov edi, 0x4005f8
+    0x40055c: call 0x4003e0 <puts@plt>
+    0x400561: eax = 0 # mov eax, 0
+    0x400566: leave 
+    0x400567: ret 
+}
