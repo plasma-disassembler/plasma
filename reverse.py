@@ -24,13 +24,16 @@ import os.path
 import lib.ast
 import lib.output
 import lib.colors
+import lib.binary
 from lib.utils import die
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
 
 
+
 def usage():
     print("reverse.py FILENAME [OPTIONS]")
+    print("Reverse engineering (x86) to pseudo-C")
     print()
     print("OPTIONS:")
     print("     --nocolor, -nc")
@@ -51,7 +54,7 @@ if __name__ == '__main__':
     print_help = False
     addr = "main"
     bits = 64
-    lib.output.MAX_STRING_RODATA = 30
+    lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
     for i in sys.argv[1:]:
@@ -70,6 +73,8 @@ if __name__ == '__main__':
                 lib.output.nocomment = True
                 lib.ast.nocomment = True
             elif arg[0][0] == "-":
+                print("unknown option " + arg[0])
+                print()
                 usage()
             else:
                 filename = i
@@ -86,16 +91,19 @@ if __name__ == '__main__':
                 bits = int(arg[1])
 
             elif arg[0] == "--strsize":
-                lib.output.MAX_STRING_RODATA = int(arg[1])
+                lib.binary.MAX_STRING_RODATA = int(arg[1])
 
             else:
+                print("unknown option " + arg[0])
+                print()
                 usage()
 
         else:
             usage()
 
     if filename == "":
-        die("file not specified")
+        print("file not specified\n")
+        usage()
 
     if not os.path.exists(filename):
         die("%s doesn't exists" % filename)

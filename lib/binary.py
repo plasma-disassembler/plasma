@@ -17,22 +17,26 @@
 #
 
 import lib.elf
+import lib.pe
 from lib.utils import *
+
+
+MAX_STRING_RODATA = 30
 
 
 class Binary(object):
     def __init__(self, filename):
         self.__binary = None
-        self.rodata = None
-        self.rodata_data = None
         self.reverse_symbols = {}
         self.symbols = {}
 
-        fd = open(filename, 'rb')
         try:
-            self.__binary = lib.elf.ELF(self, fd)
+            self.__binary = lib.elf.ELF(self, filename)
         except:
-            die("it seems that the file is not an elf-binary")
+            try:
+                self.__binary = lib.pe.PE(self, filename)
+            except:
+                die("the file is not PE or ELF binary")
 
         self.__binary.load_static_sym()
         self.__binary.load_dyn_sym()
@@ -43,9 +47,9 @@ class Binary(object):
         return self.__binary.is_rodata(addr)
 
 
-    def find_section(self, addr):
-        return self.__binary.find_section(addr)
-
-
     def get_section(self, addr):
         return self.__binary.get_section(addr)
+
+
+    def get_string(self, addr):
+        return self.__binary.get_string(addr)

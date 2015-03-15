@@ -38,16 +38,16 @@ class Disassembler():
             except:
                 die("symbol %s not found" % str_start_addr)
 
-        (data, size, is_exec) = self.binary.get_section(self.start_addr)
+        (data, virtual_addr, flags) = self.binary.get_section(self.start_addr)
 
-        if not is_exec:
+        if not flags["exec"]:
             die("the address 0x%x is not in an executable section" % self.start_addr)
 
         mode = CS_MODE_64 if bits == 64 else CS_MODE_32
         md = Cs(CS_ARCH_X86, mode)
         md.detail = True
 
-        for i in md.disasm(data, size):
+        for i in md.disasm(data, virtual_addr):
             self.code[i.address] = i
 
         self.graph = self.extract_func(self.start_addr)

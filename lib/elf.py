@@ -20,6 +20,9 @@ from elftools.common.py3compat import bytes2str
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import *
 
+import lib.binary
+import lib.utils
+
 
 # SHF_WRITE=0x1
 # SHF_ALLOC=0x2
@@ -37,9 +40,12 @@ from elftools.elf.constants import *
 
 
 class ELF:
-    def __init__(self, classbinary, fd):
+    def __init__(self, classbinary, filename):
+        fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
+        self.rodata = None
+        self.rodata_data = None
 
 
     def load_static_sym(self):
@@ -79,17 +85,24 @@ class ELF:
 
 
     def load_rodata(self):
-        self.classbinary.rodata = self.elf.get_section_by_name(b".rodata")
-        self.classbinary.rodata_data = self.classbinary.rodata.data()
+        # TODO more read-only data ?
+        self.rodata = self.elf.get_section_by_name(b".rodata")
+        self.rodata_data = self.rodata.data()
 
 
     def is_rodata(self, addr):
-        start = self.classbinary.rodata.header.sh_addr
-        end = start + self.classbinary.rodata.header.sh_size
+        # exception if rodata != None
+        try:
+            if self.rodata == None:
+                return False
+        except:
+            pass
+        start = self.rodata.header.sh_addr
+        end = start + self.rodata.header.sh_size
         return  start <= addr <= end
 
 
-    def find_section(self, addr):
+    def __find_section(self, addr):
         for s in self.elf.iter_sections():
             start = s.header.sh_addr
             end = start + s.header.sh_size
@@ -99,21 +112,31 @@ class ELF:
 
 
     def get_section(self, addr):
-        s = self.find_section(addr)
-        return (s.data(), s.header.sh_addr, self.__section_is_exec(s))
+        s = self.__find_section(addr)
+        flags = {
+            "exec": self.__section_is_exec(s)
+        }
+        return (s.data(), s.header.sh_addr, flags)
 
 
     def __section_is_exec(self, s):
         return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
 
-    # def is_in_section(self, addr, sect):
-        # start = sect.header.sh_addr
-        # end = start + sect.header.sh_size
-        # return  start <= addr <= end
+    def get_string(self, addr):
+        off = addr - self.rodata.header.sh_addr
+        txt = "\""
 
+        i = 0
+        while i < lib.binary.MAX_STRING_RODATA:
+            c = self.rodata_data[off]
+            if c == 0:
+                break
+            txt += lib.utils.get_char(c)
+            off += 1
+            i += 1
 
-    # def print_exec_section(self):
-        # for s in self.elf.iter_sections():
-            # if self.section_is_exec(s):
-                # print(s.name)
+        if c != 0:
+            txt += "..."
+
+        return txt + "\""
