@@ -80,11 +80,15 @@ OPPOSITES = [
 OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
 
 def invert_cond(ty):
-    return OPPOSITES[ty]
+    try:
+        return OPPOSITES[ty]
+    except:
+        return -1
 
 
 def cond_inst_str(ty):
     conds = {
+        -1: "UNKNOWN",
         X86_INS_JAE: "jae",
         X86_INS_JA: "ja",
         X86_INS_JBE: "jbe",
