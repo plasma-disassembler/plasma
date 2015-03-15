@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
         elif len(arg) == 2:
             if arg[0] == "-x":
-                if len(arg[1]) <= 2:
+                if arg[1] == "0x":
                     usage()
                 addr = arg[1]
 
