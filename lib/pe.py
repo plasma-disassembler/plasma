@@ -18,28 +18,81 @@
 
 
 import sys
-import pefile
 import lib.utils
 import lib.binary
+import struct
+import pefile
+from lib.pefile2 import *
+from ctypes import sizeof
 
 
 class PE:
     def __init__(self, classbinary, filename):
         self.classbinary = classbinary
-        self.pe = pefile.PE(filename, fast_load=True)
+        self.pe = PE2(filename, fast_load=True)
         self.rodata = None
         self.rodata_data = None
 
 
     def load_static_sym(self):
-        # self.classbinary.reverse_symbols[sy.entry.st_value] = sy.name.decode()
-        # self.classbinary.symbols[sy.name.decode()] = sy.entry.st_value
+        self.__load_coff_symbols()
+        # self.__load_import_symbols()
         return
+
+
+    def __load_coff_symbols(self):
+        # http://wiki.osdev.org/COFF
+        # http://www.delorie.com/djgpp/doc/coff/symtab.html
+
+        sym_table_off = self.pe.FILE_HEADER.PointerToSymbolTable
+        n_sym = self.pe.FILE_HEADER.NumberOfSymbols
+        string_table_off = sym_table_off + sizeof(SymbolEntry) * n_sym
+        base = self.pe.OPTIONAL_HEADER.ImageBase + \
+               self.pe.OPTIONAL_HEADER.SectionAlignment
+
+        off = sym_table_off
+        i = 0
+
+        while i < n_sym:
+            sym = self.pe.get_sym_at_offset(off)
+
+            if sym.sclass == 2:  # static symbol
+                name = \
+                    sym.sym.name.decode() if sym.sym.addr.zeroes != 0 else \
+                    self.pe.get_string_at_offset(string_table_off + \
+                                                 sym.sym.addr.offset)
+
+                # print("%d   %s" % (sym.scnum, name))
+
+                self.classbinary.reverse_symbols[sym.value + base] = name
+                self.classbinary.symbols[name] = sym.value + base
+                
+            if sym.numaux != 0:
+                off += sym.numaux * sizeof(SymbolEntry)
+                i += sym.numaux
+
+            off += sizeof(SymbolEntry)
+            i += 1
 
 
     def load_dyn_sym(self):
-        # self.classbinary.reverse_symbols[off] = name + "@plt"
         return
+
+
+    #
+    # TODO for each imported SYMBOL we have this :
+    # ADDRESS:  	jmp    DWORD PTR ds:SYMBOL
+    #
+    # we need to assign SYMBOL to ADDRESS, because in the code
+    # we have "call ADDRESS" and not "call SYMBOL"
+    #
+
+    # def __load_import_symbols(self):
+        # self.pe.parse_data_directories()
+        # for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
+            # for imp in entry.imports:
+                # self.classbinary.reverse_symbols[imp.address] = imp.name
+                # self.classbinary.symbols[imp.name] = imp.address
 
 
     def load_rodata(self):
@@ -91,22 +144,6 @@ class PE:
             txt += "..."
 
         return txt + "\""
-
-
-    # pe.parse_data_directories()
-    # for entry in pe.DIRECTORY_ENTRY_IMPORT:
-        # print(entry.dll)
-        # for imp in entry.imports:
-            # print(lib.colors.red(imp.name))
-            # print(imp)
-            # for a in attrs:
-                # v = getattr(imp, a)
-                # if isinstance(v, int):
-                    # print("\t %s %x" % (a, v))
-                # else:
-                    # print("\t %s " % a, end="")
-                    # print(v)
-            # print()
 
 
     def get_arch(self):

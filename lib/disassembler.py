@@ -31,6 +31,8 @@ class Disassembler():
         self.binary = Binary(filename)
         self.start_addr = 0
 
+        # Test arch
+
         arch = self.binary.get_arch()
         if arch == ARCH_x86:
             bits = 32
@@ -39,13 +41,27 @@ class Disassembler():
         else:
             die("only x86 and x64 are supported")
 
-        if str_start_addr.startswith("0x"):
-            self.start_addr = int(str_start_addr, 16)
+
+        # Get address
+
+        if str_start_addr != "":
+            search = [str_start_addr]
         else:
-            try:
-                self.start_addr = self.binary.symbols[str_start_addr]
-            except:
-                die("symbol %s not found" % str_start_addr)
+            search = ["main", "_main"] # by default
+
+        found = False
+        for s in search:
+            a = self.get_addr(s)
+            if a != -1:
+                self.start_addr = a
+                found = True
+                break
+
+        if not found:
+            die("symbol %s not found" % search[0])
+
+
+        # Disassemble
 
         (data, virtual_addr, flags) = self.binary.get_section(self.start_addr)
 
@@ -60,9 +76,25 @@ class Disassembler():
             self.code[i.address] = i
             self.code_idx.append(i.address)
 
+
+        # Generate graph
+
         self.graph = self.extract_func(self.start_addr)
         self.graph.simplify()
         self.graph.detect_loops()
+
+
+    def get_addr(self, str_addr):
+        addr = -1
+        if str_addr.startswith("0x"):
+            addr = int(str_addr, 16)
+        else:
+            try:
+                addr = self.binary.symbols[str_addr]
+            except:
+                pass
+        return addr
+
 
 
     def dump_code(self):

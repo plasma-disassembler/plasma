@@ -12,6 +12,7 @@ The `Makefile` is used only for checking tests.
 
 ## Requirements
 
+    capstone
     python3
     python-capstone (>= 3.0.1)
     python-pyelftools

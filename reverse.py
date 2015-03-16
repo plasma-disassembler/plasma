@@ -55,7 +55,7 @@ if __name__ == '__main__':
     gen_graph = False
     debug = False
     print_help = False
-    addr = "main"
+    addr = ""
     gen_vim = False
     lib.binary.MAX_STRING_RODATA = 30
 

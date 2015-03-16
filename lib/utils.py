@@ -179,6 +179,8 @@ def print_dict(dic, end="\n"):
             print_list(v)
         elif isinstance(v, dict):
             print_dict(v)
+        elif isinstance(v, str):
+            print("%s: " % v)
         else:
             print("0x%x" % v)
 
