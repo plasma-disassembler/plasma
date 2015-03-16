@@ -28,6 +28,7 @@ import lib.binary
 from lib.utils import die
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
+from lib.vim import generate_vim_syntax
 
 
 
@@ -44,6 +45,7 @@ def usage():
     print("     --strsize=N             default 30, maximum of chars to display for")
     print("                             rodata strings.")
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
+    print("     --vim                   Generate syntax colors for vim")
     print()
     sys.exit(0)
 
@@ -54,6 +56,7 @@ if __name__ == '__main__':
     debug = False
     print_help = False
     addr = "main"
+    gen_vim = False
     lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -72,6 +75,8 @@ if __name__ == '__main__':
             elif arg[0] == "--nocomment":
                 lib.output.nocomment = True
                 lib.ast.nocomment = True
+            elif arg[0] == "--vim":
+                gen_vim = True
             elif arg[0][0] == "-":
                 print("unknown option " + arg[0])
                 print()
@@ -118,4 +123,17 @@ if __name__ == '__main__':
         dis.graph.html_graph()
 
     ast = generate_ast(dis.graph, debug)
+
+    if gen_vim:
+        base = os.path.basename(filename)
+        # re-assign if no colors
+        lib.ast.assign_colors(ast)
+        lib.colors.nocolor = True
+        generate_vim_syntax(base + ".vim")
+        sys.stdout = open(base + ".rev", "w+")
+
     lib.output.print_ast(dis.start_addr, ast)
+
+    if gen_vim:
+        print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
+        

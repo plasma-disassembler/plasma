@@ -24,6 +24,12 @@ can install it from PyPi, like followings:
     sudo pip3 install capstone
 
 
+## Edit with vim
+
+    $ ./reverse tests/dowhile1.bin --vim
+    You can now run : vim dowhile1.bin.rev -S dowhile1.bin.vim
+
+
 ## Example
 
     $ ./reverse.py tests/nestedloop1.bin
