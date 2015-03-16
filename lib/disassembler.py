@@ -21,15 +21,23 @@ from capstone.x86 import *
 
 from lib.graph import Graph
 from lib.utils import *
-from lib.binary import Binary
+from lib.binary import *
 
 
 class Disassembler():
-    def __init__(self, filename, str_start_addr, bits):
+    def __init__(self, filename, str_start_addr):
         self.code = {}
         self.code_idx = []
         self.binary = Binary(filename)
         self.start_addr = 0
+
+        arch = self.binary.get_arch()
+        if arch == ARCH_x86:
+            bits = 32
+        elif arch == ARCH_x64:
+            bits = 64
+        else:
+            die("only x86 and x64 are supported")
 
         if str_start_addr.startswith("0x"):
             self.start_addr = int(str_start_addr, 16)

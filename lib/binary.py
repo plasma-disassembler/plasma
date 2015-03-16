@@ -23,6 +23,10 @@ from lib.utils import *
 
 MAX_STRING_RODATA = 30
 
+ARCH_x64 = 0
+ARCH_x86 = 1
+ARCH_INVALID = -1
+
 
 class Binary(object):
     def __init__(self, filename):
@@ -53,3 +57,7 @@ class Binary(object):
 
     def get_string(self, addr):
         return self.__binary.get_string(addr)
+
+
+    def get_arch(self):
+        return self.__binary.get_arch()

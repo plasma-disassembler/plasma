@@ -22,6 +22,7 @@ from elftools.elf.constants import *
 
 import lib.binary
 import lib.utils
+import lib.binary
 
 
 # SHF_WRITE=0x1
@@ -141,3 +142,14 @@ class ELF:
             txt += "..."
 
         return txt + "\""
+
+
+    def get_arch(self):
+        arch = self.elf.get_machine_arch()
+        if arch == "x86":
+            return lib.binary.ARCH_x86
+        if arch == "x64":
+            return lib.binary.ARCH_x64
+        return lib.binary.ARCH_INVALID
+
+        return self.elf.get_machine_arch()

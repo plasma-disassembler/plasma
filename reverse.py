@@ -32,8 +32,10 @@ from lib.generate_ast import generate_ast
 
 
 def usage():
-    print("reverse.py FILENAME [OPTIONS]")
-    print("Reverse engineering (x86) to pseudo-C")
+    print("Usage:  reverse.py FILENAME [OPTIONS]")
+    print()
+    print("Reverse engineering for x86 binaries. Generation of pseudo-C.")
+    print("Supported formats : ELF, PE")
     print()
     print("OPTIONS:")
     print("     --nocolor, -nc")
@@ -42,8 +44,7 @@ def usage():
     print("     --strsize=N             default 30, maximum of chars to display for")
     print("                             rodata strings.")
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
-    print("     -b=64|32                default 64")
-    print("     --debug, -d")
+    print()
     sys.exit(0)
 
 
@@ -53,7 +54,6 @@ if __name__ == '__main__':
     debug = False
     print_help = False
     addr = "main"
-    bits = 64
     lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -85,11 +85,6 @@ if __name__ == '__main__':
                     usage()
                 addr = arg[1]
 
-            elif arg[0] == "-b":
-                if arg[1] not in ["64", "32"]:
-                    usage()
-                bits = int(arg[1])
-
             elif arg[0] == "--strsize":
                 lib.binary.MAX_STRING_RODATA = int(arg[1])
 
@@ -111,7 +106,7 @@ if __name__ == '__main__':
 
     # Reverse !
 
-    dis = Disassembler(filename, addr, bits)
+    dis = Disassembler(filename, addr)
 
     lib.output.binary = dis.binary
     lib.output.gph    = dis.graph

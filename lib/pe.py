@@ -20,6 +20,7 @@
 import sys
 import pefile
 import lib.utils
+import lib.binary
 
 
 class PE:
@@ -92,7 +93,6 @@ class PE:
         return txt + "\""
 
 
-
     # pe.parse_data_directories()
     # for entry in pe.DIRECTORY_ENTRY_IMPORT:
         # print(entry.dll)
@@ -108,3 +108,11 @@ class PE:
                     # print(v)
             # print()
 
+
+    def get_arch(self):
+        arch = self.pe.OPTIONAL_HEADER.Magic
+        if arch == pefile.OPTIONAL_HEADER_MAGIC_PE:
+            return lib.binary.ARCH_x86
+        if arch == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
+            return lib.binary.ARCH_x64
+        return lib.binary.ARCH_INVALID
