@@ -4,7 +4,7 @@ Reverse
 Reverse engineering for x86 binaries. Generate a more readable code (pseudo-C)
 with colored syntax.
 
-Supported formats : `ELF`, `PE`. No symbol resolution for PE at the moment.
+Supported formats : `ELF`, `PE`. (for PE : only static symbols are resolved)
 
 
 The `Makefile` is used only for checking tests.
