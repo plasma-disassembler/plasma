@@ -293,13 +293,13 @@ def generate_vim_syntax(filename):
     fd = open(filename, "w+")
 
     syn = """
-    syn keyword RevKeywords function goto if else loop
+    syn keyword RevKeywords function goto if else loop and
     syn keyword RevTypes int8_t int16_t int32_t int64_t
 
     syn match RevComment "0x[0-9a-f]\+:"
     syn match RevComment "#.\+$"
     syn match RevVar "var[a-z0-9A-Z_]\+"
-    syn match RevRetCall "ret|call"
+    syn match RevRetCall "ret\|call"
 
     syn match RevString "<[a-zA-Z_@]\+>"
     syn match RevString "\\".\+\\""
@@ -310,7 +310,7 @@ def generate_vim_syntax(filename):
     hi RevComment  ctermfg=242  guifg=#6c6c6c
     hi RevString  ctermfg=144  guifg=#afaf87
     hi RevVar  ctermfg=208 cterm=bold  gui=bold  guifg=#ff8700
-    hi RevRetCall  ctermfg=161 cterm=bold  gui=bold  guifg=#d7005f\n
+    hi RevRetCall  ctermfg=161  guifg=#d7005f\n
     """
 
     fd.write(syn)
