@@ -25,7 +25,7 @@ import lib.ast
 import lib.output
 import lib.colors
 import lib.binary
-from lib.utils import die
+from lib.utils import die, error
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
