@@ -317,7 +317,7 @@ def generate_vim_syntax(filename):
 
     match = 1
     for addr, col in lib.colors.addr_color.items():
-        fd.write("syn match RevAddr_%d \"0x%x:\"\n" % (match, addr))
+        fd.write("syn match RevAddr_%d \"0x%x:\?\"\n" % (match, addr))
         fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))
         match += 1
 
