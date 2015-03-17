@@ -140,6 +140,9 @@ def head_last_common(paths, curr_loop):
 
         # TODO cleanup
 
+        if loop_start_by(addr0):
+            return last, True, False
+
         # Check addr0
         if is_cond_jump(gph.nodes[addr0][0]):
             nxt = gph.link_out[addr0]
@@ -148,8 +151,6 @@ def head_last_common(paths, curr_loop):
             if c1 and c2:
                 return last, False, True
 
-        if loop_start_by(addr0):
-            return last, True, False
 
         # Compare with other paths
         i = 0
@@ -162,15 +163,16 @@ def head_last_common(paths, curr_loop):
                 return last, False, False
 
             addr = paths[i][k]
+
+            if loop_start_by(addr):
+                return last, True, False
+
             if is_cond_jump(gph.nodes[addr][0]):
                 nxt = gph.link_out[addr]
                 c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
                 c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
                 if c1 and c2:
                     return last, False, True
-
-            if loop_start_by(addr):
-                return last, True, False
 
             i += 1
 
@@ -514,6 +516,49 @@ def cut_paths(paths, start, end):
     return cut
 
 
+def get_ast_ifgoto(curr_loop, inst):
+    nxt = gph.link_out[inst.address]
+    c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
+    c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
+
+    if c1 and c2:
+        die("can't have a ifelse here     %x" % inst.address)
+
+    # If the address of the jump is inside the loop, we
+    # invert the conditions. example :
+    #
+    # jmp conditions
+    # loop:
+    #    code ...
+    # conditions:
+    #    cmp ...
+    #    jg endloop
+    #    cmp ...
+    #    jne loop
+    # endloop:
+    #
+    # Here the last jump point inside the loop. We want to
+    # replace by this : 
+    #
+    # loop {
+    #    cmp ...
+    #    jg endloop
+    #    cmp ...
+    #    je endloop
+    #    code ...
+    # } # here there is an implicit jmp to loop
+    # endloop:
+    #
+
+    cond_id = inst.id
+    if c2:
+        (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP]) = \
+            (nxt[BRANCH_NEXT_JUMP], nxt[BRANCH_NEXT])
+        cond_id = invert_cond(cond_id)
+
+    return Ast_IfGoto(inst, cond_id, nxt[BRANCH_NEXT_JUMP])
+
+
 def get_ast_branch(paths, curr_loop=-1, last_else=-1):
     ast = Ast_Branch()
 
@@ -541,43 +586,7 @@ def get_ast_branch(paths, curr_loop=-1, last_else=-1):
             # it's a condition for a loop. It will be replaced by a
             # goto. ifgoto are skipped by head_last_common.
             if is_cond_jump(inst):
-                nxt = gph.link_out[inst.address]
-                c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
-                c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
-                if c1 and c2:
-                    die("can't have a ifelse here     %x" % inst.address)
-
-                # If the address of the jump is inside the loop, we
-                # invert the conditions. example :
-                #
-                # jmp conditions
-                # loop:
-                #    code ...
-                # conditions:
-                #    cmp ...
-                #    jg endloop
-                #    cmp ...
-                #    jne loop
-                # endloop:
-                #
-                # Here the last jump point inside the loop. We want to
-                # replace by this : 
-                #
-                # loop {
-                #    cmp ...
-                #    jg endloop
-                #    cmp ...
-                #    je endloop
-                #    code ...
-                # } # here there is an implicit jmp to loop
-                # endloop:
-                #
-                cond_id = inst.id
-                if c2:
-                    (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP]) = \
-                        (nxt[BRANCH_NEXT_JUMP], nxt[BRANCH_NEXT])
-                    cond_id = invert_cond(cond_id)
-                ast.add(Ast_IfGoto(inst, cond_id, nxt[BRANCH_NEXT_JUMP]))
+                ast.add(get_ast_ifgoto(curr_loop, inst))
             else:
                 ast.add(blk)
 
@@ -622,7 +631,13 @@ def get_ast_loop(paths, last_loop, last_else):
     debug__(paths)
     ast = Ast_Loop()
     curr_loop = paths[0][0]
-    ast.add(gph.nodes[curr_loop])
+    first_inst = gph.nodes[curr_loop]
+
+    if is_cond_jump(first_inst[0]):
+        ast.add(get_ast_ifgoto(curr_loop, first_inst[0]))
+    else:
+        ast.add(first_inst)
+
     loop_paths, endloop = extract_loop_paths(paths)
 
     # Checking if endloop == [] to determine if it's an 
