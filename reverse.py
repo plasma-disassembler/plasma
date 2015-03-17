@@ -147,7 +147,14 @@ def reverse():
         return
 
     if opt_dump:
+        if opt_gen_vim:
+            base = os.path.basename(filename)
+            lib.colors.nocolor = True
+            sys.stdout = open(base + ".rev", "w+")
         dis.dump()
+        if opt_gen_vim:
+            generate_vim_syntax(base + ".vim")
+            print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
         return
 
     gph = dis.get_graph(addr)

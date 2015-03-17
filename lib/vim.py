@@ -322,5 +322,3 @@ def generate_vim_syntax(filename):
         match += 1
 
     fd.close()
-
-
