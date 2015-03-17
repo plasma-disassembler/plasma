@@ -108,7 +108,7 @@ class ELF:
         for s in self.elf.iter_sections():
             start = s.header.sh_addr
             end = start + s.header.sh_size
-            if  start <= addr <= end:
+            if  start <= addr < end:
                 return s
         return None
 
