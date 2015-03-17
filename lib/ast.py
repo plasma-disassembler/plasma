@@ -287,14 +287,14 @@ def search_canary_plt():
     if fname not in binary.symbols:
         return
 
-    addr = binary.symbols[fname]
+    faddr = binary.symbols[fname]
 
     k = 0
     for idx in dis.code_idx:
         i = dis.code[idx]
         if is_call(i):
             op = i.operands[0]
-            if op.type == X86_OP_IMM and op.value.imm == addr:
+            if op.type == X86_OP_IMM and op.value.imm == faddr:
                 # Try to get VAR
                 #
                 # rax = VAR # mov rax, qword ptr [rbp - 8]
@@ -305,13 +305,19 @@ def search_canary_plt():
                 # }
                 #
 
-                inst = dis.code[dis.code_idx[k-3]]
+                kk = k - 1
+                while kk > 0 and kk > k - 4:
+                    inst = dis.code[dis.code_idx[kk]]
 
-                if inst.id == X86_INS_MOV:
-                    mm = inst.operands[1].mem
-                    if mm.disp != 0  and inv(mm.segment) and inv(mm.index) and \
-                        mm.base in [X86_REG_RBP, X86_REG_EBP]:
-                        local_vars_name[local_vars_idx[mm.disp]] += "_canary"
+                    if inst.id == X86_INS_MOV:
+                        mm = inst.operands[1].mem
+                        if mm.disp != 0  and inv(mm.segment) and inv(mm.index) and \
+                                mm.base in [X86_REG_RBP, X86_REG_EBP] and \
+                                mm.disp in local_vars_idx:
+                            local_vars_name[local_vars_idx[mm.disp]] += "_canary"
+                            break
+
+                    kk -= 1
 
                 break
 
