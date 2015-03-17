@@ -47,6 +47,7 @@ def usage():
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
     print("     --vim                   Generate syntax colors for vim")
     print("     --sym,-s                Print all symbols")
+    print("     --call,-c               Print all calls")
     print("     --dump                  Dump asm without decompilation")
     print()
     sys.exit(0)
@@ -60,6 +61,7 @@ def reverse():
     opt_gen_vim = False
     opt_print_sym = False
     opt_dump = False
+    opt_print_calls = False
     lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -84,6 +86,8 @@ def reverse():
                 opt_dump = True
             elif arg[0] == "--sym" or arg[0] == "-s":
                 opt_print_sym = True
+            elif arg[0] == "--call" or arg[0] == "-c":
+                opt_print_calls = True
             elif arg[0][0] == "-":
                 print("unknown option " + arg[0])
                 print()
@@ -123,7 +127,7 @@ def reverse():
     # Maybe opt_addr is a symbol and doesn't exists.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
-    if opt_print_sym:
+    if opt_print_sym or opt_print_calls:
         addr = dis.binary.get_entry_point()
     else:
         addr = dis.get_addr_from_string(opt_addr)
@@ -133,6 +137,10 @@ def reverse():
 
     lib.output.binary = dis.binary
     lib.ast.binary    = dis.binary
+
+    if opt_print_calls:
+        dis.print_calls()
+        return
 
     if opt_print_sym:
         dis.print_symbols()

@@ -99,6 +99,13 @@ class Disassembler():
             print_inst(inst, 0)
 
 
+    def print_calls(self):
+        for i in self.code_idx:
+            inst = self.code[i]
+            if is_call(inst):
+                print_inst(inst)
+
+
     def get_graph(self, addr):
         graph = self.__extract_func(addr)
         graph.simplify()
