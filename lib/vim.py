@@ -303,7 +303,7 @@ def generate_vim_syntax(filename):
 
     syn match RevString "<[a-zA-Z_@]\+>"
     syn match RevString "\\".\+\\""
-    syn match RevString "'.'"
+    syn match RevString "'.\+'"
 
     hi RevKeywords  ctermfg=161  cterm=bold  gui=bold  guifg=#d7005f
     hi RevTypes  ctermfg=81  guifg=#5fd7ff
@@ -317,7 +317,7 @@ def generate_vim_syntax(filename):
 
     match = 1
     for addr, col in lib.colors.addr_color.items():
-        fd.write("syn match RevAddr_%d \"0x%x\"\n" % (match, addr))
+        fd.write("syn match RevAddr_%d \"0x%x:\"\n" % (match, addr))
         fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))
         match += 1
 
