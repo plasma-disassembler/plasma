@@ -125,7 +125,9 @@ def print_operand(i, num_op, hexa=False):
             else:
                 if printed:
                     print_no_end(" + ")
-                print_no_end(mm.disp)
+                    print_no_end(mm.disp)
+                else:
+                    print_no_end("0x%x" % mm.disp)
 
         print_no_end("]")
         return True
