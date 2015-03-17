@@ -189,3 +189,8 @@ class PE:
         if arch == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
             return lib.binary.ARCH_x64
         return lib.binary.ARCH_INVALID
+
+
+    def get_entry_point(self):
+        return self.pe.OPTIONAL_HEADER.ImageBase + \
+               self.pe.OPTIONAL_HEADER.AddressOfEntryPoint

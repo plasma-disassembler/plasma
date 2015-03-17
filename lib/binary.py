@@ -76,6 +76,10 @@ class Binary(object):
         return T_BIN_UNK
 
 
+    def get_entry_point(self):
+        return self.__binary.get_entry_point()
+
+
     # Only for PE !
     def load_import_symbols(self, code):
         self.__binary.load_import_symbols(code)

@@ -46,17 +46,18 @@ def usage():
     print("                             rodata strings.")
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
     print("     --vim                   Generate syntax colors for vim")
+    print("     --sym,-s                Print all symbols")
     print()
     sys.exit(0)
 
 
-if __name__ == '__main__':
+def reverse():
     filename = ""
-    gen_graph = False
-    debug = False
-    print_help = False
-    addr = ""
-    gen_vim = False
+    opt_gen_graph = False
+    opt_debug = False
+    opt_addr = ""
+    opt_gen_vim = False
+    opt_print_sym = False
     lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -68,15 +69,17 @@ if __name__ == '__main__':
                 usage()
             if arg[0] == "--nocolor" or arg[0] == "-nc":
                 lib.colors.nocolor = True
-            elif arg[0] == "--debug" or arg[0] == "-d":
-                debug = True
+            elif arg[0] == "--opt_debug" or arg[0] == "-d":
+                opt_debug = True
             elif arg[0] == "--graph" or arg[0] == "-g":
-                gen_graph = True
+                opt_gen_graph = True
             elif arg[0] == "--nocomment":
                 lib.output.nocomment = True
                 lib.ast.nocomment = True
             elif arg[0] == "--vim":
-                gen_vim = True
+                opt_gen_vim = True
+            elif arg[0] == "--sym" or arg[0] == "-s":
+                opt_print_sym = True
             elif arg[0][0] == "-":
                 print("unknown option " + arg[0])
                 print()
@@ -88,7 +91,7 @@ if __name__ == '__main__':
             if arg[0] == "-x":
                 if arg[1] == "0x":
                     usage()
-                addr = arg[1]
+                opt_addr = arg[1]
 
             elif arg[0] == "--strsize":
                 lib.binary.MAX_STRING_RODATA = int(arg[1])
@@ -112,9 +115,22 @@ if __name__ == '__main__':
     # Reverse !
 
     dis = Disassembler(filename)
-    addr = dis.get_addr_from_string(addr)
 
+    # Maybe opt_addr is a symbol and doesn't exists.
+    # But we need an address for disassembling. After that, if the file 
+    # is PE we load imported symbols and search in the code for calls.
+    if opt_print_sym:
+        addr = dis.binary.get_entry_point()
+    else:
+        addr = dis.get_addr_from_string(opt_addr)
+
+    # Disassemble and load imported symbols for PE
     dis.disasm(addr)
+
+    if opt_print_sym:
+        dis.print_symbols()
+        return
+
     gph = dis.get_graph(addr)
 
     lib.output.binary = dis.binary
@@ -123,12 +139,12 @@ if __name__ == '__main__':
     lib.ast.binary    = dis.binary
     lib.ast.dis       = dis
 
-    if gen_graph:
+    if opt_gen_graph:
         gph.html_graph()
 
-    ast = generate_ast(gph, debug)
+    ast = generate_ast(gph, opt_debug)
 
-    if gen_vim:
+    if opt_gen_vim:
         base = os.path.basename(filename)
         # re-assign if no colors
         lib.ast.assign_colors(ast)
@@ -138,5 +154,9 @@ if __name__ == '__main__':
 
     lib.output.print_ast(addr, ast)
 
-    if gen_vim:
+    if opt_gen_vim:
         print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
+
+
+if __name__ == '__main__':
+    reverse()

@@ -153,3 +153,7 @@ class ELF:
         return lib.binary.ARCH_INVALID
 
         return self.elf.get_machine_arch()
+
+
+    def get_entry_point(self):
+        return self.elf.header['e_entry']

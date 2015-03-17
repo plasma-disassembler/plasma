@@ -59,16 +59,16 @@ class Disassembler():
             self.binary.load_import_symbols(self.code)
 
 
-    def get_addr_from_string(self, str_addr):
-        if str_addr != "":
-            search = [str_addr]
+    def get_addr_from_string(self, opt_addr):
+        if opt_addr != "":
+            search = [opt_addr]
         else:
             search = ["main", "_main"] # by default
 
         found = False
         for s in search:
-            if str_addr.startswith("0x"):
-                a = int(str_addr, 16)
+            if opt_addr.startswith("0x"):
+                a = int(opt_addr, 16)
             else:
                 try:
                     a = self.binary.symbols[s]
@@ -95,6 +95,12 @@ class Disassembler():
         graph.simplify()
         graph.detect_loops()
         return graph
+
+
+    def print_symbols(self):
+        for addr in self.binary.reverse_symbols:
+            sy = self.binary.reverse_symbols[addr]
+            print("0x%x   %s" % (addr, sy))
 
 
     # Generate a flow graph of the given function (addr)
