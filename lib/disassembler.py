@@ -82,7 +82,8 @@ class Disassembler():
                 break
 
         if not found:
-            die("symbol %s not found" % search[0])
+            error("symbol %s not found" % search[0])
+            die("Try with --sym to see all symbols.")
         
         return a
 
