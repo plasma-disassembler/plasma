@@ -81,14 +81,14 @@ class PE:
 
         # Load imported symbols
 
+        # TODO
         try:
             self.pe.parse_data_directories(
                 pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'])
         except Exception as e:
-            print(e)
-            print("It seems that pefile.parse_data_directories is bugged.")
-            print("Retry ?")
-            lib.utils.die("")
+            lib.utils.error(str(e))
+            lib.utils.error("It seems that pefile.parse_data_directories is bugged.")
+            lib.utils.die("Maybe you should Retry")
 
         sym = {}
         for entry in self.pe.DIRECTORY_ENTRY_IMPORT:

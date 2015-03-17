@@ -47,6 +47,7 @@ def usage():
     print("     -x=SYMBOLNAME|0xXXXXX   default main")
     print("     --vim                   Generate syntax colors for vim")
     print("     --sym,-s                Print all symbols")
+    print("     --dump                  Dump asm without decompilation")
     print()
     sys.exit(0)
 
@@ -58,6 +59,7 @@ def reverse():
     opt_addr = ""
     opt_gen_vim = False
     opt_print_sym = False
+    opt_dump = False
     lib.binary.MAX_STRING_RODATA = 30
 
     # Parse arguments
@@ -78,6 +80,8 @@ def reverse():
                 lib.ast.nocomment = True
             elif arg[0] == "--vim":
                 opt_gen_vim = True
+            elif arg[0] == "--dump":
+                opt_dump = True
             elif arg[0] == "--sym" or arg[0] == "-s":
                 opt_print_sym = True
             elif arg[0][0] == "-":
@@ -105,7 +109,7 @@ def reverse():
             usage()
 
     if filename == "":
-        print("file not specified\n")
+        error("file not specified\n")
         usage()
 
     if not os.path.exists(filename):
@@ -127,16 +131,21 @@ def reverse():
     # Disassemble and load imported symbols for PE
     dis.disasm(addr)
 
+    lib.output.binary = dis.binary
+    lib.ast.binary    = dis.binary
+
     if opt_print_sym:
         dis.print_symbols()
         return
 
+    if opt_dump:
+        dis.dump()
+        return
+
     gph = dis.get_graph(addr)
 
-    lib.output.binary = dis.binary
     lib.output.gph    = gph
     lib.ast.gph       = gph
-    lib.ast.binary    = dis.binary
     lib.ast.dis       = dis
 
     if opt_gen_graph:

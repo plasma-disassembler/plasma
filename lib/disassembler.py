@@ -22,6 +22,8 @@ from capstone.x86 import *
 from lib.graph import Graph
 from lib.utils import *
 from lib.binary import *
+from lib.output import print_inst
+from lib.colors import pick_color
 
 
 class Disassembler():
@@ -85,9 +87,16 @@ class Disassembler():
         return a
 
 
-    def dump_code(self):
-        for i in self.code:
-            print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
+    def dump(self):
+        # set jumps color
+        for i in self.code_idx:
+            inst = self.code[i]
+            if is_jump(inst) and inst.operands[0].type == X86_OP_IMM:
+                pick_color(inst.operands[0].value.imm)
+
+        for i in self.code_idx:
+            inst = self.code[i]
+            print_inst(inst, 0)
 
 
     def get_graph(self, addr):
@@ -101,6 +110,13 @@ class Disassembler():
         for addr in self.binary.reverse_symbols:
             sy = self.binary.reverse_symbols[addr]
             print("0x%x   %s" % (addr, sy))
+
+
+    def __error_jmp_reg(self, i):
+        error("failed on 0x%x: %s %s" % 
+                (i.address, i.mnemonic, i.op_str))
+        error("Sorry, I can't generate the flow graph.")
+        die("Try with --dump")
 
 
     # Generate a flow graph of the given function (addr)
@@ -119,7 +135,7 @@ class Disassembler():
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     else:
-                        die("failed on 0x%x: %s %s\nSorry, I can't generate the flow graph." % (curr.address, curr.mnemonic, curr.op_str))
+                        self.__error_jmp_reg(curr)
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
@@ -129,7 +145,7 @@ class Disassembler():
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
                     else:
-                        die("failed on 0x%x: %s %s\nSorry, I can't generate the flow graph." % (curr.address, curr.mnemonic, curr.op_str))
+                        self.__error_jmp_reg(curr)
 
                 elif is_ret(curr):
                     gph.add_node(curr)

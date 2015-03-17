@@ -90,10 +90,11 @@ def print_operand(i, num_op, hexa=False):
         if not inv(mm.base) and mm.disp != 0 \
             and inv(mm.segment) and inv(mm.index):
 
-            if mm.base == X86_REG_RBP or mm.base == X86_REG_EBP:
+            if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
+                   var_name_exists(i, num_op): 
                 print_no_end(color_var(get_var_name(i, num_op)))
                 return True
-            elif mm.base == X86_REG_RIP or mm.base == X86_REG_EBP:
+            elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                 print_no_end("[" + "0x%x" % (i.address + mm.disp) + "]")
                 return True
 
@@ -131,6 +132,10 @@ def print_operand(i, num_op, hexa=False):
 
         print_no_end("]")
         return True
+
+
+def var_name_exists(i, op_num):
+    return i.operands[op_num].mem.disp in lib.ast.local_vars_idx
 
 
 def get_var_name(i, op_num):
@@ -193,7 +198,7 @@ def print_comment(txt, tab=-1):
         print_tabbed(color_comment(txt), tab)
 
 
-def print_inst(i, tab, prefix=""):
+def print_inst(i, tab=0, prefix=""):
     def get_inst_str():
         nonlocal i
         return "%s %s" % (i.mnemonic, i.op_str)
@@ -218,16 +223,18 @@ def print_inst(i, tab, prefix=""):
         print()
         return
 
-    if is_uncond_jump(i):
+    # Here we can have conditional jump with the option --dump
+    if is_jump(i):
         if i.operands[0].type != X86_OP_IMM:
             print(get_inst_str())
             return
         try:
             addr = i.operands[0].value.imm
-            print("jmp " + color("0x%x" % addr, addr_color[addr]))
+            print(i.mnemonic + " " + color("0x%x" % addr, addr_color[addr]))
         except:
-            print("jmp 0x%x" % addr)
+            print(i.mnemonic + " 0x%x" % addr)
         return
+
     
     modified = False
 

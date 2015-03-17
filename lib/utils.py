@@ -213,6 +213,10 @@ def index(L, obj, k=0):
         return -1
 
 
+def error(txt):
+    print("ERROR: " + txt, file=sys.stderr)
+
+
 def die(txt):
     print("ERROR: " + txt, file=sys.stderr)
     sys.exit(1)
