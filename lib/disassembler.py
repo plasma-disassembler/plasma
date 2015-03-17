@@ -25,50 +25,27 @@ from lib.binary import *
 
 
 class Disassembler():
-    def __init__(self, filename, str_start_addr):
+    def __init__(self, filename):
         self.code = {}
         self.code_idx = []
         self.binary = Binary(filename)
-        self.start_addr = 0
-
-        # Test arch
 
         arch = self.binary.get_arch()
         if arch == ARCH_x86:
-            bits = 32
+            self.bits = 32
         elif arch == ARCH_x64:
-            bits = 64
+            self.bits = 64
         else:
             die("only x86 and x64 are supported")
 
 
-        # Get address
-
-        if str_start_addr != "":
-            search = [str_start_addr]
-        else:
-            search = ["main", "_main"] # by default
-
-        found = False
-        for s in search:
-            a = self.get_addr(s)
-            if a != -1:
-                self.start_addr = a
-                found = True
-                break
-
-        if not found:
-            die("symbol %s not found" % search[0])
-
-
-        # Disassemble
-
-        (data, virtual_addr, flags) = self.binary.get_section(self.start_addr)
+    def disasm(self, addr):
+        (data, virtual_addr, flags) = self.binary.get_section(addr)
 
         if not flags["exec"]:
-            die("the address 0x%x is not in an executable section" % self.start_addr)
+            die("the address 0x%x is not in an executable section" % addr)
 
-        mode = CS_MODE_64 if bits == 64 else CS_MODE_32
+        mode = CS_MODE_64 if self.bits == 64 else CS_MODE_32
         md = Cs(CS_ARCH_X86, mode)
         md.detail = True
 
@@ -76,25 +53,36 @@ class Disassembler():
             self.code[i.address] = i
             self.code_idx.append(i.address)
 
-
-        # Generate graph
-
-        self.graph = self.extract_func(self.start_addr)
-        self.graph.simplify()
-        self.graph.detect_loops()
+        # Now load imported symbols for PE.
+        # This cannot be done before, because we need the code.
+        if self.binary.get_type() == T_BIN_PE:
+            self.binary.load_import_symbols(self.code)
 
 
-    def get_addr(self, str_addr):
-        addr = -1
-        if str_addr.startswith("0x"):
-            addr = int(str_addr, 16)
+    def get_addr_from_string(self, str_addr):
+        if str_addr != "":
+            search = [str_addr]
         else:
-            try:
-                addr = self.binary.symbols[str_addr]
-            except:
-                pass
-        return addr
+            search = ["main", "_main"] # by default
 
+        found = False
+        for s in search:
+            if str_addr.startswith("0x"):
+                a = int(str_addr, 16)
+            else:
+                try:
+                    a = self.binary.symbols[s]
+                except:
+                    a = -1
+
+            if a != -1:
+                found = True
+                break
+
+        if not found:
+            die("symbol %s not found" % search[0])
+        
+        return a
 
 
     def dump_code(self):
@@ -102,8 +90,15 @@ class Disassembler():
             print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
 
 
+    def get_graph(self, addr):
+        graph = self.__extract_func(addr)
+        graph.simplify()
+        graph.detect_loops()
+        return graph
+
+
     # Generate a flow graph of the given function (addr)
-    def extract_func(self, addr):
+    def __extract_func(self, addr):
         curr = self.code[addr]
         gph = Graph(self, addr)
 

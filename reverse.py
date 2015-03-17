@@ -111,18 +111,22 @@ if __name__ == '__main__':
 
     # Reverse !
 
-    dis = Disassembler(filename, addr)
+    dis = Disassembler(filename)
+    addr = dis.get_addr_from_string(addr)
+
+    dis.disasm(addr)
+    gph = dis.get_graph(addr)
 
     lib.output.binary = dis.binary
-    lib.output.gph    = dis.graph
-    lib.ast.gph       = dis.graph
+    lib.output.gph    = gph
+    lib.ast.gph       = gph
     lib.ast.binary    = dis.binary
     lib.ast.dis       = dis
 
     if gen_graph:
-        dis.graph.html_graph()
+        gph.html_graph()
 
-    ast = generate_ast(dis.graph, debug)
+    ast = generate_ast(gph, debug)
 
     if gen_vim:
         base = os.path.basename(filename)
@@ -132,8 +136,7 @@ if __name__ == '__main__':
         generate_vim_syntax(base + ".vim")
         sys.stdout = open(base + ".rev", "w+")
 
-    lib.output.print_ast(dis.start_addr, ast)
+    lib.output.print_ast(addr, ast)
 
     if gen_vim:
         print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
-        

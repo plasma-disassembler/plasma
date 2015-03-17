@@ -51,9 +51,6 @@ class SymbolEntry(Structure):
 
 
 class PE2(pefile.PE):
-    def test(self):
-        return
-
     def get_sym_at_offset(self, off):
         end = off + sizeof(SymbolEntry)
         if end > len(self.__data__):

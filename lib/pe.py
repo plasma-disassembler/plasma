@@ -24,6 +24,7 @@ import struct
 import pefile
 from lib.pefile2 import *
 from ctypes import sizeof
+from capstone.x86 import *
 
 
 class PE:
@@ -35,12 +36,6 @@ class PE:
 
 
     def load_static_sym(self):
-        self.__load_coff_symbols()
-        # self.__load_import_symbols()
-        return
-
-
-    def __load_coff_symbols(self):
         # http://wiki.osdev.org/COFF
         # http://www.delorie.com/djgpp/doc/coff/symtab.html
 
@@ -79,20 +74,61 @@ class PE:
         return
 
 
-    #
-    # TODO for each imported SYMBOL we have this :
-    # ADDRESS:  	jmp    DWORD PTR ds:SYMBOL
-    #
-    # we need to assign SYMBOL to ADDRESS, because in the code
-    # we have "call ADDRESS" and not "call SYMBOL"
-    #
+    def load_import_symbols(self, code):
+        def inv(n):
+            return n == X86_OP_INVALID
 
-    # def __load_import_symbols(self):
-        # self.pe.parse_data_directories()
-        # for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
-            # for imp in entry.imports:
-                # self.classbinary.reverse_symbols[imp.address] = imp.name
-                # self.classbinary.symbols[imp.name] = imp.address
+
+        # Load imported symbols
+
+        try:
+            self.pe.parse_data_directories(
+                pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'])
+        except Exception as e:
+            print(e)
+            print("It seems that pefile.parse_data_directories is bugged.")
+            print("Retry ?")
+            lib.utils.die("")
+
+        sym = {}
+        for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
+            for imp in entry.imports:
+                sym[imp.address] = imp.name
+
+
+        # Now try to find the real call. For each SYMBOL address 
+        # we have this :
+        #
+        # call ADDRESS
+        # ...
+        # ADDRESS:  	jmp    DWORD PTR SYMBOL
+        #
+        # we need to assign SYMBOL to ADDRESS, because in the code
+        # we have "call ADDRESS" and not "call SYMBOL"
+        #
+
+        # Search in the code every call which point to a "jmp SYMBOL"
+
+        for ad in code:
+            inst = code[ad]
+            if not lib.utils.is_call(inst) or \
+                inst.operands[0].type != X86_OP_IMM:
+                continue
+
+            goto = inst.operands[0].value.imm
+            nxt = code[goto]
+
+            if not lib.utils.is_uncond_jump(nxt) or \
+                    nxt.operands[0].type != X86_OP_MEM:
+                continue
+           
+            mm = nxt.operands[0].mem
+
+            if inv(mm.base) and mm.disp in sym \
+                    and inv(mm.segment) and inv(mm.index):
+                name = sym[mm.disp]
+                self.classbinary.reverse_symbols[goto] = name
+                self.classbinary.symbols[name] = goto
 
 
     def load_rodata(self):

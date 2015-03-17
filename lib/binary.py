@@ -28,6 +28,11 @@ ARCH_x86 = 1
 ARCH_INVALID = -1
 
 
+T_BIN_ELF = 0
+T_BIN_PE = 1
+T_BIN_UNK = 2
+
+
 class Binary(object):
     def __init__(self, filename):
         self.__binary = None
@@ -61,3 +66,16 @@ class Binary(object):
 
     def get_arch(self):
         return self.__binary.get_arch()
+
+
+    def get_type(self):
+        if isinstance(self.__binary, lib.elf.ELF):
+            return T_BIN_ELF
+        if isinstance(self.__binary, lib.pe.PE):
+            return T_BIN_PE
+        return T_BIN_UNK
+
+
+    # Only for PE !
+    def load_import_symbols(self, code):
+        self.__binary.load_import_symbols(code)
