@@ -22,7 +22,6 @@ from elftools.elf.constants import *
 
 import lib.binary
 import lib.utils
-import lib.binary
 
 
 # SHF_WRITE=0x1
