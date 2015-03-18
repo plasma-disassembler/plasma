@@ -20,6 +20,7 @@
 import sys
 import os
 import os.path
+from argparse import ArgumentParser, FileType
 
 import lib.ast
 import lib.output
@@ -32,120 +33,58 @@ from lib.vim import generate_vim_syntax
 
 
 
-def usage():
-    print("Usage:  reverse.py FILENAME [OPTIONS]")
-    print()
-    print("Reverse engineering for x86 binaries. Generation of pseudo-C.")
-    print("Supported formats : ELF, PE")
-    print()
-    print("OPTIONS:")
-    print("     --nocolor, -nc")
-    print("     --graph, -g             Generate an html flow graph. See d3/index.html.")
-    print("     --nocomment             Don't print comments")
-    print("     --strsize=N             default 30, maximum of chars to display for")
-    print("                             rodata strings.")
-    print("     -x=SYMBOLNAME|0xXXXXX   default main")
-    print("     --vim                   Generate syntax colors for vim")
-    print("     --sym, -s               Print all symbols")
-    print("     --call, -c              Print all calls")
-    print("     --dump                  Dump asm without decompilation")
-    print("     --lines=N               Max lines to dump")
-    print("     --symfile=FILENAME      Add user symbols for better readability in")
-    print("                             in the analyze. Each line has the format :")
-    print("                             ADDRESS_HEXA    SYMBOL_NAME")
-    print()
-    sys.exit(0)
-
-
 def reverse():
-    filename = None
-    opt_symfile = None
-    opt_gen_graph = False
-    opt_debug = False
-    opt_addr = ""
-    opt_gen_vim = False
-    opt_print_sym = False
-    opt_dump = False
-    opt_dump_lines = 30
-    opt_print_calls = False
-    lib.binary.MAX_STRING_RODATA = 30
-
     # Parse arguments
-    for i in sys.argv[1:]:
-        arg = i.split("=")
+    parser = ArgumentParser(description='Reverse engineering for x86 binaries. Generation of pseudo-C.')
+    parser.add_argument('filename', metavar='FILENAME')
+    parser.add_argument('-nc', '--nocolor', action='store_true')
+    parser.add_argument('-d', '--opt_debug', action='store_true')
+    parser.add_argument('-g', '--graph', action='store_true',
+            help='Generate an html flow graph. See d3/index.html.')
+    parser.add_argument('--nocomment', action='store_true',
+            help="Don't print comments")
+    parser.add_argument('--strsize', type=int, default=30, metavar='N',
+            help='default 30, maximum of chars to display for rodata strings.')
+    parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX',
+            help='default main')
+    parser.add_argument('--vim', action='store_true',
+            help='Generate syntax colors for vim')
+    parser.add_argument('-s', '--sym', action='store_true',
+            help='Print all symbols')
+    parser.add_argument('-c', '--call', action='store_true',
+            help='Print all calls')
+    parser.add_argument('--dump', action='store_true',
+            help='Dump asm without decompilation')
+    parser.add_argument('--lines', type=int, default=30, metavar='N',
+            help='Max lines to dump')
+    parser.add_argument('--symfile', metavar='FILENAME', type=FileType('r'),
+            help=('Add user symbols for better readability in in the analyze. '
+            'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
 
-        if len(arg) == 1:
-            if arg[0] == "--help" or arg[0] == "-h":
-                usage()
-            if arg[0] == "--nocolor" or arg[0] == "-nc":
-                lib.colors.nocolor = True
-            elif arg[0] == "--opt_debug" or arg[0] == "-d":
-                opt_debug = True
-            elif arg[0] == "--graph" or arg[0] == "-g":
-                opt_gen_graph = True
-            elif arg[0] == "--nocomment":
-                lib.output.nocomment = True
-                lib.ast.nocomment = True
-            elif arg[0] == "--vim":
-                opt_gen_vim = True
-            elif arg[0] == "--dump":
-                opt_dump = True
-            elif arg[0] == "--sym" or arg[0] == "-s":
-                opt_print_sym = True
-            elif arg[0] == "--call" or arg[0] == "-c":
-                opt_print_calls = True
-            elif arg[0][0] == "-":
-                print("unknown option " + arg[0])
-                print()
-                usage()
-            else:
-                filename = i
+    args = parser.parse_args()
 
-        elif len(arg) == 2:
-            if arg[0] == "-x":
-                if arg[1] == "0x":
-                    usage()
-                opt_addr = arg[1]
+    lib.colors.nocolor = args.nocolor
+    lib.output.nocomment = args.nocomment
+    lib.ast.nocomment = args.nocomment
+    lib.binary.MAX_STRING_RODATA = args.strsize
 
-            elif arg[0] == "--strsize":
-                lib.binary.MAX_STRING_RODATA = int(arg[1])
-
-            elif arg[0] == "--lines":
-                opt_dump_lines = int(arg[1])
-
-            elif arg[0] == "--symfile":
-                opt_symfile = arg[1]
-
-            else:
-                print("unknown option " + arg[0])
-                print()
-                usage()
-
-        else:
-            usage()
-
-    if filename == None:
-        error("file not specified\n")
-        usage()
-
-    if not os.path.exists(filename):
-        die("%s doesn't exists" % filename)
-
+    if not os.path.exists(args.filename):
+        die("%s doesn't exists" % args.filename)
 
     # Reverse !
 
-    dis = Disassembler(filename)
+    dis = Disassembler(args.filename)
 
-    if opt_symfile != None:
-        dis.load_user_sym_file(opt_symfile)
+    if args.symfile:
+        dis.load_user_sym_file(args.symfile)
 
-    # Maybe opt_addr is a symbol and doesn't exists.
+    # Maybe args.entry is a symbol and doesn't exists.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
-    if opt_print_sym or opt_print_calls:
+    if args.sym or args.call:
         addr = dis.binary.get_entry_point()
     else:
-        addr = dis.get_addr_from_string(opt_addr)
+        addr = dis.get_addr_from_string(args.entry)
 
     # Disassemble and load imported symbols for PE
     dis.disasm(addr)
@@ -153,21 +92,21 @@ def reverse():
     lib.output.binary = dis.binary
     lib.ast.binary    = dis.binary
 
-    if opt_print_calls:
+    if args.call:
         dis.print_calls()
         return
 
-    if opt_print_sym:
+    if args.sym:
         dis.print_symbols()
         return
 
-    if opt_dump:
-        if opt_gen_vim:
-            base = os.path.basename(filename)
+    if args.dump:
+        if args.vim:
+            base = os.path.basename(args.filename)
             lib.colors.nocolor = True
             sys.stdout = open(base + ".rev", "w+")
-        dis.dump(addr, opt_dump_lines)
-        if opt_gen_vim:
+        dis.dump(addr, args.lines)
+        if args.vim:
             generate_vim_syntax(base + ".vim")
             print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
         return
@@ -178,13 +117,13 @@ def reverse():
     lib.ast.gph       = gph
     lib.ast.dis       = dis
 
-    if opt_gen_graph:
+    if args.graph:
         gph.html_graph()
 
-    ast = generate_ast(gph, opt_debug)
+    ast = generate_ast(gph, args.opt_debug)
 
-    if opt_gen_vim:
-        base = os.path.basename(filename)
+    if args.vim:
+        base = os.path.basename(args.filename)
         # re-assign if no colors
         lib.ast.assign_colors(ast)
         lib.colors.nocolor = True
@@ -193,7 +132,7 @@ def reverse():
 
     lib.output.print_ast(addr, ast)
 
-    if opt_gen_vim:
+    if args.vim:
         print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
 
 
