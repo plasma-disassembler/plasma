@@ -293,7 +293,7 @@ def generate_vim_syntax(filename):
     fd = open(filename, "w+")
 
     syn = """
-    syn keyword RevKeywords function goto if else loop and
+    syn keyword RevKeywords infiniteloop function goto if else loop and
     syn keyword RevTypes int8_t int16_t int32_t int64_t
 
     syn match RevComment "0x[0-9a-f]\+:"
