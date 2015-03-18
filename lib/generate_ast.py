@@ -561,6 +561,7 @@ def get_ast_ifgoto(curr_loop, inst):
 
 def get_ast_branch(paths, curr_loop=-1, last_else=-1):
     ast = Ast_Branch()
+    if_printed = False
 
     while 1:
         rm_empty_paths(paths)
@@ -600,7 +601,8 @@ def get_ast_branch(paths, curr_loop=-1, last_else=-1):
             a, endpoint = get_ast_loop(paths, curr_loop, last_else)
             ast.add(a)
         elif is_ifelse:
-            a, endpoint = get_ast_ifelse(paths, curr_loop, last_else)
+            a, endpoint = get_ast_ifelse(paths, curr_loop, last_else, if_printed)
+            if_printed = isinstance(a, Ast_Ifelse)
             ast.add(a)
         else:
             endpoint = paths[0][0]
@@ -631,12 +633,12 @@ def get_ast_loop(paths, last_loop, last_else):
     debug__(paths)
     ast = Ast_Loop()
     curr_loop = paths[0][0]
-    first_inst = gph.nodes[curr_loop]
+    first_blk = gph.nodes[curr_loop]
 
-    if is_cond_jump(first_inst[0]):
-        ast.add(get_ast_ifgoto(curr_loop, first_inst[0]))
+    if is_cond_jump(first_blk[0]):
+        ast.add(get_ast_ifgoto(curr_loop, first_blk[0]))
     else:
-        ast.add(first_inst)
+        ast.add(first_blk)
 
     loop_paths, endloop = extract_loop_paths(paths)
 
@@ -667,7 +669,7 @@ def get_ast_loop(paths, last_loop, last_else):
     return ast, endloop[-1][0][0]
 
 
-def get_ast_ifelse(paths, curr_loop, last_else):
+def get_ast_ifelse(paths, curr_loop, last_else, is_prev_andif):
     debug__("\nifelse %x" % paths[0][0])
     debug__("last else %x" % last_else)
     addr = pop(paths)
@@ -686,6 +688,34 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     debug__("endpoint %x" % endpoint)
     split, else_addr = create_split(addr, paths, endpoint)
 
+    # is_prev_and_if : better output (tests/if5)
+    #
+    # example C file :
+    #
+    # if 1 {
+    #   if 2 { 
+    #     ...
+    #   }
+    #   if 3 {
+    #     ...
+    #   }
+    # }
+    #
+    #
+    # output without the is_prev_andif. This is correct, the andif is 
+    # attached to the "if 1", but it's not very clear.
+    #
+    # if 1 {
+    #   if 2 { 
+    #     ...
+    #   }
+    #   and if 3
+    #   ...
+    # }
+    #
+    # output with the is_prev_andif :
+    # Instead of the andif, we have the same code as the original.
+    #
 
     # last_else allows to not repeat the else part when there are some 
     # and in the If. example :
@@ -724,13 +754,15 @@ def get_ast_ifelse(paths, curr_loop, last_else):
     # }
     #
 
-    if last_else != -1:
+    if last_else != -1 and not is_prev_andif:
         # TODO not sure about endpoint == -1
         # tests/or4
         if if_addr == last_else and endpoint == -1:
+            debug__("andif 1   %x   %x" % (if_addr, last_else))
             return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
 
         if else_addr == -1 or else_addr == last_else:
+            debug__("andif 2   %x   %x" % (else_addr, last_else))
             endpoint = gph.link_out[addr][BRANCH_NEXT]
             return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
 

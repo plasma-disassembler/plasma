@@ -1,0 +1,31 @@
+function main {
+    int32_t var1
+    int32_t var2
+    int32_t var3
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    # 0x40050e: cmp dword ptr [rbp - 4], 0x2a
+    # 0x400512: jne 0x40053c
+    if (var1 == 42) {
+        # 0x400514: cmp dword ptr [rbp - 8], 0xa
+        # 0x400518: jne 0x400524
+        if (var2 == 10) {
+            0x40051a: edi = 0x4005d4 "1" # mov edi, 0x4005d4
+            0x40051f: call 0x4003e0 <puts@plt>
+        }
+        # 0x400524: cmp dword ptr [rbp - 0xc], 0xc
+        # 0x400528: jne 0x40053c
+        if (var3 == 12) {
+            0x40052a: eax = var2 # mov eax, dword ptr [rbp - 8]
+            # 0x40052d: cmp eax, dword ptr [rbp - 0xc]
+            # 0x400530: je 0x40053c
+            and if (eax != var3)
+            0x400532: edi = 0x4005d6 "2" # mov edi, 0x4005d6
+            0x400537: call 0x4003e0 <puts@plt>
+        }
+    }
+    0x40053c: eax = 0 # mov eax, 0
+    0x400541: leave 
+    0x400542: ret 
+}
