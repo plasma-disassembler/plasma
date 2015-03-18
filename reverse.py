@@ -58,7 +58,7 @@ def reverse():
     parser.add_argument('--lines', type=int, default=30, metavar='N',
             help='Max lines to dump')
     parser.add_argument('--symfile', metavar='FILENAME', type=FileType('r'),
-            help=('Add user symbols for better readability in in the analyze. '
+            help=('Add user symbols for better readability of the analysis. '
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
 
     args = parser.parse_args()
