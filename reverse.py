@@ -49,6 +49,7 @@ def usage():
     print("     --sym, -s               Print all symbols")
     print("     --call, -c              Print all calls")
     print("     --dump                  Dump asm without decompilation")
+    print("     --lines=N               Max lines to dump")
     print()
     sys.exit(0)
 
@@ -61,6 +62,7 @@ def reverse():
     opt_gen_vim = False
     opt_print_sym = False
     opt_dump = False
+    opt_dump_lines = 30
     opt_print_calls = False
     lib.binary.MAX_STRING_RODATA = 30
 
@@ -103,6 +105,9 @@ def reverse():
 
             elif arg[0] == "--strsize":
                 lib.binary.MAX_STRING_RODATA = int(arg[1])
+
+            elif arg[0] == "--lines":
+                opt_dump_lines = int(arg[1])
 
             else:
                 print("unknown option " + arg[0])
@@ -151,7 +156,7 @@ def reverse():
             base = os.path.basename(filename)
             lib.colors.nocolor = True
             sys.stdout = open(base + ".rev", "w+")
-        dis.dump()
+        dis.dump(addr, opt_dump_lines)
         if opt_gen_vim:
             generate_vim_syntax(base + ".vim")
             print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)

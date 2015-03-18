@@ -88,16 +88,24 @@ class Disassembler():
         return a
 
 
-    def dump(self):
+    def dump(self, addr, lines):
+
+        i_init = index(self.code_idx, addr)
+        end = min(len(self.code_idx), i_init + lines)
+
         # set jumps color
-        for i in self.code_idx:
-            inst = self.code[i]
+        i = i_init
+        while i < end:
+            inst = self.code[self.code_idx[i]]
             if is_jump(inst) and inst.operands[0].type == X86_OP_IMM:
                 pick_color(inst.operands[0].value.imm)
+            i += 1
 
-        for i in self.code_idx:
-            inst = self.code[i]
+        i = i_init
+        while i < end:
+            inst = self.code[self.code_idx[i]]
             print_inst(inst, 0)
+            i += 1
 
 
     def print_calls(self):
