@@ -94,6 +94,8 @@ class PE:
         for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
                 sym[imp.address] = imp.name
+                self.classbinary.reverse_symbols[imp.address] = imp.name
+                self.classbinary.symbols[imp.name] = imp.address
 
 
         # Now try to find the real call. For each SYMBOL address 
@@ -126,7 +128,7 @@ class PE:
 
             if inv(mm.base) and mm.disp in sym \
                     and inv(mm.segment) and inv(mm.index):
-                name = sym[mm.disp]
+                name = "jmp_" + sym[mm.disp]
                 self.classbinary.reverse_symbols[goto] = name
                 self.classbinary.symbols[name] = goto
 
