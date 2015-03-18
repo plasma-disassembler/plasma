@@ -128,7 +128,11 @@ def print_operand(i, num_op, hexa=False):
                     print_no_end(" + ")
                     print_no_end(mm.disp)
                 else:
-                    print_no_end("0x%x" % mm.disp)
+                    if mm.disp in binary.reverse_symbols:
+                        print_no_end("0x%x " % mm.disp)
+                        print_no_end(color_string("<" + binary.reverse_symbols[mm.disp] + ">"))
+                    else:
+                        print_no_end("0x%x" % mm.disp)
 
         print_no_end("]")
         return True
@@ -226,7 +230,9 @@ def print_inst(i, tab=0, prefix=""):
     # Here we can have conditional jump with the option --dump
     if is_jump(i):
         if i.operands[0].type != X86_OP_IMM:
-            print(get_inst_str())
+            print_no_end(i.mnemonic + " ")
+            print_operand(i, 0)
+            print()
             return
         try:
             addr = i.operands[0].value.imm
