@@ -69,7 +69,7 @@ def reverse():
     lib.binary.MAX_STRING_RODATA = args.strsize
 
     if not os.path.exists(args.filename):
-        die("%s doesn't exists" % args.filename)
+        die("{args.filename} doesn't exists".format(args=args))
 
     # Reverse !
 
@@ -108,7 +108,7 @@ def reverse():
         dis.dump(addr, args.lines)
         if args.vim:
             generate_vim_syntax(base + ".vim")
-            print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
+            print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
         return
 
     gph = dis.get_graph(addr)
@@ -133,7 +133,7 @@ def reverse():
     lib.output.print_ast(addr, ast)
 
     if args.vim:
-        print("Run :  vim %s.rev -S %s.vim" % (base, base), file=sys.stderr)
+        print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
 
 
 if __name__ == '__main__':
