@@ -22,7 +22,7 @@ from capstone.x86 import *
 from lib.graph import Graph
 from lib.utils import *
 from lib.binary import *
-from lib.output import print_inst
+from lib.output import print_inst, print_symbol
 from lib.colors import pick_color
 
 
@@ -104,6 +104,9 @@ class Disassembler():
         i = i_init
         while i < end:
             inst = self.code[self.code_idx[i]]
+            if inst.address in self.binary.reverse_symbols:
+                print_symbol(inst.address)
+                print()
             print_inst(inst, 0)
             i += 1
 

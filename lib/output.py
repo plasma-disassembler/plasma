@@ -47,6 +47,10 @@ def print_no_end(text):
     print(text, end="")
 
 
+def print_symbol(addr):
+    print_no_end(color_string("<" + binary.reverse_symbols[addr] + ">"))
+
+
 # Return True if the operand is a variable (because the output is
 # modified, we reprint the original instruction later)
 def print_operand(i, num_op, hexa=False):
@@ -64,7 +68,7 @@ def print_operand(i, num_op, hexa=False):
 
         elif imm in binary.reverse_symbols:
             print_no_end("0x%x " % imm)
-            print_no_end(color_string("<" + binary.reverse_symbols[imm] + ">"))
+            print_symbol(imm)
 
         else:
             if hexa:
@@ -130,7 +134,7 @@ def print_operand(i, num_op, hexa=False):
                 else:
                     if mm.disp in binary.reverse_symbols:
                         print_no_end("0x%x " % mm.disp)
-                        print_no_end(color_string("<" + binary.reverse_symbols[mm.disp] + ">"))
+                        print_symbol(mm.disp)
                     else:
                         print_no_end("0x%x" % mm.disp)
 
