@@ -138,12 +138,7 @@ class Disassembler():
         die("Try with --dump")
 
 
-    def load_user_sym_file(self, filename):
-        try:
-            fd = open(filename, "r")
-        except:
-            die("file %s not found" % filename)
-
+    def load_user_sym_file(self, fd):
         for l in fd:
             arg = l.split()
             addr = int(arg[0], 16)
