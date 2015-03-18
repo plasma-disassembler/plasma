@@ -62,10 +62,9 @@ class Disassembler():
 
 
     def get_addr_from_string(self, opt_addr):
-        if opt_addr != "":
-            search = [opt_addr]
-        else:
-            search = ["main", "_main"] # by default
+        search = [opt_addr]
+        if opt_addr == "main":
+            search.append("_main")
 
         found = False
         for s in search:
