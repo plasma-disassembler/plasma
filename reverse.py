@@ -50,12 +50,16 @@ def usage():
     print("     --call, -c              Print all calls")
     print("     --dump                  Dump asm without decompilation")
     print("     --lines=N               Max lines to dump")
+    print("     --symfile=FILENAME      Add user symbols for better readability in")
+    print("                             in the analyze. Each line has the format :")
+    print("                             ADDRESS_HEXA    SYMBOL_NAME")
     print()
     sys.exit(0)
 
 
 def reverse():
-    filename = ""
+    filename = None
+    opt_symfile = None
     opt_gen_graph = False
     opt_debug = False
     opt_addr = ""
@@ -109,6 +113,9 @@ def reverse():
             elif arg[0] == "--lines":
                 opt_dump_lines = int(arg[1])
 
+            elif arg[0] == "--symfile":
+                opt_symfile = arg[1]
+
             else:
                 print("unknown option " + arg[0])
                 print()
@@ -117,7 +124,7 @@ def reverse():
         else:
             usage()
 
-    if filename == "":
+    if filename == None:
         error("file not specified\n")
         usage()
 
@@ -139,6 +146,9 @@ def reverse():
 
     # Disassemble and load imported symbols for PE
     dis.disasm(addr)
+
+    if opt_symfile != None:
+        dis.load_user_sym_file(opt_symfile)
 
     lib.output.binary = dis.binary
     lib.ast.binary    = dis.binary

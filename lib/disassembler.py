@@ -135,6 +135,19 @@ class Disassembler():
         die("Try with --dump")
 
 
+    def load_user_sym_file(self, filename):
+        try:
+            fd = open(filename, "r")
+        except:
+            die("file %s not found" % filename)
+
+        for l in fd:
+            arg = l.split()
+            addr = int(arg[0], 16)
+            self.binary.reverse_symbols[addr] = arg[1]
+            self.binary.symbols[arg[1]] = addr
+
+
     # Generate a flow graph of the given function (addr)
     def __extract_func(self, addr):
         curr = self.code[addr]
