@@ -136,6 +136,9 @@ def reverse():
 
     dis = Disassembler(filename)
 
+    if opt_symfile != None:
+        dis.load_user_sym_file(opt_symfile)
+
     # Maybe opt_addr is a symbol and doesn't exists.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
@@ -146,9 +149,6 @@ def reverse():
 
     # Disassemble and load imported symbols for PE
     dis.disasm(addr)
-
-    if opt_symfile != None:
-        dis.load_user_sym_file(opt_symfile)
 
     lib.output.binary = dis.binary
     lib.ast.binary    = dis.binary
