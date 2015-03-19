@@ -396,7 +396,7 @@ def extract_loop_paths(paths):
         try:
             idx = seen[el[0]]
             group_endloop[idx].append(el)
-        except:
+        except KeyError:
             seen[el[0]] = len(group_endloop)
             group_endloop.append([el])
 
@@ -423,7 +423,7 @@ def extract_loop_paths(paths):
                     # is it possible to have a conditional jump here ?
                     # if true, need to check BRANCH_NEXT_JUMP
                     no_jump[i] = gph.link_out[queue][BRANCH_NEXT]
-                except:
+                except KeyError:
                     no_jump[i] = -1
                 all_jmp = False
 

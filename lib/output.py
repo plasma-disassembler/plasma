@@ -241,7 +241,7 @@ def print_inst(i, tab=0, prefix=""):
         try:
             addr = i.operands[0].value.imm
             print(i.mnemonic + " " + color("0x%x" % addr, addr_color[addr]))
-        except:
+        except Exception:
             print(i.mnemonic + " 0x%x" % addr)
         return
 
@@ -273,10 +273,7 @@ def print_inst(i, tab=0, prefix=""):
 
 def print_ast(entry, ast):
     print_no_end(color_keyword("function "))
-    try:
-        print_no_end(binary.reverse_symbols[entry])
-    except:
-        print_no_end("0x%x" % entry)
+    print_no_end(binary.reverse_symbols.get(entry, hex(entry)))
     print(" {")
     print_vars_type()
     ast.print(1)

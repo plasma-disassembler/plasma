@@ -112,7 +112,7 @@ class Graph:
             for k, lst_i in self.link_in.items():
                 try:
                     lst_i[lst_i.index(curr)] = pred
-                except:
+                except ValueError:
                     pass
 
 

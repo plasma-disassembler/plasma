@@ -41,10 +41,10 @@ class Binary(object):
 
         try:
             self.__binary = lib.elf.ELF(self, filename)
-        except:
+        except Exception:
             try:
                 self.__binary = lib.pe.PE(self, filename)
-            except:
+            except Exception:
                 die("the file is not PE or ELF binary")
 
         self.__binary.load_static_sym()
