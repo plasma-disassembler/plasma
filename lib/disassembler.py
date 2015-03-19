@@ -183,7 +183,7 @@ class Disassembler():
 
             try:
                 curr = self.code[rest.pop()]
-            except:
+            except IndexError:
                 break
 
         return gph

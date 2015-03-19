@@ -241,7 +241,7 @@ def print_inst(i, tab=0, prefix=""):
         try:
             addr = i.operands[0].value.imm
             print(i.mnemonic + " " + color("0x%x" % addr, addr_color[addr]))
-        except:
+        except Exception:
             print(i.mnemonic + " 0x%x" % addr)
         return
 
