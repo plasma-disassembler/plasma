@@ -273,10 +273,7 @@ def print_inst(i, tab=0, prefix=""):
 
 def print_ast(entry, ast):
     print_no_end(color_keyword("function "))
-    try:
-        print_no_end(binary.reverse_symbols[entry])
-    except:
-        print_no_end("0x%x" % entry)
+    print_no_end(binary.reverse_symbols.get(entry, hex(entry)))
     print(" {")
     print_vars_type()
     ast.print(1)

@@ -71,10 +71,7 @@ class Disassembler():
             if opt_addr.startswith("0x"):
                 a = int(opt_addr, 16)
             else:
-                try:
-                    a = self.binary.symbols[s]
-                except:
-                    a = -1
+                a = self.binary.symbols.get(s, -1)
 
             if a != -1:
                 found = True

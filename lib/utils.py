@@ -80,10 +80,7 @@ OPPOSITES = [
 OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
 
 def invert_cond(ty):
-    try:
-        return OPPOSITES[ty]
-    except:
-        return -1
+    return OPPOSITES.get(ty, -1)
 
 
 def cond_inst_str(ty):
@@ -144,13 +141,8 @@ def cond_sign_str(ty, has_cmp=False):
         X86_INS_JS: "<"
     }
 
-    try:
-        if has_cmp:
-            return conds_cmp[ty]
-        else:
-            return conds[ty]
-    except:
-        return "UNKNOWN"
+    c = conds_cmp if has_cmp else conds
+    return c.get(ty, "UNKNOWN")
 
     # TODO : invert_cond need to be updated too
     # X86_INS_JAE
