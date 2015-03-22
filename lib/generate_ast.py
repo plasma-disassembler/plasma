@@ -21,36 +21,13 @@ import sys
 import lib.colors
 from lib.ast import *
 from lib.utils import *
+from lib.paths import Paths, get_loop_start
 
 
 gph = None
-dbg = False
 
 
-# Contains for each looping path, the last address in the path
-last_addr_loop = []
-
-
-def debug__(obj, end="\n"):
-    if dbg:
-        if isinstance(obj, str):
-            print(obj, end=end)
-        elif isinstance(obj, list):
-            print_list(obj)
-        elif isinstance(obj, dict):
-            print_dict(obj)
-
-
-def loop_start_by(addr):
-    # normally addr != -1
-    # nested_loops[-1] contains all sub-loops
-    return addr in gph.nested_loops
-    # for l in gph.loops:
-        # if addr == l[0]:
-            # return True
-    # return False
-
-
+# TODO remove
 def loop_contains(loop_start, addr):
     if loop_start == -1:
         return True
@@ -60,466 +37,12 @@ def loop_contains(loop_start, addr):
     return False
 
 
-# Returns all paths
-def paths_explore(start_addr):
-    def save_step(k, addr, create):
-        nonlocal paths, looping, new_paths, moved
-        # Prevent looping on seen node : the branch will be deleted later.
-        if addr in paths[k]:
-            if create:
-                # Future path
-                looping[len(paths) + len(new_paths)] = True
-                new_paths.append(list(paths[k]))
-            else:
-                looping[k] = True
-            return
-        moved = True
-        if create:
-            new_paths.append(paths[k] + [addr])
-        else:
-            paths[k].append(addr)
 
-    # Compute all paths to the end
-    paths = [[start_addr]]
-    moved = True
-    looping = {}
-
-    while moved:
-        new_paths = []
-        moved = False
-
-        # Next step for each branch
-        # - Looping branchs will be deleted
-        # - Create a new branch if we are on cond jump
-        #     only if it doesn't go outside the current loop
-        for k, p in enumerate(paths):
-            addr = p[-1]
-            inst = gph.dis.code[addr]
-
-            # The branch is finish or is looping
-            if k in looping or addr not in gph.link_out:
-                continue
-
-            nxt = gph.link_out[addr]
-            if is_cond_jump(inst):
-                save_step(k, nxt[BRANCH_NEXT_JUMP], True)
-            save_step(k, nxt[BRANCH_NEXT], False)
-
-        paths += new_paths
-
-    global last_addr_loop
-    for k in looping:
-        last_addr_loop.append(paths[k][-1])
-
-    return paths
-
-
-# The second value returned indicates if we have stop on a loop.
-# Stop on :
-# - first difference (ifelse), but not on jumps which are 
-#     conditions for loops
-# - beginning of a loop
-def head_last_common(paths, curr_loop):
-    last = -1
-
-    # The path used as a reference (each value of this path is
-    # compared all others paths). We need the longest, otherwise
-    # if we have a too smal path, we can stop too early.
-    # tests/nestedloop3
-    refpath = 0
-    max_len = len(paths[0])
-    for k, p in enumerate(paths):
-        if len(p) > max_len:
-            max_len = len(p)
-            refpath = k
-
-    k = 0
-    while k < len(paths[refpath]):
-
-        addr0 = paths[refpath][k]
-
-        # TODO cleanup
-
-        if loop_start_by(addr0):
-            return last, True, False
-
-        # Check addr0
-        if is_cond_jump(gph.nodes[addr0][0]):
-            nxt = gph.link_out[addr0]
-            c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
-            c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
-            if c1 and c2:
-                return last, False, True
-
-
-        # Compare with other paths
-        i = 0
-        while i < len(paths):
-            if i == refpath:
-                i += 1
-                continue
-
-            if index(paths[i], addr0) == -1:
-                return last, False, False
-
-            addr = paths[i][k]
-
-            if loop_start_by(addr):
-                return last, True, False
-
-            if is_cond_jump(gph.nodes[addr][0]):
-                nxt = gph.link_out[addr]
-                c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
-                c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
-                if c1 and c2:
-                    return last, False, True
-
-            i += 1
-
-        k += 1
-        last = addr0
-
-    if len(paths) == 1:
-        return paths[0][-1], False, False
-
-    return last, False, False
-
-
-# Return True if the path is looping (it means that the next of the
-# last address is a loop)
-# 
-# If curr_loop is given :
-#       if the path is looping on the current loop, return False
-#       tests/if3
-def is_looping(path, curr_loop=None):
-    last = path[-1]
-
-    debug__("")
-    debug__(path)
-
-    if last not in gph.link_out:
-        debug__("false 1")
-        return False
-
-    if last not in last_addr_loop:
-        debug__("false 2")
-        return False
-
-    nxt = gph.link_out[last]
-
-    if nxt[BRANCH_NEXT] == curr_loop:
-        debug__("false 3")
-        return False
-
-    if len(nxt) == 2:
-        if nxt[BRANCH_NEXT_JUMP] == curr_loop:
-            debug__("false 4")
-            return False
-        
-    debug__("true")
-    return True
-
-
-def are_all_looping(paths, curr_loop, start, check_equal):
-    if check_equal:
-        for p in paths:
-            if p[0] == start and not is_looping(p, curr_loop):
-                return False
-    else:
-        for p in paths:
-            if p[0] != start and not is_looping(p, curr_loop):
-                return False
-    return True
-
-
-def first_common(paths, curr_loop, else_addr, start=0):
-    if len(paths) <= 1:
-        return -1
-
-    #
-    # if () { 
-    #   infiniteloop ...
-    # } else {
-    #   ...
-    # }
-    #
-    # can be simplified by : (the endpoint is the else-part)
-    #
-    # if () { 
-    #   infiniteloop ...
-    # }
-    # ...
-    #
-
-    all_looping_if = are_all_looping(paths, curr_loop, else_addr, False)
-    all_looping_else = are_all_looping(paths, curr_loop, else_addr, True)
-
-    if all_looping_if or all_looping_else:
-        debug__("all looping : if %d   else %d" % (all_looping_if, all_looping_else))
-        return else_addr
-
-    # Take a non looping-path as a reference :
-    # we want to search a common address between other paths
-    refpath = 0
-    i = 0
-    while i < len(paths):
-        if not is_looping(paths[i], curr_loop):
-            refpath = i
-            break
-        i += 1
-
-    # Compare
-
-    debug__("refpath %d" % refpath)
-
-    found = False
-    k = start
-    val = -1
-    while not found and k < len(paths[refpath]):
-        val = paths[refpath][k]
-        i = 0
-        found = True
-        while i < len(paths):
-            if i != refpath:
-                if not is_looping(paths[i], curr_loop):
-                    if index(paths[i], val, start) == -1:
-                        found = False
-                        break
-            i += 1
-        k += 1
-
-    # if paths[0][0] == 0x40051b:
-        # sys.exit(0)
-
-    if found:
-        return val
-    return -1
-
-
-# For a loop : check if the path need to be kept (the loop 
-# contains the path). For this we see the last address of the path.
-def keep_path(curr_loop, path):
-    last = path[-1]
-
-    if last not in gph.link_out:
-        return False
-
-    nxt = gph.link_out[last]
-
-    # may be a nested or current loop
-    n = nxt[BRANCH_NEXT]
-    if n == curr_loop or n in gph.nested_loops[curr_loop] or \
-          loop_contains(curr_loop, last):
-        return True
-
-    if len(nxt) == 1:
-        return False
-
-    n = nxt[BRANCH_NEXT_JUMP]
-    if n == curr_loop or n in gph.nested_loops[curr_loop] or \
-            loop_contains(curr_loop, last):
-        return True
-
-    return False
-
-
-def extract_loop_paths(paths):
-    # TODO optimize....
-
-    loop_paths = []
-    endloop = []
-    curr_loop = paths[0][0]
-
-    # ------------------------------------------------------
-    # Separation of loop-paths / endloops
-    # ------------------------------------------------------
-
-    for p in paths:
-        looping = False
-        if keep_path(curr_loop, p):
-            loop_paths.append(p)
-            looping = True
-        if not looping:
-            endloop.append(p)
-
-    # Finalize endloops
-    # Cut the path to get only the endloop
-    for i, el in enumerate(endloop):
-        for k, addr in enumerate(el):
-            if not is_in_paths(loop_paths, addr):
-                p = el[k:]
-                if p not in endloop:
-                    endloop[i] = p
-                else:
-                    endloop[i] = []
-                break
-
-    rm_empty_paths(endloop)
-
-
-    # ------------------------------------------------------
-    # Remove dupplicate code
-    # ------------------------------------------------------
-
-    common = {}
-
-    # Search dupplicate address
-    for path in endloop:
-        for addr in path:
-            for el in endloop:
-                if el[0] == path[0]:
-                    continue
-                idx = index(el, addr)
-                if idx != -1:
-                    common[addr] = True
-                    break
-
-    for dup in common:
-        for i, el in enumerate(endloop):
-            if el[0] == dup:
-                continue
-            idx = index(el, dup)
-            if idx != -1:
-                endloop[i] = el[:idx]
-
-    rm_empty_paths(endloop)
-
-
-    # ------------------------------------------------------
-    # Regroup paths if they start with the same addr
-    # ------------------------------------------------------
-
-    group_endloop = []
-    seen = {}
-
-    for el in endloop:
-        try:
-            idx = seen[el[0]]
-            group_endloop[idx].append(el)
-        except:
-            seen[el[0]] = len(group_endloop)
-            group_endloop.append([el])
-
-    endloop = group_endloop
-
-
-    # ------------------------------------------------------
-    # Sort endloops
-    # ------------------------------------------------------
-
-    with_jump = []
-    no_jump = {}
-        
-    # Search the next address of each endloops
-    for i, els in enumerate(endloop):
-        all_jmp = True
-
-        for el in els:
-            queue = el[-1]
-            inst = gph.nodes[queue][0]
-            if not is_uncond_jump(inst):
-                try:
-                    # TODO
-                    # is it possible to have a conditional jump here ?
-                    # if true, need to check BRANCH_NEXT_JUMP
-                    no_jump[i] = gph.link_out[queue][BRANCH_NEXT]
-                except:
-                    no_jump[i] = -1
-                all_jmp = False
-
-        if all_jmp:
-            with_jump.append(i)
-
-    # print("no jump ", end=""); print_dict(no_jump)
-    # print("with jump ", end=""); print_list(with_jump)
-
-    # paths which not finish with a jump need to be sorted
-    endloop_sort = []
-    while no_jump:
-        for i in no_jump:
-            head = endloop[i][0]
-            nxt = no_jump[i]
-            if nxt == -1 or nxt not in no_jump:
-                endloop_sort.insert(0, i) 
-                del no_jump[i]
-                break
-
-    # print_list(endloop_sort)
-
-    # Recreate endloop
-    new_endloop = []
-    for i in with_jump:
-        new_endloop.append(endloop[i])
-        
-    for i in endloop_sort:
-        new_endloop.append(endloop[i])
-
-    endloop = new_endloop
-    # print_list(endloop)
-
-    debug__("loop paths: ", end="")
-    debug__(loop_paths)
-    debug__("endloop: ", end="")
-    debug__(endloop)
-
-    return loop_paths, endloop
-
-
-def is_in_paths(paths, addr):
-    for p in paths:
-        if index(p, addr) != -1:
-            return True
-    return False
-
-
-def get_index_path(paths, addr):
-    for k, p in enumerate(paths):
-        if index(p, addr) != -1:
-            return k
-    return -1
-
-
-def pop(paths):
-    # Assume that all paths pop the same value
-    for p in paths:
-        val = p.pop(0)
-    return val
-
-
-def paths_goto_addr(paths, addr):
-    debug__("goto endpoint %x" % addr)
-    i = 0
-    while i < len(paths):
-        idx = index(paths[i], addr)
-        paths[i] = [] if idx == -1 else paths[i][idx:]
-        i += 1
-
-
-def rm_empty_paths(paths):
-    for i in reversed(range(len(paths))):
-        if not paths[i]:
-            del paths[i]
-
-
-def cut_paths(paths, start, end):
-    cut = []
-    for p in paths:
-        if not p:
-            continue
-        idx_s = index(p, start)
-        if idx_s != -1:
-            idx_e = index(p, end)
-            if idx_e != -1:
-                cut.append(p[idx_s:idx_e-1])
-            else:
-                cut.append(p[idx_s:])
-    return cut
-
-
-def get_ast_ifgoto(curr_loop, inst):
+def get_ast_ifgoto(paths, curr_loop_idx, inst):
     nxt = gph.link_out[inst.address]
-    c1 = loop_contains(curr_loop, nxt[BRANCH_NEXT])
-    c2 = loop_contains(curr_loop, nxt[BRANCH_NEXT_JUMP])
+
+    c1 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
+    c2 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
 
     if c1 and c2:
         die("can't have a ifelse here     %x" % inst.address)
@@ -551,104 +74,105 @@ def get_ast_ifgoto(curr_loop, inst):
     #
 
     cond_id = inst.id
+    br = nxt[BRANCH_NEXT_JUMP]
     if c2:
-        (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP]) = \
-            (nxt[BRANCH_NEXT_JUMP], nxt[BRANCH_NEXT])
         cond_id = invert_cond(cond_id)
+        br = nxt[BRANCH_NEXT]
 
-    return Ast_IfGoto(inst, cond_id, nxt[BRANCH_NEXT_JUMP])
+    return Ast_IfGoto(inst, cond_id, br)
 
 
-def get_ast_branch(paths, curr_loop=-1, last_else=-1):
+def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
     ast = Ast_Branch()
     if_printed = False
 
     while 1:
-        rm_empty_paths(paths)
-        if not paths:
+        if paths.rm_empty_paths():
             break
 
-        debug__("\nbranch %x     loop=%x" % (paths[0][0], curr_loop))
-        debug__("nb paths %d" % len(paths))
-        debug__(paths)
+        debug__("\nbranch %x     loop=%x" % (paths.first(), get_loop_start(curr_loop_idx)))
+        debug__("nb paths %d" % len(paths.paths))
+        paths.debug()
 
         # Stop on the first split or is_loop
-        until, is_loop, is_ifelse = head_last_common(paths, curr_loop)
+        until, is_loop, is_ifelse = paths.head_last_common(curr_loop_idx)
         debug__("until %x   loop=%d   ifelse=%d" % (until, is_loop, is_ifelse))
 
         # Add code to the branch, and update paths
         # until == -1 if there is no common point at the begining
         last = -1
         while last != until:
-            blk = gph.nodes[paths[0][0]]
+            blk = gph.nodes[paths.first()]
             inst = blk[0] # first inst
 
             # Here if we have conditional jump, it's not a ifelse,
             # it's a condition for a loop. It will be replaced by a
             # goto. ifgoto are skipped by head_last_common.
             if is_cond_jump(inst):
-                ast.add(get_ast_ifgoto(curr_loop, inst))
+                ast.add(get_ast_ifgoto(paths, curr_loop_idx, inst))
             else:
                 ast.add(blk)
 
-            last = pop(paths)
+            last = paths.pop()
 
-        rm_empty_paths(paths)
-        if not paths:
+        if paths.rm_empty_paths():
             break
 
         if is_loop:
-            a, endpoint = get_ast_loop(paths, curr_loop, last_else)
+            # last_else == -1
+            # -> we can't go to a same else inside a loop
+            a, endpoint = get_ast_loop(paths, curr_loop_idx, -1, endif)
             ast.add(a)
         elif is_ifelse:
-            a, endpoint = get_ast_ifelse(paths, curr_loop, last_else, if_printed)
+            a, endpoint = get_ast_ifelse(paths, curr_loop_idx, last_else, if_printed, endif)
             if_printed = isinstance(a, Ast_Ifelse)
             ast.add(a)
         else:
-            endpoint = paths[0][0]
+            endpoint = paths.first()
 
         if endpoint == -1:
             break
 
-        paths_goto_addr(paths, endpoint)
+        paths.goto_addr(endpoint)
 
     return ast
 
 
+# TODO move in class Paths
 # Assume that the beginning of paths is the beginning of a loop
 def paths_is_infinite(paths):
-    for p in paths:
+    for p in paths.paths:
         for addr in p:
             inst = gph.nodes[addr][0]
             if is_cond_jump(inst):
                 nxt = gph.link_out[addr]
-                if not is_in_paths(paths, nxt[BRANCH_NEXT]) \
-                or not is_in_paths(paths, nxt[BRANCH_NEXT_JUMP]):
+                if nxt[BRANCH_NEXT] not in paths or \
+                   nxt[BRANCH_NEXT_JUMP] not in paths: \
                     return False
     return True
 
 
-def get_ast_loop(paths, last_loop, last_else):
-    debug__("\nloop %x" % paths[0][0])
-    debug__(paths)
+def get_ast_loop(paths, last_loop, last_else, endif):
+    debug__("\nloop %x" % paths.first())
+    paths.debug()
     ast = Ast_Loop()
-    curr_loop = paths[0][0]
-    first_blk = gph.nodes[curr_loop]
+    curr_loop_idx = paths.get_loops_idx()
+    first_blk = gph.nodes[get_loop_start(curr_loop_idx)]
 
     if is_cond_jump(first_blk[0]):
-        ast.add(get_ast_ifgoto(curr_loop, first_blk[0]))
+        ast.add(get_ast_ifgoto(paths, curr_loop_idx, first_blk[0]))
     else:
         ast.add(first_blk)
 
-    loop_paths, endloop = extract_loop_paths(paths)
+    loop_paths, endloop = paths.extract_loop_paths(curr_loop_idx)
 
     # Checking if endloop == [] to determine if it's an 
     # infinite loop is not sufficient
     # tests/nestedloop2
     ast.set_infinite(paths_is_infinite(loop_paths))
 
-    pop(paths)
-    ast.add(get_ast_branch(loop_paths, curr_loop, last_else))
+    paths.pop()
+    ast.add(get_ast_branch(loop_paths, curr_loop_idx, last_else))
 
     if not endloop:
         return ast, -1
@@ -666,15 +190,15 @@ def get_ast_loop(paths, last_loop, last_else):
 
         ast.set_epilog(epilog)
 
-    return ast, endloop[-1][0][0]
+    return ast, endloop[-1].first()
 
 
-def get_ast_ifelse(paths, curr_loop, last_else, is_prev_andif):
-    debug__("\nifelse %x" % paths[0][0])
+def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
+    debug__("\nifelse %x" % paths.first())
     debug__("last else %x" % last_else)
-    addr = pop(paths)
-    rm_empty_paths(paths)
-    debug__(paths)
+    addr = paths.pop()
+    paths.rm_empty_paths()
+    paths.debug()
     jump_inst = gph.nodes[addr][0]
     nxt = gph.link_out[addr]
 
@@ -684,9 +208,9 @@ def get_ast_ifelse(paths, curr_loop, last_else, is_prev_andif):
     # If endpoint == -1, it means we are in a sub-if and the endpoint 
     # is after. When we create_split, only address inside current
     # if and else are kept.
-    endpoint = first_common(paths, curr_loop, else_addr)
+    endpoint = paths.first_common(curr_loop_idx, else_addr)
     debug__("endpoint %x" % endpoint)
-    split, else_addr = create_split(addr, paths, endpoint)
+    split, else_addr = paths.split(addr, endpoint)
 
     # is_prev_and_if : better output (tests/if5)
     #
@@ -754,62 +278,41 @@ def get_ast_ifelse(paths, curr_loop, last_else, is_prev_andif):
     # }
     #
 
-    if last_else != -1 and not is_prev_andif:
-        # TODO not sure about endpoint == -1
-        # tests/or4
-        if if_addr == last_else and endpoint == -1:
-            debug__("andif 1   %x   %x" % (if_addr, last_else))
-            return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
+    if 1:
+        if last_else != -1 and not is_prev_andif:
+            # TODO not sure about endpoint == -1
+            # tests/or4
+            if if_addr == last_else and endpoint == -1:
+                debug__("andif 1   %x   %x" % (if_addr, last_else))
+                return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
 
-        if else_addr == -1 or else_addr == last_else:
-            debug__("andif 2   %x   %x" % (else_addr, last_else))
-            endpoint = gph.link_out[addr][BRANCH_NEXT]
-            return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
+            # print("---------- addr=%x    else=%x   last_else=%x   endif=%x  endpoint=%x" % (jump_inst.address, else_addr, last_else, endif, endpoint))
+
+            # if else_addr == -1 or else_addr == last_else:
+            if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
+                    last_else == endif and endif == endpoint and endpoint != -1:
+                debug__("andif 2   %x   %x" % (else_addr, last_else))
+                endpoint = gph.link_out[addr][BRANCH_NEXT]
+                return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
 
     if else_addr == -1:
         else_addr = last_else
 
-    a1 = get_ast_branch(split[BRANCH_NEXT_JUMP], curr_loop, -1)
-    a2 = get_ast_branch(split[BRANCH_NEXT], curr_loop, else_addr)
+    a1 = get_ast_branch(split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
+    a2 = get_ast_branch(split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)
 
     return (Ast_Ifelse(jump_inst, a1, a2), endpoint)
 
 
-def create_split(ifaddr, paths, endpoint):
-    nxt = gph.link_out[ifaddr]
-    split = [[], []]
-    else_addr = -1
-    for p in paths:
-        if p:
-            if p[0] == nxt[BRANCH_NEXT]:
-                k = BRANCH_NEXT
-            else:
-                k = BRANCH_NEXT_JUMP
-                else_addr = nxt[BRANCH_NEXT_JUMP]
-            # idx == -1 means :
-            # - p is looping so there is no endpoint with some other paths
-            # - endpoint == -1
-            idx = index(p, endpoint)
-            if idx == -1:
-                split[k].append(p)
-            else:
-                split[k].append(p[:idx])
-    debug__("split: ", end="")
-    debug__(split)
-    debug__("else addr %x" % else_addr)
-    return split, else_addr
 
-
-def generate_ast(graph, debug):
-    global gph, dbg
+def generate_ast(graph):
+    global gph
     gph = graph
-    dbg = debug
-    paths = paths_explore(gph.entry_point_addr)
-    debug__(paths)
 
-    ast = get_ast_branch(paths)
+    ast = get_ast_branch(Paths(gph.entry_point_addr))
 
     # Process ast
+
     search_local_vars(ast)
     fuse_cmp_if(ast)
     search_canary_plt() 

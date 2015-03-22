@@ -43,6 +43,20 @@ from capstone.x86 import *
 # X86_INS_JS = 276
 
 
+dbg = False
+
+
+def debug__(obj="", end="\n"):
+    if dbg:
+        if isinstance(obj, str):
+            print(obj, end=end)
+        elif isinstance(obj, list):
+            print_list(obj)
+        elif isinstance(obj, dict):
+            print_dict(obj)
+
+
+
 # In each array nxt (from gph.link_out)
 BRANCH_NEXT = 0        # or for the if part
 BRANCH_NEXT_JUMP = 1   # or for the else part
@@ -167,6 +181,13 @@ def cond_sign_str(ty, has_cmp=False):
 
 
 
+def print_set(s, end="\n"):
+    print("{", end="")
+    for i in s:
+        print(" %x" % i, end="")
+    print(" }" + end, end="")
+
+
 def print_dict(dic, end="\n"):
     print("[")
     for i in dic:
@@ -179,10 +200,12 @@ def print_dict(dic, end="\n"):
             print_list(v)
         elif isinstance(v, dict):
             print_dict(v)
+        elif isinstance(v, set):
+            print_set(v)
         elif isinstance(v, str):
             print("%s: " % v)
         else:
-            print("0x%x" % v)
+            print("0x%x, " % v, end="")
 
     print("]" + end, end="")
 
@@ -193,13 +216,22 @@ def print_list(lst, end="\n"):
     for i in lst[:-1]:
         if isinstance(i, list):
             print_list(i, "")
-            print(", ", end="")
+            print(",\n ", end="")
+        elif isinstance(i, dict):
+            print_dict(i)
+            print(",\n ", end="")
+        elif isinstance(i, set):
+            print(i)
         else:
             print("0x%x, " % i, end="")
 
     if len(lst) > 0:
         if isinstance(lst[-1], list):
             print_list(lst[-1], "")
+        elif isinstance(lst[-1], dict):
+            print_dict(lst[-1])
+        elif isinstance(lst[-1], set):
+            print(lst[-1])
         else:
             print("0x%x" % lst[-1], end="")
 

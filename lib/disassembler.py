@@ -119,8 +119,7 @@ class Disassembler():
 
     def get_graph(self, addr):
         graph = self.__extract_func(addr)
-        graph.simplify()
-        graph.detect_loops()
+        graph.init()
         return graph
 
 

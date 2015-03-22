@@ -17,10 +17,11 @@ function main {
             and if (var1 > 19)
             # 0x400590: cmp dword ptr [rbp - 4], 9
             # 0x400594: jle 0x400562
-            and if (var1 > 9)
-            # 0x400596: cmp dword ptr [rbp - 4], 4
-            # 0x40059a: jle 0x400562
-            if (var1 > 4)  goto 0x40059c 
+            if (var1 > 9) {
+                # 0x400596: cmp dword ptr [rbp - 4], 4
+                # 0x40059a: jle 0x400562
+                if (var1 > 4)  goto 0x40059c 
+            }
         }
         # 0x400562: cmp dword ptr [rbp - 4], 0x37
         # 0x400566: jne 0x400574

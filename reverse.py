@@ -26,6 +26,7 @@ import lib.ast
 import lib.output
 import lib.colors
 import lib.binary
+import lib.paths
 from lib.utils import die, error
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
@@ -63,9 +64,10 @@ def reverse():
 
     args = parser.parse_args()
 
-    lib.colors.nocolor = args.nocolor
-    lib.output.nocomment = args.nocomment
-    lib.ast.nocomment = args.nocomment
+    lib.utils.dbg                = args.opt_debug
+    lib.colors.nocolor           = args.nocolor
+    lib.output.nocomment         = args.nocomment
+    lib.ast.nocomment            = args.nocomment
     lib.binary.MAX_STRING_RODATA = args.strsize
 
     if not os.path.exists(args.filename):
@@ -115,12 +117,13 @@ def reverse():
 
     lib.output.gph    = gph
     lib.ast.gph       = gph
+    lib.paths.gph     = gph
     lib.ast.dis       = dis
 
     if args.graph:
         gph.html_graph()
 
-    ast = generate_ast(gph, args.opt_debug)
+    ast = generate_ast(gph)
 
     if args.vim:
         base = os.path.basename(args.filename)
