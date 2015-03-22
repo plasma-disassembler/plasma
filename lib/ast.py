@@ -68,7 +68,7 @@ class Ast_IfGoto:
         try:
             c = addr_color[self.addr_jump]
             print(color("0x%x ", c) % self.addr_jump)
-        except:
+        except KeyError:
             print("0x%x " % self.addr_jump)
 
 

@@ -52,11 +52,8 @@ class ELF:
 
     def load_static_sym(self):
         symtab = self.elf.get_section_by_name(b".symtab")
-        try:
-            if symtab == None:
-                return
-        except:
-            pass
+        if symtab is None:
+            return
         for sy in symtab.iter_symbols():
             if sy.entry.st_value != 0 and sy.name != b"":
                 self.classbinary.reverse_symbols[sy.entry.st_value] = sy.name.decode()
@@ -94,12 +91,8 @@ class ELF:
 
 
     def is_rodata(self, addr):
-        # exception if rodata != None
-        try:
-            if self.rodata == None:
-                return False
-        except:
-            pass
+        if self.rodata is None:
+            return False
         start = self.rodata.header.sh_addr
         end = start + self.rodata.header.sh_size
         return  start <= addr <= end

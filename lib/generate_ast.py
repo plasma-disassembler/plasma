@@ -37,7 +37,6 @@ def loop_contains(loop_start, addr):
     return False
 
 
-
 def get_ast_ifgoto(paths, curr_loop_idx, inst):
     nxt = gph.link_out[inst.address]
 
