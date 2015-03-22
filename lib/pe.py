@@ -148,7 +148,7 @@ class PE:
         base = self.pe.OPTIONAL_HEADER.ImageBase
         start = base + self.rodata.VirtualAddress
         end = start + self.rodata.SizeOfRawData
-        return  start <= addr <= end
+        return  start <= addr < end
 
 
     def get_section(self, addr):
