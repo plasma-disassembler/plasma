@@ -95,7 +95,7 @@ class ELF:
             return False
         start = self.rodata.header.sh_addr
         end = start + self.rodata.header.sh_size
-        return  start <= addr <= end
+        return  start <= addr < end
 
 
     def __find_section(self, addr):
