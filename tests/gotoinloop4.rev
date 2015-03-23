@@ -1,0 +1,43 @@
+function main {
+    int32_t var1
+    int32_t var2
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    # 0x40050e: cmp dword ptr [rbp - 4], 1
+    # 0x400512: jne 0x400520
+    if (var1 == 1) {
+        0x400514: edi = 0x400604 "1" # mov edi, 0x400604
+        0x400519: call 0x4003e0 <puts@plt>
+        0x40051e: jmp 0x40052c
+    }
+    0x400520: edi = 0x400606 "2" # mov edi, 0x400606
+    0x400525: call 0x4003e0 <puts@plt>
+    0x40052a: jmp 0x400552
+    infiniteloop {
+        # 0x400552: cmp dword ptr [rbp - 8], 5
+        # 0x400556: jne 0x400564
+        if (var2 == 5) {
+            0x400558: edi = 0x400611 "5" # mov edi, 0x400611
+            0x40055d: call 0x4003e0 <puts@plt>
+            0x400562: jmp 0x40056e
+        } else {
+            0x400564: edi = 0x400613 "6" # mov edi, 0x400613
+            0x400569: call 0x4003e0 <puts@plt>
+        }
+        0x40056e: var1 += 1 # add dword ptr [rbp - 4], 1
+        0x400572: jmp 0x40052c
+        0x40052c: edi = 0x400608 "loop" # mov edi, 0x400608
+        0x400531: call 0x4003e0 <puts@plt>
+        # 0x400536: cmp dword ptr [rbp - 8], 6
+        # 0x40053a: jne 0x400548
+        if (var2 == 6) {
+            0x40053c: edi = 0x40060d "3" # mov edi, 0x40060d
+            0x400541: call 0x4003e0 <puts@plt>
+            0x400546: jmp 0x400552
+        } else {
+            0x400548: edi = 0x40060f "4" # mov edi, 0x40060f
+            0x40054d: call 0x4003e0 <puts@plt>
+        }
+    }
+}

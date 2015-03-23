@@ -17,9 +17,6 @@
 #
 
 
-# WORK IN PROGRESS
-
-
 from lib.utils import *
 
 gph = None
@@ -88,21 +85,17 @@ class Paths():
         return True
 
 
-    def __is_in_curr_loop(self, loop, cond):
+    def __is_in_curr_loop(self, loop):
         # Assume that current paths is a loop
 
         curr_loop = self.first()
 
         if loop[0] != curr_loop:
-            if cond:
-                print("    false 1")
             return False
 
         # Check if all address of loop are in paths
         for addr in loop:
             if addr not in self:
-                if cond:
-                    print("    false 2")
                 return False
 
         # Check if the loop is in the right order
@@ -112,41 +105,19 @@ class Paths():
                 idx = index(p, addr)
                 if idx == -1:
                     break
-                    last_idx = 99999999
                 elif idx < last_idx:
-                    if cond:
-                        print("    false 3")
                     return False
                 else:
-                  last_idx = idx
+                    last_idx = idx
 
-        if cond:
-            print("    true 1")
         return True
 
 
     def get_loops_idx(self):
-        # TODO cleanup
         idx = []
-        cond = self.first() == 0x400530 and 0
-
-        if cond:
-            print_list(self.paths)
-            print_dict(self.looping)
-            print()
-
         for k, l in enumerate(gph.loops):
-            if cond:
-                print("check  %d  " % k, end="")
-                print_list(l)
-            if self.__is_in_curr_loop(l, cond):
+            if self.__is_in_curr_loop(l):
                 idx.append(k)
-
-        if cond:
-            print()
-            print(idx)
-            sys.exit(0)
-
         return idx
 
 
@@ -158,18 +129,12 @@ class Paths():
 
 
     def __is_looping(self, path_idx, curr_loop_idx):
-        # TODO
-        # print(" ####   %d   " % path_idx, end="")
-        # print_list(self.paths[path_idx])
         if path_idx not in self.looping:
-            # print(" ####   false 1")
             return False
         l_idx = self.looping[path_idx]
         # If is a loop but on the current, return False and  keep the path
         if l_idx not in curr_loop_idx :
-            # print(" ####   true 1")
             return True
-        # print(" ####   false 2")
         return False
 
 
@@ -181,11 +146,13 @@ class Paths():
             
         l_idx = self.looping[path_idx]
 
-        # if l_idx in gph.marked and l_idx in gph.equiv and gph.equiv[l_idx] not in curr_loop_idx and addr == gph.loops[l_idx][0]:
-            # return False, True
-
         if addr != gph.loops[l_idx][0]:
             return False, False
+
+        if l_idx in gph.marked and \
+                l_idx in gph.equiv and \
+                gph.equiv[l_idx] not in curr_loop_idx:
+            return False, True
 
         return True, False
 
@@ -291,8 +258,6 @@ class Paths():
                 nxt = gph.link_out[addr0]
                 c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                 c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
-                # TODO
-                # debug__("0_____ %x  %x  %d  %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
                 if c1 and c2:
                     return last, False, True, False
 
@@ -318,8 +283,6 @@ class Paths():
                     nxt = gph.link_out[addr]
                     c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                     c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
-                    # TODO
-                    # debug__("1_____ %x  %x  %d  %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
                     if c1 and c2:
                         return last, False, True, False
 
@@ -357,7 +320,6 @@ class Paths():
 
         all_looping_if = self.are_all_looping(else_addr, False, curr_loop_idx)
         all_looping_else = self.are_all_looping(else_addr, True, curr_loop_idx)
-        debug__("all looping : if %d   else %d" % (all_looping_if, all_looping_else))
 
         if all_looping_if or all_looping_else:
             return else_addr
@@ -373,10 +335,6 @@ class Paths():
             i += 1
 
         # Compare
-
-        debug__("refpath %d" % refpath)
-        debug__(self.paths[refpath])
-        debug__(curr_loop_idx)
 
         found = False
         k = 0
@@ -418,14 +376,10 @@ class Paths():
                     split[br].add(p, self.__get_loop_idx(k))
                 else:
                     split[br].add(p[:idx])
-        # debug__("split: ", end="")
-        # debug__(split)
-        debug__("else addr %x" % else_addr)
         return split, else_addr
 
 
     def goto_addr(self, addr):
-        debug__("goto endpoint %x" % addr)
         i = 0
         while i < len(self.paths):
             idx = index(self.paths[i], addr)
@@ -452,19 +406,10 @@ class Paths():
     def __keep_path(self, curr_loop_idx, path, path_idx):
         last = path[-1]
 
-        # debug__("curr %x   last  %x     " % (get_loop_start(curr_loop_idx), last), end="")
-        # debug__(path)
-
-        # if path_idx in self.looping:
-            # l_idx = self.looping[path_idx]
-            # if l_idx in curr_loop_idx or 
-
         if self.loop_contains(curr_loop_idx, last):
-            debug__("     true 1")
             return True
 
         if path_idx not in self.looping:
-            debug__("     false 1")
             return False
 
         l_idx = self.looping[path_idx]
@@ -610,12 +555,5 @@ class Paths():
             new_endloop.append(grp_endloop[i])
 
         grp_endloop = new_endloop
-
-        # TODO
-        debug__("loop paths: ", end="")
-        loop_paths.debug()
-        debug__("endloop: ", end="")
-        for el in grp_endloop:
-            el.debug()
 
         return loop_paths, grp_endloop

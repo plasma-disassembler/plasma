@@ -24,9 +24,6 @@ from lib.utils import *
 from lib.paths import Paths, loop_contains
 
 
-# WORK IN PROGRESS
-
-
 class Graph:
     def __init__(self, dis, entry_point_addr):
         # Each node contains a block (list) of instructions.
@@ -47,11 +44,12 @@ class Graph:
         self.loops_set = []
         self.nested_loops_idx = {}
         self.direct_nested_idx = {}
-
         self.paths = None
 
+        # If a loop is "marked" it means that there is an other equivalent
+        # loop, and this must not be interpreted during the process. Generally
+        # it will print a jmp. This can occurs if a goto jump inside a loop.
         self.marked = set({})
-        self.start_addr = {}
 
 
     def add_node(self, inst):
@@ -87,8 +85,8 @@ class Graph:
     def init(self):
         self.__simplify()
         self.__explore(self.entry_point_addr)
+        self.__search_equivalent_loops()
         self.__compute_nested()
-        # self.__search_equivalent_loops()
 
 
     # Concat instructions in single block
@@ -218,7 +216,7 @@ class Graph:
             new_paths = []
             moved = False
 
-            # - Looping branchs will be deleted
+            # - Looping branchs will be detected
             # - Create a new branch if we are on cond jump
             #     only if it doesn't go outside the current loop
             for k, p in enumerate(self.paths.paths):
@@ -238,19 +236,25 @@ class Graph:
 
 
     def __compute_nested(self):
+        for k in range(len(self.loops)):
+            self.nested_loops_idx[k] = set({})
+            self.direct_nested_idx[k] = set({})
+
         has_parent_loop_idx = set({})
-        
+
         for k, l in enumerate(self.loops):
             self.nested_loops_idx[k] = set({})
             self.direct_nested_idx[k] = set({})
 
         for k1, l1 in enumerate(self.loops):
+            if k1 in self.marked:
+                continue
             for addr in l1[1:]:
-            
                 # check if addr is a beginning of another loop
                 # found = -1
                 for k2, l2 in enumerate(self.loops):
-                    if self.loops_set[k1] == self.loops_set[k2]:
+                    if k2 in self.marked or \
+                            self.loops_set[k1] == self.loops_set[k2]:
                         continue
                     if l2[0] == addr:
                         self.direct_nested_idx[k1].add(k2) 
@@ -280,85 +284,48 @@ class Graph:
 
 
     def __search_equivalent_loops(self):
-        # WIP
 
-        # Sort by loop levels (the first level are the most nested loops)
-        levels_idx = {}
-        lvl = 0
-        moved = True
-        while moved:
-            levels_idx[lvl] = set({})
-            moved = False
-            for i in self.nested_loops_idx:
-                if len(self.nested_loops_idx[i]) == lvl:
-                    levels_idx[lvl].add(i)
-                    moved = True
-            lvl += 1
+        # TODO : temporary algorithm while waiting a better one.
+        #
+        # Can occurs when a goto jumps into a loop. This will generate more
+        # loops. For example :
+        #
+        # if {
+        #    goto next
+        # }
+        # 
+        # loop {
+        #    next:
+        #    ...
+        # }
+        #
+        # Two loops are detected here, but they are equivalents, one is just
+        # shifted. If each number is an address we can have for example these
+        # two loops :
+        # [1, 2, 3, 4, 5]
+        # [2, 3, 4, 5, 6]
+        #
+        #
+        # So to keep only the non-shifted loop, we keep the loop which have
+        # the smallest address at the beginning (here 1).
+        #
+        # In fact it's false, because sometimes we can have this situation
+        # For avoiding these we had a jmp for to be sure (see tests/gotoinloop3)
+        #
 
-        print()
-        print()
-        print_dict(self.nested_loops_idx)
-        print()
-        print_dict(self.direct_nested_idx)
-        print()
-        print(self.marked)
-        print()
-        print(levels_idx)
-        print()
-        print_list(self.loops)
-        print("---------")
-        print()
 
-
+        self.equiv = {}
 
         for k1, l1 in enumerate(self.loops_set):
             k2 = k1 + 1
             while k2 < len(self.loops_set):
                 l2 = self.loops_set[k2]
-
                 if l1 == l2:
-                    pass
-
+                    k = k1 if self.loops[k1][0] < self.loops[k2][0] else k2
+                    self.marked.add(k)
+                    self.equiv[k1] = k2
+                    self.equiv[k2] = k1
                 k2 += 1
-
-
-        sys.exit(0)
-        return
-
-
-        self.equiv = {}
-        equiv_uniq = {}
-
-
-        for k1 in range(len(self.loops)):
-            if not self.__contains_nested(k1):
-                continue
-
-            k2 = k1 + 1
-            while k2 < len(self.loops):
-                if self.__contains_nested(k2):
-                    eq = self.__are_equiv(k1, k2)
-                    if eq:
-                        self.equiv[k1] = k2
-                        self.equiv[k2] = k1
-                        equiv_uniq[k1] = k2
-                k2 += 1
-
-
-        for k1, k2 in equiv_uniq.items():
-            print("%d  %d" % (k1, k2))
-            c1 = self.__has_go_out(k1)
-            c2 = self.__has_go_out(k2)
-
-            if c1 ^ c2:
-                if c1:
-                    self.__mark(k2)
-                else:
-                    self.__mark(k1)
-
-        return
-
-
 
 
     def __mark(self, k):
@@ -368,38 +335,6 @@ class Graph:
             print("mark %d " % i)
             self.marked.add(i)
        
-
-
-    # Check if the loop k has a jump which go outside
-    def __has_go_out(self, k):
-        start = self.loops[k][0]
-        s = self.__get_loop_set(k)
-
-        for ad in self.loops[k]:
-            if is_cond_jump(self.nodes[ad][0]):
-                nxt = self.link_out[ad]
-
-                c1 = self.loop_contains(start, nxt[BRANCH_NEXT]) or \
-                     nxt[BRANCH_NEXT] in s
-
-                c2 = self.loop_contains(start, nxt[BRANCH_NEXT_JUMP]) or \
-                     nxt[BRANCH_NEXT_JUMP] in s
-
-                print("---> %x   %x   %d   %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
-                if not c1 or not c2:
-                    return True
-        return False
-
-
-
-    def loop_contains(self, loop_start, addr):
-        if loop_start == -1:
-            return True
-        for l in self.loops:
-            if l[0] == loop_start and addr in l:
-                return True
-        return False
-
 
 
     def __get_loop_set(self, k):

@@ -89,13 +89,8 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
         if paths.rm_empty_paths():
             break
 
-        ("\nbranch %x     loop=%x" % (paths.first(), get_loop_start(curr_loop_idx)))
-        debug__("nb paths %d" % len(paths.paths))
-        paths.debug()
-
         # Stop on the first split or is_loop
         until, is_loop, is_ifelse, force_stop = paths.head_last_common(curr_loop_idx)
-        debug__("until %x   loop=%d   ifelse=%d  stop=%d" % (until, is_loop, is_ifelse, force_stop))
 
         # Add code to the branch, and update paths
         # until == -1 if there is no common point at the begining
@@ -118,6 +113,8 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
             break
 
         if force_stop:
+            if not is_uncond_jump(gph.nodes[last][0]):
+                ast.add(Ast_Jmp(gph.link_out[last][BRANCH_NEXT]))
             break
 
         if is_loop:
@@ -155,8 +152,6 @@ def paths_is_infinite(paths):
 
 
 def get_ast_loop(paths, last_loop, last_else, endif):
-    debug__("\nloop %x" % paths.first())
-    paths.debug()
     ast = Ast_Loop()
     curr_loop_idx = paths.get_loops_idx()
     first_blk = gph.nodes[get_loop_start(curr_loop_idx)]
@@ -185,7 +180,6 @@ def get_ast_loop(paths, last_loop, last_else, endif):
         i = 1
         for el in endloop[:-1]:
             epilog.add(Ast_Comment("endloop " + str(i)))
-            debug__("\nendloop " + str(i))
             epilog.add(get_ast_branch(el, last_loop, last_else))
             i += 1
         epilog.add(Ast_Comment("endloop " + str(i)))
@@ -196,11 +190,8 @@ def get_ast_loop(paths, last_loop, last_else, endif):
 
 
 def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
-    debug__("\nifelse %x" % paths.first())
-    debug__("last else %x" % last_else)
     addr = paths.pop()
     paths.rm_empty_paths()
-    paths.debug()
     jump_inst = gph.nodes[addr][0]
     nxt = gph.link_out[addr]
 
@@ -211,7 +202,6 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # is after. When we create_split, only address inside current
     # if and else are kept.
     endpoint = paths.first_common(curr_loop_idx, else_addr)
-    debug__("endpoint %x" % endpoint)
     split, else_addr = paths.split(addr, endpoint)
 
     # is_prev_and_if : better output (tests/if5)
@@ -285,15 +275,11 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
             # TODO not sure about endpoint == -1
             # tests/or4
             if if_addr == last_else and endpoint == -1:
-                debug__("andif 1   %x   %x" % (if_addr, last_else))
                 return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
-
-            # print("---------- addr=%x    else=%x   last_else=%x   endif=%x  endpoint=%x" % (jump_inst.address, else_addr, last_else, endif, endpoint))
 
             # if else_addr == -1 or else_addr == last_else:
             if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
                     last_else == endif and endif == endpoint and endpoint != -1:
-                debug__("andif 2   %x   %x" % (else_addr, last_else))
                 endpoint = gph.link_out[addr][BRANCH_NEXT]
                 return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
 

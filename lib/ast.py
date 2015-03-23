@@ -142,6 +142,18 @@ class Ast_Ifelse:
         print_tabbed("}", tab)
 
 
+class Ast_Jmp:
+    def __init__(self, addr):
+        self.addr_jump = addr
+
+    def print(self, tab=0):
+        print_tabbed_no_end("jmp ", tab)
+        try:
+            print(color("0x%x" % self.addr_jump, addr_color[self.addr_jump]))
+        except Exception:
+            print("0x%x" % self.addr_jump)
+
+
 class Ast_Loop:
     def __init__(self):
         self.branch = Ast_Branch()
@@ -192,7 +204,7 @@ def assign_colors(ast):
             else: # ast
                 assign_colors(n)
 
-    elif isinstance(ast, Ast_IfGoto):
+    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Jmp):
         pick_color(ast.addr_jump)
 
     elif isinstance(ast, Ast_Ifelse):
