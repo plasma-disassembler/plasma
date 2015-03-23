@@ -21,7 +21,7 @@ import os
 import os.path
 import sys
 from lib.utils import *
-from lib.paths import loop_contains
+from lib.paths import Paths, loop_contains
 
 
 # WORK IN PROGRESS
@@ -47,6 +47,11 @@ class Graph:
         self.loops_set = []
         self.nested_loops_idx = {}
         self.direct_nested_idx = {}
+
+        self.paths = None
+
+        self.marked = set({})
+        self.start_addr = {}
 
 
     def add_node(self, inst):
@@ -81,11 +86,9 @@ class Graph:
 
     def init(self):
         self.__simplify()
-        self.__detect_loops()
+        self.__explore(self.entry_point_addr)
         self.__compute_nested()
-        # TODO
         # self.__search_equivalent_loops()
-
 
 
     # Concat instructions in single block
@@ -172,31 +175,66 @@ class Graph:
 
         output.write("}\";\n")
         output.write("inputGraph.innerHTML = mygraph;")
-        output.write("tryDraw();")
+        output.o
+        write("tryDraw();")
 
 
-    def __detect_loops(self):
-        def rec_explore(path, curr):
-            path = list(path) # copy
+    def __explore(self, start):
+        def save_step(k, addr, create):
+            nonlocal new_paths, moved
 
-            while 1:
-                idx = index(path, curr.address)
-                if idx != -1:
-                    lp = path[idx:]
-                    if lp not in self.loops:
-                        self.loops.append(lp)
-                        self.loops_set.append(set(lp))
-                    return
-                if curr.address not in self.link_out:
-                    return
+            try:
+                # This path is looping if index doesn't fail
 
-                path.append(curr.address)
-                nxt = self.link_out[curr.address]
-                if len(nxt) == 2:
-                    rec_explore(path, self.nodes[nxt[BRANCH_NEXT_JUMP]][0])
-                curr = self.nodes[nxt[BRANCH_NEXT]][0]
+                idx_node = self.paths.paths[k].index(addr)
 
-        rec_explore([], self.nodes[self.entry_point_addr][0])
+                l = self.paths.paths[k][idx_node:]
+                l_idx = index(self.loops, l)
+
+                if l_idx == -1:
+                    l_idx = len(self.loops)
+                    self.loops.append(l)
+                    self.loops_set.append(set(l))
+
+                if create:
+                    idx_new_path = len(self.paths.paths) + len(new_paths)
+                    self.paths.looping[idx_new_path] = l_idx
+                    new_paths.append(list(self.paths.paths[k]))
+                else:
+                    self.paths.looping[k] = l_idx
+
+            except ValueError:
+                moved = True
+                if create:
+                    new_paths.append(self.paths.paths[k] + [addr])
+                else:
+                    self.paths.paths[k].append(addr)
+
+        moved = True
+        self.paths = Paths()
+        self.paths.paths = [[start]]
+
+        while moved:
+            new_paths = []
+            moved = False
+
+            # - Looping branchs will be deleted
+            # - Create a new branch if we are on cond jump
+            #     only if it doesn't go outside the current loop
+            for k, p in enumerate(self.paths.paths):
+                last = p[-1]
+                inst = self.dis.code[last]
+
+                # The branch is finish or is looping
+                if k in self.paths.looping or last not in self.link_out:
+                    continue
+
+                nxt = self.link_out[last]
+                if is_cond_jump(inst):
+                    save_step(k, nxt[BRANCH_NEXT_JUMP], True)
+                save_step(k, nxt[BRANCH_NEXT], False)
+
+            self.paths.paths += new_paths
 
 
     def __compute_nested(self):
@@ -212,46 +250,18 @@ class Graph:
                 # check if addr is a beginning of another loop
                 # found = -1
                 for k2, l2 in enumerate(self.loops):
-                    # TODO optimize
-                    if set(l1) == set(l2):
+                    if self.loops_set[k1] == self.loops_set[k2]:
                         continue
                     if l2[0] == addr:
-                        # found = k2
-
-
                         self.direct_nested_idx[k1].add(k2) 
                         self.nested_loops_idx[k1].add(k2) 
                         has_parent_loop_idx.add(k2)
-                        # break
-
-                    # if found != -1:
-                        # don't dupplicate addr in the list
-                        # if addr not in self.nested_loops[l1[0]]:
-                            # self.nested_loops[l1[0]].append(addr)
-                            # has_parent_loop[addr] = True
-
-
-
 
         # Warning : sometimes a sub-nested-loop didn't appear in a
         # parent-parent-loop. So we search for new nested.
         # See tests/nestedloop5 :
         # the path of the third loop is not in the first one
 
-        # while 1:
-            # moved = False
-            # for parent in self.nested_loops:
-                # l_par = self.nested_loops[parent]
-                # for nest in l_par:
-                    # l_nest = self.nested_loops[nest]
-                    # for subnest in l_nest:
-                        # if subnest not in l_par:
-                            # l_par.append(subnest)
-                            # moved = True
-            # if not moved:
-                # break
-
-        # idx
         while 1:
             moved = False
             for parent in self.nested_loops_idx:
@@ -265,38 +275,59 @@ class Graph:
             if not moved:
                 break
 
-
-        # "main loop" : not really a loop, but contains all the loops
-        # self.nested_loops[-1] = []
-        # for l in self.loops:
-            # if l[0] not in self.nested_loops[-1]:
-                # self.nested_loops[-1].append(l[0])
-
-
-
         self.direct_nested_idx[-1] = set(range(len(self.loops))) - has_parent_loop_idx
         self.nested_loops_idx[-1] = set(range(len(self.loops)))
-        # self.nested_loops_idx[-1] = list(set(range(len(self.loops))))
-
 
 
     def __search_equivalent_loops(self):
+        # WIP
 
         # Sort by loop levels (the first level are the most nested loops)
-        # levels_idx = {}
-        # lvl = 0
-        # moved = True
-        # while moved:
-            # levels_idx[lvl] = set({})
-            # moved = False
-            # for i in self.nested_loops_idx:
-                # if len(self.nested_loops_idx[i]) == lvl:
-                    # levels_idx[lvl].add(i)
-                    # moved = True
-            # lvl += 1
+        levels_idx = {}
+        lvl = 0
+        moved = True
+        while moved:
+            levels_idx[lvl] = set({})
+            moved = False
+            for i in self.nested_loops_idx:
+                if len(self.nested_loops_idx[i]) == lvl:
+                    levels_idx[lvl].add(i)
+                    moved = True
+            lvl += 1
+
+        print()
+        print()
+        print_dict(self.nested_loops_idx)
+        print()
+        print_dict(self.direct_nested_idx)
+        print()
+        print(self.marked)
+        print()
+        print(levels_idx)
+        print()
+        print_list(self.loops)
+        print("---------")
+        print()
 
 
-        equiv = {}
+
+        for k1, l1 in enumerate(self.loops_set):
+            k2 = k1 + 1
+            while k2 < len(self.loops_set):
+                l2 = self.loops_set[k2]
+
+                if l1 == l2:
+                    pass
+
+                k2 += 1
+
+
+        sys.exit(0)
+        return
+
+
+        self.equiv = {}
+        equiv_uniq = {}
 
 
         for k1 in range(len(self.loops)):
@@ -308,71 +339,52 @@ class Graph:
                 if self.__contains_nested(k2):
                     eq = self.__are_equiv(k1, k2)
                     if eq:
-                        equiv[k1] = k2
+                        self.equiv[k1] = k2
+                        self.equiv[k2] = k1
+                        equiv_uniq[k1] = k2
                 k2 += 1
 
 
-        for k1, k2 in equiv.items():
+        for k1, k2 in equiv_uniq.items():
             print("%d  %d" % (k1, k2))
-            
+            c1 = self.__has_go_out(k1)
+            c2 = self.__has_go_out(k2)
 
-
-            
-        print(self.__has_go_out(3))
-        
-
-
-
-
-        print()
-        print()
-        print_dict(self.nested_loops_idx)
-        print()
-        print_dict(self.direct_nested_idx)
-        print()
-        print_list(self.loops)
-        print("---------")
-        print()
-
-
-        # sys.exit(0)
+            if c1 ^ c2:
+                if c1:
+                    self.__mark(k2)
+                else:
+                    self.__mark(k1)
 
         return
 
 
 
 
-        
-
-
-
-
-
-        # for k1, l1 in enumerate(self.loops):
-            # for k2, l2 in enumerate(self.loops):
-                # if k1 == k2:
-                    # continue
-                # if set(l1) == set(l2):
-                    # keep the loop which have less nested loops
-                    # sz1 = len(self.nested_loops_idx[k1])
-                    # sz2 = len(self.nested_loops_idx[k2])
-                    # print("%d %d" % (k1, k2))
-                    # if sz1 > sz2:
-                        # self.marked.add(k1)
-                    # elif sz1 > sz2:
-                        # self.marked.add(k2)
-
+    def __mark(self, k):
+        print("mark %d " % k)
+        self.marked.add(k)
+        for i in self.nested_loops_idx[k]:
+            print("mark %d " % i)
+            self.marked.add(i)
+       
 
 
     # Check if the loop k has a jump which go outside
     def __has_go_out(self, k):
         start = self.loops[k][0]
-        print("%x" % start)
+        s = self.__get_loop_set(k)
+
         for ad in self.loops[k]:
             if is_cond_jump(self.nodes[ad][0]):
                 nxt = self.link_out[ad]
-                c1 = self.loop_contains(start, nxt[BRANCH_NEXT])
-                c2 = self.loop_contains(start, nxt[BRANCH_NEXT_JUMP])
+
+                c1 = self.loop_contains(start, nxt[BRANCH_NEXT]) or \
+                     nxt[BRANCH_NEXT] in s
+
+                c2 = self.loop_contains(start, nxt[BRANCH_NEXT_JUMP]) or \
+                     nxt[BRANCH_NEXT_JUMP] in s
+
                 print("---> %x   %x   %d   %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
                 if not c1 or not c2:
                     return True
@@ -397,7 +409,6 @@ class Graph:
         return s
 
 
-
     def __contains_nested(self, k):
         return len(self.nested_loops_idx[k]) != 0
 
@@ -406,10 +417,3 @@ class Graph:
         s1 = self.__get_loop_set(k1)
         s2 = self.__get_loop_set(k2)
         return s1 == s2
-        
-
-
-
-
-
-

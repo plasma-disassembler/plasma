@@ -25,18 +25,11 @@ from lib.utils import *
 gph = None
 
 
-# TODO remove
-last_addr_loop = {}
-
-
-
-
 
 def get_loop_start(curr_loop_idx):
     if not curr_loop_idx:
         return -1
     return gph.loops[curr_loop_idx[0]][0]
-
 
 
 # TODO remove
@@ -75,16 +68,10 @@ def loop_exists(addr):
 
 
 
-
-
 class Paths():
-    def __init__(self, start=None):
+    def __init__(self):
         self.looping = {}  # idx_path -> idx_loop
-        if start is None:
-            self.paths = []
-        else:
-            self.paths = [[start]]
-            self.__explore()
+        self.paths = []
 
 
     def __contains__(self, addr):
@@ -189,121 +176,18 @@ class Paths():
     def __enter_new_loop(self, curr_loop_idx, path_idx, k):
         addr = self.paths[path_idx][k]
 
-        # TODO 
-        cond = addr == 0x40053a and 0
+        if path_idx not in self.looping:
+            return False, False
+            
+        l_idx = self.looping[path_idx]
 
-        if cond:
-            print("curr path:  ", end="")
-            print(path_idx)
-            print("paths:  ", end="")
-            print_list(self.paths)
-            print("curr loop idx %x:  " % get_loop_start(curr_loop_idx), end="")
-            print_list(curr_loop_idx)
-            print("looping:  ", end="")
-            print_dict(self.looping)
+        # if l_idx in gph.marked and l_idx in gph.equiv and gph.equiv[l_idx] not in curr_loop_idx and addr == gph.loops[l_idx][0]:
+            # return False, True
 
-        # We search a new loop-path
+        if addr != gph.loops[l_idx][0]:
+            return False, False
 
-        # if not loop_exists(addr) or \
-                # path_idx not in self.looping:
-            # return False
-
-        if path_idx not in self.looping or \
-                addr != gph.loops[self.looping[path_idx]][0]:
-            if cond:
-                print("    false 1\n")
-                # sys.exit(0)
-            return False
-
-        return True
-
-        # ????????????
-        # TODO optimize
-        l_set = set(gph.loops[self.looping[path_idx]])
-
-        for i in curr_loop_idx:
-            if set(gph.loops[i]) == l_set:
-                if cond:
-                    print("    false 2\n")
-                    # sys.exit(0)
-
-                return False
-
-
-        if cond:
-            print("    true\n")
-            # sys.exit(0)
-        return True
-
-        ######
-
-
-        if path_idx not in self.looping or \
-                addr != gph.loops[self.looping[path_idx]][0]:
-            return False
-
-        return True
-
-
-
-        print("         ok")
-
-        l = set(gph.loops[self.looping[path_idx]])
-
-        for i in loop_exists_idx(curr_loop_idx):
-            if set(gph.loops[i]) == l:
-                print("equiv   %x   %d" % (curr_loop_idx, path_idx))
-                print_list(gph.loops[i])
-                print()
-                return False
-
-        return True
-
-
-
-
-        last = self.paths[path_idx][-1]
-
-        # if path_idx not in self.looping:
-            # return False
-
-        # TODO ???????????????????????
-        if last not in last_addr_loop:
-            return False
-
-        # if last not in gph.link_out or \
-                # last not in last_addr_loop:
-            # debug__("false 1")
-            # return False
-
-        for goto in last_addr_loop[last]:
-            if goto == curr_loop_idx:
-                return False
-
-
-    # print("%x   " % last, end="")
-    # print_list(last_addr_loop[last])
-
-    # nxt = gph.link_out[last]
-
-    # if nxt[BRANCH_NEXT] == curr_loop_idx:
-        # debug__("false 3")
-        # return False
-# 
-    # if not is_in_paths(paths, nxt[BRANCH_NEXT]):
-        # return False
-
-    # if len(nxt) == 2:
-        # if nxt[BRANCH_NEXT_JUMP] == curr_loop_idx:
-            # debug__("false 4")
-            # return False
-
-        # if not is_in_paths(paths, nxt[BRANCH_NEXT_JUMP]):
-            # return False
-    # debug__("true")
-    # return True
-
-        return True
+        return True, False
 
 
     def are_all_looping(self, start, check_equal, curr_loop_idx):
@@ -334,16 +218,6 @@ class Paths():
         return self.looping.get(k, -1)
 
 
-    def __search_loop(self, p):
-        i = 0
-        for k, l in enumerate(gph.loops):
-            if p == l:
-                return i
-                break
-            i += 1
-        return -1
-
-            
     def pop(self):
         # Assume that all paths pop the same value
         for p in self.paths:
@@ -386,62 +260,6 @@ class Paths():
         return idx
 
 
-    def __explore(self):
-        def __save_step(k, addr, create):
-            nonlocal new_paths, moved
-            global last_addr_loop
-
-            try:
-                # This path is looping if index doesn't fail
-
-                idx_node = self.paths[k].index(addr)
-                idx_loop = self.__search_loop(self.paths[k][idx_node:])
-
-                lst = self.paths[k][-1]
-                if lst not in last_addr_loop:
-                    last_addr_loop[lst] = [addr]
-                else:
-                    last_addr_loop[lst].append(addr)
-                
-                if create:
-                    idx_new_path = len(self.paths) + len(new_paths)
-                    self.looping[idx_new_path] = idx_loop
-                    new_paths.append(list(self.paths[k]))
-                else:
-                    self.looping[k] = idx_loop
-
-            except ValueError:
-                moved = True
-                if create:
-                    new_paths.append(self.paths[k] + [addr])
-                else:
-                    self.paths[k].append(addr)
-
-        moved = True
-
-        while moved:
-            new_paths = []
-            moved = False
-
-            # - Looping branchs will be deleted
-            # - Create a new branch if we are on cond jump
-            #     only if it doesn't go outside the current loop
-            for k, p in enumerate(self.paths):
-                last = p[-1]
-                inst = gph.dis.code[last]
-
-                # The branch is finish or is looping
-                if k in self.looping or last not in gph.link_out:
-                    continue
-
-                nxt = gph.link_out[last]
-                if is_cond_jump(inst):
-                    __save_step(k, nxt[BRANCH_NEXT_JUMP], True)
-                __save_step(k, nxt[BRANCH_NEXT], False)
-
-            self.paths += new_paths
-
-
     # The second value returned indicates if we have stop on a loop.
     # Stop on :
     # - first difference (ifelse), but not on jumps which are 
@@ -464,8 +282,9 @@ class Paths():
 
             addr0 = self.paths[refpath][k]
 
-            if self.__enter_new_loop(curr_loop_idx, refpath, k):
-                return last, True, False
+            is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, k)
+            if is_loop or force_stop:
+                return last, is_loop, False, force_stop
 
             # Check addr0
             if is_cond_jump(gph.nodes[addr0][0]):
@@ -475,7 +294,7 @@ class Paths():
                 # TODO
                 # debug__("0_____ %x  %x  %d  %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
                 if c1 and c2:
-                    return last, False, True
+                    return last, False, True, False
 
 
             # Compare with other paths
@@ -486,12 +305,14 @@ class Paths():
                     continue
 
                 if index(self.paths[i], addr0) == -1:
-                    return last, False, False
+                    return last, False, False, False
 
                 addr = self.paths[i][k]
 
-                if self.__enter_new_loop(curr_loop_idx, i, k):
-                    return last, True, False
+                is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, i, k)
+                if is_loop or force_stop:
+                    return last, is_loop, False, force_stop
+
 
                 if is_cond_jump(gph.nodes[addr][0]):
                     nxt = gph.link_out[addr]
@@ -500,7 +321,7 @@ class Paths():
                     # TODO
                     # debug__("1_____ %x  %x  %d  %d" % (nxt[BRANCH_NEXT], nxt[BRANCH_NEXT_JUMP], c1, c2))
                     if c1 and c2:
-                        return last, False, True
+                        return last, False, True, False
 
                 i += 1
 
@@ -510,9 +331,9 @@ class Paths():
         # We have to test here, because we can stop before with a loop
         # or a ifelse.
         if len(self.paths) == 1:
-            return self.paths[0][-1], False, False
+            return self.paths[0][-1], False, False, False
 
-        return last, False, False
+        return last, False, False, False
 
 
     def first_common(self, curr_loop_idx, else_addr):
@@ -623,44 +444,6 @@ class Paths():
             if addr in gph.loops[i]:
                 return True
         return False
-        # TODO loop on idx
-        # search addr
-
-
-
-
-        return loop_contains(get_loop_start(loop_start_idx), addr)
-
-        # Search every loops which start with curr_loop_idx.
-        #
-        # Warning: sometimes two loop-paths start with the same value
-        # but they are not the same loop. It can occurs when a jmp
-        # go inside a loop (look tests/gotoinloop*)
-        #
-
-        if not loop_start_idx:
-            return True
-
-        debug__()
-        debug__("test loop_contains   %x" % addr)
-        self.debug()
-
-        for l in gph.loops:
-            if l[0] == loop_start_idx:
-                debug__(l)
-                try:
-                    idx = l.index(addr)
-                    debug__("   found")
-                    return True
-                    # if self.contains_list(l[idx:]):
-                        # debug__("   true")
-                        # return True
-                except:
-                    debug__("   nop")
-                    pass
-
-        debug__("   false")
-        return False
                     
 
     # For a loop : check if the path need to be kept (the loop 
@@ -694,71 +477,6 @@ class Paths():
                 return True
 
         return False
-
-
-        l = gph.loops[l_idx]
-
-        # Here s != -1
-        s = get_loop_start(curr_loop_idx)
-        if l[0] == s or l[0] in gph.nested_loops[s]:
-            debug__("     true 2")
-            return True
-        
-        debug__("     false 2")
-        return False
-
-
-        ########################################################
-
-
-        if last not in last_addr_loop:
-            # debug__("     false 2")
-            return False
-
-
-
-        gotos = last_addr_loop[last]
-
-        # debug__("gotos   ", end="")
-        # debug__(gotos)
-
-        for g in gotos:
-            if g == curr_loop_idx or g in gph.nested_loops[curr_loop_idx]:
-                # debug__("     true 2")
-                return True
-
-        # debug__("     false 3")
-        return False
-
-        #########################################
-        #########################################
-        #########################################
-        #########################################
-
-        nxt = gph.link_out[last]
-
-        # may be a nested or current loop
-        n = nxt[BRANCH_NEXT]
-        print("%x      " % n, end="")
-        # print_list(gph.nested_loops[curr_loop_idx])
-        if n == curr_loop_idx or n in gph.nested_loops[curr_loop_idx] or \
-              loop_contains(curr_loop_idx, last):
-            print("true 1")
-            return True
-
-        if len(nxt) == 1:
-            return False
-
-        n = nxt[BRANCH_NEXT_JUMP]
-        print("%x" % n)
-        if n == curr_loop_idx or n in gph.nested_loops[curr_loop_idx] or \
-                loop_contains(curr_loop_idx, last):
-            print("true 2")
-            return True
-
-        print("false")
-        return False
-
 
 
     # Returns :

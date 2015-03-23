@@ -89,13 +89,13 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
         if paths.rm_empty_paths():
             break
 
-        debug__("\nbranch %x     loop=%x" % (paths.first(), get_loop_start(curr_loop_idx)))
+        ("\nbranch %x     loop=%x" % (paths.first(), get_loop_start(curr_loop_idx)))
         debug__("nb paths %d" % len(paths.paths))
         paths.debug()
 
         # Stop on the first split or is_loop
-        until, is_loop, is_ifelse = paths.head_last_common(curr_loop_idx)
-        debug__("until %x   loop=%d   ifelse=%d" % (until, is_loop, is_ifelse))
+        until, is_loop, is_ifelse, force_stop = paths.head_last_common(curr_loop_idx)
+        debug__("until %x   loop=%d   ifelse=%d  stop=%d" % (until, is_loop, is_ifelse, force_stop))
 
         # Add code to the branch, and update paths
         # until == -1 if there is no common point at the begining
@@ -115,6 +115,9 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
             last = paths.pop()
 
         if paths.rm_empty_paths():
+            break
+
+        if force_stop:
             break
 
         if is_loop:
@@ -308,7 +311,7 @@ def generate_ast(graph):
     global gph
     gph = graph
 
-    ast = get_ast_branch(Paths(gph.entry_point_addr))
+    ast = get_ast_branch(gph.paths)
 
     # Process ast
 
