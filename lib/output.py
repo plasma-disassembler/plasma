@@ -63,16 +63,16 @@ def print_operand(i, num_op, hexa=False):
         imm = op.value.imm
 
         if binary.is_rodata(imm):
-            print_no_end("0x%x " % imm)
+            print_no_end(hex(imm) + " ")
             print_no_end(color_string(binary.get_string(imm)))
 
         elif imm in binary.reverse_symbols:
-            print_no_end("0x%x " % imm)
+            print_no_end(hex(imm) + " ")
             print_symbol(imm)
 
         else:
             if hexa:
-                print_no_end("0x%x" % imm)
+                print_no_end(hex(imm))
             else:
                 if op.size == 1:
                     print_no_end(color_string("'%s'" % get_char(imm)))
@@ -99,7 +99,7 @@ def print_operand(i, num_op, hexa=False):
                 print_no_end(color_var(get_var_name(i, num_op)))
                 return True
             elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                print_no_end("[" + "0x%x" % (i.address + mm.disp) + "]")
+                print_no_end("[" + hex(i.address + mm.disp) + "]")
                 return True
 
         printed = False
@@ -133,10 +133,10 @@ def print_operand(i, num_op, hexa=False):
                     print_no_end(mm.disp)
                 else:
                     if mm.disp in binary.reverse_symbols:
-                        print_no_end("0x%x " % mm.disp)
+                        print_no_end(hex(mm.disp) + " ")
                         print_symbol(mm.disp)
                     else:
-                        print_no_end("0x%x" % mm.disp)
+                        print_no_end(hex(mm.disp))
 
         print_no_end("]")
         return True
@@ -152,7 +152,7 @@ def get_var_name(i, op_num):
 
 
 def get_addr(i):
-    addr_str = "0x%x: " % i.address
+    addr_str = hex(i.address) + ": "
     if i.address in addr_color:
         addr_str = color(addr_str, addr_color[i.address])
     else:
@@ -240,9 +240,9 @@ def print_inst(i, tab=0, prefix=""):
             return
         try:
             addr = i.operands[0].value.imm
-            print(i.mnemonic + " " + color("0x%x" % addr, addr_color[addr]))
+            print(i.mnemonic + " " + color(hex(addr), addr_color[addr]))
         except Exception:
-            print(i.mnemonic + " 0x%x" % addr)
+            print(i.mnemonic + " " + hex(addr))
         return
 
     

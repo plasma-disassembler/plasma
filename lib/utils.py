@@ -191,6 +191,25 @@ def cond_sign_str(ty, has_cmp=False):
 
 
 
+def index(L, obj, k=0):
+    try:
+        return L.index(obj, k)
+    except ValueError:
+        return -1
+
+
+def error(txt):
+    print("ERROR: " + txt, file=sys.stderr)
+
+
+def die(txt):
+    print("ERROR: " + txt, file=sys.stderr)
+    sys.exit(1)
+
+
+
+# Debug functions
+
 def print_set(s, end="\n"):
     print("{", end="")
     for i in s:
@@ -220,7 +239,6 @@ def print_dict(dic, end="\n"):
     print("]" + end, end="")
 
 
-
 def print_list(lst, end="\n"):
     print("[", end="")
     for i in lst[:-1]:
@@ -246,19 +264,3 @@ def print_list(lst, end="\n"):
             print("0x%x" % lst[-1], end="")
 
     print("]" + end, end="")
-
-
-def index(L, obj, k=0):
-    try:
-        return L.index(obj, k)
-    except ValueError:
-        return -1
-
-
-def error(txt):
-    print("ERROR: " + txt, file=sys.stderr)
-
-
-def die(txt):
-    print("ERROR: " + txt, file=sys.stderr)
-    sys.exit(1)
