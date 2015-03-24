@@ -167,21 +167,21 @@ class PE:
     def get_string(self, addr):
         base = self.pe.OPTIONAL_HEADER.ImageBase
         off = addr - self.rodata.VirtualAddress - base
-        txt = "\""
+        txt = ['"']
 
         i = 0
         while i < lib.binary.MAX_STRING_RODATA:
             c = self.rodata_data[off]
             if c == 0:
                 break
-            txt += lib.utils.get_char(c)
+            txt.append(lib.utils.get_char(c))
             off += 1
             i += 1
 
         if c != 0:
-            txt += "..."
+            txt.append("...")
 
-        return txt + "\""
+        return ''.join(txt) + '"'
 
 
     def get_arch(self):

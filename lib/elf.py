@@ -121,21 +121,21 @@ class ELF:
 
     def get_string(self, addr):
         off = addr - self.rodata.header.sh_addr
-        txt = "\""
+        txt = ['"']
 
         i = 0
         while i < lib.binary.MAX_STRING_RODATA:
             c = self.rodata_data[off]
             if c == 0:
                 break
-            txt += lib.utils.get_char(c)
+            txt.append(lib.utils.get_char(c))
             off += 1
             i += 1
 
         if c != 0:
-            txt += "..."
+            txt.append("...")
 
-        return txt + "\""
+        return ''.join(txt) + '"'
 
 
     def get_arch(self):
