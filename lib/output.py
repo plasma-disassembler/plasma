@@ -248,12 +248,16 @@ def print_inst(i, tab=0, prefix=""):
     
     modified = False
 
-    inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP]
+    inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP, X86_INS_XOR]
 
     if i.id in inst_check:
         print_operand(i, 0)
-        print_no_end(" " + cond_sign_str(i.id) + " ")
-        print_operand(i, 1)
+        if (all(op.type == X86_OP_REG for op in i.operands) and
+                len(set(op.value.reg for op in i.operands)) == 1 and i.id == X86_INS_XOR):
+            print_no_end(" = 0")
+        else:
+            print_no_end(" " + cond_sign_str(i.id) + " ")
+            print_operand(i, 1)
         modified = True
     else:
         print_no_end("%s " % i.mnemonic)
