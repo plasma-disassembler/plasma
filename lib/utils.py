@@ -64,8 +64,15 @@ BRANCH_NEXT_JUMP = 1   # or for the else part
 
 # Here, I don't use string.printable because it contains \r \n \t
 # and I want to print backslashed strings.
-PRINTABLE = set(map(ord, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
-    "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "))
+PRINTABLE = [r'\x{0:02x}'.format(i) for i in range(256)]
+for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
+        "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "):
+    PRINTABLE[ord(c)] = c
+PRINTABLE[9] = r'\t'
+PRINTABLE[10] = r'\n'
+PRINTABLE[13] = r'\r'
+
+get_char = PRINTABLE.__getitem__
 
 
 def is_jump(i):
@@ -246,15 +253,3 @@ def error(txt):
 def die(txt):
     print("ERROR: " + txt, file=sys.stderr)
     sys.exit(1)
-
-
-def get_char(c):
-    if c in PRINTABLE:
-        return chr(c)
-    if c == 10:
-        return "\\n"
-    if c == 9:
-        return "\\t"
-    if c == 13:
-        return "\\r"
-    return "\\x%02x" % (c % 256)
