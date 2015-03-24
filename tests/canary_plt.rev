@@ -6,7 +6,7 @@ function main {
     0x40052a: rsp -= 160 # sub rsp, 0xa0
     0x400531: rax = [fs + 40] # mov rax, qword ptr fs:[0x28]
     0x40053a: var1_canary = rax # mov qword ptr [rbp - 8], rax
-    0x40053e: xor eax, eax
+    0x40053e: eax = 0 # xor eax, eax
     0x400540: var2 = 0 # mov dword ptr [rbp - 0x94], 0
     0x40054a: jmp 0x40055c
     loop {
@@ -19,7 +19,7 @@ function main {
     }
     0x400565: eax = 0 # mov eax, 0
     0x40056a: rdx = var1_canary # mov rdx, qword ptr [rbp - 8]
-    0x40056e: xor rdx, [fs + 40] # xor rdx, qword ptr fs:[0x28]
+    0x40056e: rdx ^= [fs + 40] # xor rdx, qword ptr fs:[0x28]
     # 0x400577: je 0x40057e
     if != {
         0x400579: call 0x400400 <__stack_chk_fail@plt>
