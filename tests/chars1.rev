@@ -3,7 +3,7 @@ function main {
     0x400506: push rbp
     0x400507: rbp = rsp # mov rbp, rsp
     0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = '\x00' # mov byte ptr [rbp - 1], 0
+    0x40050e: var1 = '\0' # mov byte ptr [rbp - 1], 0
     # 0x400512: cmp byte ptr [rbp - 1], 0x61
     # 0x400516: jne 0x400524
     if (var1 == 'a') {

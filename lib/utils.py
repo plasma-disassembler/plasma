@@ -68,6 +68,7 @@ PRINTABLE = [r'\x{0:02x}'.format(i) for i in range(256)]
 for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
         "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "):
     PRINTABLE[ord(c)] = c
+PRINTABLE[0] = r'\0'
 PRINTABLE[9] = r'\t'
 PRINTABLE[10] = r'\n'
 PRINTABLE[13] = r'\r'
