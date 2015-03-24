@@ -90,7 +90,8 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
             break
 
         # Stop on the first split or is_loop
-        until, is_loop, is_ifelse, force_stop = paths.head_last_common(curr_loop_idx)
+        until, is_loop, is_ifelse, force_stop_addr = \
+            paths.head_last_common(curr_loop_idx)
 
         # Add code to the branch, and update paths
         # until == -1 if there is no common point at the begining
@@ -112,9 +113,11 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
         if paths.rm_empty_paths():
             break
 
-        if force_stop:
-            if not is_uncond_jump(gph.nodes[last][0]):
-                ast.add(Ast_Jmp(gph.link_out[last][BRANCH_NEXT]))
+        if force_stop_addr != 0:
+            blk = gph.nodes[paths.first()]
+            ast.add(blk)
+            if not is_uncond_jump(blk[0]):
+                ast.add(Ast_Jmp(gph.link_out[blk[0].address][BRANCH_NEXT]))
             break
 
         if is_loop:

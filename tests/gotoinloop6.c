@@ -15,8 +15,8 @@ int main() {
     while (i < 123) {
         while (j < 456) { 
             while (k < 789) {
-next:
                 if (i == j) {
+next:
                     printf("3\n");
                 } else {
                     if (j == k) {

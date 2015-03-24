@@ -51,6 +51,9 @@ class Graph:
         # it will print a jmp. This can occurs if a goto jump inside a loop.
         self.marked = set({})
 
+        # address juste before the loop marked
+        self.marked_addr = set({})
+
 
     def add_node(self, inst):
         self.nodes[inst.address] = [inst]
@@ -323,18 +326,22 @@ class Graph:
                 if l1 == l2:
                     k = k1 if self.loops[k1][0] < self.loops[k2][0] else k2
                     self.marked.add(k)
+                    self.__mark_addr(k)
                     self.equiv[k1] = k2
                     self.equiv[k2] = k1
                 k2 += 1
 
+        # print(self.marked)
+        # print_set(self.marked_addr)
+        # print_list(self.loops)
 
-    def __mark(self, k):
-        print("mark %d " % k)
-        self.marked.add(k)
-        for i in self.nested_loops_idx[k]:
-            print("mark %d " % i)
-            self.marked.add(i)
-       
+
+    def __mark_addr(self, loop_idx):
+        for k in self.paths.looping:
+            if self.paths.looping[k] == loop_idx:
+                idx_start_loop = self.paths.paths[k].index(self.loops[loop_idx][0])
+                before = self.paths.paths[k][idx_start_loop-1]
+                self.marked_addr.add(before)
 
 
     def __get_loop_set(self, k):

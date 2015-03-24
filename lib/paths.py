@@ -140,18 +140,28 @@ class Paths():
 
     def __enter_new_loop(self, curr_loop_idx, path_idx, k):
         addr = self.paths[path_idx][k]
+        is_loop = path_idx not in self.looping
 
-        if path_idx not in self.looping:
+        # TODO not sure
+        # tests/gotoinloop{6,7}
+        if addr in gph.marked_addr:
+            if not curr_loop_idx or is_loop:
+                return False, True
+
+        if is_loop:
             return False, False
-            
+
         l_idx = self.looping[path_idx]
 
         if addr != gph.loops[l_idx][0]:
             return False, False
 
-        if l_idx in gph.marked and \
-                l_idx in gph.equiv and \
-                gph.equiv[l_idx] not in curr_loop_idx:
+        # TODO check if all conditions are really necessary
+        if addr in gph.marked_addr: # and \
+                # l_idx in gph.marked:
+                # and \
+                # l_idx in gph.equiv and \
+                # gph.equiv[l_idx] not in curr_loop_idx:
             return False, True
 
         return True, False
@@ -227,14 +237,12 @@ class Paths():
         return idx
 
 
-    # The second value returned indicates if we have stop on a loop.
-    # Stop on :
-    # - first difference (ifelse), but not on jumps which are 
-    #     conditions for loops
-    # - beginning of a loop
+    # Returns tuple :
     #
-    # Returns :
-    # until_address, is_loop, is_ifelse 
+    # until_address : found common address until this value
+    # is_loop (bool) : stopped on a begining loop
+    # is_ifelse (bool) : stopped on a ifelse (found two differents address on paths)
+    # force_stop_addr : return the address we have stopped the algorithm
     #
     def head_last_common(self, curr_loop_idx):
         # The path used as a reference (each value of this path is
@@ -251,7 +259,7 @@ class Paths():
 
             is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, k)
             if is_loop or force_stop:
-                return last, is_loop, False, force_stop
+                return last, is_loop, False, (force_stop and addr0)
 
             # Check addr0
             if is_cond_jump(gph.nodes[addr0][0]):
@@ -259,7 +267,7 @@ class Paths():
                 c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                 c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                 if c1 and c2:
-                    return last, False, True, False
+                    return last, False, True, 0
 
 
             # Compare with other paths
@@ -270,13 +278,13 @@ class Paths():
                     continue
 
                 if index(self.paths[i], addr0) == -1:
-                    return last, False, False, False
+                    return last, False, False, 0
 
                 addr = self.paths[i][k]
 
                 is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, i, k)
                 if is_loop or force_stop:
-                    return last, is_loop, False, force_stop
+                    return last, is_loop, False, force_stop and addr
 
 
                 if is_cond_jump(gph.nodes[addr][0]):
@@ -284,7 +292,7 @@ class Paths():
                     c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                     c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                     if c1 and c2:
-                        return last, False, True, False
+                        return last, False, True, 0
 
                 i += 1
 
@@ -294,9 +302,9 @@ class Paths():
         # We have to test here, because we can stop before with a loop
         # or a ifelse.
         if len(self.paths) == 1:
-            return self.paths[0][-1], False, False, False
+            return self.paths[0][-1], False, False, 0
 
-        return last, False, False, False
+        return last, False, False, 0
 
 
     def first_common(self, curr_loop_idx, else_addr):
@@ -407,21 +415,24 @@ class Paths():
         last = path[-1]
 
         if self.loop_contains(curr_loop_idx, last):
-            return True
+            return True, False
 
         if path_idx not in self.looping:
-            return False
+            return False, False
 
         l_idx = self.looping[path_idx]
 
         if l_idx in curr_loop_idx:
-            return True
+            return True, False
 
         for i in curr_loop_idx:
             if l_idx in gph.nested_loops_idx[i]:
-                return True
+                return True, False
 
-        return False
+        if l_idx in gph.marked:
+            return False, True
+
+        return False, False
 
 
     # Returns :
@@ -439,12 +450,13 @@ class Paths():
         # ------------------------------------------------------
 
         for k, p in enumerate(self.paths):
-            is_in_curr = False
-            if self.__keep_path(curr_loop_idx, p, k):
-                loop_paths.add(p, self.__get_loop_idx(k))
-                is_in_curr = True
-            if not is_in_curr:
-                endloop.add(p, self.__get_loop_idx(k))
+            keep, ignore =  self.__keep_path(curr_loop_idx, p, k)
+
+            if not ignore:
+                if keep:
+                    loop_paths.add(p, self.__get_loop_idx(k))
+                else:
+                    endloop.add(p, self.__get_loop_idx(k))
 
         # Finalize endloops
         # Cut the path to get only the endloop
