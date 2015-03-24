@@ -39,7 +39,7 @@ function main {
     }
     0x400549: edx = var1 # mov edx, dword ptr [rbp - 4]
     0x40054c: eax = edx # mov eax, edx
-    0x40054e: shl eax, 3
+    0x40054e: eax <<= 3 # shl eax, 3
     0x400551: eax += edx # add eax, edx
     0x400553: var2 += eax # add dword ptr [rbp - 8], eax
     0x400556: jmp 0x400570

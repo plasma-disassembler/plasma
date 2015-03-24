@@ -22,7 +22,7 @@ function _main {
     0x4012a1: eax += 15 # add eax, 0xf
     0x4012a4: eax += 15 # add eax, 0xf
     0x4012a7: eax >>= 4 # shr eax, 4
-    0x4012aa: shl eax, 4
+    0x4012aa: eax <<= 4 # shl eax, 4
     0x4012ad: var1 = eax # mov dword ptr [ebp - 0xbc], eax
     0x4012b3: eax = var1 # mov eax, dword ptr [ebp - 0xbc]
     0x4012b9: call 0x401c20 <__alloca>
@@ -64,7 +64,7 @@ function _main {
                     0x401360: call 0x401d30 <jmp_strlen>
                     0x401365: var11 = eax # mov dword ptr [ebp - 0x1c], eax
                     0x401368: eax = var11 # mov eax, dword ptr [ebp - 0x1c]
-                    0x40136b: shl eax, 2
+                    0x40136b: eax <<= 2 # shl eax, 2
                     0x40136e: [esp] = eax # mov dword ptr [esp], eax
                     0x401371: call 0x401d20 <jmp_malloc>
                     0x401376: var4 = eax # mov dword ptr [ebp - 0x18], eax
