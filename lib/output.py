@@ -248,7 +248,7 @@ def print_inst(i, tab=0, prefix=""):
     
     modified = False
 
-    inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP, X86_INS_XOR]
+    inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP, X86_INS_XOR, X86_INS_AND]
 
     if i.id in inst_check:
         print_operand(i, 0)
