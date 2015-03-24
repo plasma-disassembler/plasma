@@ -91,7 +91,6 @@ function main {
                 0x400ad8: edi = 0x400d40 "Handler assigned" # mov edi, 0x400d40
                 0x400add: call 0x400800 <puts@plt>
             }
-            # warning not sure multi endloop is correct !!
             # endloop 1
             0x400ac7: edi = 0x400d28 "could not create thread" # mov edi, 0x400d28
             0x400acc: call 0x4008a0 <perror@plt>

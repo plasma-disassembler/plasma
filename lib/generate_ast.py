@@ -179,7 +179,6 @@ def get_ast_loop(paths, last_loop, last_else, endif):
 
     epilog = Ast_Branch()
     if len(endloop) > 1:
-        epilog.add(Ast_Comment("warning not sure multi endloop is correct !!"))
         i = 1
         for el in endloop[:-1]:
             epilog.add(Ast_Comment("endloop " + str(i)))

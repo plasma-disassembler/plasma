@@ -12,15 +12,16 @@ all: check
 
 
 # Don't rebuild. We want to keep original rev file.
-# You need to recreate the file .rev at hand.
+# You need to recreate the file .rev at hand (with the option --nocolor|-nc)
+# Or you can use the file regen.sh
 check: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
 	@./diff.sh $@ $(SYMBOLS[$@])
+
+# @./diff.sh $@ verbose $(SYMBOLS[$@])
 	
 
 compile: $(BIN)
 $(TESTS_DIR)/%.bin: $(TESTS_DIR)/%.c
 	gcc $< $(FLAGS[$^]) -o $@
-
-

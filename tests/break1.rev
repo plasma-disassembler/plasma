@@ -24,7 +24,6 @@ function main {
         0x400558: var1 += 1 # add dword ptr [rbp - 4], 1
         0x40055c: var2 += 1 # add dword ptr [rbp - 8], 1
     }
-    # warning not sure multi endloop is correct !!
     # endloop 1
     0x40052e: jmp 0x400543
     loop {

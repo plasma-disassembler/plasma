@@ -51,7 +51,6 @@ function main {
         }
         0x400589: var3 += 1 # add dword ptr [rbp - 0xc], 1
     }
-    # warning not sure multi endloop is correct !!
     # endloop 1
     infiniteloop {
         0x400549: edi = 0x400638 "3" # mov edi, 0x400638

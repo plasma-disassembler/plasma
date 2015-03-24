@@ -19,7 +19,6 @@ function main {
         if (var1 == 6)  goto 0x40053b 
         0x40054c: var1 += 1 # add dword ptr [rbp - 4], 1
     }
-    # warning not sure multi endloop is correct !!
     # endloop 1
     0x400524: edi = 0x4005f4 "1" # mov edi, 0x4005f4
     0x400529: call 0x4003e0 <puts@plt>
