@@ -211,12 +211,14 @@ def print_inst(i, tab=0, prefix=""):
         nonlocal i
         return "%s %s" % (i.mnemonic, i.op_str)
 
-
     if prefix == "# ":
         if not nocomment:
             print_comment_no_end(prefix, tab)
             print_no_end(get_addr(i))
             print_comment(get_inst_str())
+        return
+
+    if i.address in lib.ast.cmp_fused:
         return
 
     print_tabbed_no_end(get_addr(i), tab)

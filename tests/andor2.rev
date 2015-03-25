@@ -20,12 +20,13 @@ function main {
                 0x400565: eax = var3 # mov eax, dword ptr [rbp - 4]
                 # 0x400568: cmp eax, dword ptr [rbp - 0xc]
                 # 0x40056b: je 0x400517
-                if (eax != var5)  goto 0x40056d 
+                if (eax != var5)  goto 0x40056d
             }
         } else {
             0x400565: eax = var3 # mov eax, dword ptr [rbp - 4]
+            # 0x400568: cmp eax, dword ptr [rbp - 0xc]
             # 0x40056b: je 0x400517
-            if !=  goto 0x40056d 
+            if (eax != var5)  goto 0x40056d
         }
         0x400517: edi = 0x400604 "1" # mov edi, 0x400604
         0x40051c: call 0x4003e0 <puts@plt>
@@ -33,14 +34,14 @@ function main {
         loop {
             # 0x400549: cmp dword ptr [rbp - 0xc], 0x13
             # 0x40054d: jle 0x400523
-            if (var5 > 19)  goto 0x40054f 
+            if (var5 > 19)  goto 0x40054f
             0x400523: edi = 0x400606 "2" # mov edi, 0x400606
             0x400528: call 0x4003e0 <puts@plt>
             0x40052d: jmp 0x400539
             loop {
                 # 0x400539: cmp dword ptr [rbp - 8], 0x13
                 # 0x40053d: jle 0x40052f
-                if (var4 > 19)  goto 0x40053f 
+                if (var4 > 19)  goto 0x40053f
                 0x40052f: edi = 0x400608 "3" # mov edi, 0x400608
                 0x400534: call 0x4003e0 <puts@plt>
             }

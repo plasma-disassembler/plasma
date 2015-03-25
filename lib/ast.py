@@ -33,6 +33,10 @@ local_vars_size = []
 local_vars_name = []
 vars_counter = 1
 
+# If an address of a cmp is here, it means that we have fused 
+# with a if, so don't print this instruction. 
+cmp_fused = set({})
+
 
 class Ast_Branch:
     def __init__(self):
@@ -124,15 +128,22 @@ class Ast_Ifelse:
             # }
             #
 
-            if len(self.br_next_jump.nodes) == 1 \
-                    and isinstance(self.br_next_jump.nodes[0], Ast_Ifelse):
+            br = self.br_next_jump
+
+            if len(br.nodes) == 1 and isinstance(br.nodes[0], Ast_Ifelse):
                 print()
-                self.br_next_jump.nodes[0].print(tab, True)
+                br.nodes[0].print(tab, True)
                 return
 
-            else:
-                print(color_keyword("else ") + "{")
-                self.br_next_jump.print(tab+1)
+            if len(br.nodes) == 2 and isinstance(br.nodes[0], list) and \
+                  len(br.nodes[0]) == 1 and br.nodes[0][0].id == X86_INS_CMP and \
+                  isinstance(self.br_next_jump.nodes[1], Ast_Ifelse):
+                print()
+                br.nodes[1].print(tab, True)
+                return
+
+            print(color_keyword("else ") + "{")
+            self.br_next_jump.print(tab+1)
 
         print_tabbed("}", tab)
 
@@ -216,7 +227,6 @@ def assign_colors(ast):
 
 def fuse_cmp_if(ast):
     if isinstance(ast, Ast_Branch):
-        del_nodes_idx = []
         types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
 
         for i, n in enumerate(ast.nodes):
@@ -224,17 +234,10 @@ def fuse_cmp_if(ast):
                 if n[-1].id == X86_INS_CMP and i+1 < len(ast.nodes) \
                             and isinstance(ast.nodes[i+1], types_ast):
                     ast.nodes[i+1].cmp_inst = n[-1]
-                    if len(n) == 1:
-                        del_nodes_idx.append(i)
-                    else:
-                        n.pop(-1)
-
+                    cmp_fused.add(n[-1].address)
             else: # ast
                 fuse_cmp_if(n)
 
-        del_nodes_idx.sort()
-        for i in reversed(del_nodes_idx):
-            del ast.nodes[i]
 
     elif isinstance(ast, Ast_Ifelse):
         fuse_cmp_if(ast.br_next)

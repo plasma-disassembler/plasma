@@ -21,37 +21,6 @@ with the option --dump, which disassemble only.
 
 bug 2
 
-fusion of cmp/jumps, sometimes the cmp instruction disappears.
-
-example : if the two "if cond_3" are exactly the same instructions (at the
-same address), because we fuse the cmp and the jump, the first is deleted
-and the second disappears.
-
-    # cmp
-    # jump
-    if cond_1 {
-
-        # cmp
-        # jump
-        if cond_2 {
-
-            # cmp
-            # jump
-            if cond_3 {
-                ...
-            }
-        }
-    }
-    else {
-        # jmp
-        if cond_3 {
-            ...
-        }
-    }
-
-
-bug 3
-
 The pefile library seems to be bugged. Sometimes the function 
 pe.load_import_symbols fails because the internal function of pefile,
 parse_data_directories, throw an exception.

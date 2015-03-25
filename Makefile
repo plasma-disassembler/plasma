@@ -11,8 +11,8 @@ SYMBOLS[tests/server.rev] = "main" "connection_handler"
 all: check
 
 
-# Don't rebuild. We want to keep original rev file.
-# You need to recreate the file .rev at hand (with the option --nocolor|-nc)
+# Don't rebuild. We want to keep the original rev file.
+# You need to recreate the file .rev at hand (with the option -nc)
 # Or you can use the file regen.sh
 check: $(REV)
 FORCE:
