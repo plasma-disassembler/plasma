@@ -20,7 +20,7 @@ from elftools.common.py3compat import bytes2str
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import *
 
-import lib.binary
+import lib.fileformat.binary
 import lib.utils
 
 
@@ -46,7 +46,10 @@ class ELF:
         self.classbinary = classbinary
         self.rodata = None
         self.rodata_data = None
-        self.arch_lookup = {"x86": lib.binary.ARCH_x86, "x64": lib.binary.ARCH_x64}
+        self.arch_lookup = {
+          "x86": lib.fileformat.binary.ARCH_x86,
+          "x64": lib.fileformat.binary.ARCH_x64
+        }
 
 
 
@@ -124,7 +127,7 @@ class ELF:
         txt = ['"']
 
         i = 0
-        while i < lib.binary.MAX_STRING_RODATA:
+        while i < lib.fileformat.binary.MAX_STRING_RODATA:
             c = self.rodata_data[off]
             if c == 0:
                 break
@@ -139,7 +142,8 @@ class ELF:
 
 
     def get_arch(self):
-        return self.arch_lookup.get(self.elf.get_machine_arch(), lib.binary.ARCH_INVALID)
+        return self.arch_lookup.get(self.elf.get_machine_arch(), \
+            lib.fileformat.binary.ARCH_INVALID)
 
 
     def get_entry_point(self):

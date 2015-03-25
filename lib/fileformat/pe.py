@@ -18,11 +18,11 @@
 
 
 import sys
-import lib.utils
-import lib.binary
 import struct
 import pefile
-from lib.pefile2 import *
+import lib.utils
+import lib.fileformat.binary
+from lib.fileformat.pefile2 import *
 from ctypes import sizeof
 from capstone.x86 import *
 
@@ -170,7 +170,7 @@ class PE:
         txt = ['"']
 
         i = 0
-        while i < lib.binary.MAX_STRING_RODATA:
+        while i < lib.fileformat.binary.MAX_STRING_RODATA:
             c = self.rodata_data[off]
             if c == 0:
                 break
@@ -187,10 +187,10 @@ class PE:
     def get_arch(self):
         arch = self.pe.OPTIONAL_HEADER.Magic
         if arch == pefile.OPTIONAL_HEADER_MAGIC_PE:
-            return lib.binary.ARCH_x86
+            return lib.fileformat.binary.ARCH_x86
         if arch == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
-            return lib.binary.ARCH_x64
-        return lib.binary.ARCH_INVALID
+            return lib.fileformat.binary.ARCH_x64
+        return lib.fileformat.binary.ARCH_INVALID
 
 
     def get_entry_point(self):

@@ -21,7 +21,7 @@ from capstone.x86 import *
 
 from lib.graph import Graph
 from lib.utils import *
-from lib.binary import *
+from lib.fileformat.binary import *
 from lib.output import print_inst, print_symbol
 from lib.colors import pick_color
 

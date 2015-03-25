@@ -25,7 +25,7 @@ from argparse import ArgumentParser, FileType
 import lib.ast
 import lib.output
 import lib.colors
-import lib.binary
+import lib.fileformat.binary
 import lib.paths
 from lib.utils import die, error
 from lib.disassembler import Disassembler
@@ -64,11 +64,11 @@ def reverse():
 
     args = parser.parse_args()
 
-    lib.utils.dbg                = args.opt_debug
-    lib.colors.nocolor           = args.nocolor
-    lib.output.nocomment         = args.nocomment
-    lib.ast.nocomment            = args.nocomment
-    lib.binary.MAX_STRING_RODATA = args.strsize
+    lib.utils.dbg                           = args.opt_debug
+    lib.colors.nocolor                      = args.nocolor
+    lib.output.nocomment                    = args.nocomment
+    lib.ast.nocomment                       = args.nocomment
+    lib.fileformat.binary.MAX_STRING_RODATA = args.strsize
 
     if not os.path.exists(args.filename):
         die("{args.filename} doesn't exists".format(args=args))

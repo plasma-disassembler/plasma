@@ -16,8 +16,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import lib.elf
-import lib.pe
+import lib.fileformat.elf
+import lib.fileformat.pe
 from lib.utils import *
 
 
@@ -40,10 +40,10 @@ class Binary(object):
         self.symbols = {}
 
         try:
-            self.__binary = lib.elf.ELF(self, filename)
+            self.__binary = lib.fileformat.elf.ELF(self, filename)
         except Exception:
             try:
-                self.__binary = lib.pe.PE(self, filename)
+                self.__binary = lib.fileformat.pe.PE(self, filename)
             except Exception:
                 die("the file is not PE or ELF binary")
 
@@ -69,9 +69,9 @@ class Binary(object):
 
 
     def get_type(self):
-        if isinstance(self.__binary, lib.elf.ELF):
+        if isinstance(self.__binary, lib.fileformat.elf.ELF):
             return T_BIN_ELF
-        if isinstance(self.__binary, lib.pe.PE):
+        if isinstance(self.__binary, lib.fileformat.pe.PE):
             return T_BIN_PE
         return T_BIN_UNK
 
