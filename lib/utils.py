@@ -132,7 +132,7 @@ def cond_inst_str(ty):
     return conds[ty]
 
 
-def cond_sign_str(ty, has_cmp=False):
+def inst_symbol(ty, has_cmp=False):
     conds = {
         X86_INS_JE: "==",
         X86_INS_JNE: "!=",

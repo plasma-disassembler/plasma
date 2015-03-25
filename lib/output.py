@@ -191,7 +191,7 @@ def print_cmp_in_if(cmp_inst, jump_id):
         print_operand(cmp_inst, 0)
         print_no_end(" ")
 
-    print_no_end(cond_sign_str(jump_id, cmp_inst != None))
+    print_no_end(inst_symbol(jump_id, cmp_inst != None))
 
     if cmp_inst != None:
         print_no_end(" ")
@@ -261,10 +261,10 @@ def print_inst(i, tab=0, prefix=""):
         elif i.id == X86_INS_IMUL and len(i.operands) == 3:
             print_no_end(" = ")
             print_operand(i, 1)
-            print_no_end(" " + cond_sign_str(i.id).rstrip('=') + " ")
+            print_no_end(" " + inst_symbol(i.id).rstrip('=') + " ")
             print_operand(i, 2)
         else:
-            print_no_end(" " + cond_sign_str(i.id) + " ")
+            print_no_end(" " + inst_symbol(i.id) + " ")
             print_operand(i, 1)
         modified = True
     elif i.id == X86_INS_IDIV:
