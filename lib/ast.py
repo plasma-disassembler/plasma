@@ -64,12 +64,7 @@ class Ast_IfGoto:
         print_tabbed_no_end(color_keyword("if "), tab)
         print_cmp_in_if(self.cmp_inst, self.cond_id)
         print_no_end(color_keyword("  goto "))
-
-        try:
-            c = addr_color[self.addr_jump]
-            print(color(hex(self.addr_jump) + " ", c))
-        except KeyError:
-            print(hex(self.addr_jump) + " ")
+        print_addr(self.addr_jump)
 
 
 class Ast_AndIf:
@@ -148,10 +143,12 @@ class Ast_Jmp:
 
     def print(self, tab=0):
         print_tabbed_no_end("jmp ", tab)
-        try:
-            print(color(hex(self.addr_jump), addr_color[self.addr_jump]))
-        except Exception:
-            print(hex(self.addr_jump))
+        print_addr(self.addr_jump)
+
+
+def print_addr(addr):
+    c = addr_color.get(addr)
+    print(hex(addr) if c is None else color(hex(addr), c))
 
 
 class Ast_Loop:
