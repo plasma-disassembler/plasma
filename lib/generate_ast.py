@@ -25,6 +25,7 @@ from lib.paths import Paths, get_loop_start
 
 
 gph = None
+print_andif = True
 
 
 # TODO remove
@@ -272,7 +273,7 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # }
     #
 
-    if 1:
+    if print_andif:
         if last_else != -1 and not is_prev_andif:
             # TODO not sure about endpoint == -1
             # tests/or4

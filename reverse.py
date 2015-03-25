@@ -39,11 +39,12 @@ def reverse():
     parser = ArgumentParser(description='Reverse engineering for x86 binaries. Generation of pseudo-C.')
     parser.add_argument('filename', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')
-    parser.add_argument('-d', '--opt_debug', action='store_true')
     parser.add_argument('-g', '--graph', action='store_true',
             help='Generate an html flow graph. See d3/index.html.')
     parser.add_argument('--nocomment', action='store_true',
             help="Don't print comments")
+    parser.add_argument('--noandif', action='store_true',
+            help="Print normal 'if' instead of 'andif'")
     parser.add_argument('--strsize', type=int, default=30, metavar='N',
             help='default 30, maximum of chars to display for rodata strings.')
     parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX',
@@ -61,10 +62,12 @@ def reverse():
     parser.add_argument('--symfile', metavar='FILENAME', type=FileType('r'),
             help=('Add user symbols for better readability of the analysis. '
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
+    parser.add_argument('-d', '--opt_debug', action='store_true')
 
     args = parser.parse_args()
 
     lib.utils.dbg                           = args.opt_debug
+    lib.generate_ast.print_andif            = not args.noandif
     lib.colors.nocolor                      = args.nocolor
     lib.output.nocomment                    = args.nocomment
     lib.ast.nocomment                       = args.nocomment
