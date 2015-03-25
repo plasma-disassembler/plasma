@@ -178,6 +178,8 @@ def inst_symbol(ty, has_cmp=False):
         X86_INS_MOV: "=",
         X86_INS_SUB: "-=",
         X86_INS_CMP: "cmp",
+        X86_INS_DEC: "--",
+        X86_INS_INC: "++",
     }
 
     # used when we have fuse a cmp with a ifelse

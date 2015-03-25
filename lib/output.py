@@ -251,7 +251,8 @@ def print_inst(i, tab=0, prefix=""):
     modified = False
 
     inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
-            X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL]
+            X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
+            X86_INS_DEC, X86_INS_INC]
 
     if i.id in inst_check:
         print_operand(i, 0)
@@ -259,6 +260,8 @@ def print_inst(i, tab=0, prefix=""):
                 len(set(op.value.reg for op in i.operands)) == 1 and
                 i.id == X86_INS_XOR):
             print_no_end(" = 0")
+        elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
+            print_no_end(inst_symbol(i.id))
         elif i.id == X86_INS_IMUL and len(i.operands) == 3:
             print_no_end(" = ")
             print_operand(i, 1)
