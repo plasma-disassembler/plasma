@@ -265,6 +265,12 @@ def print_inst(i, tab=0, prefix=""):
             print_no_end(" " + cond_sign_str(i.id) + " ")
             print_operand(i, 1)
         modified = True
+    elif i.id == X86_INS_IDIV:
+        print_no_end('eax = edx:eax / ')
+        print_operand(i, 0)
+        print_no_end('; edx = edx:eax % ')
+        print_operand(i, 0)
+        modified = True
     else:
         print_no_end("%s " % i.mnemonic)
         if len(i.operands) > 0:
