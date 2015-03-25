@@ -48,3 +48,10 @@ and the second disappears.
             ...
         }
     }
+
+
+bug 3
+
+The pefile library seems to be bugged. Sometimes the function 
+pe.load_import_symbols fails because the internal function of pefile,
+parse_data_directories, throw an exception.
