@@ -17,14 +17,12 @@
 #
 
 
-import sys
-import struct
 import pefile
 import lib.utils
 import lib.fileformat.binary
-from lib.fileformat.pefile2 import *
+from lib.fileformat.pefile2 import PE2, SymbolEntry
 from ctypes import sizeof
-from capstone.x86 import *
+from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 
 
 class PE:

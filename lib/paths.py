@@ -17,7 +17,8 @@
 #
 
 
-from lib.utils import *
+from lib.utils import (debug__, index, is_cond_jump, is_uncond_jump,
+        BRANCH_NEXT, BRANCH_NEXT_JUMP)
 
 gph = None
 

@@ -17,10 +17,12 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from lib.utils import *
-from lib.colors import pick_color, addr_color
-from lib.output import *
+from lib.utils import invert_cond, is_call, is_uncond_jump, BRANCH_NEXT
+from lib.colors import pick_color, addr_color, color, color_keyword
+from lib.output import (print_block, print_cmp_in_if, print_cmp_jump_commented,
+        print_comment, print_no_end, print_tabbed, print_tabbed_no_end)
+from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_OP_IMM,
+        X86_OP_INVALID, X86_REG_EBP, X86_REG_RBP)
 
 gph = None
 binary = None
@@ -35,7 +37,7 @@ vars_counter = 1
 
 # If an address of a cmp is here, it means that we have fused 
 # with a if, so don't print this instruction. 
-cmp_fused = set({})
+cmp_fused = set()
 
 
 class Ast_Branch:

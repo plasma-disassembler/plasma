@@ -17,11 +17,13 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import lib.colors
-from lib.ast import *
-from lib.utils import *
-from lib.paths import Paths, get_loop_start
+from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, Ast_IfGoto,
+        Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars, fuse_cmp_if,
+        search_canary_plt)
+from lib.utils import (is_cond_jump, is_uncond_jump, invert_cond,
+        BRANCH_NEXT, BRANCH_NEXT_JUMP, die)
+from lib.paths import get_loop_start
 
 
 gph = None
