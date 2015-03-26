@@ -43,8 +43,8 @@ class ELF:
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
-        self.rodata = None
-        self.rodata_data = None
+        self.__data_sections = []
+        self.__data_sections_data = []
         self.arch_lookup = {
           "x86": lib.fileformat.binary.ARCH_x86,
           "x64": lib.fileformat.binary.ARCH_x64
@@ -86,18 +86,30 @@ class ELF:
             k += 1
 
 
-    def load_rodata(self):
-        # TODO more read-only data ?
-        self.rodata = self.elf.get_section_by_name(b".rodata")
-        self.rodata_data = self.rodata.data()
+    def load_data_sections(self):
+        mask = SH_FLAGS.SHF_WRITE | SH_FLAGS.SHF_ALLOC
+        for s in self.elf.iter_sections():
+            if s.header.sh_flags & mask and not self.__section_is_exec(s):
+                self.__data_sections.append(s)
+                self.__data_sections_data.append(s.data())
 
 
-    def is_rodata(self, addr):
-        if self.rodata is None:
-            return False
-        start = self.rodata.header.sh_addr
-        end = start + self.rodata.header.sh_size
-        return  start <= addr < end
+    def is_data(self, addr):
+        for s in self.__data_sections:
+            start = s.header.sh_addr
+            end = start + s.header.sh_size
+            if start <= addr < end:
+                return True
+        return False
+
+
+    def __get_data_section_idx(self, addr):
+        for i, s in enumerate(self.__data_sections):
+            start = s.header.sh_addr
+            end = start + s.header.sh_size
+            if start <= addr < end:
+                return i
+        return -1
 
 
     def is_address(self, imm):
@@ -133,19 +145,26 @@ class ELF:
 
 
     def get_string(self, addr):
-        off = addr - self.rodata.header.sh_addr
+        i = self.__get_data_section_idx(addr)
+        if i == -1:
+            return ""
+
+        s = self.__data_sections[i]
+        data = self.__data_sections_data[i]
+        off = addr - s.header.sh_addr
         txt = ['"']
 
         i = 0
-        while i < lib.fileformat.binary.MAX_STRING_RODATA:
-            c = self.rodata_data[off]
+        while i < lib.fileformat.binary.MAX_STRING_DATA and \
+              off < s.header.sh_size:
+            c = data[off]
             if c == 0:
                 break
             txt.append(lib.utils.get_char(c))
             off += 1
             i += 1
 
-        if c != 0:
+        if c != 0 and off != s.header.sh_size:
             txt.append("...")
 
         return ''.join(txt) + '"'

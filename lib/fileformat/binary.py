@@ -21,7 +21,7 @@ import lib.fileformat.pe
 from lib.utils import die
 
 
-MAX_STRING_RODATA = 30
+MAX_STRING_DATA = 30
 
 ARCH_x64 = 0
 ARCH_x86 = 1
@@ -49,11 +49,11 @@ class Binary(object):
 
         self.__binary.load_static_sym()
         self.__binary.load_dyn_sym()
-        self.__binary.load_rodata()
+        self.__binary.load_data_sections()
 
 
-    def is_rodata(self, addr):
-        return self.__binary.is_rodata(addr)
+    def is_data(self, addr):
+        return self.__binary.is_data(addr)
 
 
     def get_section(self, addr):

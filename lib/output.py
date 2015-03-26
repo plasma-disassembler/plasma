@@ -67,7 +67,7 @@ def print_operand(i, num_op):
     if op.type == X86_OP_IMM:
         imm = op.value.imm
 
-        if binary.is_rodata(imm):
+        if binary.is_data(imm):
             print_no_end(hex(imm) + " ")
             print_no_end(color_string(binary.get_string(imm)))
 

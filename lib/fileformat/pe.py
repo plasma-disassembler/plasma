@@ -29,8 +29,8 @@ class PE:
     def __init__(self, classbinary, filename):
         self.classbinary = classbinary
         self.pe = PE2(filename, fast_load=True)
-        self.rodata = None
-        self.rodata_data = None
+        self.__data_sections = []
+        self.__data_sections_data = []
 
 
     def load_static_sym(self):
@@ -131,22 +131,33 @@ class PE:
                 self.classbinary.symbols[name] = goto
 
 
-    def load_rodata(self):
+    def load_data_sections(self):
+             # INITIALIZED_DATA | MEM_READ   | MEM_WRITE
+        mask = 0x00000040       | 0x40000000 | 0x80000000
         for s in self.pe.sections:
-            if s.Name.rstrip(b"\0") == b".rdata":
-                # TODO more read-only data ?
-                self.rodata = s
-                self.rodata_data = s.get_data()
-                break
+            if s.Characteristics & mask and not self.__section_is_exec(s):
+                self.__data_sections.append(s)
+                self.__data_sections_data.append(s.get_data())
 
 
-    def is_rodata(self, addr):
-        if self.rodata == None:
-            return False
+    def is_data(self, addr):
         base = self.pe.OPTIONAL_HEADER.ImageBase
-        start = base + self.rodata.VirtualAddress
-        end = start + self.rodata.SizeOfRawData
-        return  start <= addr < end
+        for s in self.__data_sections:
+            start = base + s.VirtualAddress
+            end = start + s.SizeOfRawData
+            if start <= addr < end:
+                return True
+        return False
+
+
+    def __get_data_section(self, addr):
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        for i, s in enumerate(self.__data_sections):
+            start = base + s.VirtualAddress
+            end = start + s.SizeOfRawData
+            if start <= addr < end:
+                return i
+        return -1
 
 
     def get_section(self, addr):
@@ -168,20 +179,27 @@ class PE:
 
 
     def get_string(self, addr):
+        i = self.__get_data_section(addr)
+        if i == -1:
+            return ""
+
+        s = self.__data_sections[i]
+        data = self.__data_sections_data[i]
         base = self.pe.OPTIONAL_HEADER.ImageBase
-        off = addr - self.rodata.VirtualAddress - base
+        off = addr - s.VirtualAddress - base
         txt = ['"']
 
         i = 0
-        while i < lib.fileformat.binary.MAX_STRING_RODATA:
-            c = self.rodata_data[off]
+        while i < lib.fileformat.binary.MAX_STRING_DATA and \
+              off < s.SizeOfRawData:
+            c = data[off]
             if c == 0:
                 break
             txt.append(lib.utils.get_char(c))
             off += 1
             i += 1
 
-        if c != 0:
+        if c != 0 and off != s.SizeOfRawData:
             txt.append("...")
 
         return ''.join(txt) + '"'
