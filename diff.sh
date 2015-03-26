@@ -1,11 +1,24 @@
 #!/bin/bash
 
+color() {
+    local color="$1"
+    if [ "$3" == "" ]; then
+        local prefix=""
+        local txt="$2"
+    else
+        local prefix="$2 "
+        local txt="$3"
+    fi
+    echo -en "${prefix}\x1b[;${color}m${txt}\x1b[0m"
+}
+
 red() {
-    echo -en "\x1b[;31m$1\x1b[0m"
+    color 31 "$1" "$2"
+
 }
 
 green() {
-    echo -en "\x1b[;32m$1\x1b[0m"
+    color 32 "$1" "$2"
 }
 
 
@@ -20,7 +33,6 @@ __diff() {
         local suffix="_$2"
     fi
 
-    echo -n "$name$suffix "
 
     if [ -f "tests/${name}${suffix}.rev" ]; then
         ./reverse.py "tests/${name}.bin" $more_opt --nocolor >$tmp 2>/dev/null
@@ -32,16 +44,16 @@ __diff() {
             fi
 
             if [ $? -eq 0 ]; then
-                green "[OK]\n"
+                green "$name$suffix" "[OK]\n"
             else
-                red "[FAIL]\n"
+                red "$name$suffix" "[FAIL]\n"
             fi
             rm $tmp
         else
-            red "[EXCEPTION]\n"
+            red "$name$suffix" "[EXCEPTION]\n"
         fi
     else
-        red "[NOT FOUND]\n"
+        red "$name$suffix" "[NOT FOUND]\n"
     fi
 }
 
@@ -62,6 +74,3 @@ else
         shift
     done
 fi
-
-
-
