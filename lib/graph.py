@@ -174,8 +174,7 @@ class Graph:
 
         output.write("}\";\n")
         output.write("inputGraph.innerHTML = mygraph;")
-        output.o
-        write("tryDraw();")
+        output.write("tryDraw();")
 
 
     def __explore(self, start):
