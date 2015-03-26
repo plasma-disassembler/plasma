@@ -47,8 +47,8 @@ def reverse():
             help="Print normal 'if' instead of 'andif'")
     parser.add_argument('--datasize', type=int, default=30, metavar='N',
             help='default 30, maximum of chars to display for strings or bytes array.')
-    parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX',
-            help='default main')
+    parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX|EP',
+            help='default main. EP stands for entry point.')
     parser.add_argument('--vim', action='store_true',
             help='Generate syntax colors for vim')
     parser.add_argument('-s', '--sym', action='store_true',
@@ -86,7 +86,7 @@ def reverse():
     # Maybe args.entry is a symbol and doesn't exists.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
-    if args.sym or args.call:
+    if args.sym or args.call or args.entry == "EP":
         addr = dis.binary.get_entry_point()
     else:
         addr = dis.get_addr_from_string(args.entry)
