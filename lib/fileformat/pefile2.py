@@ -18,7 +18,6 @@
 
 
 import pefile
-import struct
 from ctypes import *
 
 

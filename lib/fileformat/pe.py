@@ -17,8 +17,6 @@
 #
 
 
-import sys
-import struct
 import pefile
 import lib.utils
 import lib.fileformat.binary

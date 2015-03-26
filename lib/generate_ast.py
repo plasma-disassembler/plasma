@@ -17,11 +17,10 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import lib.colors
 from lib.ast import *
 from lib.utils import *
-from lib.paths import Paths, get_loop_start
+from lib.paths import get_loop_start
 
 
 gph = None

@@ -19,7 +19,6 @@
 
 import os
 import os.path
-import sys
 from lib.utils import *
 from lib.paths import Paths, loop_contains
 
