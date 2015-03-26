@@ -13,6 +13,7 @@ __diff() {
     local name=$1
     local suffix=""
     local more_opt=""
+    local tmp=tmp$$
 
     if [ "$2" != "" ]; then
         local more_opt="-x=$2"
@@ -22,12 +23,12 @@ __diff() {
     echo -n "$name$suffix "
 
     if [ -f "tests/${name}${suffix}.rev" ]; then
-        ./reverse.py "tests/${name}.bin" $more_opt --nocolor >tmp 2>/dev/null
+        ./reverse.py "tests/${name}.bin" $more_opt --nocolor >$tmp 2>/dev/null
         if [ $? -eq 0 ]; then
             if [ $verbose -eq 1 ]; then
-                diff -b tmp "tests/${name}${suffix}.rev"
+                diff -b $tmp "tests/${name}${suffix}.rev"
             else
-                diff -b tmp "tests/${name}${suffix}.rev" >/dev/null
+                diff -b $tmp "tests/${name}${suffix}.rev" >/dev/null
             fi
 
             if [ $? -eq 0 ]; then
@@ -35,7 +36,7 @@ __diff() {
             else
                 red "[FAIL]\n"
             fi
-            rm tmp
+            rm $tmp
         else
             red "[EXCEPTION]\n"
         fi
