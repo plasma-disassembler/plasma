@@ -35,7 +35,7 @@ vars_counter = 1
 
 # If an address of a cmp is here, it means that we have fused 
 # with a if, so don't print this instruction. 
-cmp_fused = set({})
+cmp_fused = set()
 
 
 class Ast_Branch:

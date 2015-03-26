@@ -49,10 +49,10 @@ class Graph:
         # If a loop is "marked" it means that there is an other equivalent
         # loop, and this must not be interpreted during the process. Generally
         # it will print a jmp. This can occurs if a goto jump inside a loop.
-        self.marked = set({})
+        self.marked = set()
 
         # address juste before the loop marked
-        self.marked_addr = set({})
+        self.marked_addr = set()
 
 
     def add_node(self, inst):
@@ -240,14 +240,14 @@ class Graph:
 
     def __compute_nested(self):
         for k in range(len(self.loops)):
-            self.nested_loops_idx[k] = set({})
-            self.direct_nested_idx[k] = set({})
+            self.nested_loops_idx[k] = set()
+            self.direct_nested_idx[k] = set()
 
-        has_parent_loop_idx = set({})
+        has_parent_loop_idx = set()
 
         for k, l in enumerate(self.loops):
-            self.nested_loops_idx[k] = set({})
-            self.direct_nested_idx[k] = set({})
+            self.nested_loops_idx[k] = set()
+            self.direct_nested_idx[k] = set()
 
         for k1, l1 in enumerate(self.loops):
             if k1 in self.marked:
