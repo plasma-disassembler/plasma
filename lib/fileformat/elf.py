@@ -100,6 +100,17 @@ class ELF:
         return  start <= addr < end
 
 
+    def is_address(self, imm):
+        for s in self.elf.iter_sections():
+            start = s.header.sh_addr
+            if start == 0:
+                continue
+            end = start + s.header.sh_size
+            if  start <= imm < end:
+                return True
+        return False
+
+
     def __find_section(self, addr):
         for s in self.elf.iter_sections():
             start = s.header.sh_addr

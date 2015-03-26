@@ -158,6 +158,11 @@ class PE:
         return (s.get_data(), base + s.VirtualAddress, flags)
 
 
+    def is_address(self, imm):
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        return imm > base and self.pe.get_section_by_rva(imm - base) is not None
+
+
     def __section_is_exec(self, s):
         return s.Characteristics & 0x20000000
 

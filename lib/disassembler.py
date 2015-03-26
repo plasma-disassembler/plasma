@@ -56,8 +56,8 @@ class Disassembler():
             self.code[i.address] = i
             self.code_idx.append(i.address)
 
-        # Now load imported symbols for PE.
-        # This cannot be done before, because we need the code.
+        # Now load imported symbols for PE. This cannot be done before,
+        # because we need the code for a better resolution.
         if self.binary.get_type() == T_BIN_PE:
             self.binary.load_import_symbols(self.code)
 

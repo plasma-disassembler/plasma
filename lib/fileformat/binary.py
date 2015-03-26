@@ -68,6 +68,10 @@ class Binary(object):
         return self.__binary.get_arch()
 
 
+    def is_address(self, imm):
+        return self.__binary.is_address(imm)
+
+
     def get_type(self):
         if isinstance(self.__binary, lib.fileformat.elf.ELF):
             return T_BIN_ELF
