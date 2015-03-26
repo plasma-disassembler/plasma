@@ -94,7 +94,6 @@ class Graph:
     # Concat instructions in single block
     # jumps are in separated blocks
     def __simplify(self):
-        fuse = []
         nodes = list(self.nodes.keys())
 
         for curr in nodes:
