@@ -14,7 +14,6 @@ color() {
 
 red() {
     color 31 "$1" "$2"
-
 }
 
 green() {
@@ -61,7 +60,7 @@ verbose=0
 name=`basename "$1" .rev`
 shift
 
-if [ "$1" == "verbose" ]; then
+if [ "$1" == "1" ]; then
     verbose=1
     shift
 fi

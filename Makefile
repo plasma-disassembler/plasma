@@ -11,16 +11,18 @@ SYMBOLS[tests/server.rev] = "main" "connection_handler"
 all: check
 
 
+# Verbose : print the diff at each test
+# set the variable V=1 on the commande line
+
+
 # Don't rebuild. We want to keep the original rev file.
 # You need to recreate the file .rev at hand (with the option -nc)
 # Or you can use the file regen.sh
 check: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
-	@./diff.sh $@ $(SYMBOLS[$@])
+	@./diff.sh $@ ${V} $(SYMBOLS[$@])
 
-# @./diff.sh $@ verbose $(SYMBOLS[$@])
-	
 
 compile: $(BIN)
 $(TESTS_DIR)/%.bin: $(TESTS_DIR)/%.c
