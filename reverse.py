@@ -45,8 +45,8 @@ def reverse():
             help="Don't print comments")
     parser.add_argument('--noandif', action='store_true',
             help="Print normal 'if' instead of 'andif'")
-    parser.add_argument('--strsize', type=int, default=30, metavar='N',
-            help='default 30, maximum of chars to display for rodata strings.')
+    parser.add_argument('--datasize', type=int, default=30, metavar='N',
+            help='default 30, maximum of chars to display for strings or bytes array.')
     parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX',
             help='default main')
     parser.add_argument('--vim', action='store_true',
@@ -66,12 +66,12 @@ def reverse():
 
     args = parser.parse_args()
 
-    lib.utils.dbg                           = args.opt_debug
-    lib.generate_ast.print_andif            = not args.noandif
-    lib.colors.nocolor                      = args.nocolor
-    lib.output.nocomment                    = args.nocomment
-    lib.ast.nocomment                       = args.nocomment
-    lib.fileformat.binary.MAX_STRING_RODATA = args.strsize
+    lib.utils.dbg                         = args.opt_debug
+    lib.generate_ast.print_andif          = not args.noandif
+    lib.colors.nocolor                    = args.nocolor
+    lib.output.nocomment                  = args.nocomment
+    lib.ast.nocomment                     = args.nocomment
+    lib.fileformat.binary.MAX_STRING_DATA = args.datasize
 
     if not os.path.exists(args.filename):
         die("{args.filename} doesn't exists".format(args=args))
