@@ -19,8 +19,8 @@
 
 import os
 import os.path
-from lib.utils import *
-from lib.paths import Paths, loop_contains
+from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_cond_jump, is_jump
+from lib.paths import Paths
 
 
 class Graph:

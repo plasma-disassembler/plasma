@@ -18,7 +18,8 @@
 
 
 import pefile
-from ctypes import *
+from ctypes import (c_char, c_short, c_ubyte, c_uint, c_ushort, sizeof,
+        Structure, Union)
 
 
 

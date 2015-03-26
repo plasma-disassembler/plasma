@@ -18,7 +18,7 @@
 
 import lib.fileformat.elf
 import lib.fileformat.pe
-from lib.utils import *
+from lib.utils import die
 
 
 MAX_STRING_RODATA = 30
