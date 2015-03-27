@@ -132,12 +132,16 @@ class PE:
 
 
     def load_data_sections(self):
-             # INITIALIZED_DATA | MEM_READ   | MEM_WRITE
-        mask = 0x00000040       | 0x40000000 | 0x80000000
         for s in self.pe.sections:
-            if s.Characteristics & mask and not self.__section_is_exec(s):
+            if self.__section_is_data(s):
                 self.__data_sections.append(s)
                 self.__data_sections_data.append(s.get_data())
+
+
+    def __section_is_data(self, s):
+             # INITIALIZED_DATA | MEM_READ   | MEM_WRITE
+        mask = 0x00000040       | 0x40000000 | 0x80000000
+        return s.Characteristics & mask and not self.__section_is_exec(s)
 
 
     def is_data(self, addr):
@@ -171,7 +175,11 @@ class PE:
 
     def is_address(self, imm):
         base = self.pe.OPTIONAL_HEADER.ImageBase
-        return imm > base and self.pe.get_section_by_rva(imm - base) is not None
+        if imm > base:
+            s = self.pe.get_section_by_rva(imm - base)
+            if s is not None:
+                return s.Name.decode(), self.__section_is_data(s)
+        return None, False
 
 
     def __section_is_exec(self, s):

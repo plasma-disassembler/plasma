@@ -51,6 +51,10 @@ def bold(text):
     return "\x1b[1m" + text + "\x1b[0m"
 
 
+def color_section(text):
+    return color(text, 81)
+
+
 def color_keyword(text):
     return bold(color(text, 161))
 

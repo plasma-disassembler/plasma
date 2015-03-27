@@ -68,6 +68,9 @@ class Binary(object):
         return self.__binary.get_arch()
 
 
+    # Returns the name of the section if the value is an address
+    # and a bool if it's a data section.
+    # (name, is_data)
     def is_address(self, imm):
         return self.__binary.is_address(imm)
 

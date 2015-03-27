@@ -3,8 +3,8 @@ function main {
     int64_t var2
     0x4004b6: push rbp
     0x4004b7: rbp = rsp # mov rbp, rsp
-    0x4004ba: var1 = 0x6008b8 "\x01\x02\x03\x04\x05\x06\x07\x08\tab" # mov qword ptr [rbp - 8], 0x6008b8
-    0x4004c2: var2 = 0x6008c1 "ab" # mov qword ptr [rbp - 0x10], 0x6008c1
+    0x4004ba: var1 = 0x6008b8 "\x01\x02\x03\x04\x05\x06\x07\x08\tab" <c1> # mov qword ptr [rbp - 8], 0x6008b8
+    0x4004c2: var2 = 0x6008c1 "ab" <c2.2706> # mov qword ptr [rbp - 0x10], 0x6008c1
     0x4004ca: eax = 0 # mov eax, 0
     0x4004cf: pop rbp
     0x4004d0: ret 

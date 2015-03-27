@@ -16,7 +16,7 @@ all: check
 
 
 # Don't rebuild. We want to keep the original rev file.
-# You need to recreate the file .rev at hand (with the option -nc)
+# You need to recreate the file .rev at hand (with the options -nc -ns)
 # Or you can use the file regen.sh
 check: $(REV)
 FORCE:

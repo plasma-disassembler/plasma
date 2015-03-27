@@ -20,7 +20,8 @@
 
 import lib.ast
 from lib.colors import (addr_color, color, color_addr, color_comment,
-        color_keyword, color_retcall, color_string, color_type, color_var)
+        color_keyword, color_retcall, color_string, color_type, color_var,
+        color_section)
 from lib.utils import get_char, inst_symbol, is_call, is_jump, is_ret
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
@@ -31,6 +32,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
 
 binary = None
 nocomment = False
+nosectionsname = False
 
 
 def print_block(blk, tab):
@@ -67,22 +69,26 @@ def print_operand(i, num_op):
     if op.type == X86_OP_IMM:
         imm = op.value.imm
 
-        if binary.is_data(imm):
-            print_no_end(hex(imm) + " ")
-            print_no_end(color_string(binary.get_string(imm)))
+        sec_name, is_data = binary.is_address(imm)
 
-        elif imm in binary.reverse_symbols:
+        if sec_name is not None:
             print_no_end(hex(imm) + " ")
-            print_symbol(imm)
 
-        elif binary.is_address(imm):
-            print_no_end(hex(imm))
+            if not nosectionsname:
+                print_no_end("(" + color_section(sec_name) + ") ")
+
+            if is_data: 
+                print_no_end(color_string(binary.get_string(imm)))
+
+            if imm in binary.reverse_symbols:
+                print_no_end(" ")
+                print_symbol(imm)
+
+        elif op.size == 1:
+            print_no_end(color_string("'%s'" % get_char(imm)))
 
         else:
-            if op.size == 1:
-                print_no_end(color_string("'%s'" % get_char(imm)))
-            else:
-                print_no_end(str(imm))
+            print_no_end(str(imm))
 
         return False
 

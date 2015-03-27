@@ -36,7 +36,9 @@ from lib.vim import generate_vim_syntax
 
 def reverse():
     # Parse arguments
-    parser = ArgumentParser(description='Reverse engineering for x86 binaries. Generation of pseudo-C.')
+    parser = ArgumentParser(description=
+        'Reverse engineering for x86 binaries. Generation of pseudo-C. '
+        'Supported formats : ELF, PE. https://github.com/joelpx/reverse')
     parser.add_argument('filename', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')
     parser.add_argument('-g', '--graph', action='store_true',
@@ -63,6 +65,7 @@ def reverse():
             help=('Add user symbols for better readability of the analysis. '
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
     parser.add_argument('-d', '--opt_debug', action='store_true')
+    parser.add_argument('-ns', '--nosectionsname', action='store_true')
 
     args = parser.parse_args()
 
@@ -70,6 +73,7 @@ def reverse():
     lib.generate_ast.print_andif          = not args.noandif
     lib.colors.nocolor                    = args.nocolor
     lib.output.nocomment                  = args.nocomment
+    lib.output.nosectionsname             = args.nosectionsname
     lib.ast.nocomment                     = args.nocomment
     lib.fileformat.binary.MAX_STRING_DATA = args.datasize
 

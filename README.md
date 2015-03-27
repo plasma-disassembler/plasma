@@ -35,7 +35,7 @@ can install it from PyPi, like followings:
 
     $ ./reverse.py tests/nestedloop1.bin
 
-![reverse](http://hippersoft.fr/projects/rev.jpg)
+![reverse](http://hippersoft.fr/projects/rev2.jpg)
 
 
 By opening `d3/index.html` (with the option `--graph`) you will be able to

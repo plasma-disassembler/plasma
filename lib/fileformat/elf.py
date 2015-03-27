@@ -51,7 +51,6 @@ class ELF:
         }
 
 
-
     def load_static_sym(self):
         symtab = self.elf.get_section_by_name(b".symtab")
         if symtab is None:
@@ -87,20 +86,10 @@ class ELF:
 
 
     def load_data_sections(self):
-        mask = SH_FLAGS.SHF_WRITE | SH_FLAGS.SHF_ALLOC
         for s in self.elf.iter_sections():
-            if s.header.sh_flags & mask and not self.__section_is_exec(s):
+            if self.__section_is_data(s):
                 self.__data_sections.append(s)
                 self.__data_sections_data.append(s.data())
-
-
-    def is_data(self, addr):
-        for s in self.__data_sections:
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if start <= addr < end:
-                return True
-        return False
 
 
     def __get_data_section_idx(self, addr):
@@ -112,6 +101,11 @@ class ELF:
         return -1
 
 
+    def __section_is_data(self, s):
+        mask = SH_FLAGS.SHF_WRITE | SH_FLAGS.SHF_ALLOC
+        return s.header.sh_flags & mask and not self.__section_is_exec(s)
+
+
     def is_address(self, imm):
         for s in self.elf.iter_sections():
             start = s.header.sh_addr
@@ -119,8 +113,8 @@ class ELF:
                 continue
             end = start + s.header.sh_size
             if  start <= imm < end:
-                return True
-        return False
+                return s.name.decode(), self.__section_is_data(s)
+        return None, False
 
 
     def __find_section(self, addr):
