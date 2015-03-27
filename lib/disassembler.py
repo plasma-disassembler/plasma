@@ -86,7 +86,6 @@ class Disassembler():
 
 
     def dump(self, addr, lines):
-
         i_init = index(self.code_idx, addr)
         end = min(len(self.code_idx), i_init + lines)
 
@@ -146,7 +145,6 @@ class Disassembler():
     def __extract_func(self, addr):
         curr = self.code[addr]
         gph = Graph(self, addr)
-
         rest = []
 
         while 1:

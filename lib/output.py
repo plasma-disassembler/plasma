@@ -68,25 +68,19 @@ def print_operand(i, num_op):
 
     if op.type == X86_OP_IMM:
         imm = op.value.imm
-
         sec_name, is_data = binary.is_address(imm)
 
         if sec_name is not None:
             print_no_end(hex(imm) + " ")
-
             if not nosectionsname:
                 print_no_end("(" + color_section(sec_name) + ") ")
-
             if is_data: 
                 print_no_end(color_string(binary.get_string(imm)))
-
             if imm in binary.reverse_symbols:
                 print_no_end(" ")
                 print_symbol(imm)
-
         elif op.size == 1:
             print_no_end(color_string("'%s'" % get_char(imm)))
-
         else:
             print_no_end(str(imm))
 
@@ -283,12 +277,14 @@ def print_inst(i, tab=0, prefix=""):
             print_no_end(" " + inst_symbol(i.id) + " ")
             print_operand(i, 1)
         modified = True
+
     elif i.id == X86_INS_IDIV:
         print_no_end('eax = edx:eax / ')
         print_operand(i, 0)
         print_no_end('; edx = edx:eax % ')
         print_operand(i, 0)
         modified = True
+
     else:
         print_no_end("%s " % i.mnemonic)
         if len(i.operands) > 0:

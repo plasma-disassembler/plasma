@@ -230,7 +230,6 @@ def assign_colors(ast):
 def fuse_cmp_if(ast):
     if isinstance(ast, Ast_Branch):
         types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
-
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
                 if n[-1].id == X86_INS_CMP and i+1 < len(ast.nodes) \

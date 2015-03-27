@@ -284,7 +284,6 @@ class Graph:
 
 
     def __search_equivalent_loops(self):
-
         # TODO : temporary algorithm while waiting a better one.
         #
         # Can occurs when a goto jumps into a loop. This will generate more
@@ -312,7 +311,6 @@ class Graph:
         # In fact it's false, because sometimes we can have this situation
         # For avoiding these we had a jmp for to be sure (see tests/gotoinloop3)
         #
-
 
         self.equiv = {}
 

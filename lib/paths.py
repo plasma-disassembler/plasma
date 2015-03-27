@@ -40,7 +40,6 @@ def loop_contains(loop_start, addr):
     return False
 
 
-
 # TODO remove
 # Returns all loops starting with addr
 def loop_exists_idx(addr):
@@ -53,7 +52,6 @@ def loop_exists_idx(addr):
     return idx
 
 
-
 # TODO remove
 def loop_exists(addr):
     # normally addr != -1
@@ -63,7 +61,6 @@ def loop_exists(addr):
         if addr == l[0]:
             return True
     return False
-
 
 
 class Paths():
@@ -88,7 +85,6 @@ class Paths():
 
     def __is_in_curr_loop(self, loop):
         # Assume that current paths is a loop
-
         curr_loop = self.first()
 
         if loop[0] != curr_loop:
@@ -153,7 +149,6 @@ class Paths():
             return False, False
 
         l_idx = self.looping[path_idx]
-
         if addr != gph.loops[l_idx][0]:
             return False, False
 
@@ -206,7 +201,6 @@ class Paths():
     # TODO optimize suppression
     def __del_path(self, i):
         del self.paths[i]
-
         new = {}
         for k in self.looping:
             if k != i:
@@ -214,7 +208,6 @@ class Paths():
                     new[k-1] = self.looping[k]
                 else:
                     new[k] = self.looping[k]
-
         del self.looping
         self.looping = new
 
