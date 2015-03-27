@@ -30,16 +30,6 @@ gph = None
 print_andif = True
 
 
-# TODO remove
-def loop_contains(loop_start, addr):
-    if loop_start == -1:
-        return True
-    for l in gph.loops:
-        if l[0] == loop_start and addr in l:
-            return True
-    return False
-
-
 def get_ast_ifgoto(paths, curr_loop_idx, inst):
     nxt = gph.link_out[inst.address]
 
