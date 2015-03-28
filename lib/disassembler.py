@@ -28,10 +28,10 @@ from lib.colors import pick_color
 
 
 class Disassembler():
-    def __init__(self, filename):
+    def __init__(self, filename, raw_bits=0):
         self.code = {}
         self.code_idx = []
-        self.binary = Binary(filename)
+        self.binary = Binary(filename, raw_bits)
 
         arch = self.binary.get_arch()
         if arch == ARCH_x86:
@@ -62,14 +62,17 @@ class Disassembler():
             self.binary.load_import_symbols(self.code)
 
 
-    def get_addr_from_string(self, opt_addr):
-        search = [opt_addr]
-        if opt_addr == "main":
-            search.append("_main")
+    def get_addr_from_string(self, opt_addr, raw=False):
+        if opt_addr is None:
+            if raw:
+                return 0
+            search = ["main", "_main"]
+        else:
+            search = [opt_addr]
 
         found = False
         for s in search:
-            if opt_addr.startswith("0x"):
+            if s.startswith("0x"):
                 a = int(opt_addr, 16)
             else:
                 a = self.binary.symbols.get(s, -1)
@@ -172,9 +175,13 @@ class Disassembler():
                     gph.add_node(curr)
 
                 else:
-                    nxt = self.code[curr.address + curr.size]
-                    gph.set_next(curr, nxt)
-                    rest.append(nxt.address)
+                    try:
+                        nxt = self.code[curr.address + curr.size]
+                        gph.set_next(curr, nxt)
+                        rest.append(nxt.address)
+                    except:
+                        gph.add_node(curr)
+                        pass
 
             try:
                 curr = self.code[rest.pop()]

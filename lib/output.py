@@ -60,7 +60,7 @@ def print_symbol(addr):
 
 # Return True if the operand is a variable (because the output is
 # modified, we reprint the original instruction later)
-def print_operand(i, num_op):
+def print_operand(i, num_op, hexa=False):
     def inv(n):
         return n == X86_OP_INVALID
 
@@ -81,6 +81,8 @@ def print_operand(i, num_op):
                 print_symbol(imm)
         elif op.size == 1:
             print_no_end(color_string("'%s'" % get_char(imm)))
+        elif hexa:
+            print_no_end(hex(imm))
         else:
             print_no_end(str(imm))
 
@@ -235,7 +237,7 @@ def print_inst(i, tab=0, prefix=""):
 
     if is_call(i):
         print_no_end(color_retcall(i.mnemonic) + " ")
-        print_operand(i, 0)
+        print_operand(i, 0, hexa=True)
         print()
         return
 

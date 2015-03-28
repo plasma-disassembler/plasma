@@ -49,7 +49,7 @@ def reverse():
             help="Print normal 'if' instead of 'andif'")
     parser.add_argument('--datasize', type=int, default=30, metavar='N',
             help='default 30, maximum of chars to display for strings or bytes array.')
-    parser.add_argument('-x', '--entry', default='main', metavar='SYMBOLNAME|0xXXXXX|EP',
+    parser.add_argument('-x', '--entry', metavar='SYMBOLNAME|0xXXXXX|EP',
             help='default main. EP stands for entry point.')
     parser.add_argument('--vim', action='store_true',
             help='Generate syntax colors for vim')
@@ -57,6 +57,10 @@ def reverse():
             help='Print all symbols')
     parser.add_argument('-c', '--call', action='store_true',
             help='Print all calls')
+    parser.add_argument('-r32', '--raw32', action='store_true',
+            help='Consider the input file as a raw binary')
+    parser.add_argument('-r64', '--raw64', action='store_true',
+            help='Consider the input file as a raw binary')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
     parser.add_argument('--lines', type=int, default=30, metavar='N',
@@ -82,7 +86,14 @@ def reverse():
 
     # Reverse !
 
-    dis = Disassembler(args.filename)
+    if args.raw32:
+        raw_bits = 32
+    elif args.raw64:
+        raw_bits = 64
+    else:
+        raw_bits = 0
+
+    dis = Disassembler(args.filename, raw_bits)
 
     if args.symfile:
         dis.load_user_sym_file(args.symfile)
@@ -93,7 +104,7 @@ def reverse():
     if args.sym or args.call or args.entry == "EP":
         addr = dis.binary.get_entry_point()
     else:
-        addr = dis.get_addr_from_string(args.entry)
+        addr = dis.get_addr_from_string(args.entry, raw_bits)
 
     # Disassemble and load imported symbols for PE
     dis.disasm(addr)

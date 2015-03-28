@@ -18,6 +18,7 @@
 
 import lib.fileformat.elf
 import lib.fileformat.pe
+import lib.fileformat.raw
 from lib.utils import die
 
 
@@ -34,22 +35,25 @@ T_BIN_UNK = 2
 
 
 class Binary(object):
-    def __init__(self, filename):
+    def __init__(self, filename, raw_bits=0):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
 
-        try:
-            self.__binary = lib.fileformat.elf.ELF(self, filename)
-        except Exception:
+        if raw_bits != 0:
+            self.__binary = lib.fileformat.raw.Raw(filename, raw_bits)
+        else:
             try:
-                self.__binary = lib.fileformat.pe.PE(self, filename)
+                self.__binary = lib.fileformat.elf.ELF(self, filename)
             except Exception:
-                die("the file is not PE or ELF binary")
+                try:
+                    self.__binary = lib.fileformat.pe.PE(self, filename)
+                except Exception:
+                    die("the file is not PE or ELF binary")
 
-        self.__binary.load_static_sym()
-        self.__binary.load_dyn_sym()
-        self.__binary.load_data_sections()
+            self.__binary.load_static_sym()
+            self.__binary.load_dyn_sym()
+            self.__binary.load_data_sections()
 
 
     def is_data(self, addr):
