@@ -178,7 +178,7 @@ class PE:
         if imm > base:
             s = self.pe.get_section_by_rva(imm - base)
             if s is not None:
-                return s.Name.decode(), self.__section_is_data(s)
+                return s.Name.decode().rstrip(' \0'), self.__section_is_data(s)
         return None, False
 
 
