@@ -82,7 +82,7 @@ def reverse():
     lib.fileformat.binary.MAX_STRING_DATA = args.datasize
 
     if not os.path.exists(args.filename):
-        die("{args.filename} doesn't exists".format(args=args))
+        die("{args.filename} doesn't exist".format(args=args))
 
     # Reverse !
 
@@ -98,7 +98,7 @@ def reverse():
     if args.symfile:
         dis.load_user_sym_file(args.symfile)
 
-    # Maybe args.entry is a symbol and doesn't exists.
+    # Maybe args.entry is a symbol and doesn't exist.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
     if args.sym or args.call or args.entry == "EP":
