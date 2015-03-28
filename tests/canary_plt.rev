@@ -14,7 +14,7 @@ function main {
         # 0x400563: jle 0x40054c
         if (var2 > 99)  goto 0x400565
         0x40054c: eax = var2 # mov eax, dword ptr [rbp - 0x94]
-        0x400552: cdqe 
+        0x400552: rax = eax # cdqe 
         0x400554: *(rbp + rax - 144) = 'a' # mov byte ptr [rbp + rax - 0x90], 0x61
     }
     0x400565: eax = 0 # mov eax, 0
