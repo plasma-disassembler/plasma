@@ -33,7 +33,7 @@ function connection_handler {
     0x400b87: call 0x400810 <write@plt>
     0x400b8c: jmp 0x400bb4
     loop {
-        0x400bb4: lea rsi, var4 # lea rsi, qword ptr [rbp - 0x7f0]
+        0x400bb4: rsi = &(var4) # lea rsi, qword ptr [rbp - 0x7f0]
         0x400bbb: eax = var2 # mov eax, dword ptr [rbp - 4]
         0x400bbe: ecx = 0 # mov ecx, 0
         0x400bc3: edx = 2000 # mov edx, 0x7d0
@@ -43,11 +43,11 @@ function connection_handler {
         # 0x400bd2: cmp dword ptr [rbp - 0x14], 0
         # 0x400bd6: jg 0x400b8e
         if (var5 <= 0)  goto 0x400bd8
-        0x400b8e: lea rax, var4 # lea rax, qword ptr [rbp - 0x7f0]
+        0x400b8e: rax = &(var4) # lea rax, qword ptr [rbp - 0x7f0]
         0x400b95: rdi = rax # mov rdi, rax
         0x400b98: call 0x400820 <strlen@plt>
         0x400b9d: rdx = rax # mov rdx, rax
-        0x400ba0: lea rcx, var4 # lea rcx, qword ptr [rbp - 0x7f0]
+        0x400ba0: rcx = &(var4) # lea rcx, qword ptr [rbp - 0x7f0]
         0x400ba7: eax = var2 # mov eax, dword ptr [rbp - 4]
         0x400baa: rsi = rcx # mov rsi, rcx
         0x400bad: edi = eax # mov edi, eax

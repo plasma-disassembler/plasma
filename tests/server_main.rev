@@ -35,7 +35,7 @@ function main {
         0x400a1d: edi = 8888 # mov edi, 0x22b8
         0x400a22: call 0x400830 <htons@plt>
         0x400a27: var6 = ax # mov word ptr [rbp - 0x2e], ax
-        0x400a2b: lea rcx, var4 # lea rcx, qword ptr [rbp - 0x30]
+        0x400a2b: rcx = &(var4) # lea rcx, qword ptr [rbp - 0x30]
         0x400a2f: eax = var3 # mov eax, dword ptr [rbp - 4]
         0x400a32: edx = 16 # mov edx, 0x10
         0x400a37: rsi = rcx # mov rsi, rcx
@@ -60,8 +60,8 @@ function main {
             0x400a7c: var7 = 16 # mov dword ptr [rbp - 0x14], 0x10
             0x400a83: jmp 0x400ae2
             loop {
-                0x400ae2: lea rdx, var7 # lea rdx, qword ptr [rbp - 0x14]
-                0x400ae6: lea rcx, var8 # lea rcx, qword ptr [rbp - 0x40]
+                0x400ae2: rdx = &(var7) # lea rdx, qword ptr [rbp - 0x14]
+                0x400ae6: rcx = &(var8) # lea rcx, qword ptr [rbp - 0x40]
                 0x400aea: eax = var3 # mov eax, dword ptr [rbp - 4]
                 0x400aed: rsi = rcx # mov rsi, rcx
                 0x400af0: edi = eax # mov edi, eax
@@ -79,7 +79,7 @@ function main {
                 0x400aa1: edx = var9 # mov edx, dword ptr [rbp - 8]
                 0x400aa4: *(rax) = edx # mov dword ptr [rax], edx
                 0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
-                0x400aaa: lea rax, var11 # lea rax, qword ptr [rbp - 0x48]
+                0x400aaa: rax = &(var11) # lea rax, qword ptr [rbp - 0x48]
                 0x400aae: rcx = rdx # mov rcx, rdx
                 0x400ab1: edx = 0x400b1e <connection_handler> # mov edx, 0x400b1e
                 0x400ab6: esi = 0 # mov esi, 0
