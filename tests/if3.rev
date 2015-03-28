@@ -12,7 +12,7 @@ function main {
     loop {
         # 0x400550: cmp dword ptr [rbp - 4], 7
         # 0x400554: jle 0x400525
-        if (var1 > 7)  goto 0x400556 
+        if (var1 > 7)  goto 0x400556
         0x400525: edi = 0x4005e4 "1" # mov edi, 0x4005e4
         0x40052a: call 0x4003e0 <puts@plt>
         # 0x40052f: cmp dword ptr [rbp - 0xc], 0xa

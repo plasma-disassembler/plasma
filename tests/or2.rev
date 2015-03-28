@@ -20,7 +20,7 @@ function main {
             if (var1 > 9) {
                 # 0x400582: cmp dword ptr [rbp - 4], 4
                 # 0x400586: jle 0x400562
-                if (var1 > 4)  goto 0x400588 
+                if (var1 > 4)  goto 0x400588
             }
         }
         0x400562: edi = 0x400624 "1" # mov edi, 0x400624

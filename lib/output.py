@@ -71,11 +71,11 @@ def print_operand(i, num_op):
         sec_name, is_data = binary.is_address(imm)
 
         if sec_name is not None:
-            print_no_end(hex(imm) + " ")
+            print_no_end(hex(imm))
             if not nosectionsname:
-                print_no_end("(" + color_section(sec_name) + ") ")
+                print_no_end(" (" + color_section(sec_name) + ")")
             if is_data: 
-                print_no_end(color_string(binary.get_string(imm)))
+                print_no_end(" " + color_string(binary.get_string(imm)))
             if imm in binary.reverse_symbols:
                 print_no_end(" ")
                 print_symbol(imm)
@@ -262,20 +262,25 @@ def print_inst(i, tab=0, prefix=""):
 
     if i.id in inst_check:
         print_operand(i, 0)
+
         if (all(op.type == X86_OP_REG for op in i.operands) and
                 len(set(op.value.reg for op in i.operands)) == 1 and
                 i.id == X86_INS_XOR):
             print_no_end(" = 0")
+
         elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
             print_no_end(inst_symbol(i.id))
+
         elif i.id == X86_INS_IMUL and len(i.operands) == 3:
             print_no_end(" = ")
             print_operand(i, 1)
             print_no_end(" " + inst_symbol(i.id).rstrip('=') + " ")
             print_operand(i, 2)
+
         else:
             print_no_end(" " + inst_symbol(i.id) + " ")
             print_operand(i, 1)
+
         modified = True
 
     elif i.id == X86_INS_IDIV:

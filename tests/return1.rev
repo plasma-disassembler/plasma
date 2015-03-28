@@ -10,13 +10,13 @@ function main {
     loop {
         # 0x400550: cmp dword ptr [rbp - 4], 0x63
         # 0x400554: jle 0x40051e
-        if (var1 > 99)  goto 0x400556 
+        if (var1 > 99)  goto 0x400556
         # 0x40051e: cmp dword ptr [rbp - 4], 5
         # 0x400522: jne 0x400535
-        if (var1 == 5)  goto 0x400524 
+        if (var1 == 5)  goto 0x400524
         # 0x400535: cmp dword ptr [rbp - 4], 6
         # 0x400539: jne 0x40054c
-        if (var1 == 6)  goto 0x40053b 
+        if (var1 == 6)  goto 0x40053b
         0x40054c: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     # endloop 1

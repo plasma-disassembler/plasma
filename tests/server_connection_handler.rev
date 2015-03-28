@@ -9,7 +9,7 @@ function connection_handler {
     0x400b22: rsp -= 2048 # sub rsp, 0x800
     0x400b29: var1 = rdi # mov qword ptr [rbp - 0x7f8], rdi
     0x400b30: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
-    0x400b37: eax = [rax] # mov eax, dword ptr [rax]
+    0x400b37: eax = *(rax) # mov eax, dword ptr [rax]
     0x400b39: var2 = eax # mov dword ptr [rbp - 4], eax
     0x400b3c: var3 = 0x400d60 "Greetings! I am your connectio..." # mov qword ptr [rbp - 0x10], 0x400d60
     0x400b44: rax = var3 # mov rax, qword ptr [rbp - 0x10]
@@ -42,7 +42,7 @@ function connection_handler {
         0x400bcf: var5 = eax # mov dword ptr [rbp - 0x14], eax
         # 0x400bd2: cmp dword ptr [rbp - 0x14], 0
         # 0x400bd6: jg 0x400b8e
-        if (var5 <= 0)  goto 0x400bd8 
+        if (var5 <= 0)  goto 0x400bd8
         0x400b8e: lea rax, var4 # lea rax, qword ptr [rbp - 0x7f0]
         0x400b95: rdi = rax # mov rdi, rax
         0x400b98: call 0x400820 <strlen@plt>
@@ -58,7 +58,7 @@ function connection_handler {
     if (var5 == 0) {
         0x400bde: edi = 0x400dc6 "Client disconnected" # mov edi, 0x400dc6
         0x400be3: call 0x400800 <puts@plt>
-        0x400be8: rax = [0x6012a1] # mov rax, qword ptr [rip + 0x2006b9]
+        0x400be8: rax = *(0x6012a1) # mov rax, qword ptr [rip + 0x2006b9]
         0x400bef: rdi = rax # mov rdi, rax
         0x400bf2: call 0x400870 <fflush@plt>
         0x400bf7: jmp 0x400c09

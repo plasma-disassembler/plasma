@@ -10,17 +10,17 @@ function main {
     loop {
         # 0x400560: cmp dword ptr [rbp - 4], 9
         # 0x400564: jg 0x400570
-        if (var1 > 9)  goto 0x400570 
+        if (var1 > 9)  goto 0x400570
         0x400566: eax = var1 # mov eax, dword ptr [rbp - 4]
         0x400569: eax += eax # add eax, eax
         # 0x40056b: cmp eax, dword ptr [rbp - 8]
         # 0x40056e: jne 0x40051e
-        if (eax == var2)  goto 0x400570 
+        if (eax == var2)  goto 0x400570
         0x40051e: edi = 0x400614 "1" # mov edi, 0x400614
         0x400523: call 0x4003e0 <puts@plt>
         # 0x400528: cmp dword ptr [rbp - 4], 8
         # 0x40052c: jne 0x400558
-        if (var1 == 8)  goto 0x40052e 
+        if (var1 == 8)  goto 0x40052e
         0x400558: var1 += 1 # add dword ptr [rbp - 4], 1
         0x40055c: var2 += 1 # add dword ptr [rbp - 8], 1
     }
@@ -29,7 +29,7 @@ function main {
     loop {
         # 0x400543: cmp dword ptr [rbp - 8], 3
         # 0x400547: jle 0x400530
-        if (var2 > 3)  goto 0x400549 
+        if (var2 > 3)  goto 0x400549
         0x400530: eax = var1 # mov eax, dword ptr [rbp - 4]
         0x400533: eax += 10 # add eax, 0xa
         0x400536: var2 += eax # add dword ptr [rbp - 8], eax

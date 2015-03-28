@@ -13,7 +13,7 @@ function main {
         0x400529: var1 += 1 # add dword ptr [rbp - 4], 1
         # 0x40052d: cmp dword ptr [rbp - 4], 9
         # 0x400531: jle 0x400515
-        if (var1 > 9)  goto 0x400533 
+        if (var1 > 9)  goto 0x400533
     }
     0x400533: eax = 0 # mov eax, 0
     0x400538: leave 

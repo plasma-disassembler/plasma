@@ -12,7 +12,7 @@ function main {
     loop {
         # 0x400559: cmp dword ptr [rbp - 4], 0x13
         # 0x40055d: jle 0x400525
-        if (var2 > 19)  goto 0x40055f 
+        if (var2 > 19)  goto 0x40055f
         # 0x400525: cmp dword ptr [rbp - 8], 0
         # 0x400529: jne 0x40053d
         if (var1 == 0) {

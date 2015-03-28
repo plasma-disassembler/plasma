@@ -8,7 +8,7 @@ function main {
     loop {
         # 0x400546: cmp dword ptr [rbp - 4], 0
         # 0x40054a: jle 0x400510
-        if (var1 > 0)  goto 0x40054c 
+        if (var1 > 0)  goto 0x40054c
         0x400510: edi = 0x4005e4 "1" # mov edi, 0x4005e4
         0x400515: call 0x4003e0 <puts@plt>
         loop {
@@ -16,10 +16,10 @@ function main {
             loop {
                 # 0x40053c: cmp dword ptr [rbp - 8], 0x18
                 # 0x400540: jle 0x40051c
-                if (var2 > 24)  goto 0x400542 
+                if (var2 > 24)  goto 0x400542
                 # 0x40051c: cmp dword ptr [rbp - 4], 1
                 # 0x400520: jne 0x40052e
-                if (var1 == 1)  goto 0x400522 
+                if (var1 == 1)  goto 0x400522
                 0x40052e: edi = 0x4005e8 "3" # mov edi, 0x4005e8
                 0x400533: call 0x4003e0 <puts@plt>
                 0x400538: var2 += 1 # add dword ptr [rbp - 8], 1

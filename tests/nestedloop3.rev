@@ -11,16 +11,16 @@ function main {
     loop {
         # 0x4004df: cmp dword ptr [rbp - 4], 4
         # 0x4004e3: jle 0x4004d1
-        if (var1 > 4)  goto 0x4004e5 
+        if (var1 > 4)  goto 0x4004e5
         0x4004d1: jmp 0x4004d9
         loop {
             # 0x4004d9: cmp dword ptr [rbp - 8], 1
             # 0x4004dd: jle 0x4004d3
-            if (var2 > 1)  goto 0x4004df 
+            if (var2 > 1)  goto 0x4004df
             loop {
                 # 0x4004d3: cmp dword ptr [rbp - 0xc], 3
                 # 0x4004d7: jle 0x4004d3
-                if (var3 > 3)  goto 0x4004d9 
+                if (var3 > 3)  goto 0x4004d9
             }
         }
     }

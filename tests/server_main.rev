@@ -69,7 +69,7 @@ function main {
                 0x400af7: var9 = eax # mov dword ptr [rbp - 8], eax
                 # 0x400afa: cmp dword ptr [rbp - 8], 0
                 # 0x400afe: jne 0x400a85
-                if (var9 == 0)  goto 0x400b00 
+                if (var9 == 0)  goto 0x400b00
                 0x400a85: edi = 0x400d14 "Connection accepted" # mov edi, 0x400d14
                 0x400a8a: call 0x400800 <puts@plt>
                 0x400a8f: edi = 1 # mov edi, 1
@@ -77,7 +77,7 @@ function main {
                 0x400a99: var10 = rax # mov qword ptr [rbp - 0x10], rax
                 0x400a9d: rax = var10 # mov rax, qword ptr [rbp - 0x10]
                 0x400aa1: edx = var9 # mov edx, dword ptr [rbp - 8]
-                0x400aa4: [rax] = edx # mov dword ptr [rax], edx
+                0x400aa4: *(rax) = edx # mov dword ptr [rax], edx
                 0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
                 0x400aaa: lea rax, var11 # lea rax, qword ptr [rbp - 0x48]
                 0x400aae: rcx = rdx # mov rcx, rdx
@@ -87,7 +87,7 @@ function main {
                 0x400abe: call 0x4007f0 <pthread_create@plt>
                 0x400ac3: test eax, eax
                 # 0x400ac5: jns 0x400ad8
-                if < 0  goto 0x400ac7 
+                if < 0  goto 0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned" # mov edi, 0x400d40
                 0x400add: call 0x400800 <puts@plt>
             }

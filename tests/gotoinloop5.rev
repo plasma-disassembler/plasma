@@ -25,7 +25,7 @@ function main {
     loop {
         # 0x4005a6: cmp dword ptr [rbp - 4], 9
         # 0x4005aa: jle 0x40053e
-        if (var1 > 9)  goto 0x4005ac 
+        if (var1 > 9)  goto 0x4005ac
         0x40053e: edi = 0x40064a "loop" # mov edi, 0x40064a
         0x400543: call 0x4003e0 <puts@plt>
         # 0x400548: cmp dword ptr [rbp - 8], 0x6f

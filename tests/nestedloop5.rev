@@ -17,7 +17,7 @@ function main {
             loop {
                 # 0x400544: cmp dword ptr [rbp - 0xc], 0
                 # 0x400548: jg 0x40051d
-                if (var4 <= 0)  goto 0x40054a 
+                if (var4 <= 0)  goto 0x40054a
                 0x40051d: edi = 0x4005e4 "1" # mov edi, 0x4005e4
                 0x400522: call 0x4003e0 <puts@plt>
                 0x400527: var5 = 0 # mov dword ptr [rbp - 4], 0
@@ -25,7 +25,7 @@ function main {
                 loop {
                     # 0x40053e: cmp dword ptr [rbp - 4], 0x31
                     # 0x400542: jle 0x400530
-                    if (var5 > 49)  goto 0x400544 
+                    if (var5 > 49)  goto 0x400544
                     0x400530: edi = 0x4005e6 "2" # mov edi, 0x4005e6
                     0x400535: call 0x4003e0 <puts@plt>
                     0x40053a: var5 += 1 # add dword ptr [rbp - 4], 1
@@ -34,7 +34,7 @@ function main {
         }
         # 0x40054a: cmp dword ptr [rbp - 8], 0x31
         # 0x40054e: jle 0x400515
-        if (var3 > 49)  goto 0x400550 
+        if (var3 > 49)  goto 0x400550
     }
     0x400550: eax = 0 # mov eax, 0
     0x400555: leave 

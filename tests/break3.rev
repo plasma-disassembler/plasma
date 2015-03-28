@@ -10,14 +10,14 @@ function main {
     loop {
         # 0x4005e9: cmp dword ptr [rbp - 4], 0x3e7
         # 0x4005f0: jle 0x400561
-        if (var1 > 999)  goto 0x4005f6 
+        if (var1 > 999)  goto 0x4005f6
         0x400561: edi = 0x400694 "1" # mov edi, 0x400694
         0x400566: call 0x400410 <puts@plt>
         0x40056b: call 0x400440 <rand@plt>
         0x400570: var2 = eax # mov dword ptr [rbp - 8], eax
         # 0x400573: cmp dword ptr [rbp - 8], 1
         # 0x400577: jne 0x4005db
-        if (var2 == 1)  goto 0x400579 
+        if (var2 == 1)  goto 0x400579
         0x4005db: edi = 0x4006ab "5" # mov edi, 0x4006ab
         0x4005e0: call 0x400410 <puts@plt>
         0x4005e5: var1 += 1 # add dword ptr [rbp - 4], 1

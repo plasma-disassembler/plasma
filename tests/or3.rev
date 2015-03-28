@@ -20,12 +20,12 @@ function main {
             if (var1 > 9) {
                 # 0x400596: cmp dword ptr [rbp - 4], 4
                 # 0x40059a: jle 0x400562
-                if (var1 > 4)  goto 0x40059c 
+                if (var1 > 4)  goto 0x40059c
             }
         }
         # 0x400562: cmp dword ptr [rbp - 4], 0x37
         # 0x400566: jne 0x400574
-        if (var1 != 55)  goto 0x400574 
+        if (var1 != 55)  goto 0x400574
         0x400568: edi = 0x400634 "1" # mov edi, 0x400634
         0x40056d: call 0x400410 <puts@plt>
         0x400572: jmp 0x400580
