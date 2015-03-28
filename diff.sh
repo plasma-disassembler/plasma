@@ -37,9 +37,9 @@ __diff() {
         ./reverse.py "tests/${name}.bin" $more_opt --nosectionsname --nocolor >$tmp 2>/dev/null
         if [ $? -eq 0 ]; then
             if [ $verbose -eq 1 ]; then
-                diff -b $tmp "tests/${name}${suffix}.rev"
+                diff $tmp "tests/${name}${suffix}.rev" 
             else
-                diff -b $tmp "tests/${name}${suffix}.rev" >/dev/null
+                diff -q $tmp "tests/${name}${suffix}.rev" >/dev/null
             fi
 
             if [ $? -eq 0 ]; then
