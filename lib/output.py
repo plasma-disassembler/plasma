@@ -21,7 +21,7 @@
 import lib.ast
 from lib.colors import (addr_color, color, color_addr, color_comment,
         color_keyword, color_retcall, color_string, color_type, color_var,
-        color_section)
+        color_section, color_symbol)
 from lib.utils import get_char, inst_symbol, is_call, is_jump, is_ret
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
@@ -55,7 +55,7 @@ def print_no_end(text):
 
 
 def print_symbol(addr):
-    print_no_end(color_string("<" + binary.reverse_symbols[addr] + ">"))
+    print_no_end(color_symbol("<" + binary.reverse_symbols[addr] + ">"))
 
 
 # Return True if the operand is a variable (because the output is

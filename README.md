@@ -25,6 +25,12 @@ can install it from PyPi, like followings:
     sudo pip3 install capstone
 
 
+## Custom colors
+
+At the first run, `reverse.py` creates a new file `custom_colors.py` with
+default values. Here you can set your own colors.
+
+
 ## Edit with vim
 
     $ ./reverse tests/dowhile1.bin --vim

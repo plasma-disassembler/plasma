@@ -1,3 +1,4 @@
 __pycache__/
 *.py[cod]
 d3/graph.js
+custom_colors.py

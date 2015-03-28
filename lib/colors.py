@@ -18,10 +18,38 @@
 #
 
 
+
+def default_custom_file(filename):
+    fd = open(filename, "w+")
+    fd.write("class COLOR:\n")
+    fd.write("    def __init__(self, val, bold):\n")
+    fd.write("        self.val  = str(val)\n")
+    fd.write("        self.bold = bold\n")
+    fd.write("\n")
+    fd.write("COLOR_SECTION = COLOR(81, False)\n")
+    fd.write("COLOR_KEYWORD = COLOR(161, True)\n")
+    fd.write("COLOR_VAR     = COLOR(208, True)\n")
+    fd.write("COLOR_TYPE    = COLOR(81, False)\n")
+    fd.write("COLOR_COMMENT = COLOR(242, False)\n")
+    fd.write("COLOR_ADDR    = COLOR(242, False)\n")
+    fd.write("COLOR_STRING  = COLOR(144, False)\n")
+    fd.write("COLOR_SYMBOL  = COLOR(144, False)\n")
+    fd.write("COLOR_RETCALL = COLOR(161, False)\n")
+    fd.close()
+
+
+try:
+    from custom_colors import *
+except:
+    default_custom_file("custom_colors.py")
+    from custom_colors import *
+
+
 nocolor = False
 color_counter = 112
 
 addr_color = {}
+
 
 
 def pick_color(addr):
@@ -38,46 +66,55 @@ def pick_color(addr):
     addr_color[addr] = color_counter
 
 
-
-def color(text, c):
+def color(text, c): # type c == int
     if nocolor:
         return text
     return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"
 
 
-def bold(text):
+def color_class(text, c):
     if nocolor:
         return text
+    if c.bold:
+        return "\x1b[38;5;" + c.val + "m" + bold(text) + "\x1b[0m"
+    return "\x1b[38;5;" + c.val + "m" + text + "\x1b[0m"
+
+
+def bold(text):
     return "\x1b[1m" + text + "\x1b[0m"
 
 
 def color_section(text):
-    return color(text, 81)
+    return color_class(text, COLOR_SECTION)
 
 
 def color_keyword(text):
-    return bold(color(text, 161))
+    return color_class(text, COLOR_KEYWORD)
 
 
 def color_var(text):
-    return bold(color(text, 208))
+    return color_class(text, COLOR_VAR)
 
 
 def color_type(text):
-    return color(text, 81)
+    return color_class(text, COLOR_TYPE)
 
 
 def color_comment(text):
-    return color(text, 242)
+    return color_class(text, COLOR_COMMENT)
 
 
 def color_addr(text):
-    return color(text, 242)
+    return color_class(text, COLOR_ADDR)
 
 
 def color_string(text):
-    return color(text, 144)
+    return color_class(text, COLOR_STRING)
+
+
+def color_symbol(text):
+    return color_class(text, COLOR_SYMBOL)
 
 
 def color_retcall(text):
-    return color(text, 161)
+    return color_class(text, COLOR_RETCALL)
