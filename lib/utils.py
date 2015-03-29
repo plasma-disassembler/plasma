@@ -106,8 +106,8 @@ OPPOSITES = [
         [X86_INS_JNS, X86_INS_JS],
 
         # TODO not sure
-        [X86_INS_JAE, X86_INS_JA],
-        [X86_INS_JBE, X86_INS_JB],
+        [X86_INS_JAE, X86_INS_JB],
+        [X86_INS_JBE, X86_INS_JA],
         [X86_INS_JP, X86_INS_JNP],
         [X86_INS_JO, X86_INS_JNO],
         [X86_INS_JS, X86_INS_JNS],
