@@ -22,7 +22,8 @@ import lib.ast
 from lib.colors import (addr_color, color, color_addr, color_comment,
         color_keyword, color_retcall, color_string, color_type, color_var,
         color_section, color_symbol)
-from lib.utils import get_char, inst_symbol, is_call, is_jump, is_ret
+from lib.utils import (get_char, inst_symbol, is_call, is_jump, is_ret, 
+        is_uncond_jump)
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
@@ -85,6 +86,10 @@ def print_operand(i, num_op, hexa=False):
             print_no_end(hex(imm))
         else:
             print_no_end(str(imm))
+            # returns True because capstone print immediate in hexa
+            # it will be printed in a comment, sometimes it better
+            # to have the value in hexa
+            # return True
 
         return False
 
@@ -246,6 +251,8 @@ def print_inst(i, tab=0, prefix=""):
         if i.operands[0].type != X86_OP_IMM:
             print_no_end(i.mnemonic + " ")
             print_operand(i, 0)
+            if is_uncond_jump(i) and not nocomment:
+                print_comment_no_end(" # STOPPED")
             print()
             return
         try:

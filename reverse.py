@@ -57,9 +57,9 @@ def reverse():
             help='Print all symbols')
     parser.add_argument('-c', '--call', action='store_true',
             help='Print all calls')
-    parser.add_argument('-r32', '--raw32', action='store_true',
+    parser.add_argument('--raw32', action='store_true',
             help='Consider the input file as a raw binary')
-    parser.add_argument('-r64', '--raw64', action='store_true',
+    parser.add_argument('--raw64', action='store_true',
             help='Consider the input file as a raw binary')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
@@ -70,10 +70,13 @@ def reverse():
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
     parser.add_argument('-d', '--opt_debug', action='store_true')
     parser.add_argument('-ns', '--nosectionsname', action='store_true')
+    parser.add_argument('--forcejmp', action='store_true',
+            help=('Try to disassemble if a "jmp [ADDR]" or jmp rax is found.'))
 
     args = parser.parse_args()
 
     lib.utils.dbg                         = args.opt_debug
+    lib.disassembler.forcejmp             = args.forcejmp
     lib.generate_ast.print_andif          = not args.noandif
     lib.colors.nocolor                    = args.nocolor
     lib.output.nocomment                  = args.nocomment

@@ -27,6 +27,9 @@ from lib.output import print_inst, print_symbol
 from lib.colors import pick_color
 
 
+forcejmp = False
+
+
 class Disassembler():
     def __init__(self, filename, raw_bits=0):
         self.code = {}
@@ -133,7 +136,7 @@ class Disassembler():
         error("failed on 0x%x: %s %s" % 
                 (i.address, i.mnemonic, i.op_str))
         error("Sorry, I can't generate the flow graph.")
-        die("Try with --dump")
+        die("Try with --dump or with --forcejmp")
 
 
     def load_user_sym_file(self, fd):
@@ -159,7 +162,9 @@ class Disassembler():
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     else:
-                        self.__error_jmp_reg(curr)
+                        if not forcejmp:
+                            self.__error_jmp_reg(curr)
+                        gph.add_node(curr)
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
@@ -169,7 +174,9 @@ class Disassembler():
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
                     else:
-                        self.__error_jmp_reg(curr)
+                        if not forcejmp:
+                            self.__error_jmp_reg(curr)
+                        gph.add_node(curr)
 
                 elif is_ret(curr):
                     gph.add_node(curr)
