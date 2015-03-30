@@ -8,8 +8,13 @@ if [ "$1" == "force" ]; then
       name=`basename "$file" .bin`
      ./reverse.py --nosectionsname --nocolor "tests/${name}.bin" >"tests/${name}.rev"
   done
+
   mv tests/server.rev tests/server_main.rev
   ./reverse.py tests/server.bin -x=connection_handler -ns -nc >tests/server_connection_handler.rev
+
+  mv tests/pendu.rev tests/pendu__main.rev
+  ./reverse.py tests/pendu.bin -x=___main -ns -nc >tests/pendu____main.rev
+
 else
     echo "Are you sure ?"
     echo "if yes add 'force' in argument"

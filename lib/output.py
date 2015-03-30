@@ -199,7 +199,7 @@ def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
         print_addr_if_req(jump_inst, tab)
 
 
-def print_cmp_in_if(cmp_inst, jump_id):
+def print_if_cond(cmp_inst, jump_id):
     if cmp_inst != None:
         print_no_end("(")
         print_operand(cmp_inst, 0)

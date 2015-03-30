@@ -7,6 +7,7 @@ BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
 FLAGS[tests/server.c] = "-lpthread"
 FLAGS[tests/canary_plt.c] = "-fstack-protector"
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
+SYMBOLS[tests/pendu.rev] = "_main" "___main"
 
 all: check
 

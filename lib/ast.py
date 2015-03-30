@@ -19,7 +19,7 @@
 
 from lib.utils import invert_cond, is_call, is_uncond_jump, BRANCH_NEXT
 from lib.colors import pick_color, addr_color, color, color_keyword
-from lib.output import (print_block, print_cmp_in_if, print_cmp_jump_commented,
+from lib.output import (print_block, print_if_cond, print_cmp_jump_commented,
         print_comment, print_no_end, print_tabbed, print_tabbed_no_end)
 from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_OP_IMM,
         X86_OP_INVALID, X86_REG_EBP, X86_REG_RBP)
@@ -68,7 +68,7 @@ class Ast_IfGoto:
     def print(self, tab=0):
         print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
         print_tabbed_no_end(color_keyword("if "), tab)
-        print_cmp_in_if(self.cmp_inst, self.cond_id)
+        print_if_cond(self.cmp_inst, self.cond_id)
         print_no_end(color_keyword("  goto "))
         print_addr(self.addr_jump)
 
@@ -82,7 +82,7 @@ class Ast_AndIf:
     def print(self, tab=0):
         print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
-        print_cmp_in_if(self.cmp_inst, self.cond_id)
+        print_if_cond(self.cmp_inst, self.cond_id)
         print()
 
 
@@ -94,6 +94,28 @@ class Ast_Ifelse:
         self.cmp_inst = None
 
     def print(self, tab=0, print_else_keyword=False):
+
+        #
+        # if cond {
+        # } else {
+        #   ...
+        # }
+        #
+        # become
+        #
+        # if !cond {
+        #   ...
+        # }
+        #
+
+        br_next = self.br_next
+        br_next_jump = self.br_next_jump
+        inv_if = False
+
+        if len(self.br_next.nodes) == 0:
+            br_next, br_next_jump = br_next_jump, br_next
+            inv_if = True
+            
         print_cmp_jump_commented(self.cmp_inst, self.jump_inst, tab)
 
         if print_else_keyword:
@@ -101,14 +123,19 @@ class Ast_Ifelse:
         else:
             print_tabbed_no_end(color_keyword("if "), tab)
 
-        print_cmp_in_if(self.cmp_inst, invert_cond(self.jump_inst.id))
+        # jump_inst is the condition to go to the else-part
+        if inv_if:
+            print_if_cond(self.cmp_inst, self.jump_inst.id)
+        else:
+            print_if_cond(self.cmp_inst, invert_cond(self.jump_inst.id))
+
         print(" {")
 
         # if-part
-        self.br_next.print(tab+1)
+        br_next.print(tab+1)
 
         # else-part
-        if len(self.br_next_jump.nodes) > 0:
+        if len(br_next_jump.nodes) > 0:
             print_tabbed_no_end("} ", tab)
             
             # 
@@ -130,7 +157,7 @@ class Ast_Ifelse:
             # }
             #
 
-            br = self.br_next_jump
+            br = br_next_jump
 
             if len(br.nodes) == 1 and isinstance(br.nodes[0], Ast_Ifelse):
                 print()
@@ -139,13 +166,13 @@ class Ast_Ifelse:
 
             if len(br.nodes) == 2 and isinstance(br.nodes[0], list) and \
                   len(br.nodes[0]) == 1 and br.nodes[0][0].id == X86_INS_CMP and \
-                  isinstance(self.br_next_jump.nodes[1], Ast_Ifelse):
+                  isinstance(br.nodes[1], Ast_Ifelse):
                 print()
                 br.nodes[1].print(tab, True)
                 return
 
             print(color_keyword("else ") + "{")
-            self.br_next_jump.print(tab+1)
+            br.print(tab+1)
 
         print_tabbed("}", tab)
 
