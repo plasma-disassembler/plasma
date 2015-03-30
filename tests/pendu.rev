@@ -109,7 +109,7 @@ function _main {
                                 0x4013ed: eax = &(var13) # lea eax, dword ptr [ebp - 8]
                                 0x4013f0: eax += var12 # add eax, dword ptr [ebp - 0x20]
                                 0x4013f3: eax -= 160 # sub eax, 0xa0
-                                0x4013f8: movsx eax, *(eax) # movsx eax, byte ptr [eax]
+                                0x4013f8: eax = *(eax) # movsx eax, byte ptr [eax]
                                 0x4013fb: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
                                 0x4013ff: *(esp) = 0x40307d "%c" # mov dword ptr [esp], 0x40307d
                                 0x401406: call 0x401d50 <jmp_printf>
@@ -131,7 +131,7 @@ function _main {
                         loop {
                             0x40143f: call 0x401d10 <jmp_getchar>
                             0x401444: var14 = al # mov byte ptr [ebp - 0xa9], al
-                            0x40144a: movsx eax, var14 # movsx eax, byte ptr [ebp - 0xa9]
+                            0x40144a: eax = var14 # movsx eax, byte ptr [ebp - 0xa9]
                             0x401451: *(esp) = eax # mov dword ptr [esp], eax
                             0x401454: call 0x40154d <_maj>
                             0x401459: var14 = al # mov byte ptr [ebp - 0xa9], al
@@ -152,7 +152,7 @@ function _main {
                         0x40148c: *(esp + 8) = eax # mov dword ptr [esp + 8], eax
                         0x401490: eax = &(var9) # lea eax, dword ptr [ebp - 0xa8]
                         0x401496: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                        0x40149a: movsx eax, var14 # movsx eax, byte ptr [ebp - 0xa9]
+                        0x40149a: eax = var14 # movsx eax, byte ptr [ebp - 0xa9]
                         0x4014a1: *(esp) = eax # mov dword ptr [esp], eax
                         0x4014a4: call 0x40161d <_verification>
                         0x4014a9: eax = var6 # mov eax, dword ptr [ebp - 0x2c]
