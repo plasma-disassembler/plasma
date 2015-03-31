@@ -44,25 +44,16 @@ class Disassembler():
         else:
             die("only x86 and x64 are supported")
 
+        mode = CS_MODE_64 if self.bits == 64 else CS_MODE_32
+        self.md = Cs(CS_ARCH_X86, mode)
+        self.md.detail = True
 
-    def disasm(self, addr):
-        (data, virtual_addr, flags) = self.binary.get_section(addr)
 
+    def init(self, addr):
+        # Get section data
+        (self.data, self.virtual_addr, flags) = self.binary.get_section(addr)
         if not flags["exec"]:
             die("the address 0x%x is not in an executable section" % addr)
-
-        mode = CS_MODE_64 if self.bits == 64 else CS_MODE_32
-        md = Cs(CS_ARCH_X86, mode)
-        md.detail = True
-
-        for i in md.disasm(data, virtual_addr):
-            self.code[i.address] = i
-            self.code_idx.append(i.address)
-
-        # Now load imported symbols for PE. This cannot be done before,
-        # because we need the code for a better resolution.
-        if self.binary.get_type() == T_BIN_PE:
-            self.binary.load_import_symbols(self.code)
 
 
     def get_addr_from_string(self, opt_addr, raw=False):
@@ -92,38 +83,43 @@ class Disassembler():
 
 
     def dump(self, addr, lines):
-        i_init = index(self.code_idx, addr)
-        end = min(len(self.code_idx), i_init + lines)
-
         # set jumps color
-        i = i_init
-        while i < end:
-            inst = self.code[self.code_idx[i]]
-            if is_jump(inst) and inst.operands[0].type == X86_OP_IMM:
-                pick_color(inst.operands[0].value.imm)
-            i += 1
+        i = self.lazy_disasm(addr)
+        l = 0
+        while i is not None and l < lines:
+            if is_jump(i) and i.operands[0].type == X86_OP_IMM:
+                pick_color(i.operands[0].value.imm)
+            i = self.lazy_disasm(i.address + i.size)
+            l += 1
 
-        i = i_init
-        while i < end:
-            inst = self.code[self.code_idx[i]]
-            if inst.address in self.binary.reverse_symbols:
-                print_symbol(inst.address)
+        # Here we have loaded all instructions we want to print
+        if self.binary.get_type() == T_BIN_PE:
+            self.binary.pe_reverse_stripped_symbols(self)
+
+        # dump
+        i = self.lazy_disasm(addr)
+        l = 0
+        while i is not None and l < lines:
+            if i.address in self.binary.reverse_symbols:
+                print_symbol(i.address)
                 print()
-            print_inst(inst, 0)
-            i += 1
+            print_inst(i, 0)
+            i = self.lazy_disasm(i.address + i.size)
+            l += 1
 
 
     def print_calls(self):
-        for i in self.code_idx:
-            inst = self.code[i]
-            if is_call(inst):
-                print_inst(inst)
+        for i in self.md.disasm(self.data, self.virtual_addr):
+            if is_call(i):
+                self.code[i.address] = i
 
+        # Here we have loaded all instructions we want to print
+        if self.binary.get_type() == T_BIN_PE:
+            self.binary.pe_reverse_stripped_symbols(self)
 
-    def get_graph(self, addr):
-        graph = self.__extract_func(addr)
-        graph.init()
-        return graph
+        for ad, i in self.code.items():
+            if is_call(i):
+                print_inst(i)
 
 
     def print_symbols(self):
@@ -147,9 +143,35 @@ class Disassembler():
             self.binary.symbols[arg[1]] = addr
 
 
+    def lazy_disasm(self, addr):
+        if addr in self.code:
+            return self.code[addr]
+        
+        # Disasm by block of 16 instructions
+
+        first = None
+        off = addr - self.virtual_addr
+
+        gen = self.md.disasm(self.data[off:off+64], addr)
+
+        try:
+            first = next(gen)
+            self.code[first.address] = first
+            self.code_idx.append(first.address)
+
+            for n in range(15):
+                i = next(gen)
+                self.code[i.address] = i
+                self.code_idx.append(i.address)
+        except StopIteration:
+            pass
+
+        return first
+
+
     # Generate a flow graph of the given function (addr)
-    def __extract_func(self, addr):
-        curr = self.code[addr]
+    def get_graph(self, addr):
+        curr = self.lazy_disasm(addr)
         gph = Graph(self, addr)
         rest = []
 
@@ -158,7 +180,7 @@ class Disassembler():
                 if is_uncond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
                         addr = curr.operands[0].value.imm
-                        nxt = self.code[addr]
+                        nxt = self.lazy_disasm(addr)
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     else:
@@ -168,8 +190,8 @@ class Disassembler():
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
-                        nxt_jump = self.code[curr.operands[0].value.imm]
-                        direct_nxt = self.code[curr.address + curr.size]
+                        nxt_jump = self.lazy_disasm(curr.operands[0].value.imm)
+                        direct_nxt = self.lazy_disasm(curr.address + curr.size)
                         gph.set_cond_next(curr, nxt_jump, direct_nxt)
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
@@ -183,7 +205,7 @@ class Disassembler():
 
                 else:
                     try:
-                        nxt = self.code[curr.address + curr.size]
+                        nxt = self.lazy_disasm(curr.address + curr.size)
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     except:
@@ -191,8 +213,12 @@ class Disassembler():
                         pass
 
             try:
-                curr = self.code[rest.pop()]
+                curr = self.lazy_disasm(rest.pop())
             except IndexError:
                 break
 
+        if self.binary.get_type() == T_BIN_PE:
+            self.binary.pe_reverse_stripped_symbols(self)
+
+        gph.init()
         return gph

@@ -101,6 +101,10 @@ def reverse():
     if args.symfile:
         dis.load_user_sym_file(args.symfile)
 
+
+    # TODO cleanup and simplify
+
+
     # Maybe args.entry is a symbol and doesn't exist.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
@@ -109,8 +113,8 @@ def reverse():
     else:
         addr = dis.get_addr_from_string(args.entry, raw_bits)
 
-    # Disassemble and load imported symbols for PE
-    dis.disasm(addr)
+    dis.init(addr)
+
 
     lib.output.binary = dis.binary
     lib.ast.binary    = dis.binary

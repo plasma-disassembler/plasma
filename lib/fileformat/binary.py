@@ -92,5 +92,5 @@ class Binary(object):
 
 
     # Only for PE !
-    def load_import_symbols(self, code):
-        self.__binary.load_import_symbols(code)
+    def pe_reverse_stripped_symbols(self, dis):
+        self.__binary.pe_reverse_stripped_symbols(dis)

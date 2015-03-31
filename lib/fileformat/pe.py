@@ -31,6 +31,7 @@ class PE:
         self.pe = PE2(filename, fast_load=True)
         self.__data_sections = []
         self.__data_sections_data = []
+        self.__imported_syms = {}
 
 
     def load_static_sym(self):
@@ -68,18 +69,8 @@ class PE:
             i += 1
 
 
+
     def load_dyn_sym(self):
-        return
-
-
-    def load_import_symbols(self, code):
-        def inv(n):
-            return n == X86_OP_INVALID
-
-
-        # Load imported symbols
-
-        # TODO
         try:
             self.pe.parse_data_directories(
                 pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'])
@@ -88,12 +79,21 @@ class PE:
             lib.utils.error("It seems that pefile.parse_data_directories is bugged.")
             lib.utils.die("Maybe you should Retry")
 
-        sym = {}
         for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
-                sym[imp.address] = imp.name
+                self.__imported_syms[imp.address] = imp.name
                 self.classbinary.reverse_symbols[imp.address] = imp.name
                 self.classbinary.symbols[imp.name] = imp.address
+
+
+    def pe_reverse_stripped_symbols(self, dis):
+        def inv(n):
+            return n == X86_OP_INVALID
+
+        def save_sym(ad, ad_real_sym):
+            name = "jmp_" + self.__imported_syms[ad_real_sym]
+            self.classbinary.reverse_symbols[ad] = name
+            self.classbinary.symbols[name] = ad
 
 
         # Now try to find the real call. For each SYMBOL address 
@@ -109,26 +109,32 @@ class PE:
 
         # Search in the code every call which point to a "jmp SYMBOL"
 
-        for ad in code:
-            inst = code[ad]
-            if not lib.utils.is_call(inst) or \
-                inst.operands[0].type != X86_OP_IMM:
+        k = list(dis.code.keys())
+
+        for ad in k:
+            i = dis.code[ad]
+
+            if lib.utils.is_call(i) and i.operands[0].type == X86_OP_IMM:
+                goto = i.operands[0].value.imm
+                nxt = dis.lazy_disasm(goto)
+
+                if not lib.utils.is_uncond_jump(nxt) or \
+                        nxt.operands[0].type != X86_OP_MEM:
+                    continue
+               
+                mm = nxt.operands[0].mem
+
+            elif lib.utils.is_uncond_jump(i) and \
+                    i.address in self.classbinary.reverse_symbols:
+                goto = i.address
+                mm = i.operands[0].mem
+
+            else:
                 continue
 
-            goto = inst.operands[0].value.imm
-            nxt = code[goto]
-
-            if not lib.utils.is_uncond_jump(nxt) or \
-                    nxt.operands[0].type != X86_OP_MEM:
-                continue
-           
-            mm = nxt.operands[0].mem
-
-            if inv(mm.base) and mm.disp in sym \
+            if inv(mm.base) and mm.disp in self.__imported_syms \
                     and inv(mm.segment) and inv(mm.index):
-                name = "jmp_" + sym[mm.disp]
-                self.classbinary.reverse_symbols[goto] = name
-                self.classbinary.symbols[name] = goto
+                save_sym(goto, mm.disp)
 
 
     def load_data_sections(self):
