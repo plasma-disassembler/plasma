@@ -58,7 +58,7 @@ function connection_handler {
     if (var5 == 0) {
         0x400bde: edi = 0x400dc6 "Client disconnected" # mov edi, 0x400dc6
         0x400be3: call 0x400800 <puts@plt>
-        0x400be8: rax = *(0x6012a8) # mov rax, qword ptr [rip + 0x2006b9]
+        0x400be8: rax = *(__TMC_END__) # mov rax, qword ptr [rip + 0x2006b9]
         0x400bef: rdi = rax # mov rdi, rax
         0x400bf2: call 0x400870 <fflush@plt>
         0x400bf7: jmp 0x400c09
