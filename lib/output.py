@@ -113,7 +113,7 @@ def print_operand(i, num_op, hexa=False):
                 print_no_end(color_var(get_var_name(i, num_op)))
                 return True
             elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                print_no_end("*(" + hex(i.address + mm.disp) + ")")
+                print_no_end("*(" + hex(i.address + i.size + mm.disp) + ")")
                 return True
 
         printed = False
