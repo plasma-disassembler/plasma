@@ -18,8 +18,11 @@
 #
 
 
+import os
 
-def default_custom_file(filename):
+def default_custom_file():
+    f = os.path.abspath(os.path.expanduser(__file__))
+    filename = os.path.dirname(f) + "/../custom_colors.py"
     fd = open(filename, "w+")
     fd.write("class COLOR:\n")
     fd.write("    def __init__(self, val, bold):\n")
@@ -41,7 +44,7 @@ def default_custom_file(filename):
 try:
     from custom_colors import *
 except:
-    default_custom_file("custom_colors.py")
+    default_custom_file()
     from custom_colors import *
 
 
