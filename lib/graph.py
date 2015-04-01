@@ -86,9 +86,13 @@ class Graph:
 
     def init(self):
         self.__simplify()
+        # print("simplify ok")
         self.__explore(self.entry_point_addr)
+        # print("explore ok")
         self.__search_equivalent_loops()
+        # print("search equiv ok")
         self.__compute_nested()
+        # print("nested ok")
 
 
     # Concat instructions in single block

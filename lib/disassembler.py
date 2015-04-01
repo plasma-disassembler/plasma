@@ -220,5 +220,6 @@ class Disassembler():
         if self.binary.get_type() == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
+        # print("gen graph ok")
         gph.init()
         return gph
