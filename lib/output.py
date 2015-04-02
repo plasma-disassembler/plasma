@@ -62,7 +62,7 @@ def print_symbol(addr):
 
 # Return True if the operand is a variable (because the output is
 # modified, we reprint the original instruction later)
-def print_operand(i, num_op, hexa=False):
+def print_operand(i, num_op, hexa=False, show_deref=True):
     def inv(n):
         return n == X86_OP_INVALID
 
@@ -119,7 +119,8 @@ def print_operand(i, num_op, hexa=False):
                 return True
 
         printed = False
-        print_no_end("*(")
+        if show_deref:
+            print_no_end("*(")
 
         if not inv(mm.base):
             print_no_end("%s" % i.reg_name(mm.base))
@@ -154,7 +155,8 @@ def print_operand(i, num_op, hexa=False):
                     else:
                         print_no_end(hex(mm.disp))
 
-        print_no_end(")")
+        if show_deref:
+            print_no_end(")")
         return True
 
 
