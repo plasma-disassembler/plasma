@@ -1,4 +1,4 @@
-#idx_new_path
+#
 # Reverse : reverse engineering for x86 binaries
 # Copyright (C) 2015    Joel
 #
@@ -133,19 +133,19 @@ class Paths():
         debug__(self.looping)
 
 
-    def __is_looping(self, path_idx, curr_loop_idx):
-        if path_idx not in self.looping:
+    def __is_looping(self, key_path, curr_loop_idx):
+        if key_path not in self.looping:
             return False
-        l_idx = self.looping[path_idx]
+        l_idx = self.looping[key_path]
         # If is a loop but on the current, return False and  keep the path
         if l_idx not in curr_loop_idx :
             return True
         return False
 
 
-    def __enter_new_loop(self, curr_loop_idx, path_idx, k):
-        addr = self.paths[path_idx][k]
-        is_loop = path_idx not in self.looping
+    def __enter_new_loop(self, curr_loop_idx, key_path, k):
+        addr = self.paths[key_path][k]
+        is_loop = key_path not in self.looping
 
         # TODO not sure
         # tests/gotoinloop{6,7}
@@ -156,7 +156,7 @@ class Paths():
         if is_loop:
             return False, False
 
-        l_idx = self.looping[path_idx]
+        l_idx = self.looping[key_path]
         if addr != gph.loops[l_idx][0]:
             return False, False
 
@@ -186,10 +186,10 @@ class Paths():
         return True
 
 
-    def add(self, path_idx, new_path, loop_idx=-1):
-        self.paths[path_idx] = new_path
+    def add(self, key_path, new_path, loop_idx=-1):
+        self.paths[key_path] = new_path
         if loop_idx != -1:
-            self.looping[path_idx] = loop_idx
+            self.looping[key_path] = loop_idx
 
 
     def __get_loop_idx(self, k):
@@ -203,10 +203,10 @@ class Paths():
         return val
 
 
-    def __del_path(self, i):
-        del self.paths[i]
-        if i in self.looping:
-            del self.looping[i]
+    def __del_path(self, k):
+        del self.paths[k]
+        if k in self.looping:
+            del self.looping[k]
         return
 
 
@@ -224,14 +224,14 @@ class Paths():
         return len(self.paths) == 0
 
 
-    def __longuest_path_idx(self):
-        idx = 0
+    def __longuest_path(self):
+        key = 0
         max_len = 0
         for k, p in self.paths.items():
             if len(p) > max_len:
                 max_len = len(p)
-                idx = k
-        return idx
+                key = k
+        return key
 
 
     # Returns tuple :
@@ -246,7 +246,7 @@ class Paths():
         # compared all others paths). We need the longest, otherwise
         # if we have a too smal path, we can stop too early.
         # tests/nestedloop3
-        refpath = self.__longuest_path_idx()
+        refpath = self.__longuest_path()
 
         last = -1
         i = 0
@@ -400,16 +400,16 @@ class Paths():
     # For a loop : check if the path need to be kept (the loop 
     # contains the path). For this we see the last address of the path.
     # Otherwise it's an endloop
-    def __keep_path(self, curr_loop_idx, path, path_idx):
+    def __keep_path(self, curr_loop_idx, path, key_path):
         last = path[-1]
 
         if self.loop_contains(curr_loop_idx, last):
             return True, False
 
-        if path_idx not in self.looping:
+        if key_path not in self.looping:
             return False, False
 
-        l_idx = self.looping[path_idx]
+        l_idx = self.looping[key_path]
 
         if l_idx in curr_loop_idx:
             return True, False
