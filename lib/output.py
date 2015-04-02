@@ -29,7 +29,8 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
-        X86_INS_OR)
+        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
+        X86_INS_TEST, X86_INS_JNS, X86_INS_JS)
 
 
 binary = None
@@ -62,7 +63,7 @@ def print_symbol(addr):
 
 # Return True if the operand is a variable (because the output is
 # modified, we reprint the original instruction later)
-def print_operand(i, num_op, hexa=False):
+def print_operand(i, num_op, hexa=False, show_deref=True):
     def inv(n):
         return n == X86_OP_INVALID
 
@@ -119,7 +120,8 @@ def print_operand(i, num_op, hexa=False):
                 return True
 
         printed = False
-        print_no_end("*(")
+        if show_deref:
+            print_no_end("*(")
 
         if not inv(mm.base):
             print_no_end("%s" % i.reg_name(mm.base))
@@ -154,7 +156,8 @@ def print_operand(i, num_op, hexa=False):
                     else:
                         print_no_end(hex(mm.disp))
 
-        print_no_end(")")
+        if show_deref:
+            print_no_end(")")
         return True
 
 
@@ -207,12 +210,16 @@ def print_if_cond(cmp_inst, jump_id):
         print_operand(cmp_inst, 0)
         print_no_end(" ")
 
-    print_no_end(inst_symbol(jump_id, cmp_inst != None))
+    if cmp_inst != None and cmp_inst.id == X86_INS_TEST:
+        print_no_end(inst_symbol(jump_id, True))
+        print_no_end(" 0)")
+    else:
+        print_no_end(inst_symbol(jump_id, cmp_inst != None))
 
-    if cmp_inst != None:
-        print_no_end(" ")
-        print_operand(cmp_inst, 1)
-        print_no_end(")")
+        if cmp_inst != None:
+            print_no_end(" ")
+            print_operand(cmp_inst, 1)
+            print_no_end(")")
 
 
 def print_comment(txt, tab=-1):
@@ -275,7 +282,11 @@ def print_inst(i, tab=0, prefix=""):
     if i.id in inst_check:
         print_operand(i, 0)
 
-        if (all(op.type == X86_OP_REG for op in i.operands) and
+        if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
+                i.operands[1].value.imm == -1):
+            print_no_end(" = -1")
+
+        elif (all(op.type == X86_OP_REG for op in i.operands) and
                 len(set(op.value.reg for op in i.operands)) == 1 and
                 i.id == X86_INS_XOR):
             print_no_end(" = 0")
@@ -309,6 +320,23 @@ def print_inst(i, tab=0, prefix=""):
         print_operand(i, 0)
         print_no_end('; edx = edx:eax % ')
         print_operand(i, 0)
+        modified = True
+
+    elif i.id == X86_INS_NOT:
+        print_operand(i, 0)
+        print_no_end(' ^= -1')
+        modified = True
+
+    elif i.id == X86_INS_SCASB and i.prefix[0] == X86_PREFIX_REPNE:
+        print_no_end('while (')
+        print_operand(i, 1)
+        print_no_end(' != ')
+        print_operand(i, 0)
+        print_no_end(') { ')
+        print_operand(i, 1, show_deref=False)
+        print_no_end('++; cx--; } ')
+        print_operand(i, 1, show_deref=False)
+        print_no_end('++; cx--;')
         modified = True
 
     else:
