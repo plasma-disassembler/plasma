@@ -29,7 +29,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
-        X86_INS_OR, X86_INS_NOT)
+        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE)
 
 
 binary = None
@@ -320,6 +320,18 @@ def print_inst(i, tab=0, prefix=""):
     elif i.id == X86_INS_NOT:
         print_operand(i, 0)
         print_no_end(' ^= -1')
+        modified = True
+
+    elif i.id == X86_INS_SCASB and i.prefix[0] == X86_PREFIX_REPNE:
+        print_no_end('while (')
+        print_operand(i, 1)
+        print_no_end(' != ')
+        print_operand(i, 0)
+        print_no_end(') { ')
+        print_operand(i, 1, show_deref=False)
+        print_no_end('++; cx--; } ')
+        print_operand(i, 1, show_deref=False)
+        print_no_end('++; cx--;')
         modified = True
 
     else:
