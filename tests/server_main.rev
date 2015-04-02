@@ -41,9 +41,9 @@ function main {
         0x400a37: rsi = rcx # mov rsi, rcx
         0x400a3a: edi = eax # mov edi, eax
         0x400a3c: call 0x400890 <bind@plt>
-        0x400a41: test eax, eax
+        # 0x400a41: test eax, eax
         # 0x400a43: jns 0x400a59
-        if < 0 {
+        if (eax < 0) {
             0x400a45: edi = 0x400ccf "bind failed. Error" # mov edi, 0x400ccf
             0x400a4a: call 0x4008a0 <perror@plt>
             0x400a4f: eax = 1 # mov eax, 1
@@ -85,9 +85,9 @@ function main {
                 0x400ab6: esi = 0 # mov esi, 0
                 0x400abb: rdi = rax # mov rdi, rax
                 0x400abe: call 0x4007f0 <pthread_create@plt>
-                0x400ac3: test eax, eax
+                # 0x400ac3: test eax, eax
                 # 0x400ac5: jns 0x400ad8
-                if < 0  goto 0x400ac7
+                if (eax < 0)  goto 0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned" # mov edi, 0x400d40
                 0x400add: call 0x400800 <puts@plt>
             }

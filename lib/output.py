@@ -29,7 +29,8 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
-        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE)
+        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
+        X86_INS_TEST, X86_INS_JNS, X86_INS_JS)
 
 
 binary = None
@@ -209,12 +210,16 @@ def print_if_cond(cmp_inst, jump_id):
         print_operand(cmp_inst, 0)
         print_no_end(" ")
 
-    print_no_end(inst_symbol(jump_id, cmp_inst != None))
+    if cmp_inst != None and cmp_inst.id == X86_INS_TEST:
+        print_no_end(inst_symbol(jump_id, True))
+        print_no_end(" 0)")
+    else:
+        print_no_end(inst_symbol(jump_id, cmp_inst != None))
 
-    if cmp_inst != None:
-        print_no_end(" ")
-        print_operand(cmp_inst, 1)
-        print_no_end(")")
+        if cmp_inst != None:
+            print_no_end(" ")
+            print_operand(cmp_inst, 1)
+            print_no_end(")")
 
 
 def print_comment(txt, tab=-1):

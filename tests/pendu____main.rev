@@ -4,9 +4,9 @@ function ___main {
     0x4018c3: push ebx
     0x4018c4: esp -= 4 # sub esp, 4
     0x4018c7: eax = *(0x404020) # mov eax, dword ptr [0x404020]
-    0x4018cc: test eax, eax
+    # 0x4018cc: test eax, eax
     # 0x4018ce: jne 0x401906
-    if == {
+    if (eax == 0) {
         0x4018d0: eax = *(0x401e90 <___CTOR_LIST__>) # mov eax, dword ptr [0x401e90]
         0x4018d5: ebx = 1 # mov ebx, 1
         0x4018da: *(0x404020) = ebx # mov dword ptr [0x404020], ebx
