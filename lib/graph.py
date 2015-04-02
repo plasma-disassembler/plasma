@@ -19,8 +19,10 @@
 
 import os
 import os.path
-from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_cond_jump, is_jump
+import time
 from lib.paths import Paths
+from lib.utils import (BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_cond_jump,
+        is_jump, debug__)
 
 
 class Graph:
@@ -52,6 +54,8 @@ class Graph:
 
         # address juste before the loop marked
         self.marked_addr = set()
+
+        self.__key_path_count = 0
 
 
     def add_node(self, inst):
@@ -86,19 +90,17 @@ class Graph:
 
     def init(self):
         self.__simplify()
-        # print("simplify ok")
         self.__explore(self.entry_point_addr)
-        # print("explore ok")
         self.__search_equivalent_loops()
-        # print("search equiv ok")
         self.__compute_nested()
-        # print("nested ok")
 
 
     # Concat instructions in single block
     # jumps are in separated blocks
     def __simplify(self):
         nodes = list(self.nodes.keys())
+
+        start = time.clock()
 
         for curr in nodes:
             inst = self.nodes[curr]
@@ -136,6 +138,10 @@ class Graph:
                     lst_i[lst_i.index(curr)] = pred
                 except ValueError:
                     pass
+
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Graph simplified in %fs" % elapsed)
 
 
     # Check d3/index.html !
@@ -181,16 +187,17 @@ class Graph:
         output.write("tryDraw();")
 
 
-    def __explore(self, start):
-        def save_step(k, addr, create):
-            nonlocal new_paths, moved
+    def __rec_explore(self, p, new):
+        myk = self.__key_path_count
+        self.__key_path_count += 1
+        self.paths.paths[myk] = p
+        p_set = set(p) # optimization search
 
-            try:
-                # This path is looping if index doesn't fail
-
-                idx_node = self.paths.paths[k].index(addr)
-
-                l = self.paths.paths[k][idx_node:]
+        while new in self.link_out:
+            if new in p_set:
+                # loop detected
+                idx_node = p.index(new)
+                l = p[idx_node:]
                 l_idx = index(self.loops, l)
 
                 if l_idx == -1:
@@ -198,48 +205,37 @@ class Graph:
                     self.loops.append(l)
                     self.loops_set.append(set(l))
 
-                if create:
-                    idx_new_path = len(self.paths.paths) + len(new_paths)
-                    self.paths.looping[idx_new_path] = l_idx
-                    new_paths.append(list(self.paths.paths[k]))
-                else:
-                    self.paths.looping[k] = l_idx
+                self.paths.looping[myk] = l_idx
+                return
 
-            except ValueError:
-                moved = True
-                if create:
-                    new_paths.append(self.paths.paths[k] + [addr])
-                else:
-                    self.paths.paths[k].append(addr)
+            else:
+                p.append(new)
+                p_set.add(new)
+                nxt = self.link_out[new]
 
-        moved = True
+                # much faster than: is_cond_jump(self.dis.code[new])
+                if len(nxt) == 2:
+                    self.__rec_explore(list(p), nxt[BRANCH_NEXT_JUMP])
+
+                new = nxt[BRANCH_NEXT]
+
+        p.append(new)
+
+
+    def __explore(self, entry):
         self.paths = Paths()
-        self.paths.paths = [[start]]
-
-        while moved:
-            new_paths = []
-            moved = False
-
-            # - Looping branchs will be detected
-            # - Create a new branch if we are on cond jump
-            #     only if it doesn't go outside the current loop
-            for k, p in enumerate(self.paths.paths):
-                last = p[-1]
-                inst = self.dis.code[last]
-
-                # The branch is finish or is looping
-                if k in self.paths.looping or last not in self.link_out:
-                    continue
-
-                nxt = self.link_out[last]
-                if is_cond_jump(inst):
-                    save_step(k, nxt[BRANCH_NEXT_JUMP], True)
-                save_step(k, nxt[BRANCH_NEXT], False)
-
-            self.paths.paths += new_paths
+        start = time.clock()
+        self.__rec_explore([], entry)
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Exploration: found %d paths and %d loop-paths in %fs" %
+                (len(self.paths.paths), len(self.paths.looping), elapsed))
+        return
 
 
     def __compute_nested(self):
+        start = time.clock()
+
         for k in range(len(self.loops)):
             self.nested_loops_idx[k] = set()
             self.direct_nested_idx[k] = set()
@@ -285,6 +281,10 @@ class Graph:
 
         self.direct_nested_idx[-1] = set(range(len(self.loops))) - has_parent_loop_idx
         self.nested_loops_idx[-1] = set(range(len(self.loops)))
+
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Nested loops computed in %fs" % elapsed)
 
 
     def __search_equivalent_loops(self):
@@ -332,7 +332,6 @@ class Graph:
 
         # print(self.marked)
         # print_set(self.marked_addr)
-        # print_list(self.loops)
 
 
     def __mark_addr(self, loop_idx):

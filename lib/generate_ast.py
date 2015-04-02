@@ -17,12 +17,14 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import time
+
 import lib.colors
 from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, Ast_IfGoto,
         Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars, fuse_cmp_if,
         search_canary_plt)
 from lib.utils import (is_cond_jump, is_uncond_jump, invert_cond,
-        BRANCH_NEXT, BRANCH_NEXT_JUMP, die)
+        BRANCH_NEXT, BRANCH_NEXT_JUMP, die, debug__)
 from lib.paths import get_loop_start
 
 
@@ -136,7 +138,7 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
 # TODO move in class Paths
 # Assume that the beginning of paths is the beginning of a loop
 def paths_is_infinite(paths):
-    for p in paths.paths:
+    for k, p in paths.paths.items():
         for addr in p:
             inst = gph.nodes[addr][0]
             if is_cond_jump(inst):
@@ -182,6 +184,9 @@ def get_ast_loop(paths, last_loop, last_else, endif):
         ast.set_epilog(epilog)
 
     return ast, endloop[-1].first()
+
+
+from lib.utils import print_dict, print_list
 
 
 def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
@@ -292,13 +297,25 @@ def generate_ast(graph):
     global gph
     gph = graph
 
+    start = time.clock()
+
     ast = get_ast_branch(gph.paths)
 
+    elapsed = time.clock()
+    elapsed = elapsed - start
+    debug__("Ast generated in %fs" % elapsed)
+
     # Process ast
+
+    start = time.clock()
 
     search_local_vars(ast)
     fuse_cmp_if(ast)
     search_canary_plt() 
+
+    elapsed = time.clock()
+    elapsed = elapsed - start
+    debug__("Functions for processing ast in %fs" % elapsed)
 
     if not lib.colors.nocolor:
         assign_colors(ast)

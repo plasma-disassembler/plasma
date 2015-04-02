@@ -90,12 +90,6 @@ class PE:
         def inv(n):
             return n == X86_OP_INVALID
 
-        def save_sym(ad, ad_real_sym):
-            name = "jmp_" + self.__imported_syms[ad_real_sym]
-            self.classbinary.reverse_symbols[ad] = name
-            self.classbinary.symbols[name] = ad
-
-
         # Now try to find the real call. For each SYMBOL address 
         # we have this :
         #
@@ -110,6 +104,7 @@ class PE:
         # Search in the code every call which point to a "jmp SYMBOL"
 
         k = list(dis.code.keys())
+        count = 0
 
         for ad in k:
             i = dis.code[ad]
@@ -134,7 +129,12 @@ class PE:
 
             if inv(mm.base) and mm.disp in self.__imported_syms \
                     and inv(mm.segment) and inv(mm.index):
-                save_sym(goto, mm.disp)
+                name = "jmp_" + self.__imported_syms[mm.disp]
+                self.classbinary.reverse_symbols[goto] = name
+                self.classbinary.symbols[name] = goto
+                count += 1
+
+        return count
 
 
     def load_data_sections(self):

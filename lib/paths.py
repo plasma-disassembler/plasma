@@ -1,4 +1,4 @@
-#
+#idx_new_path
 # Reverse : reverse engineering for x86 binaries
 # Copyright (C) 2015    Joel
 #
@@ -30,7 +30,14 @@ def get_loop_start(curr_loop_idx):
     return gph.loops[curr_loop_idx[0]][0]
 
 
-# TODO remove
+def dict_contains(dict_of_lst, lst):
+    for k in dict_of_lst:
+        if lst == dict_of_lst[k]:
+            return True
+    return False
+
+
+# TODO remove ?
 def loop_contains(loop_start, addr):
     if loop_start == -1:
         return True
@@ -40,7 +47,7 @@ def loop_contains(loop_start, addr):
     return False
 
 
-# TODO remove
+# TODO remove ?
 # Returns all loops starting with addr
 def loop_exists_idx(addr):
     idx = []
@@ -52,7 +59,7 @@ def loop_exists_idx(addr):
     return idx
 
 
-# TODO remove
+# TODO remove ?
 def loop_exists(addr):
     # normally addr != -1
     # nested_loops[-1] contains all sub-loops
@@ -65,13 +72,13 @@ def loop_exists(addr):
 
 class Paths():
     def __init__(self):
-        self.looping = {}  # idx_path -> idx_loop
-        self.paths = []
+        self.looping = {}  # key_path -> idx_loop
+        self.paths = {}
 
 
     def __contains__(self, addr):
-        for p in self.paths:
-            if addr in p:
+        for k in self.paths:
+            if addr in self.paths[k]:
                 return True
         return False
 
@@ -96,7 +103,8 @@ class Paths():
                 return False
 
         # Check if the loop is in the right order
-        for p in self.paths:
+        for k in self.paths:
+            p = self.paths[k]
             last_idx = -1
             for addr in loop:
                 idx = index(p, addr)
@@ -166,25 +174,22 @@ class Paths():
     def are_all_looping(self, start, check_equal, curr_loop_idx):
         # TODO check len looping == len paths ?
         if check_equal:
-            i = 0
-            for p in self.paths:
-                if p[0] == start and not self.__is_looping(i, curr_loop_idx):
+            for k in self.paths:
+                if self.paths[k][0] == start and \
+                        not self.__is_looping(k, curr_loop_idx):
                     return False
-                i += 1
         else:
-            i = 0
-            for p in self.paths:
-                if p[0] != start and not self.__is_looping(i, curr_loop_idx):
+            for k in self.paths:
+                if self.paths[k][0] != start and \
+                        not self.__is_looping(k, curr_loop_idx):
                     return False
-                i += 1
         return True
 
 
-    def add(self, new_path, loop_idx=-1):
-        idx_new_path = len(self.paths)
-        self.paths.append(new_path)
+    def add(self, path_idx, new_path, loop_idx=-1):
+        self.paths[path_idx] = new_path
         if loop_idx != -1:
-            self.looping[idx_new_path] = loop_idx
+            self.looping[path_idx] = loop_idx
 
 
     def __get_loop_idx(self, k):
@@ -193,38 +198,36 @@ class Paths():
 
     def pop(self):
         # Assume that all paths pop the same value
-        for p in self.paths:
-            val = p.pop(0)
+        for k in self.paths:
+            val = self.paths[k].pop(0)
         return val
 
 
-    # TODO optimize suppression
     def __del_path(self, i):
         del self.paths[i]
-        new = {}
-        for k in self.looping:
-            if k != i:
-                if k > i:
-                    new[k-1] = self.looping[k]
-                else:
-                    new[k] = self.looping[k]
-        del self.looping
-        self.looping = new
+        if i in self.looping:
+            del self.looping[i]
+        return
 
 
     def rm_empty_paths(self):
-        i = len(self.paths) - 1
-        while i >= 0:
-            if not self.paths[i]:
-                self.__del_path(i)
-            i -= 1
+        to_remove = []
+        for k in self.paths:
+            if not self.paths[k]:
+                to_remove.append(k)
+
+        for k in to_remove:
+            del self.paths[k]
+            if k in self.looping:
+                del self.looping[k]
+
         return len(self.paths) == 0
 
 
     def __longuest_path_idx(self):
         idx = 0
-        max_len = len(self.paths[0])
-        for k, p in enumerate(self.paths):
+        max_len = 0
+        for k, p in self.paths.items():
             if len(p) > max_len:
                 max_len = len(p)
                 idx = k
@@ -246,12 +249,12 @@ class Paths():
         refpath = self.__longuest_path_idx()
 
         last = -1
-        k = 0
-        while k < len(self.paths[refpath]):
+        i = 0
+        while i < len(self.paths[refpath]):
 
-            addr0 = self.paths[refpath][k]
+            addr0 = self.paths[refpath][i]
 
-            is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, k)
+            is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, i)
             if is_loop or force_stop:
                 return last, is_loop, False, (force_stop and addr0)
 
@@ -265,18 +268,16 @@ class Paths():
 
 
             # Compare with other paths
-            i = 0
-            while i < len(self.paths):
-                if i == refpath:
-                    i += 1
+            for k in self.paths:
+                if k == refpath:
                     continue
 
-                if index(self.paths[i], addr0) == -1:
+                if index(self.paths[k], addr0) == -1:
                     return last, False, False, 0
 
-                addr = self.paths[i][k]
+                addr = self.paths[k][i]
 
-                is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, i, k)
+                is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, k, i)
                 if is_loop or force_stop:
                     return last, is_loop, False, force_stop and addr
 
@@ -288,15 +289,14 @@ class Paths():
                     if c1 and c2:
                         return last, False, True, 0
 
-                i += 1
-
-            k += 1
+            i += 1
             last = addr0
 
         # We have to test here, because we can stop before with a loop
         # or a ifelse.
         if len(self.paths) == 1:
-            return self.paths[0][-1], False, False, 0
+            k = next(iter(self.paths.keys()))
+            return self.paths[k][-1], False, False, 0
 
         return last, False, False, 0
 
@@ -328,31 +328,27 @@ class Paths():
 
         # Take a non looping-path as a reference :
         # we want to search a common address between other paths
-        refpath = 0
-        i = 0
-        while i < len(self.paths):
-            if not self.__is_looping(i, curr_loop_idx):
-                refpath = i
+        refpath = -1
+        for k in self.paths:
+            if not self.__is_looping(k, curr_loop_idx):
+                refpath = k
                 break
-            i += 1
 
         # Compare
 
         found = False
-        k = 0
+        i = 0
         val = -1
-        while not found and k < len(self.paths[refpath]):
-            val = self.paths[refpath][k]
-            i = 0
+        while not found and i < len(self.paths[refpath]):
+            val = self.paths[refpath][i]
             found = True
-            while i < len(self.paths):
-                if i != refpath:
-                    if not self.__is_looping(i, curr_loop_idx):
-                        if index(self.paths[i], val) == -1:
+            for k in self.paths:
+                if k != refpath:
+                    if not self.__is_looping(k, curr_loop_idx):
+                        if index(self.paths[k], val) == -1:
                             found = False
                             break
-                i += 1
-            k += 1
+            i += 1
 
         if found:
             return val
@@ -363,7 +359,7 @@ class Paths():
         nxt = gph.link_out[ifaddr]
         split = [Paths(), Paths()]
         else_addr = -1
-        for k, p in enumerate(self.paths):
+        for k, p in self.paths.items():
             if p:
                 if p[0] == nxt[BRANCH_NEXT]:
                     br = BRANCH_NEXT
@@ -375,22 +371,21 @@ class Paths():
                 # - endpoint == -1
                 idx = index(p, endpoint)
                 if idx == -1:
-                    split[br].add(p, self.__get_loop_idx(k))
+                    split[br].add(k, p, self.__get_loop_idx(k))
                 else:
-                    split[br].add(p[:idx])
+                    split[br].add(k, p[:idx])
         return split, else_addr
 
 
     def goto_addr(self, addr):
-        i = 0
-        while i < len(self.paths):
-            idx = index(self.paths[i], addr)
-            self.paths[i] = [] if idx == -1 else self.paths[i][idx:]
-            i += 1
+        for k in self.paths:
+            idx = index(self.paths[k], addr)
+            self.paths[k] = [] if idx == -1 else self.paths[k][idx:]
 
 
     def first(self):
-        return self.paths[0][0]
+        k = next(iter(self.paths.keys()))
+        return self.paths[k][0]
 
 
     def loop_contains(self, loop_start_idx, addr):
@@ -428,7 +423,6 @@ class Paths():
 
         return False, False
 
-
     # Returns :
     # loop_paths (Paths), endloop (list(Paths))
     def extract_loop_paths(self, curr_loop_idx):
@@ -443,25 +437,24 @@ class Paths():
         # Separation of loop-paths / endloops
         # ------------------------------------------------------
 
-        for k, p in enumerate(self.paths):
+        for k, p in self.paths.items():
             keep, ignore =  self.__keep_path(curr_loop_idx, p, k)
-
             if not ignore:
                 if keep:
-                    loop_paths.add(p, self.__get_loop_idx(k))
+                    loop_paths.add(k, p, self.__get_loop_idx(k))
                 else:
-                    endloop.add(p, self.__get_loop_idx(k))
+                    endloop.add(k, p, self.__get_loop_idx(k))
 
         # Finalize endloops
         # Cut the path to get only the endloop
-        for i, el in enumerate(endloop.paths):
-            for k, addr in enumerate(el):
+        for k, el in endloop.paths.items():
+            for i, addr in enumerate(el):
                 if addr not in loop_paths:
-                    p = el[k:]
-                    if p not in endloop.paths:
-                        endloop.paths[i] = p
+                    p = el[i:]
+                    if not dict_contains(endloop.paths, p):
+                        endloop.paths[k] = p
                     else:
-                        endloop.paths[i] = []
+                        endloop.paths[k] = []
                     break
 
         endloop.rm_empty_paths()
@@ -474,9 +467,9 @@ class Paths():
         common = {}
 
         # Search dupplicate address
-        for p in endloop.paths:
+        for k1, p in endloop.paths.items():
             for addr in p:
-                for el in endloop.paths:
+                for k2, el in endloop.paths.items():
                     if el[0] == p[0]:
                         continue
                     idx = index(el, addr)
@@ -485,14 +478,14 @@ class Paths():
                         break
 
         for dup in common:
-            for i, el in enumerate(endloop.paths):
+            for k, el in endloop.paths.items():
                 if el[0] == dup:
                     continue
                 idx = index(el, dup)
                 if idx != -1:
-                    endloop.paths[i] = el[:idx]
-                    if idx != len(el)-1 and i in self.looping:
-                        del endloop.looping[i]
+                    endloop.paths[k] = el[:idx]
+                    if idx != len(el)-1 and k in self.looping:
+                        del endloop.looping[k]
 
         endloop.rm_empty_paths()
 
@@ -504,14 +497,14 @@ class Paths():
         grp_endloop = []
         seen = {}
 
-        for k, el in enumerate(endloop.paths):
+        for k, el in endloop.paths.items():
             try:
                 idx = seen[el[0]]
-                grp_endloop[idx].add(el, endloop.__get_loop_idx(k))
+                grp_endloop[idx].add(k, el, endloop.__get_loop_idx(k))
             except:
                 seen[el[0]] = len(grp_endloop) # save index
                 p = Paths()
-                p.add(el, endloop.__get_loop_idx(k))
+                p.add(k, el, endloop.__get_loop_idx(k))
                 grp_endloop.append(p)
 
 
@@ -526,7 +519,7 @@ class Paths():
         for i, els in enumerate(grp_endloop):
             all_jmp = True
 
-            for el in els.paths:
+            for k, el in els.paths.items():
                 queue = el[-1]
                 inst = gph.nodes[queue][0]
                 if not is_uncond_jump(inst):
@@ -543,6 +536,7 @@ class Paths():
                 with_jump.append(i)
 
         # paths which not finish with a jump need to be sorted
+        # contains idx in grp_endloop
         endloop_sort = []
         while no_jump:
             for i in no_jump:
@@ -553,13 +547,11 @@ class Paths():
                     break
 
         # Recreate endloop
-        new_endloop = []
+        new_grp_endloop = []
         for i in with_jump:
-            new_endloop.append(grp_endloop[i])
+            new_grp_endloop.append(grp_endloop[i])
             
         for i in endloop_sort:
-            new_endloop.append(grp_endloop[i])
+            new_grp_endloop.append(grp_endloop[i])
 
-        grp_endloop = new_endloop
-
-        return loop_paths, grp_endloop
+        return loop_paths, new_grp_endloop

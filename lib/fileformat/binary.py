@@ -16,10 +16,12 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import time
+
 import lib.fileformat.elf
 import lib.fileformat.pe
 import lib.fileformat.raw
-from lib.utils import die
+from lib.utils import die, debug__
 
 
 MAX_STRING_DATA = 30
@@ -43,6 +45,8 @@ class Binary(object):
         if raw_bits != 0:
             self.__binary = lib.fileformat.raw.Raw(filename, raw_bits)
         else:
+            start = time.clock()
+
             try:
                 self.__binary = lib.fileformat.elf.ELF(self, filename)
             except Exception:
@@ -51,9 +55,19 @@ class Binary(object):
                 except Exception:
                     die("the file is not PE or ELF binary")
 
+            elapsed = time.clock()
+            elapsed = elapsed - start
+            debug__("Binary loaded in %fs" % elapsed)
+
+            start = time.clock()
+
             self.__binary.load_static_sym()
             self.__binary.load_dyn_sym()
             self.__binary.load_data_sections()
+
+            elapsed = time.clock()
+            elapsed = elapsed - start
+            debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
 
 
     def is_data(self, addr):
@@ -93,4 +107,10 @@ class Binary(object):
 
     # Only for PE !
     def pe_reverse_stripped_symbols(self, dis):
-        self.__binary.pe_reverse_stripped_symbols(dis)
+        start = time.clock()
+
+        n = self.__binary.pe_reverse_stripped_symbols(dis)
+
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Found %d imported symbols (PE) in %fs" % (n, elapsed))

@@ -16,12 +16,14 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import time
+
 from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, Cs
 from capstone.x86 import X86_OP_IMM
 
 from lib.graph import Graph
 from lib.utils import (die, error, index, is_call, is_cond_jump,
-        is_uncond_jump, is_jump, is_ret)
+        is_uncond_jump, is_jump, is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
 from lib.output import print_inst, print_symbol
 from lib.colors import pick_color
@@ -175,6 +177,8 @@ class Disassembler():
         gph = Graph(self, addr)
         rest = []
 
+        start = time.clock()
+
         while 1:
             if not gph.exists(curr):
                 if is_uncond_jump(curr) and len(curr.operands) > 0:
@@ -220,6 +224,9 @@ class Disassembler():
         if self.binary.get_type() == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
-        # print("gen graph ok")
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Graph built in %fs" % elapsed)
+
         gph.init()
         return gph
