@@ -275,7 +275,11 @@ def print_inst(i, tab=0, prefix=""):
     if i.id in inst_check:
         print_operand(i, 0)
 
-        if (all(op.type == X86_OP_REG for op in i.operands) and
+        if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
+                i.operands[1].value.imm == -1):
+            print_no_end(" = -1")
+
+        elif (all(op.type == X86_OP_REG for op in i.operands) and
                 len(set(op.value.reg for op in i.operands)) == 1 and
                 i.id == X86_INS_XOR):
             print_no_end(" = 0")
