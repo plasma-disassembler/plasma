@@ -104,11 +104,7 @@ class Paths():
 
 
     def get_loops_idx(self):
-        idx = []
-        for k, l in enumerate(gph.loops):
-            if self.__is_in_curr_loop(l):
-                idx.append(k)
-        return idx
+        return [k for k, l in enumerate(gph.loops) if self.__is_in_curr_loop(l)]
 
 
     def debug(self):
@@ -196,10 +192,7 @@ class Paths():
 
 
     def rm_empty_paths(self):
-        to_remove = []
-        for k in self.paths:
-            if not self.paths[k]:
-                to_remove.append(k)
+        to_remove = [k for k, v in self.paths.items() if not v]
 
         for k in to_remove:
             del self.paths[k]
