@@ -195,9 +195,7 @@ class Paths():
         to_remove = [k for k, v in self.paths.items() if not v]
 
         for k in to_remove:
-            del self.paths[k]
-            if k in self.looping:
-                del self.looping[k]
+            self.__del_path(k)
 
         return len(self.paths) == 0
 
