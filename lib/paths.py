@@ -85,9 +85,8 @@ class Paths():
             return False
 
         # Check if all address of loop are in paths
-        for addr in loop:
-            if addr not in self:
-                return False
+        if not all(addr in self for addr in loop):
+            return False
 
         # Check if the loop is in the right order
         for p in self.paths.values():
