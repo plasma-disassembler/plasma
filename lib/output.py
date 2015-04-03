@@ -30,7 +30,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
         X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
-        X86_INS_TEST, X86_INS_JNS, X86_INS_JS)
+        X86_INS_TEST, X86_INS_JNS, X86_INS_JS, X86_INS_MUL)
 
 
 binary = None
@@ -319,6 +319,14 @@ def print_inst(i, tab=0, prefix=""):
         print_no_end('eax = edx:eax / ')
         print_operand(i, 0)
         print_no_end('; edx = edx:eax % ')
+        print_operand(i, 0)
+        modified = True
+
+    elif i.id == X86_INS_MUL:
+        lut = {1: ("al", "ax"), 2: ("ax", "dx:ax"), 4: ("eax", "edx:eax"),
+                8: ("rax", "rdx:rax")}
+        src, dst = lut[i.operands[0].size]
+        print_no_end('{0} = {1} * '.format(dst, src))
         print_operand(i, 0)
         modified = True
 
