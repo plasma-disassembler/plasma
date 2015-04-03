@@ -74,10 +74,7 @@ class Paths():
 
 
     def contains_list(self, lst):
-        for addr in lst:
-            if addr not in self:
-                return False
-        return True
+        return all(addr not in self for addr in lst)
 
 
     def __is_in_curr_loop(self, loop):
