@@ -34,7 +34,7 @@ from lib.vim import generate_vim_syntax
 
 
 
-def reverse():
+def reverse(argv=None):
     # Parse arguments
     parser = ArgumentParser(description=
         'Reverse engineering for x86 binaries. Generation of pseudo-C. '
@@ -73,7 +73,7 @@ def reverse():
     parser.add_argument('--forcejmp', action='store_true',
             help=('Try to disassemble if a "jmp [ADDR]" or jmp rax is found.'))
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     lib.utils.dbg                         = args.opt_debug
     lib.disassembler.forcejmp             = args.forcejmp
