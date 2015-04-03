@@ -66,7 +66,6 @@ class Disassembler():
         else:
             search = [opt_addr]
 
-        found = False
         for s in search:
             if s.startswith("0x"):
                 a = int(opt_addr, 16)
@@ -74,14 +73,10 @@ class Disassembler():
                 a = self.binary.symbols.get(s, -1)
 
             if a != -1:
-                found = True
-                break
-
-        if not found:
+                return a
+        else:
             error("symbol %s not found" % search[0])
             die("Try with --sym to see all symbols.")
-        
-        return a
 
 
     def dump(self, addr, lines):
