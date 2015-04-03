@@ -55,7 +55,7 @@ dbg = False
 def debug__(obj="", end="\n"):
     if dbg:
         if isinstance(obj, str):
-            print(obj, end=end)
+            print(obj, end=end, file=sys.stderr)
         elif isinstance(obj, list):
             print_list(obj)
         elif isinstance(obj, dict):
@@ -243,19 +243,19 @@ def die(txt):
 # Debug functions
 
 def print_set(s, end="\n"):
-    print("{", end="")
+    print("{", end="", file=sys.stderr)
     for i in s:
-        print(" %x" % i, end="")
-    print(" }" + end, end="")
+        print(" %x" % i, end="", file=sys.stderr)
+    print(" }" + end, end="", file=sys.stderr)
 
 
 def print_dict(dic, end="\n"):
-    print("[")
+    print("[", file=sys.stderr)
     for i in dic:
         if isinstance(i, str):
-            print("%s: " % i, end="")
+            print("%s: " % i, end="", file=sys.stderr)
         else:
-            print("%x: " % i, end="")
+            print("%x: " % i, end="", file=sys.stderr)
         v = dic[i]
         if isinstance(v, list):
             print_list(v)
@@ -264,26 +264,26 @@ def print_dict(dic, end="\n"):
         elif isinstance(v, set):
             print_set(v)
         elif isinstance(v, str):
-            print("%s: " % v)
+            print("%s: " % v, file=sys.stderr)
         else:
-            print("0x%x, " % v, end="")
+            print("0x%x, " % v, end="", file=sys.stderr)
 
-    print("]" + end, end="")
+    print("]" + end, end="", file=sys.stderr)
 
 
 def print_list(lst, end="\n"):
-    print("[", end="")
+    print("[", end="", file=sys.stderr)
     for i in lst[:-1]:
         if isinstance(i, list):
             print_list(i, "")
             print(",\n ", end="")
         elif isinstance(i, dict):
             print_dict(i)
-            print(",\n ", end="")
+            print(",\n ", end="", file=sys.stderr)
         elif isinstance(i, set):
-            print(i)
+            print(i, file=sys.stderr)
         else:
-            print("0x%x, " % i, end="")
+            print("0x%x, " % i, end="", file=sys.stderr)
 
     if len(lst) > 0:
         if isinstance(lst[-1], list):
@@ -291,8 +291,8 @@ def print_list(lst, end="\n"):
         elif isinstance(lst[-1], dict):
             print_dict(lst[-1])
         elif isinstance(lst[-1], set):
-            print(lst[-1])
+            print(lst[-1], file=sys.stderr)
         else:
-            print("0x%x" % lst[-1], end="")
+            print("0x%x" % lst[-1], end="", file=sys.stderr)
 
-    print("]" + end, end="")
+    print("]" + end, end="", file=sys.stderr)
