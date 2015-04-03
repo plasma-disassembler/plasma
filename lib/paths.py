@@ -70,10 +70,7 @@ class Paths():
 
 
     def __contains__(self, addr):
-        for k in self.paths:
-            if addr in self.paths[k]:
-                return True
-        return False
+        return any(addr in i for i in self.paths.values())
 
 
     def contains_list(self, lst):
