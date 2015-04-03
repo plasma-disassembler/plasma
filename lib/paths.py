@@ -90,8 +90,7 @@ class Paths():
                 return False
 
         # Check if the loop is in the right order
-        for k in self.paths:
-            p = self.paths[k]
+        for p in self.paths.values():
             last_idx = -1
             for addr in loop:
                 idx = index(p, addr)
@@ -255,14 +254,14 @@ class Paths():
 
 
             # Compare with other paths
-            for k in self.paths:
+            for k, v in self.paths.items():
                 if k == refpath:
                     continue
 
-                if index(self.paths[k], addr0) == -1:
+                if index(v, addr0) == -1:
                     return last, False, False, 0
 
-                addr = self.paths[k][i]
+                addr = v[i]
 
                 is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, k, i)
                 if is_loop or force_stop:
@@ -282,8 +281,8 @@ class Paths():
         # We have to test here, because we can stop before with a loop
         # or a ifelse.
         if len(self.paths) == 1:
-            k = next(iter(self.paths.keys()))
-            return self.paths[k][-1], False, False, 0
+            v = next(iter(self.paths.values()))
+            return v[-1], False, False, 0
 
         return last, False, False, 0
 
@@ -365,14 +364,14 @@ class Paths():
 
 
     def goto_addr(self, addr):
-        for k in self.paths:
-            idx = index(self.paths[k], addr)
-            self.paths[k] = [] if idx == -1 else self.paths[k][idx:]
+        for k, v in self.paths.items():
+            idx = index(v, addr)
+            self.paths[k] = [] if idx == -1 else v[idx:]
 
 
     def first(self):
-        k = next(iter(self.paths.keys()))
-        return self.paths[k][0]
+        v = next(iter(self.paths.values()))
+        return v[0]
 
 
     def loop_contains(self, loop_start_idx, addr):
