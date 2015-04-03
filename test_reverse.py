@@ -15,7 +15,7 @@ SYMBOLS = {
         TESTS / 'pendu.bin': ["_main", "___main"]
         }
 
-def test_revese():
+def test_reverse():
     for p in TESTS.glob('*.bin'):
         for symbol in sorted(SYMBOLS.get(p, [None])):
             yield reverse_file, str(p), symbol
