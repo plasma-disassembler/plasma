@@ -376,10 +376,7 @@ class Paths():
     def loop_contains(self, loop_start_idx, addr):
         if not loop_start_idx:
             return True
-        for i in loop_start_idx:
-            if addr in gph.loops[i]:
-                return True
-        return False
+        return any(addr in gph.loops[i] for i in loop_start_idx)
                     
 
     # For a loop : check if the path need to be kept (the loop 
