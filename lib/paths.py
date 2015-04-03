@@ -328,12 +328,11 @@ class Paths():
         while not found and i < len(self.paths[refpath]):
             val = self.paths[refpath][i]
             found = True
-            for k in self.paths:
-                if k != refpath:
-                    if not self.__is_looping(k, curr_loop_idx):
-                        if index(self.paths[k], val) == -1:
-                            found = False
-                            break
+            for k, v in self.paths.items():
+                if k != refpath and not self.__is_looping(k, curr_loop_idx):
+                    if index(v, val) == -1:
+                        found = False
+                        break
             i += 1
 
         if found:
