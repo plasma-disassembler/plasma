@@ -30,13 +30,6 @@ def get_loop_start(curr_loop_idx):
     return gph.loops[curr_loop_idx[0]][0]
 
 
-def dict_contains(dict_of_lst, lst):
-    for k in dict_of_lst:
-        if lst == dict_of_lst[k]:
-            return True
-    return False
-
-
 # TODO remove ?
 def loop_contains(loop_start, addr):
     if loop_start == -1:
@@ -451,7 +444,7 @@ class Paths():
             for i, addr in enumerate(el):
                 if addr not in loop_paths:
                     p = el[i:]
-                    if not dict_contains(endloop.paths, p):
+                    if not p in endloop.paths.values():
                         endloop.paths[k] = p
                     else:
                         endloop.paths[k] = []
