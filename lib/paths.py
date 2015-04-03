@@ -185,9 +185,9 @@ class Paths():
 
     def pop(self):
         # Assume that all paths pop the same value
-        for k in self.paths:
-            val = self.paths[k].pop(0)
-        return val
+        vals = set(pv.pop(0) for pv in self.paths.values())
+        assert len(vals) == 1
+        return next(iter(vals))
 
 
     def __del_path(self, k):
