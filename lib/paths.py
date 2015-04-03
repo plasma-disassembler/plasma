@@ -30,39 +30,6 @@ def get_loop_start(curr_loop_idx):
     return gph.loops[curr_loop_idx[0]][0]
 
 
-# TODO remove ?
-def loop_contains(loop_start, addr):
-    if loop_start == -1:
-        return True
-    for l in gph.loops:
-        if l[0] == loop_start and addr in l:
-            return True
-    return False
-
-
-# TODO remove ?
-# Returns all loops starting with addr
-def loop_exists_idx(addr):
-    idx = []
-    i = 0
-    for l in gph.loops:
-        if l[0] == addr:
-            idx.append(i)
-        i += 1
-    return idx
-
-
-# TODO remove ?
-def loop_exists(addr):
-    # normally addr != -1
-    # nested_loops[-1] contains all sub-loops
-    # return addr in gph.nested_loops
-    for l in gph.loops:
-        if addr == l[0]:
-            return True
-    return False
-
-
 class Paths():
     def __init__(self):
         self.looping = {}  # key_path -> idx_loop
