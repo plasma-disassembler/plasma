@@ -217,13 +217,14 @@ class Paths():
                 if is_loop or force_stop:
                     return last, is_loop, False, force_stop and addr
 
-
-                if is_cond_jump(gph.nodes[addr][0]):
+                # much faster than: is_cond_jump(gph.nodes[addr][0])
+                if addr in gph.link_out:
                     nxt = gph.link_out[addr]
-                    c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
-                    c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
-                    if c1 and c2:
-                        return last, False, True, 0
+                    if len(nxt) == 2:
+                        c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
+                        c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
+                        if c1 and c2:
+                            return last, False, True, 0
 
             last = addr0
 
