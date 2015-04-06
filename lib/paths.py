@@ -27,7 +27,7 @@ gph = None
 def get_loop_start(curr_loop_idx):
     if not curr_loop_idx:
         return -1
-    return gph.loops[curr_loop_idx[0]][0]
+    return gph.loops[next(iter(curr_loop_idx))][0]
 
 
 class Paths():
@@ -67,7 +67,7 @@ class Paths():
 
 
     def get_loops_idx(self):
-        return [k for k, l in enumerate(gph.loops) if self.__is_in_curr_loop(l)]
+        return {k for k, l in enumerate(gph.loops) if self.__is_in_curr_loop(l)}
 
 
     def debug(self):
