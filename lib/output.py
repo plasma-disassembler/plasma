@@ -286,6 +286,10 @@ def print_inst(i, tab=0, prefix=""):
                 i.operands[1].value.imm == -1):
             print_no_end(" = -1")
 
+        elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
+                i.operands[1].value.imm == 0):
+            print_no_end(" = 0")
+
         elif (all(op.type == X86_OP_REG for op in i.operands) and
                 len(set(op.value.reg for op in i.operands)) == 1 and
                 i.id == X86_INS_XOR):
