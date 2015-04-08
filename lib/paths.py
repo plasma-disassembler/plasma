@@ -423,7 +423,7 @@ class Paths():
 
                     # Update looping : if we cut the end of a loop-path, the
                     # loop is broken, so we don't mark the loop as a path.
-                    if idx != len(el)-1 and k in self.looping:
+                    if idx != len(el)-1 and k in endloops.looping:
                         del endloops.looping[k]
 
         endloops.rm_empty_paths()
