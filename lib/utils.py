@@ -104,8 +104,6 @@ OPPOSITES = [
         [X86_INS_JGE, X86_INS_JL],
         [X86_INS_JLE, X86_INS_JG],
         [X86_INS_JNS, X86_INS_JS],
-
-        # TODO not sure
         [X86_INS_JAE, X86_INS_JB],
         [X86_INS_JBE, X86_INS_JA],
         [X86_INS_JP, X86_INS_JNP],
@@ -162,13 +160,13 @@ INST_SYMB = {
     X86_INS_JB: "(unsigned) <",
 
     # other flags
-    X86_INS_JNS: "> 0",
-    X86_INS_JS: "< 0",
-    X86_INS_JP: "% 2 == 0",
-    X86_INS_JNP: "% 2 != 0",
-    X86_INS_JCXZ: "cx == 0",
-    X86_INS_JECXZ: "ecx == 0",
-    X86_INS_JRCXZ: "rxc == 0",
+    X86_INS_JNS: ">",
+    X86_INS_JS: "<",
+    X86_INS_JP: "% 2 ==",
+    X86_INS_JNP: "% 2 !=",
+    X86_INS_JCXZ: "cx ==",
+    X86_INS_JECXZ: "ecx ==",
+    X86_INS_JRCXZ: "rxc ==",
     X86_INS_JNO: "overflow",
     X86_INS_JO: "!overflow",
 
@@ -188,39 +186,8 @@ INST_SYMB = {
     X86_INS_INC: "++",
 }
 
-# used when we have fuse a cmp with a ifelse
-CMP_SYMB = {
-    X86_INS_JE: "==",
-    X86_INS_JNE: "!=",
-
-    # signed
-    X86_INS_JGE: ">=",
-    X86_INS_JL: "<",
-    X86_INS_JLE: "<=",
-    X86_INS_JG: ">",
-
-    # unsigned
-    X86_INS_JAE: "(unsigned) >=",
-    X86_INS_JA: "(unsigned) >",
-    X86_INS_JBE: "(unsigned) <=",
-    X86_INS_JB: "(unsigned) <",
-
-    # TODO other flags : really need ?
-    X86_INS_JNS: ">",
-    X86_INS_JS: "<",
-    X86_INS_JP: "% 2 == 0",
-    X86_INS_JNP: "% 2 != 0",
-    X86_INS_JCXZ: "cx == 0",
-    X86_INS_JECXZ: "ecx == 0",
-    X86_INS_JRCXZ: "rxc == 0",
-    X86_INS_JNO: "overflow",
-    X86_INS_JO: "!overflow",
-}
-
-
-def inst_symbol(ty, has_cmp=False):
-    c = CMP_SYMB if has_cmp else INST_SYMB
-    return c.get(ty, "UNKNOWN")
+def inst_symbol(ty):
+    return INST_SYMB.get(ty, "UNKNOWN")
 
 
 def index(L, obj, k=0):
