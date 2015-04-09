@@ -272,21 +272,19 @@ class Paths():
 
         # Compare refpath with other paths
 
-        found = False
-        i = 0
-        val = -1
-        while not found and i < len(self.paths[refpath]):
-            val = self.paths[refpath][i]
+        for val in self.paths[refpath]:
             found = True
-            for k, p in self.paths.items():
+            is_enter = False
+            for k in self.paths:
                 if k != refpath and not self.__is_looping(k, curr_loop_idx):
-                    if index(p, val) == -1:
+                    is_enter = True
+                    if val not in self.paths[k]:
                         found = False
                         break
-            i += 1
 
-        if found:
-            return val
+            if found and is_enter:
+                return val
+
         return -1
 
 
