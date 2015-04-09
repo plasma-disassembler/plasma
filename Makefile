@@ -2,7 +2,7 @@ TESTS_DIR = tests
 SRC = $(shell ls -d $(TESTS_DIR)/*.c)
 REV = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.rev, $(SRC))
 BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
-.PHONY : all check compile FORCE
+.PHONY : all check compile FORCE clean
 
 FLAGS[tests/server.c] = "-lpthread"
 FLAGS[tests/canary_plt.c] = "-fstack-protector"
@@ -24,6 +24,10 @@ check: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
 	@./diff.sh $@ ${V} $(SYMBOLS[$@])
+
+
+clean:
+	@rm -f tmp*
 
 
 compile: $(BIN)
