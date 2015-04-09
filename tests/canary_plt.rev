@@ -19,9 +19,9 @@ function main {
     }
     0x400565: eax = 0 # mov eax, 0
     0x40056a: rdx = var1_canary # mov rdx, qword ptr [rbp - 8]
-    0x40056e: rdx ^= *(fs + 40) # xor rdx, qword ptr fs:[0x28]
+    # 0x40056e: xor rdx, qword ptr fs:[0x28]
     # 0x400577: je 0x40057e
-    if != {
+    if ((rdx ^= *(fs + 40)) != 0) {
         0x400579: call 0x400400 <__stack_chk_fail@plt>
     }
     0x40057e: leave 
