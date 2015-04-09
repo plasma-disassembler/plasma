@@ -19,7 +19,7 @@
 
 from lib.utils import invert_cond, is_call, is_uncond_jump, BRANCH_NEXT
 from lib.colors import pick_color, addr_color, color, color_keyword
-from lib.output import (print_block, print_if_cond, print_cmp_jump_commented,
+from lib.output import (print_block, print_if_cond, print_commented_jump,
         print_comment, print_no_end, print_tabbed, print_tabbed_no_end,
         ASSIGNMENT_OPS)
 from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_INS_TEST, X86_OP_IMM,
@@ -36,9 +36,9 @@ local_vars_size = []
 local_vars_name = []
 vars_counter = 1
 
-# If an address of a cmp is here, it means that we have fused 
-# with an if, so don't print this instruction.
-cmp_fused = set()
+# If an address of an instruction cmp is here, it means that we
+# have fused with an if, so don't print this instruction.
+all_fused_inst = set()
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
 FUSE_OPS.add(X86_INS_CMP)
@@ -67,12 +67,12 @@ class Ast_IfGoto:
         self.orig_jump = orig_jump
         self.cond_id = cond_id
         self.addr_jump = addr_jump
-        self.cmp_inst = None
+        self.fused_inst = None
 
     def print(self, tab=0):
-        print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
+        print_commented_jump(self.orig_jump, self.fused_inst, tab)
         print_tabbed_no_end(color_keyword("if "), tab)
-        print_if_cond(self.cmp_inst, self.cond_id)
+        print_if_cond(self.cond_id, self.fused_inst)
         print_no_end(color_keyword("  goto "))
         print_addr(self.addr_jump)
 
@@ -81,12 +81,12 @@ class Ast_AndIf:
     def __init__(self, orig_jump, cond_id):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
-        self.cmp_inst = None
+        self.fused_inst = None
 
     def print(self, tab=0):
-        print_cmp_jump_commented(self.cmp_inst, self.orig_jump, tab)
+        print_commented_jump(self.orig_jump, self.fused_inst, tab)
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
-        print_if_cond(self.cmp_inst, self.cond_id)
+        print_if_cond(self.cond_id, self.fused_inst)
         print()
 
 
@@ -95,7 +95,7 @@ class Ast_Ifelse:
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
-        self.cmp_inst = None
+        self.fused_inst = None
 
     def print(self, tab=0, print_else_keyword=False):
 
@@ -120,7 +120,7 @@ class Ast_Ifelse:
             br_next, br_next_jump = br_next_jump, br_next
             inv_if = True
             
-        print_cmp_jump_commented(self.cmp_inst, self.jump_inst, tab)
+        print_commented_jump(self.jump_inst, self.fused_inst, tab)
 
         if print_else_keyword:
             print_tabbed_no_end(color_keyword("else if "), tab)
@@ -129,9 +129,9 @@ class Ast_Ifelse:
 
         # jump_inst is the condition to go to the else-part
         if inv_if:
-            print_if_cond(self.cmp_inst, self.jump_inst.id)
+            print_if_cond(self.jump_inst.id, self.fused_inst)
         else:
-            print_if_cond(self.cmp_inst, invert_cond(self.jump_inst.id))
+            print_if_cond(invert_cond(self.jump_inst.id), self.fused_inst)
 
         print(" {")
 
@@ -258,7 +258,7 @@ def assign_colors(ast):
             assign_colors(ast.epilog)
 
 
-def fuse_cmp_if(ast):
+def fuse_inst_with_if(ast):
     if isinstance(ast, Ast_Branch):
         types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
         for i, n in enumerate(ast.nodes):
@@ -268,20 +268,19 @@ def fuse_cmp_if(ast):
                     len(set(op.value.reg for op in n[-1].operands)) == 1))
                     and i+1 < len(ast.nodes)
                             and isinstance(ast.nodes[i+1], types_ast)):
-                    ast.nodes[i+1].cmp_inst = n[-1]
-                    cmp_fused.add(n[-1].address)
+                    ast.nodes[i+1].fused_inst = n[-1]
+                    all_fused_inst.add(n[-1].address)
             else: # ast
-                fuse_cmp_if(n)
-
+                fuse_inst_with_if(n)
 
     elif isinstance(ast, Ast_Ifelse):
-        fuse_cmp_if(ast.br_next)
-        fuse_cmp_if(ast.br_next_jump)
+        fuse_inst_with_if(ast.br_next)
+        fuse_inst_with_if(ast.br_next_jump)
 
     elif isinstance(ast, Ast_Loop):
-        fuse_cmp_if(ast.branch)
+        fuse_inst_with_if(ast.branch)
         if ast.epilog != None:
-            fuse_cmp_if(ast.epilog)
+            fuse_inst_with_if(ast.epilog)
 
 
 def search_local_vars(ast):
@@ -311,14 +310,14 @@ def search_local_vars(ast):
                 search_local_vars(n)
 
     elif isinstance(ast, Ast_Ifelse):
-        if ast.cmp_inst != None:
-            save_vars(ast.cmp_inst)
+        if ast.fused_inst != None:
+            save_vars(ast.fused_inst)
         search_local_vars(ast.br_next)
         search_local_vars(ast.br_next_jump)
 
     elif isinstance(ast, Ast_IfGoto):
-        if ast.cmp_inst != None:
-            save_vars(ast.cmp_inst)
+        if ast.fused_inst != None:
+            save_vars(ast.fused_inst)
 
     elif isinstance(ast, Ast_Loop):
         search_local_vars(ast.branch)

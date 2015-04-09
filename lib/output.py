@@ -182,7 +182,7 @@ def get_addr(i):
 
 
 # Only used when --nocomment is enabled and a jump point to this instruction
-def print_addr_if_req(i, tab):
+def print_addr_if_needed(i, tab):
     if i.address in addr_color:
         print_tabbed(get_addr(i), tab)
 
@@ -194,44 +194,46 @@ def print_comment_no_end(txt, tab=-1):
         print_tabbed_no_end(color_comment(txt), tab)
 
 
-def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
+def print_commented_jump(jump_inst, fused_inst, tab):
     if not nocomment:
-        if cmp_inst != None:
-            print_inst(cmp_inst, tab, "# ")
+        if fused_inst != None:
+            print_inst(fused_inst, tab, "# ")
         print_inst(jump_inst, tab, "# ")
     else:
         # Otherwise print only the address if referenced
-        if cmp_inst != None:
-            print_addr_if_req(cmp_inst, tab)
-        print_addr_if_req(jump_inst, tab)
+        if fused_inst != None:
+            print_addr_if_needed(fused_inst, tab)
+        print_addr_if_needed(jump_inst, tab)
 
 
-def print_if_cond(cmp_inst, jump_id):
-    assignment = cmp_inst != None and cmp_inst.id in ASSIGNMENT_OPS
-    if cmp_inst != None:
-        if assignment:
-            print_no_end("(")
+def print_if_cond(jump_id, fused_inst):
+    if fused_inst is None:
+        print_no_end(inst_symbol(jump_id, True))
+        return
+
+    assignment = fused_inst.id in ASSIGNMENT_OPS
+
+    if assignment:
         print_no_end("(")
-        print_operand(cmp_inst, 0)
-        print_no_end(" ")
+    print_no_end("(")
+    print_operand(fused_inst, 0)
+    print_no_end(" ")
 
-    if cmp_inst != None and cmp_inst.id == X86_INS_TEST:
+    if fused_inst.id == X86_INS_TEST:
         print_no_end(inst_symbol(jump_id, True))
         print_no_end(" 0)")
     elif assignment:
-        print_no_end(inst_symbol(cmp_inst.id))
+        print_no_end(inst_symbol(fused_inst.id))
         print_no_end(" ")
-        print_operand(cmp_inst, 1)
+        print_operand(fused_inst, 1)
         print_no_end(") ")
         print_no_end(inst_symbol(jump_id, True))
         print_no_end(" 0)")
     else:
-        print_no_end(inst_symbol(jump_id, cmp_inst != None))
-
-        if cmp_inst != None:
-            print_no_end(" ")
-            print_operand(cmp_inst, 1)
-            print_no_end(")")
+        print_no_end(inst_symbol(jump_id, True))
+        print_no_end(" ")
+        print_operand(fused_inst, 1)
+        print_no_end(")")
 
 
 def print_comment(txt, tab=-1):
@@ -253,7 +255,7 @@ def print_inst(i, tab=0, prefix=""):
             print_comment(get_inst_str())
         return
 
-    if i.address in lib.ast.cmp_fused:
+    if i.address in lib.ast.all_fused_inst:
         return
 
     print_tabbed_no_end(get_addr(i), tab)
