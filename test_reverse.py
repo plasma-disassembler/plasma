@@ -26,7 +26,7 @@ def reverse_file(filename, symbol):
     lib.ast.local_vars_size = []
     lib.ast.local_vars_name = []
     lib.ast.vars_counter = 1
-    lib.ast.cmp_fused = set()
+    lib.ast.all_fused_inst = set()
     sio = StringIO()
     params = ['--nosectionsname', '--nocolor', filename]
     if symbol is not None:
