@@ -20,7 +20,8 @@
 from lib.utils import invert_cond, is_call, is_uncond_jump, BRANCH_NEXT
 from lib.colors import pick_color, addr_color, color, color_keyword
 from lib.output import (print_block, print_if_cond, print_cmp_jump_commented,
-        print_comment, print_no_end, print_tabbed, print_tabbed_no_end)
+        print_comment, print_no_end, print_tabbed, print_tabbed_no_end,
+        ASSIGNMENT_OPS)
 from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_INS_TEST, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_REG, X86_REG_EBP, X86_REG_RBP)
 
@@ -38,6 +39,9 @@ vars_counter = 1
 # If an address of a cmp is here, it means that we have fused 
 # with an if, so don't print this instruction.
 cmp_fused = set()
+
+FUSE_OPS = set(ASSIGNMENT_OPS)
+FUSE_OPS.add(X86_INS_CMP)
 
 
 class Ast_Branch:
@@ -259,7 +263,7 @@ def fuse_cmp_if(ast):
         types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
-                if ((n[-1].id == X86_INS_CMP or (n[-1].id == X86_INS_TEST and
+                if ((n[-1].id in FUSE_OPS or (n[-1].id == X86_INS_TEST and
                     all(op.type == X86_OP_REG for op in n[-1].operands) and
                     len(set(op.value.reg for op in n[-1].operands)) == 1))
                     and i+1 < len(ast.nodes)

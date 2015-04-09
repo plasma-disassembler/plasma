@@ -37,6 +37,8 @@ binary = None
 nocomment = False
 nosectionsname = False
 
+ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR}
+
 
 def print_block(blk, tab):
     for i in blk:
@@ -205,12 +207,22 @@ def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
 
 
 def print_if_cond(cmp_inst, jump_id):
+    assignment = cmp_inst != None and cmp_inst.id in ASSIGNMENT_OPS
     if cmp_inst != None:
+        if assignment:
+            print_no_end("(")
         print_no_end("(")
         print_operand(cmp_inst, 0)
         print_no_end(" ")
 
     if cmp_inst != None and cmp_inst.id == X86_INS_TEST:
+        print_no_end(inst_symbol(jump_id, True))
+        print_no_end(" 0)")
+    elif assignment:
+        print_no_end(inst_symbol(cmp_inst.id))
+        print_no_end(" ")
+        print_operand(cmp_inst, 1)
+        print_no_end(") ")
         print_no_end(inst_symbol(jump_id, True))
         print_no_end(" 0)")
     else:
