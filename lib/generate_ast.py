@@ -80,10 +80,10 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
     ast = Ast_Branch()
     if_printed = False
 
-    while 1:
-        if paths.rm_empty_paths():
-            break
+    if paths.rm_empty_paths():
+        return ast
 
+    while 1:
         # Stop at the first split or loop
         nb_commons, is_loop, is_ifelse, force_stop_addr = \
             paths.head_last_common(curr_loop_idx)
@@ -127,10 +127,8 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
         else:
             endpoint = paths.first()
 
-        if endpoint == -1:
+        if endpoint == -1 or paths.goto_addr(endpoint):
             break
-
-        paths.goto_addr(endpoint)
 
     return ast
 

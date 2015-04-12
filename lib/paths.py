@@ -348,9 +348,20 @@ class Paths():
 
 
     def goto_addr(self, addr):
+        to_remove = []
         for k, p in self.paths.items():
             idx = index(p, addr)
-            self.paths[k] = [] if idx == -1 else p[idx:]
+            if idx != -1:
+                self.paths[k] = p[idx:]
+            else:
+                to_remove.append(k)
+
+        all_removed = len(to_remove) == len(self.paths)
+
+        for k in to_remove:
+            self.__del_path(k)
+
+        return all_removed
 
 
     def first(self):
