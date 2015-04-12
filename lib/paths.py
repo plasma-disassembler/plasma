@@ -17,13 +17,13 @@
 #
 
 import sys
+import time
 
 import lib.utils
 from lib.utils import (debug__, index, BRANCH_NEXT, BRANCH_NEXT_JUMP)
 
 
 gph = None
-
 
 
 
@@ -327,23 +327,33 @@ class Paths():
 
     def split(self, ifaddr, endpoint):
         nxt = gph.link_out[ifaddr]
+        nxt_br_next = nxt[BRANCH_NEXT]
         split = [Paths(), Paths()]
-        else_addr = -1
+
+        add_path_1 = split[BRANCH_NEXT].add_path
+        add_path_2 = split[BRANCH_NEXT_JUMP].add_path
+        get_loop_idx = self.__get_loop_idx
+
         for k, p in self.paths.items():
             if p:
-                if p[0] == nxt[BRANCH_NEXT]:
-                    br = BRANCH_NEXT
-                else:
-                    br = BRANCH_NEXT_JUMP
-                    else_addr = nxt[BRANCH_NEXT_JUMP]
                 # idx == -1 means :
                 # - p is looping so there is no endpoint with some other paths
                 # - endpoint == -1
-                idx = index(p, endpoint)
-                if idx == -1:
-                    split[br].add_path(k, p, self.__get_loop_idx(k))
-                else:
-                    split[br].add_path(k, p[:idx])
+                try:
+                    idx = p.index(endpoint)
+                    if p[0] == nxt_br_next:
+                        add_path_1(k, p[:idx])
+                    else:
+                        add_path_2(k, p[:idx])
+                except:
+                    if p[0] == nxt_br_next:
+                        add_path_1(k, p, get_loop_idx(k))
+                    else:
+                        add_path_2(k, p, get_loop_idx(k))
+
+        else_addr = nxt[BRANCH_NEXT_JUMP] \
+                    if len(split[BRANCH_NEXT_JUMP].paths) > 0 else -1
+
         return split, else_addr
 
 
