@@ -186,6 +186,7 @@ class Disassembler():
                         if not forcejmp:
                             self.__error_jmp_reg(curr)
                         gph.add_node(curr)
+                    gph.uncond_jumps_set.add(curr.address)
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == X86_OP_IMM:
@@ -198,6 +199,7 @@ class Disassembler():
                         if not forcejmp:
                             self.__error_jmp_reg(curr)
                         gph.add_node(curr)
+                    gph.cond_jumps_set.add(curr.address)
 
                 elif is_ret(curr):
                     gph.add_node(curr)

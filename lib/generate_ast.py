@@ -23,8 +23,8 @@ import lib.colors
 from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
         fuse_inst_with_if, search_canary_plt)
-from lib.utils import (is_cond_jump, is_uncond_jump, invert_cond,
-        BRANCH_NEXT, BRANCH_NEXT_JUMP, die, debug__, print_list)
+from lib.utils import (invert_cond, BRANCH_NEXT, BRANCH_NEXT_JUMP, die,
+        debug__, print_list)
 from lib.paths import get_loop_start
 
 
@@ -93,12 +93,12 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
 
             for ad in common_path:
                 blk = gph.nodes[ad]
-                inst = blk[0] # first inst
 
                 # Here if we have conditional jump, it's not a ifelse,
                 # it's a condition for a loop. It will be replaced by a
                 # goto. ifgoto are skipped by head_last_common.
-                if is_cond_jump(inst):
+                if ad in gph.cond_jumps_set:
+                    inst = blk[0] # first inst
                     ast.add(get_ast_ifgoto(paths, curr_loop_idx, inst))
                 else:
                     ast.add(blk)
@@ -107,9 +107,11 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
                 return ast
 
         if force_stop_addr != 0:
-            blk = gph.nodes[paths.first()]
+            ad = paths.first()
+            blk = gph.nodes[ad]
             ast.add(blk)
-            if not is_uncond_jump(blk[0]):
+
+            if ad not in gph.uncond_jumps_set:
                 ast.add(Ast_Jmp(gph.link_out[blk[0].address][BRANCH_NEXT]))
             break
 
@@ -138,8 +140,7 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
 def paths_is_infinite(paths):
     for k, p in paths.paths.items():
         for addr in p:
-            inst = gph.nodes[addr][0]
-            if is_cond_jump(inst):
+            if addr in gph.cond_jumps_set:
                 nxt = gph.link_out[addr]
                 if nxt[BRANCH_NEXT] not in paths or \
                    nxt[BRANCH_NEXT_JUMP] not in paths: \
@@ -152,7 +153,7 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
     curr_loop_idx = paths.get_loops_idx()
     first_blk = gph.nodes[get_loop_start(curr_loop_idx)]
 
-    if is_cond_jump(first_blk[0]):
+    if first_blk[0].address in gph.cond_jumps_set:
         ast.add(get_ast_ifgoto(paths, curr_loop_idx, first_blk[0]))
     else:
         ast.add(first_blk)

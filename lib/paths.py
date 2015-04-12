@@ -19,9 +19,7 @@
 import sys
 
 import lib.utils
-from lib.utils import (debug__, index, is_cond_jump, is_uncond_jump,
-        BRANCH_NEXT, BRANCH_NEXT_JUMP, print_set, print_list, is_ret,
-        print_dict)
+from lib.utils import (debug__, index, BRANCH_NEXT, BRANCH_NEXT_JUMP)
 
 
 gph = None
@@ -229,7 +227,7 @@ class Paths():
                 return nb_commons, is_loop, False, (force_stop and addr0)
 
             # Check addr0
-            if is_cond_jump(gph.nodes[addr0][0]):
+            if addr0 in gph.cond_jumps_set:
                 nxt = gph.link_out[addr0]
                 c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                 c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
@@ -251,14 +249,12 @@ class Paths():
                 if is_loop or force_stop:
                     return nb_commons, is_loop, False, (force_stop and addr)
 
-                # much faster than: is_cond_jump(gph.nodes[addr][0])
-                if addr in gph.link_out:
+                if addr in gph.cond_jumps_set:
                     nxt = gph.link_out[addr]
-                    if len(nxt) == 2:
-                        c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
-                        c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
-                        if c1 and c2:
-                            return nb_commons, False, True, 0
+                    c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
+                    c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
+                    if c1 and c2:
+                        return nb_commons, False, True, 0
 
             nb_commons = i+1
 
@@ -478,6 +474,7 @@ class Paths():
             tmp.looping.update(p2.looping)
             return tmp.first_common(loops_idx)
 
+        # Check if the address n is the next address of g
         def has_next(g, n):
             for k, p in g.paths.items():
                 nxt = gph.link_out[p[-1]]
@@ -670,8 +667,9 @@ class Paths():
                     # if not(len(nxt) == 1 and is_uncond_jump(gph.nodes[p[stop-1]][0]) and
                             # nxt[BRANCH_NEXT] == e or \
                             # len(nxt) == 2 and nxt[BRANCH_NEXT_JUMP] == e):
+
                     if not(len(nxt) == 1 and \
-                            is_uncond_jump(gph.nodes[p[stop-1]][0]) and \
+                            p[stop-1] in gph.uncond_jumps_set and \
                             nxt[BRANCH_NEXT] == e):
                         all_finish_by_jump = False
                 else:

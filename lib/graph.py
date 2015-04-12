@@ -21,8 +21,7 @@ import os
 import os.path
 import time
 from lib.paths import Paths
-from lib.utils import (BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_cond_jump,
-        is_jump, debug__)
+from lib.utils import (BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_jump, debug__)
 
 
 class Graph:
@@ -46,6 +45,10 @@ class Graph:
         self.nested_loops_idx = {}
         self.direct_nested_idx = {}
         self.paths = None
+
+        # Optimization
+        self.cond_jumps_set = set()
+        self.uncond_jumps_set = set()
 
         # If a loop is "marked" it means that there is an other equivalent
         # loop, and this must not be interpreted during the process. Generally
