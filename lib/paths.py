@@ -293,10 +293,10 @@ class Paths():
         for val in self.paths[refpath]:
             found = True
             is_enter = False
-            for k, p in self.paths.items():
+            for k in self.paths:
                 if k != refpath and not self.__is_looping(k, curr_loop_idx):
                     is_enter = True
-                    if index(p, val) == -1:
+                    if val not in self.paths[k]:
                         found = False
                         break
 

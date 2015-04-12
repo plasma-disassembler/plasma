@@ -20,9 +20,9 @@
 import time
 
 import lib.colors
-from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, Ast_IfGoto,
-        Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars, fuse_cmp_if,
-        search_canary_plt)
+from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
+        Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
+        fuse_inst_with_if, search_canary_plt)
 from lib.utils import (is_cond_jump, is_uncond_jump, invert_cond,
         BRANCH_NEXT, BRANCH_NEXT_JUMP, die, debug__)
 from lib.paths import get_loop_start
@@ -312,7 +312,7 @@ def generate_ast(graph):
     start = time.clock()
 
     search_local_vars(ast)
-    fuse_cmp_if(ast)
+    fuse_inst_with_if(ast)
     search_canary_plt() 
 
     elapsed = time.clock()

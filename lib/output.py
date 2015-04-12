@@ -30,12 +30,27 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
         X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
-        X86_INS_TEST, X86_INS_JNS, X86_INS_JS, X86_INS_MUL)
+        X86_INS_TEST, X86_INS_JNS, X86_INS_JS, X86_INS_MUL, X86_INS_JP,
+        X86_INS_JNP, X86_INS_JCXZ, X86_INS_JECXZ, X86_INS_JRCXZ)
 
 
 binary = None
 nocomment = False
 nosectionsname = False
+
+ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR}
+
+# After these instructions we need to add a zero
+# example : jns ADDR -> if > 0
+JMP_ADD_ZERO = {
+    X86_INS_JNS,
+    X86_INS_JS,
+    X86_INS_JP,
+    X86_INS_JNP,
+    X86_INS_JCXZ,
+    X86_INS_JECXZ,
+    X86_INS_JRCXZ
+}
 
 
 def print_block(blk, tab):
@@ -180,7 +195,7 @@ def get_addr(i):
 
 
 # Only used when --nocomment is enabled and a jump point to this instruction
-def print_addr_if_req(i, tab):
+def print_addr_if_needed(i, tab):
     if i.address in addr_color:
         print_tabbed(get_addr(i), tab)
 
@@ -192,34 +207,53 @@ def print_comment_no_end(txt, tab=-1):
         print_tabbed_no_end(color_comment(txt), tab)
 
 
-def print_cmp_jump_commented(cmp_inst, jump_inst, tab):
+def print_commented_jump(jump_inst, fused_inst, tab):
     if not nocomment:
-        if cmp_inst != None:
-            print_inst(cmp_inst, tab, "# ")
+        if fused_inst != None:
+            print_inst(fused_inst, tab, "# ")
         print_inst(jump_inst, tab, "# ")
     else:
         # Otherwise print only the address if referenced
-        if cmp_inst != None:
-            print_addr_if_req(cmp_inst, tab)
-        print_addr_if_req(jump_inst, tab)
+        if fused_inst != None:
+            print_addr_if_needed(fused_inst, tab)
+        print_addr_if_needed(jump_inst, tab)
 
 
-def print_if_cond(cmp_inst, jump_id):
-    if cmp_inst != None:
+def print_if_cond(jump_id, fused_inst):
+    if fused_inst is None:
+        print_no_end(inst_symbol(jump_id))
+        if jump_id in JMP_ADD_ZERO:
+            print_no_end(" 0")
+        return
+
+    assignment = fused_inst.id in ASSIGNMENT_OPS
+
+
+    if assignment:
         print_no_end("(")
-        print_operand(cmp_inst, 0)
+    print_no_end("(")
+    print_operand(fused_inst, 0)
+    print_no_end(" ")
+
+    if fused_inst.id == X86_INS_TEST:
+        print_no_end(inst_symbol(jump_id))
+    elif assignment:
+        print_no_end(inst_symbol(fused_inst.id))
         print_no_end(" ")
-
-    if cmp_inst != None and cmp_inst.id == X86_INS_TEST:
-        print_no_end(inst_symbol(jump_id, True))
-        print_no_end(" 0)")
+        print_operand(fused_inst, 1)
+        print_no_end(") ")
+        print_no_end(inst_symbol(jump_id))
     else:
-        print_no_end(inst_symbol(jump_id, cmp_inst != None))
+        print_no_end(inst_symbol(jump_id))
+        print_no_end(" ")
+        print_operand(fused_inst, 1)
 
-        if cmp_inst != None:
-            print_no_end(" ")
-            print_operand(cmp_inst, 1)
-            print_no_end(")")
+    if fused_inst.id == X86_INS_TEST or \
+            (fused_inst.id != X86_INS_CMP and \
+             (jump_id in JMP_ADD_ZERO or assignment)):
+        print_no_end(" 0")
+
+    print_no_end(")")
 
 
 def print_comment(txt, tab=-1):
@@ -241,7 +275,7 @@ def print_inst(i, tab=0, prefix=""):
             print_comment(get_inst_str())
         return
 
-    if i.address in lib.ast.cmp_fused:
+    if i.address in lib.ast.all_fused_inst:
         return
 
     print_tabbed_no_end(get_addr(i), tab)
@@ -285,6 +319,10 @@ def print_inst(i, tab=0, prefix=""):
         if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
                 i.operands[1].value.imm == -1):
             print_no_end(" = -1")
+
+        elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
+                i.operands[1].value.imm == 0):
+            print_no_end(" = 0")
 
         elif (all(op.type == X86_OP_REG for op in i.operands) and
                 len(set(op.value.reg for op in i.operands)) == 1 and
