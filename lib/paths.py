@@ -98,8 +98,17 @@ class Paths():
         return False
 
 
-    def __enter_new_loop(self, curr_loop_idx, key_path, k):
-        addr = self.paths[key_path][k]
+    #
+    # Returns :
+    # is_loop : true if path[i] is a beginning of a loop
+    # force_stop : true if it's a loop but we need to stop here
+    #
+    # A "marked" loop is a loop which have an equivalent loop
+    # It means that these loops are the same but one starts
+    # in the middle of the second (see tests/gotoinloop*)
+    #
+    def __enter_new_loop(self, curr_loop_idx, key_path, i):
+        addr = self.paths[key_path][i]
         is_loop = key_path not in self.looping
 
         # TODO not sure
@@ -151,18 +160,29 @@ class Paths():
         return self.looping.get(k, -1)
 
 
-    def pop(self):
+    def pop(self, n):
+        if n == 0:
+            return []
         # Assume that all paths pop the same value
-        vals = set(p.pop(0) for p in self.paths.values())
-        assert len(vals) == 1
-        return next(iter(vals))
+        it = iter(self.paths.values())
+        p = next(it)
+        if n == 1:
+            poped = [p[0]]
+            del p[0]
+            for p in it:
+                del p[0]
+        else:
+            poped = p[:n]
+            del p[:n]
+            for p in it:
+                del p[:n]
+        return poped
 
 
     def __del_path(self, k):
         del self.paths[k]
         if k in self.looping:
             del self.looping[k]
-        return
 
 
     def rm_empty_paths(self):
@@ -175,6 +195,8 @@ class Paths():
     def __longuest_path(self):
         key = 0
         max_len = 0
+        # leng = {len(p):k for k, p in self.paths.items()}
+        # return leng[max(leng)]
         for k, p in self.paths.items():
             if len(p) > max_len:
                 max_len = len(p)
@@ -182,9 +204,10 @@ class Paths():
         return key
 
 
+    #
     # Returns tuple :
     #
-    # until_address : found common address until this value
+    # nb_commons :  common addresses on each paths
     # is_loop (bool) : stopped on a begining loop
     # is_ifelse (bool) : stopped on a ifelse (found two differents address on paths)
     # force_stop_addr : return the address we have stopped the algorithm
@@ -196,14 +219,14 @@ class Paths():
         # tests/nestedloop3
         refpath = self.__longuest_path()
 
-        last = -1
+        nb_commons = 0
 
         for i in range(len(self.paths[refpath])):
             addr0 = self.paths[refpath][i]
 
             is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, i)
             if is_loop or force_stop:
-                return last, is_loop, False, (force_stop and addr0)
+                return nb_commons, is_loop, False, (force_stop and addr0)
 
             # Check addr0
             if is_cond_jump(gph.nodes[addr0][0]):
@@ -211,7 +234,7 @@ class Paths():
                 c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                 c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                 if c1 and c2:
-                    return last, False, True, 0
+                    return nb_commons, False, True, 0
 
 
             # Compare with other paths
@@ -220,13 +243,13 @@ class Paths():
                     continue
 
                 if addr0 not in p:
-                    return last, False, False, 0
+                    return nb_commons, False, False, 0
 
                 addr = p[i]
 
                 is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, k, i)
                 if is_loop or force_stop:
-                    return last, is_loop, False, force_stop and addr
+                    return nb_commons, is_loop, False, (force_stop and addr)
 
                 # much faster than: is_cond_jump(gph.nodes[addr][0])
                 if addr in gph.link_out:
@@ -235,17 +258,17 @@ class Paths():
                         c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                         c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                         if c1 and c2:
-                            return last, False, True, 0
+                            return nb_commons, False, True, 0
 
-            last = addr0
+            nb_commons = i+1
 
         # We have to test here, because we can stop before with a loop
         # or a ifelse.
         if len(self.paths) == 1:
             p = next(iter(self.paths.values()))
-            return p[-1], False, False, 0
+            return len(p), False, False, 0
 
-        return last, False, False, 0
+        return nb_commons, False, False, 0
 
 
     def first_common_ifelse(self, curr_loop_idx, else_addr):

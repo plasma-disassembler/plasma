@@ -24,7 +24,7 @@ from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop,
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
         fuse_inst_with_if, search_canary_plt)
 from lib.utils import (is_cond_jump, is_uncond_jump, invert_cond,
-        BRANCH_NEXT, BRANCH_NEXT_JUMP, die, debug__)
+        BRANCH_NEXT, BRANCH_NEXT_JUMP, die, debug__, print_list)
 from lib.paths import get_loop_start
 
 
@@ -84,29 +84,27 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
         if paths.rm_empty_paths():
             break
 
-        # Stop on the first split or is_loop
-        until, is_loop, is_ifelse, force_stop_addr = \
+        # Stop at the first split or loop
+        nb_commons, is_loop, is_ifelse, force_stop_addr = \
             paths.head_last_common(curr_loop_idx)
 
-        # Add code to the branch, and update paths
-        # until == -1 if there is no common point at the begining
-        last = -1
-        while last != until:
-            blk = gph.nodes[paths.first()]
-            inst = blk[0] # first inst
+        if nb_commons > 0:
+            common_path = paths.pop(nb_commons)
 
-            # Here if we have conditional jump, it's not a ifelse,
-            # it's a condition for a loop. It will be replaced by a
-            # goto. ifgoto are skipped by head_last_common.
-            if is_cond_jump(inst):
-                ast.add(get_ast_ifgoto(paths, curr_loop_idx, inst))
-            else:
-                ast.add(blk)
+            for ad in common_path:
+                blk = gph.nodes[ad]
+                inst = blk[0] # first inst
 
-            last = paths.pop()
+                # Here if we have conditional jump, it's not a ifelse,
+                # it's a condition for a loop. It will be replaced by a
+                # goto. ifgoto are skipped by head_last_common.
+                if is_cond_jump(inst):
+                    ast.add(get_ast_ifgoto(paths, curr_loop_idx, inst))
+                else:
+                    ast.add(blk)
 
-        if paths.rm_empty_paths():
-            break
+            if paths.rm_empty_paths():
+                return ast
 
         if force_stop_addr != 0:
             blk = gph.nodes[paths.first()]
@@ -167,7 +165,7 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
     # tests/nestedloop2
     ast.set_infinite(paths_is_infinite(loop_paths))
 
-    loop_paths.pop()
+    loop_paths.pop(1)
     ast.add(get_ast_branch(loop_paths, curr_loop_idx, last_else))
 
     if not endloops:
@@ -189,7 +187,7 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
 
 
 def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
-    addr = paths.pop()
+    addr = paths.pop(1)[0]
     paths.rm_empty_paths()
     jump_inst = gph.nodes[addr][0]
     nxt = gph.link_out[addr]
