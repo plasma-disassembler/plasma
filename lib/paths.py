@@ -141,7 +141,7 @@ class Paths():
         return True
 
 
-    def add(self, key_path, new_path, loop_idx=-1):
+    def add_path(self, key_path, new_path, loop_idx=-1):
         self.paths[key_path] = new_path
         if loop_idx != -1:
             self.looping[key_path] = loop_idx
@@ -322,9 +322,9 @@ class Paths():
                 # - endpoint == -1
                 idx = index(p, endpoint)
                 if idx == -1:
-                    split[br].add(k, p, self.__get_loop_idx(k))
+                    split[br].add_path(k, p, self.__get_loop_idx(k))
                 else:
-                    split[br].add(k, p[:idx])
+                    split[br].add_path(k, p[:idx])
         return split, else_addr
 
 
@@ -389,9 +389,9 @@ class Paths():
             keep, ignore =  self.__keep_path(curr_loop_idx, p, k)
             if not ignore:
                 if keep:
-                    loop_paths.add(k, p, self.__get_loop_idx(k))
+                    loop_paths.add_path(k, p, self.__get_loop_idx(k))
                 else:
-                    tmp_endloops.add(k, p, self.__get_loop_idx(k))
+                    tmp_endloops.add_path(k, p, self.__get_loop_idx(k))
 
         # Remove the beginning of the loop to get only the endloop
         for k, el in tmp_endloops.paths.items():
@@ -417,7 +417,7 @@ class Paths():
             if el[0] not in grp_endloops:
                 grp_endloops[el[0]] = Paths()
 
-            grp_endloops[el[0]].add(k, el, tmp_endloops.__get_loop_idx(k))
+            grp_endloops[el[0]].add_path(k, el, tmp_endloops.__get_loop_idx(k))
 
 
         # ------------------------------------------------------
@@ -633,7 +633,7 @@ class Paths():
                 if not p2:
                     continue
 
-                newp.add(k, p2, loop_idx)
+                newp.add_path(k, p2, loop_idx)
 
                 # If it's an internal loop, we don't have to check
                 # if the last instruction is a jump.
