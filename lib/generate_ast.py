@@ -149,7 +149,7 @@ def paths_is_infinite(paths):
     return True
 
 
-def get_ast_loop(paths, last_loop, last_else, endif):
+def get_ast_loop(paths, last_loop_idx, last_else, endif):
     ast = Ast_Loop()
     curr_loop_idx = paths.get_loops_idx()
     first_blk = gph.nodes[get_loop_start(curr_loop_idx)]
@@ -159,34 +159,33 @@ def get_ast_loop(paths, last_loop, last_else, endif):
     else:
         ast.add(first_blk)
 
-    loop_paths, endloop = paths.extract_loop_paths(curr_loop_idx)
+    loop_paths, endloops, endloops_start = \
+        paths.extract_loop_paths(curr_loop_idx, last_loop_idx, endif)
 
     # Checking if endloop == [] to determine if it's an 
     # infinite loop is not sufficient
     # tests/nestedloop2
     ast.set_infinite(paths_is_infinite(loop_paths))
 
-    paths.pop()
+    loop_paths.pop()
     ast.add(get_ast_branch(loop_paths, curr_loop_idx, last_else))
 
-    if not endloop:
+    if not endloops:
         return ast, -1
 
     epilog = Ast_Branch()
-    if len(endloop) > 1:
+    if len(endloops) > 1:
         i = 1
-        for el in endloop[:-1]:
-            epilog.add(Ast_Comment("endloop " + str(i)))
-            epilog.add(get_ast_branch(el, last_loop, last_else))
-            i += 1
+        for el in endloops[:-1]:
+            if el.first() in endloops_start:
+                epilog.add(Ast_Comment("endloop " + str(i)))
+                i += 1
+            epilog.add(get_ast_branch(el, last_loop_idx, last_else))
         epilog.add(Ast_Comment("endloop " + str(i)))
 
         ast.set_epilog(epilog)
 
-    return ast, endloop[-1].first()
-
-
-from lib.utils import print_dict, print_list
+    return ast, endloops[-1].first()
 
 
 def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
@@ -201,7 +200,7 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # If endpoint == -1, it means we are in a sub-if and the endpoint 
     # is after. When we create_split, only address inside current
     # if and else are kept.
-    endpoint = paths.first_common(curr_loop_idx, else_addr)
+    endpoint = paths.first_common_ifelse(curr_loop_idx, else_addr)
     split, else_addr = paths.split(addr, endpoint)
 
     # is_prev_and_if : better output (tests/if5)
@@ -273,7 +272,7 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     if print_andif:
         if last_else != -1 and not is_prev_andif:
             # TODO not sure about endpoint == -1
-            # tests/or4
+            # tests/break3
             if if_addr == last_else and endpoint == -1:
                 return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
 
@@ -285,6 +284,9 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
 
     if else_addr == -1:
         else_addr = last_else
+
+    if endpoint == -1:
+        endpoint = endif
 
     a1 = get_ast_branch(split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
     a2 = get_ast_branch(split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)

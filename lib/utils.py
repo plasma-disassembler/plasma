@@ -60,6 +60,8 @@ def debug__(obj="", end="\n"):
             print_list(obj)
         elif isinstance(obj, dict):
             print_dict(obj)
+        elif isinstance(obj, set):
+            print_set(obj)
 
 
 

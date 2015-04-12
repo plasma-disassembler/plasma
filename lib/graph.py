@@ -230,7 +230,6 @@ class Graph:
         elapsed = elapsed - start
         debug__("Exploration: found %d paths and %d loop-paths in %fs" %
                 (len(self.paths.paths), len(self.paths.looping), elapsed))
-        return
 
 
     def __compute_nested(self):
