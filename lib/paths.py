@@ -219,7 +219,7 @@ class Paths():
                 if k == refpath:
                     continue
 
-                if index(p, addr0) == -1:
+                if addr0 not in p:
                     return last, False, False, 0
 
                 addr = p[i]
