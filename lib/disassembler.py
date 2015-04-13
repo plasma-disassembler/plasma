@@ -22,7 +22,7 @@ from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, Cs
 from capstone.x86 import X86_OP_IMM
 
 from lib.graph import Graph
-from lib.utils import (die, error, index, is_call, is_cond_jump,
+from lib.utils import (die, error, is_call, is_cond_jump,
         is_uncond_jump, is_jump, is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
 from lib.output import print_inst, print_symbol

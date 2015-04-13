@@ -17,10 +17,9 @@
 #
 
 import sys
-import time
 
 import lib.utils
-from lib.utils import (debug__, index, BRANCH_NEXT, BRANCH_NEXT_JUMP)
+from lib.utils import (index, BRANCH_NEXT, BRANCH_NEXT_JUMP, print_list)
 
 
 gph = None
