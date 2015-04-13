@@ -18,27 +18,28 @@
 #
 
 
-import os
+from textwrap import dedent
+from pathlib import Path
 
 def default_custom_file():
-    f = os.path.abspath(os.path.expanduser(__file__))
-    filename = os.path.dirname(f) + "/../custom_colors.py"
-    fd = open(filename, "w+")
-    fd.write("class COLOR:\n")
-    fd.write("    def __init__(self, val, bold):\n")
-    fd.write("        self.val  = str(val)\n")
-    fd.write("        self.bold = bold\n")
-    fd.write("\n")
-    fd.write("COLOR_SECTION = COLOR(81, False)\n")
-    fd.write("COLOR_KEYWORD = COLOR(161, True)\n")
-    fd.write("COLOR_VAR     = COLOR(208, True)\n")
-    fd.write("COLOR_TYPE    = COLOR(81, False)\n")
-    fd.write("COLOR_COMMENT = COLOR(242, False)\n")
-    fd.write("COLOR_ADDR    = COLOR(242, False)\n")
-    fd.write("COLOR_STRING  = COLOR(144, False)\n")
-    fd.write("COLOR_SYMBOL  = COLOR(144, False)\n")
-    fd.write("COLOR_RETCALL = COLOR(161, False)\n")
-    fd.close()
+    filename = str(Path(__file__).parent.parent / "custom_colors.py")
+    with open(filename, "w+") as fd:
+        fd.write(dedent("""\
+            class COLOR:
+                def __init__(self, val, bold):
+                    self.val  = str(val)
+                    self.bold = bold
+
+            COLOR_SECTION = COLOR(81, False)
+            COLOR_KEYWORD = COLOR(161, True)
+            COLOR_VAR     = COLOR(208, True)
+            COLOR_TYPE    = COLOR(81, False)
+            COLOR_COMMENT = COLOR(242, False)
+            COLOR_ADDR    = COLOR(242, False)
+            COLOR_STRING  = COLOR(144, False)
+            COLOR_SYMBOL  = COLOR(144, False)
+            COLOR_RETCALL = COLOR(161, False)
+            """))
 
 
 try:

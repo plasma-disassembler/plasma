@@ -17,10 +17,9 @@
 #
 
 import sys
-import time
 
 import lib.utils
-from lib.utils import (debug__, index, BRANCH_NEXT, BRANCH_NEXT_JUMP)
+from lib.utils import (index, BRANCH_NEXT, BRANCH_NEXT_JUMP, print_list)
 
 
 gph = None
@@ -506,7 +505,6 @@ class Paths():
 
         grp2_keys = set(grp_endloops.keys())
         all_endpoints = {}
-        endpoints_between = {}
 
         for ad1, els1 in grp_endloops.items():
             # Optimization to not compare twice two sets (for
@@ -547,7 +545,6 @@ class Paths():
         # paths. So we need to check which endpoint is the first.
         # ------------------------------------------------------
 
-        depends_on = {}
         rev_depends_on = {}
         edp2_keys = list(all_endpoints.keys())
 
