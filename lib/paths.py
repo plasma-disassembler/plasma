@@ -22,20 +22,23 @@ import lib.utils
 from lib.utils import (index, BRANCH_NEXT, BRANCH_NEXT_JUMP, print_list)
 
 
-gph = None
-
-
-
-def get_loop_start(curr_loop_idx):
-    if not curr_loop_idx:
-        return -1
-    return gph.loops[next(iter(curr_loop_idx))][0]
-
 
 class Paths():
-    def __init__(self):
+    def __init__(self, gph=None):
         self.looping = {}  # key_path -> idx_loop
         self.paths = {}
+        self.gph = gph
+        if gph != None:
+            self.cache_obj()
+
+
+    def cache_obj(self):
+        # For avoiding sub-access
+        self.gph_loops            = self.gph.loops
+        self.gph_marked_addr      = self.gph.marked_addr
+        self.gph_cond_jumps_set   = self.gph.cond_jumps_set
+        self.gph_uncond_jumps_set = self.gph.uncond_jumps_set
+        self.gph_link_out         = self.gph.link_out
 
 
     def __contains__(self, addr):
@@ -68,8 +71,15 @@ class Paths():
         return True
 
 
+    def get_loop_start(self, curr_loop_idx):
+        if not curr_loop_idx:
+            return -1
+        return self.gph_loops[next(iter(curr_loop_idx))][0]
+
+
     def get_loops_idx(self):
-        return {k for k, l in enumerate(gph.loops) if self.__is_in_curr_loop(l)}
+        return {k for k, l in enumerate(self.gph_loops) \
+                      if self.__is_in_curr_loop(l)}
 
 
     def debug(self):
@@ -110,7 +120,7 @@ class Paths():
 
         # TODO not sure
         # tests/gotoinloop{6,7}
-        if addr in gph.marked_addr:
+        if addr in self.gph_marked_addr:
             if not curr_loop_idx or is_loop:
                 return False, True
 
@@ -118,11 +128,11 @@ class Paths():
             return False, False
 
         l_idx = self.looping[key_path]
-        if addr != gph.loops[l_idx][0]:
+        if addr != self.gph_loops[l_idx][0]:
             return False, False
 
         # TODO check if all conditions are really necessary
-        if addr in gph.marked_addr: # and \
+        if addr in self.gph_marked_addr: # and \
                 # l_idx in gph.marked:
                 # and \
                 # l_idx in gph.equiv and \
@@ -226,8 +236,8 @@ class Paths():
                 return nb_commons, is_loop, False, (force_stop and addr0)
 
             # Check addr0
-            if addr0 in gph.cond_jumps_set:
-                nxt = gph.link_out[addr0]
+            if addr0 in self.gph_cond_jumps_set:
+                nxt = self.gph_link_out[addr0]
                 c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                 c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                 if c1 and c2:
@@ -248,8 +258,8 @@ class Paths():
                 if is_loop or force_stop:
                     return nb_commons, is_loop, False, (force_stop and addr)
 
-                if addr in gph.cond_jumps_set:
-                    nxt = gph.link_out[addr]
+                if addr in self.gph_cond_jumps_set:
+                    nxt = self.gph_link_out[addr]
                     c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
                     c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
                     if c1 and c2:
@@ -325,9 +335,9 @@ class Paths():
 
 
     def split(self, ifaddr, endpoint):
-        nxt = gph.link_out[ifaddr]
+        nxt = self.gph_link_out[ifaddr]
         nxt_br_next = nxt[BRANCH_NEXT]
-        split = [Paths(), Paths()]
+        split = [Paths(self.gph), Paths(self.gph)]
 
         add_path_1 = split[BRANCH_NEXT].add_path
         add_path_2 = split[BRANCH_NEXT_JUMP].add_path
@@ -381,7 +391,7 @@ class Paths():
     def loop_contains(self, loop_start_idx, addr):
         if not loop_start_idx:
             return True
-        return any(addr in gph.loops[i] for i in loop_start_idx)
+        return any(addr in self.gph_loops[i] for i in loop_start_idx)
                     
 
     # For a loop : check if the path need to be kept (the loop 
@@ -402,10 +412,10 @@ class Paths():
             return True, False
 
         for i in curr_loop_idx:
-            if l_idx in gph.nested_loops_idx[i]:
+            if l_idx in self.gph.nested_loops_idx[i]:
                 return True, False
 
-        if l_idx in gph.marked:
+        if l_idx in self.gph.marked:
             return False, True
 
         return False, False
@@ -416,8 +426,8 @@ class Paths():
     def extract_loop_paths(self, curr_loop_idx, last_loop_idx, endif):
         # TODO optimize....
 
-        loop_paths = Paths()
-        tmp_endloops = Paths()
+        loop_paths = Paths(self.gph)
+        tmp_endloops = Paths(self.gph)
 
 
         # ------------------------------------------------------
@@ -454,7 +464,7 @@ class Paths():
 
         for k, el in tmp_endloops.paths.items():
             if el[0] not in grp_endloops:
-                grp_endloops[el[0]] = Paths()
+                grp_endloops[el[0]] = Paths(self.gph)
 
             grp_endloops[el[0]].add_path(k, el, tmp_endloops.__get_loop_idx(k))
 
@@ -487,7 +497,7 @@ class Paths():
                 p2.are_all_looping(-1, False, loops_idx):
                 return -1
             # TODO optimize
-            tmp = Paths()
+            tmp = Paths(self.gph)
             tmp.paths.update(p1.paths)
             tmp.paths.update(p2.paths)
             tmp.looping.update(p1.looping)
@@ -497,7 +507,7 @@ class Paths():
         # Check if the address n is the next address of g
         def has_next(g, n):
             for k, p in g.paths.items():
-                nxt = gph.link_out[p[-1]]
+                nxt = self.gph_link_out[p[-1]]
                 if len(nxt) == 1 and nxt[BRANCH_NEXT] == n:
                     return True
             return False
@@ -535,7 +545,7 @@ class Paths():
                         all_endpoints[endif] = set()
                     all_endpoints[endif].add(ad)
 
-            grp_endloops[endif] = Paths()
+            grp_endloops[endif] = Paths(self.gph)
             grp_endloops[endif].paths[-1] = [endif]
 
 
@@ -642,7 +652,7 @@ class Paths():
         # or [index(force_start_e):next_endpoint]
         def cut_path(g, e, force_start_e=-1):
             els = grp_endloops[g]
-            newp = Paths()
+            newp = Paths(self.gph)
             all_finish_by_jump = True
 
             for k, p in els.paths.items():
@@ -680,14 +690,11 @@ class Paths():
 
                 # Check if the last instruction is a jump and
                 # go to the endpoint.
-                if p[stop-1] in gph.link_out:
-                    nxt = gph.link_out[p[stop-1]]
-                    # if not(len(nxt) == 1 and is_uncond_jump(gph.nodes[p[stop-1]][0]) and
-                            # nxt[BRANCH_NEXT] == e or \
-                            # len(nxt) == 2 and nxt[BRANCH_NEXT_JUMP] == e):
-
+                if p[stop-1] in self.gph_link_out:
+                    nxt = self.gph_link_out[p[stop-1]]
+                    # TODO need to check cond jumps ?
                     if not(len(nxt) == 1 and \
-                            p[stop-1] in gph.uncond_jumps_set and \
+                            p[stop-1] in self.gph_uncond_jumps_set and \
                             nxt[BRANCH_NEXT] == e):
                         all_finish_by_jump = False
                 else:

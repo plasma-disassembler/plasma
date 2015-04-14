@@ -49,11 +49,11 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
 # X86_INS_JS = 276
 
 
-dbg = False
+ctx = None
 
 
 def debug__(obj="", end="\n"):
-    if dbg:
+    if ctx.debug:
         if isinstance(obj, str):
             print(obj, end=end, file=sys.stderr)
         elif isinstance(obj, list):

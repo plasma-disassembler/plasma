@@ -22,19 +22,16 @@ import os
 import os.path
 from argparse import ArgumentParser, FileType
 
-import lib.ast
-import lib.output
-import lib.colors
-import lib.fileformat.binary
-import lib.paths
 from lib.utils import die
 from lib.disassembler import Disassembler
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
+from lib.context import Context
+from lib.output import Output
+from lib.ast import assign_colors
 
 
-
-def reverse(argv=None):
+def parse_args():
     # Parse arguments
     parser = ArgumentParser(description=
         'Reverse engineering for x86 binaries. Generation of pseudo-C. '
@@ -73,96 +70,101 @@ def reverse(argv=None):
     parser.add_argument('--forcejmp', action='store_true',
             help=('Try to disassemble if a "jmp [ADDR]" or jmp rax is found.'))
 
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
 
-    lib.utils.dbg                         = args.opt_debug
-    lib.disassembler.forcejmp             = args.forcejmp
-    lib.generate_ast.print_andif          = not args.noandif
-    lib.colors.nocolor                    = args.nocolor
-    lib.output.nocomment                  = args.nocomment
-    lib.output.nosectionsname             = args.nosectionsname
-    lib.ast.nocomment                     = args.nocomment
-    lib.fileformat.binary.MAX_STRING_DATA = args.datasize
+    ctx = Context()
+    ctx.debug           = args.opt_debug
+    ctx.forcejmp        = args.forcejmp
+    ctx.print_andif     = not args.noandif
+    ctx.color           = not args.nocolor
+    ctx.comments        = not args.nocomment
+    ctx.sectionsname    = not args.nosectionsname
+    ctx.max_string_data = args.datasize
+    ctx.filename        = args.filename
+    ctx.raw32           = args.raw32
+    ctx.raw64           = args.raw64
+    ctx.symfile         = args.symfile
+    ctx.sym             = args.sym
+    ctx.call            = args.call
+    ctx.entry           = args.entry
+    ctx.dump            = args.dump
+    ctx.vim             = args.vim
 
-    if not os.path.exists(args.filename):
-        die("{args.filename} doesn't exist".format(args=args))
+    return ctx
 
-    # Reverse !
 
-    if args.raw32:
+def reverse(ctx):
+    if not os.path.exists(ctx.filename):
+        die("{ctx.filename} doesn't exist".format(ctx=ctx))
+
+    if ctx.raw32:
         raw_bits = 32
-    elif args.raw64:
+    elif ctx.raw64:
         raw_bits = 64
     else:
         raw_bits = 0
 
-    dis = Disassembler(args.filename, raw_bits)
+    dis = Disassembler(ctx.filename, raw_bits, ctx.forcejmp)
+    ctx.dis = dis
 
-    if args.symfile:
-        dis.load_user_sym_file(args.symfile)
-
+    if ctx.symfile:
+        dis.load_user_sym_file(ctx.symfile)
 
     # TODO cleanup and simplify
 
-
-    # Maybe args.entry is a symbol and doesn't exist.
+    # Maybe ctx.entry is a symbol and doesn't exist.
     # But we need an address for disassembling. After that, if the file 
     # is PE we load imported symbols and search in the code for calls.
-    if args.sym or args.call or args.entry == "EP":
+    if ctx.sym or ctx.call or ctx.entry == "EP":
         addr = dis.binary.get_entry_point()
     else:
-        addr = dis.get_addr_from_string(args.entry, raw_bits)
+        addr = dis.get_addr_from_string(ctx.entry, raw_bits)
 
     dis.init(addr)
 
-
-    lib.output.binary = dis.binary
-    lib.ast.binary    = dis.binary
-
-    if args.call:
-        dis.print_calls()
+    if ctx.call:
+        dis.print_calls(ctx)
         return
 
-    if args.sym:
+    if ctx.sym:
         dis.print_symbols()
         return
 
-    if args.dump:
-        if args.vim:
-            base = os.path.basename(args.filename)
-            lib.colors.nocolor = True
+    if ctx.dump:
+        if ctx.vim:
+            base = os.path.basename(ctx.filename)
+            ctx.color = False
             sys.stdout = open(base + ".rev", "w+")
-        dis.dump(addr, args.lines)
-        if args.vim:
-            generate_vim_syntax(base + ".vim")
+        dis.dump(ctx, addr, ctx.lines)
+        if ctx.vim:
+            generate_vim_syntax(ctx, base + ".vim")
             print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
         return
 
-    gph = dis.get_graph(addr)
+    ctx.gph = dis.get_graph(addr)
+    paths = ctx.gph.get_paths()
+    paths.gph = ctx.gph
+    paths.cache_obj()
 
-    lib.output.gph    = gph
-    lib.ast.gph       = gph
-    lib.paths.gph     = gph
-    lib.ast.dis       = dis
+    if ctx.graph:
+        ctx.gph.html_graph()
 
-    if args.graph:
-        gph.html_graph()
+    ast = generate_ast(ctx, paths)
 
-    ast = generate_ast(gph)
-
-    if args.vim:
-        base = os.path.basename(args.filename)
+    if ctx.vim:
+        base = os.path.basename(ctx.filename)
         # re-assign if no colors
-        lib.ast.assign_colors(ast)
-        lib.colors.nocolor = True
-        generate_vim_syntax(base + ".vim")
+        assign_colors(ctx, ast)
+        ctx.color = False
+        generate_vim_syntax(ctx, base + ".vim")
         sys.stdout = open(base + ".rev", "w+")
 
-    lib.output.print_ast(addr, ast)
+    o = Output(ctx)
+    o.print_ast(addr, ast)
 
-    if args.vim:
+    if ctx.vim:
         print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
 
 
 if __name__ == '__main__':
-    reverse()
+    reverse(parse_args())

@@ -49,35 +49,29 @@ except:
     from custom_colors import *
 
 
-nocolor = False
-color_counter = 112
-
-addr_color = {}
-
+ctx = None
 
 
 def pick_color(addr):
-    global color_counter
-
-    if addr in addr_color:
+    if addr in ctx.addr_color:
         return
 
-    if color_counter == 230:
-        color_counter = 112
+    if ctx.color_counter == 230:
+        ctx.color_counter = 112
     else:
-        color_counter += 2
+        ctx.color_counter += 2
 
-    addr_color[addr] = color_counter
+    ctx.addr_color[addr] = ctx.color_counter
 
 
 def color(text, c): # type c == int
-    if nocolor:
+    if not ctx.color:
         return text
     return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"
 
 
 def color_class(text, c):
-    if nocolor:
+    if not ctx.color:
         return text
     if c.bold:
         return "\x1b[38;5;" + c.val + "m" + bold(text) + "\x1b[0m"
@@ -108,8 +102,13 @@ def color_comment(text):
     return color_class(text, COLOR_COMMENT)
 
 
-def color_addr(text):
-    return color_class(text, COLOR_ADDR)
+def color_addr(addr, print_colon=True):
+    s = hex(addr)
+    if print_colon:
+        s += ": "
+    if addr in ctx.addr_color:
+        return color(s, ctx.addr_color[addr])
+    return color_class(s, COLOR_ADDR)
 
 
 def color_string(text):

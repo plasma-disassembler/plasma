@@ -25,15 +25,13 @@ from lib.graph import Graph
 from lib.utils import (die, error, is_call, is_cond_jump,
         is_uncond_jump, is_jump, is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
-from lib.output import print_inst, print_symbol
+from lib.output import Output
 from lib.colors import pick_color
 
 
-forcejmp = False
-
-
 class Disassembler():
-    def __init__(self, filename, raw_bits=0):
+    def __init__(self, filename, raw_bits, forcejmp):
+        self.forcejmp = forcejmp
         self.code = {}
         self.code_idx = []
         self.binary = Binary(filename, raw_bits)
@@ -79,7 +77,7 @@ class Disassembler():
             die("Try with --sym to see all symbols.")
 
 
-    def dump(self, addr, lines):
+    def dump(self, ctx, addr, lines):
         # set jumps color
         i = self.lazy_disasm(addr)
         l = 0
@@ -93,19 +91,21 @@ class Disassembler():
         if self.binary.get_type() == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
+        o = Output(ctx)
+
         # dump
         i = self.lazy_disasm(addr)
         l = 0
         while i is not None and l < lines:
             if i.address in self.binary.reverse_symbols:
-                print_symbol(i.address)
+                o.print_symbol(i.address)
                 print()
-            print_inst(i, 0)
+            o.print_inst(i, 0)
             i = self.lazy_disasm(i.address + i.size)
             l += 1
 
 
-    def print_calls(self):
+    def print_calls(self, ctx):
         for i in self.md.disasm(self.data, self.virtual_addr):
             if is_call(i):
                 self.code[i.address] = i
@@ -114,9 +114,11 @@ class Disassembler():
         if self.binary.get_type() == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
+        o = Output(ctx)
+
         for ad, i in self.code.items():
             if is_call(i):
-                print_inst(i)
+                o.print_inst(i)
 
 
     def print_symbols(self):
@@ -183,7 +185,7 @@ class Disassembler():
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     else:
-                        if not forcejmp:
+                        if not self.forcejmp:
                             self.__error_jmp_reg(curr)
                         gph.add_node(curr)
                     gph.uncond_jumps_set.add(curr.address)
@@ -196,7 +198,7 @@ class Disassembler():
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
                     else:
-                        if not forcejmp:
+                        if not self.forcejmp:
                             self.__error_jmp_reg(curr)
                         gph.add_node(curr)
                     gph.cond_jumps_set.add(curr.address)
@@ -225,5 +227,4 @@ class Disassembler():
         elapsed = elapsed - start
         debug__("Graph built in %fs" % elapsed)
 
-        gph.init()
         return gph

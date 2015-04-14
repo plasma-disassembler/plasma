@@ -288,7 +288,7 @@ RGB = {
 } 
 
 
-def generate_vim_syntax(filename):
+def generate_vim_syntax(ctx, filename):
     fd = open(filename, "w+")
 
     syn = """
@@ -315,7 +315,7 @@ def generate_vim_syntax(filename):
     fd.write(syn)
 
     match = 1
-    for addr, col in lib.colors.addr_color.items():
+    for addr, col in ctx.addr_color.items():
         fd.write("syn match RevAddr_%d \"0x%x:\?\"\n" % (match, addr))
         fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))
         match += 1

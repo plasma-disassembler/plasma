@@ -25,15 +25,10 @@ from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop,
         fuse_inst_with_if, search_canary_plt)
 from lib.utils import (invert_cond, BRANCH_NEXT, BRANCH_NEXT_JUMP, die,
         debug__)
-from lib.paths import get_loop_start
 
 
-gph = None
-print_andif = True
-
-
-def get_ast_ifgoto(paths, curr_loop_idx, inst):
-    nxt = gph.link_out[inst.address]
+def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
+    nxt = ctx.gph.link_out[inst.address]
 
     c1 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
     c2 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
@@ -76,7 +71,7 @@ def get_ast_ifgoto(paths, curr_loop_idx, inst):
     return Ast_IfGoto(inst, cond_id, br)
 
 
-def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
+def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
     ast = Ast_Branch()
     if_printed = False
 
@@ -92,14 +87,14 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
             common_path = paths.pop(nb_commons)
 
             for ad in common_path:
-                blk = gph.nodes[ad]
+                blk = ctx.gph.nodes[ad]
 
                 # Here if we have conditional jump, it's not a ifelse,
                 # it's a condition for a loop. It will be replaced by a
                 # goto. ifgoto are skipped by head_last_common.
-                if ad in gph.cond_jumps_set:
+                if ad in ctx.gph.cond_jumps_set:
                     inst = blk[0] # first inst
-                    ast.add(get_ast_ifgoto(paths, curr_loop_idx, inst))
+                    ast.add(get_ast_ifgoto(ctx, paths, curr_loop_idx, inst))
                 else:
                     ast.add(blk)
 
@@ -108,20 +103,22 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
 
         if force_stop_addr != 0:
             ad = paths.first()
-            blk = gph.nodes[ad]
+            blk = ctx.gph.nodes[ad]
             ast.add(blk)
 
-            if ad not in gph.uncond_jumps_set:
-                ast.add(Ast_Jmp(gph.link_out[blk[0].address][BRANCH_NEXT]))
+            if ad not in ctx.gph.uncond_jumps_set:
+                ast.add(Ast_Jmp(ctx.gph.link_out[blk[0].address][BRANCH_NEXT]))
             break
 
         if is_loop:
             # last_else == -1
             # -> we can't go to a same else inside a loop
-            a, endpoint = get_ast_loop(paths, curr_loop_idx, -1, endif)
+            a, endpoint = get_ast_loop(ctx, paths, curr_loop_idx, -1, endif)
             ast.add(a)
         elif is_ifelse:
-            a, endpoint = get_ast_ifelse(paths, curr_loop_idx, last_else, if_printed, endif)
+            a, endpoint = get_ast_ifelse(
+                               ctx, paths, curr_loop_idx,
+                               last_else, if_printed, endif)
             if_printed = isinstance(a, Ast_Ifelse)
             ast.add(a)
         else:
@@ -138,21 +135,21 @@ def get_ast_branch(paths, curr_loop_idx=[], last_else=-1, endif=-1):
 def paths_is_infinite(paths):
     for k, p in paths.paths.items():
         for addr in p:
-            if addr in gph.cond_jumps_set:
-                nxt = gph.link_out[addr]
+            if addr in paths.gph.cond_jumps_set:
+                nxt = paths.gph.link_out[addr]
                 if nxt[BRANCH_NEXT] not in paths or \
                    nxt[BRANCH_NEXT_JUMP] not in paths: \
                     return False
     return True
 
 
-def get_ast_loop(paths, last_loop_idx, last_else, endif):
+def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     ast = Ast_Loop()
     curr_loop_idx = paths.get_loops_idx()
-    first_blk = gph.nodes[get_loop_start(curr_loop_idx)]
+    first_blk = ctx.gph.nodes[paths.get_loop_start(curr_loop_idx)]
 
-    if first_blk[0].address in gph.cond_jumps_set:
-        ast.add(get_ast_ifgoto(paths, curr_loop_idx, first_blk[0]))
+    if first_blk[0].address in ctx.gph.cond_jumps_set:
+        ast.add(get_ast_ifgoto(ctx, paths, curr_loop_idx, first_blk[0]))
     else:
         ast.add(first_blk)
 
@@ -165,7 +162,7 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
     ast.set_infinite(paths_is_infinite(loop_paths))
 
     loop_paths.pop(1)
-    ast.add(get_ast_branch(loop_paths, curr_loop_idx, last_else))
+    ast.add(get_ast_branch(ctx, loop_paths, curr_loop_idx, last_else))
 
     if not endloops:
         return ast, -1
@@ -177,7 +174,7 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
             if el.first() in endloops_start:
                 epilog.add(Ast_Comment("endloop " + str(i)))
                 i += 1
-            epilog.add(get_ast_branch(el, last_loop_idx, last_else))
+            epilog.add(get_ast_branch(ctx, el, last_loop_idx, last_else))
         epilog.add(Ast_Comment("endloop " + str(i)))
 
         ast.set_epilog(epilog)
@@ -185,11 +182,11 @@ def get_ast_loop(paths, last_loop_idx, last_else, endif):
     return ast, endloops[-1].first()
 
 
-def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
+def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     addr = paths.pop(1)[0]
     paths.rm_empty_paths()
-    jump_inst = gph.nodes[addr][0]
-    nxt = gph.link_out[addr]
+    jump_inst = ctx.gph.nodes[addr][0]
+    nxt = ctx.gph.link_out[addr]
 
     if_addr = nxt[BRANCH_NEXT]
     else_addr = nxt[BRANCH_NEXT_JUMP] if len(nxt) == 2 else -1
@@ -266,7 +263,7 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # }
     #
 
-    if print_andif:
+    if ctx.print_andif:
         if last_else != -1 and not is_prev_andif:
             # TODO not sure about endpoint == -1
             # tests/break3
@@ -276,7 +273,7 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
             # if else_addr == -1 or else_addr == last_else:
             if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
                     last_else == endif and endif == endpoint and endpoint != -1:
-                endpoint = gph.link_out[addr][BRANCH_NEXT]
+                endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
                 return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
 
     if else_addr == -1:
@@ -285,20 +282,20 @@ def get_ast_ifelse(paths, curr_loop_idx, last_else, is_prev_andif, endif):
     if endpoint == -1:
         endpoint = endif
 
-    a1 = get_ast_branch(split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
-    a2 = get_ast_branch(split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)
+    a1 = get_ast_branch(ctx, split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
+    a2 = get_ast_branch(ctx, split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)
 
     return (Ast_Ifelse(jump_inst, a1, a2), endpoint)
 
 
 
-def generate_ast(graph):
-    global gph
-    gph = graph
+def generate_ast(ctx__, paths):
+    global ctx
+    ctx = ctx__
 
     start = time.clock()
 
-    ast = get_ast_branch(gph.paths)
+    ast = get_ast_branch(ctx, paths)
 
     elapsed = time.clock()
     elapsed = elapsed - start
@@ -308,15 +305,15 @@ def generate_ast(graph):
 
     start = time.clock()
 
-    search_local_vars(ast)
-    fuse_inst_with_if(ast)
-    search_canary_plt() 
+    search_local_vars(ctx, ast)
+    fuse_inst_with_if(ctx, ast)
+    search_canary_plt(ctx)
 
     elapsed = time.clock()
     elapsed = elapsed - start
     debug__("Functions for processing ast in %fs" % elapsed)
 
-    if not lib.colors.nocolor:
-        assign_colors(ast)
+    if ctx.color:
+        assign_colors(ctx, ast)
 
     return ast

@@ -44,7 +44,6 @@ class Graph:
         self.loops_set = []
         self.nested_loops_idx = {}
         self.direct_nested_idx = {}
-        self.paths = None
 
         # Optimization
         self.cond_jumps_set = set()
@@ -91,11 +90,12 @@ class Graph:
         return inst.address in self.nodes
 
 
-    def init(self):
+    def get_paths(self):
         self.__simplify()
-        self.__explore(self.entry_point_addr)
-        self.__search_equivalent_loops()
+        paths = self.__explore(self.entry_point_addr)
+        self.__search_equivalent_loops(paths)
         self.__compute_nested()
+        return paths
 
 
     # Concat instructions in single block
@@ -190,10 +190,10 @@ class Graph:
         output.write("tryDraw();")
 
 
-    def __rec_explore(self, p, new):
+    def __rec_explore(self, paths, p, new):
         myk = self.__key_path_count
         self.__key_path_count += 1
-        self.paths.paths[myk] = p
+        paths.paths[myk] = p
         p_set = set(p) # optimization search
 
         while new in self.link_out:
@@ -208,7 +208,7 @@ class Graph:
                     self.loops.append(l)
                     self.loops_set.append(set(l))
 
-                self.paths.looping[myk] = l_idx
+                paths.looping[myk] = l_idx
                 return
 
             else:
@@ -218,7 +218,7 @@ class Graph:
 
                 # much faster than: is_cond_jump(self.dis.code[new])
                 if len(nxt) == 2:
-                    self.__rec_explore(list(p), nxt[BRANCH_NEXT_JUMP])
+                    self.__rec_explore(paths, list(p), nxt[BRANCH_NEXT_JUMP])
 
                 new = nxt[BRANCH_NEXT]
 
@@ -226,13 +226,14 @@ class Graph:
 
 
     def __explore(self, entry):
-        self.paths = Paths()
+        paths = Paths()
         start = time.clock()
-        self.__rec_explore([], entry)
+        self.__rec_explore(paths, [], entry)
         elapsed = time.clock()
         elapsed = elapsed - start
         debug__("Exploration: found %d paths and %d loop-paths in %fs" %
-                (len(self.paths.paths), len(self.paths.looping), elapsed))
+                (len(paths.paths), len(paths.looping), elapsed))
+        return paths
 
 
     def __compute_nested(self):
@@ -289,7 +290,7 @@ class Graph:
         debug__("Nested loops computed in %fs" % elapsed)
 
 
-    def __search_equivalent_loops(self):
+    def __search_equivalent_loops(self, paths):
         # TODO : temporary algorithm while waiting a better one.
         #
         # Can occurs when a goto jumps into a loop. This will generate more
@@ -327,7 +328,7 @@ class Graph:
                 if l1 == l2:
                     k = k1 if self.loops[k1][0] < self.loops[k2][0] else k2
                     self.marked.add(k)
-                    self.__mark_addr(k)
+                    self.__mark_addr(paths, k)
                     self.equiv[k1] = k2
                     self.equiv[k2] = k1
                 k2 += 1
@@ -336,11 +337,11 @@ class Graph:
         # print_set(self.marked_addr)
 
 
-    def __mark_addr(self, loop_idx):
-        for k in self.paths.looping:
-            if self.paths.looping[k] == loop_idx:
-                idx_start_loop = self.paths.paths[k].index(self.loops[loop_idx][0])
-                before = self.paths.paths[k][idx_start_loop-1]
+    def __mark_addr(self, paths, loop_idx):
+        for k in paths.looping:
+            if paths.looping[k] == loop_idx:
+                idx_start_loop = paths.paths[k].index(self.loops[loop_idx][0])
+                before = paths.paths[k][idx_start_loop-1]
                 self.marked_addr.add(before)
 
 
