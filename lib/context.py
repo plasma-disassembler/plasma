@@ -17,7 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 import lib.utils
 import lib.colors
 
@@ -25,6 +24,7 @@ import lib.colors
 class Context():
     def __init__(self):
         self.update()
+        self.reset()
 
         # Parameter options
         self.comments = True
@@ -44,12 +44,16 @@ class Context():
         self.graph = False # Print graph != gph -> object
         self.raw32 = False
         self.raw64 = False
+        self.interactive = False
 
+
+    def reset(self):
         # Built objects
         self.dis = None
         self.gph = None
 
         # Other variables
+        self.addr = 0 # address where we disassemble
         self.addr_color = {}
         self.debug = False
         self.color_counter = 112

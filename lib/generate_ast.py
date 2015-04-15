@@ -23,8 +23,8 @@ import lib.colors
 from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
         fuse_inst_with_if, search_canary_plt)
-from lib.utils import (invert_cond, BRANCH_NEXT, BRANCH_NEXT_JUMP, die,
-        debug__)
+from lib.utils import invert_cond, BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
+from lib.exceptions import ExcIfelse
 
 
 def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
@@ -34,7 +34,7 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     c2 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
 
     if c1 and c2:
-        die("can't have a ifelse here     %x" % inst.address)
+        raise ExcIfelse(inst.addr)
 
     # If the address of the jump is inside the loop, we
     # invert the conditions. example :

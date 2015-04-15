@@ -200,11 +200,12 @@ def index(L, obj, k=0):
 
 
 def error(txt):
-    print("ERROR: " + txt, file=sys.stderr)
+    print("error: " + txt, file=sys.stderr)
 
 
-def die(txt):
-    print("ERROR: " + txt, file=sys.stderr)
+def die(txt=None):
+    if txt is not None:
+        print("error: " + txt, file=sys.stderr)
     sys.exit(1)
 
 

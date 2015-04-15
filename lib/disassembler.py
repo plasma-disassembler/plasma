@@ -17,16 +17,18 @@
 #
 
 import time
+import sys
 
 from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, Cs
 from capstone.x86 import X86_OP_IMM
 
 from lib.graph import Graph
-from lib.utils import (die, error, is_call, is_cond_jump,
-        is_uncond_jump, is_jump, is_ret, debug__)
+from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
+        is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
 from lib.output import Output
 from lib.colors import pick_color
+from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
 
 class Disassembler():
@@ -42,7 +44,7 @@ class Disassembler():
         elif arch == ARCH_x64:
             self.bits = 64
         else:
-            die("only x86 and x64 are supported")
+            raise ExcArch()
 
         mode = CS_MODE_64 if self.bits == 64 else CS_MODE_32
         self.md = Cs(CS_ARCH_X86, mode)
@@ -53,7 +55,7 @@ class Disassembler():
         # Get section data
         (self.data, self.virtual_addr, flags) = self.binary.get_section(addr)
         if not flags["exec"]:
-            die("the address 0x%x is not in an executable section" % addr)
+            raise ExcNotExec(addr)
 
 
     def get_addr_from_string(self, opt_addr, raw=False):
@@ -72,9 +74,8 @@ class Disassembler():
 
             if a != -1:
                 return a
-        else:
-            error("symbol %s not found" % search[0])
-            die("Try with --sym to see all symbols.")
+
+        raise ExcSymNotFound(search[0])
 
 
     def dump(self, ctx, addr, lines):
@@ -128,10 +129,7 @@ class Disassembler():
 
 
     def __error_jmp_reg(self, i):
-        error("failed on 0x%x: %s %s" % 
-                (i.address, i.mnemonic, i.op_str))
-        error("Sorry, I can't generate the flow graph.")
-        die("Try with --dump or with --forcejmp")
+        raise ExcJmpReg(i)
 
 
     def load_user_sym_file(self, fd):

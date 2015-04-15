@@ -25,6 +25,11 @@ can install it from PyPi, like followings:
     sudo pip3 install capstone
 
 
+## Interactive mode
+
+With the option `-i` you enter in the interactive mode. See `help`.
+
+
 ## Custom colors
 
 At the first run, `reverse.py` creates a new file `custom_colors.py` with

@@ -17,13 +17,29 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib.interactive import Interactive
-from lib.reverse import reverse, parse_args
+class ExcJmpReg(Exception):
+    def __init__(self, inst):
+        self.inst = inst
 
-if __name__ == '__main__':
-    ctx = parse_args()
 
-    if ctx.interactive:
-        i = Interactive(ctx)
-    else:
-        reverse(ctx)
+class ExcSymNotFound(Exception):
+    def __init__(self, symname):
+        self.symname = symname
+
+
+class ExcNotExec(Exception):
+    def __init__(self, addr):
+        self.addr = addr
+
+
+class ExcArch(Exception):
+    pass
+
+
+class ExcFileFormat(Exception):
+    pass
+
+
+class ExcIfelse(Exception):
+    def __init__(self, addr):
+        self.addr = addr

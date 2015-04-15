@@ -17,9 +17,9 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 from textwrap import dedent
 from pathlib import Path
+
 
 def default_custom_file():
     filename = str(Path(__file__).parent.parent / "custom_colors.py")

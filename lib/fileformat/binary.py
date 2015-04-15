@@ -21,7 +21,8 @@ import time
 import lib.fileformat.elf
 import lib.fileformat.pe
 import lib.fileformat.raw
-from lib.utils import die, debug__
+from lib.utils import debug__
+from lib.exceptions import ExcFileFormat
 
 
 MAX_STRING_DATA = 30
@@ -53,7 +54,7 @@ class Binary(object):
                 try:
                     self.__binary = lib.fileformat.pe.PE(self, filename)
                 except Exception:
-                    die("the file is not PE or ELF binary")
+                    raise ExcFileFormat()
 
             elapsed = time.clock()
             elapsed = elapsed - start
