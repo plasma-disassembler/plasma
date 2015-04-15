@@ -28,8 +28,6 @@ def yellow(text):
 
 
 class ReadLine():
-    SPACE = 0x20
-
     def __init__(self, callback_enter, callback_complete, callback_ctrl_c):
         self.tty_fd = sys.stdin.fileno()
         self.tty_old_settings = termios.tcgetattr(self.tty_fd)
@@ -263,9 +261,9 @@ class ReadLine():
         if self.cursor_j == 0:
             return
         j -= 1
-        while j > 0 and self.line[j] == self.SPACE:
+        while j > 0 and self.line[j] == " ":
             j -= 1
-        while j > 0 and self.line[j] != self.SPACE:
+        while j > 0 and self.line[j] != " ":
             j -= 1
         if j != 0:
             j += 1
@@ -284,9 +282,9 @@ class ReadLine():
         if j == 0:
             return
         j -= 1
-        while j > 0 and self.line[j] == self.SPACE:
+        while j > 0 and self.line[j] == " ":
             j -= 1
-        while j > 0 and self.line[j] != self.SPACE:
+        while j > 0 and self.line[j] != " ":
             j -= 1
         if j != 0:
             j += 1
@@ -295,9 +293,9 @@ class ReadLine():
 
     def k_ctrl_right(self):
         j = self.cursor_j
-        while j < len(self.line) and self.line[j] == self.SPACE:
+        while j < len(self.line) and self.line[j] == " ":
             j += 1
-        while j < len(self.line) and self.line[j] != self.SPACE:
+        while j < len(self.line) and self.line[j] != " ":
             j += 1
         self.cursor_j = j
         self.set_cursor()
