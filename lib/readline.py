@@ -204,7 +204,7 @@ class ReadLine():
     def k_right(self):
         if self.cursor_j < len(self.line):
             self.cursor_j += 1
-            print("\x1b[1C")
+            self.print("\x1b[1C")
 
     def k_backspace(self):
         if self.cursor_j == 0:
