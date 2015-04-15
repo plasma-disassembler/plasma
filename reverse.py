@@ -25,5 +25,5 @@ if __name__ == '__main__':
 
     if ctx.interactive:
         i = Interactive(ctx)
-    else:
+    elif ctx.filename is not None:
         reverse(ctx)
