@@ -309,7 +309,8 @@ class ReadLine():
         self.set_cursor()
 
         if self.line != "":
-            self.history = [self.line] + self.history
+            if self.idx_history != 0:
+                self.history = [self.line] + self.history
             self.callback_enter(self.line)
             self.cursor_i = self.get_position()[0]
             self.set_cursor()
