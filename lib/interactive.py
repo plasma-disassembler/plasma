@@ -160,17 +160,18 @@ class Interactive():
         if not dirname:
             dirname = "."
 
-        for f in os.listdir(dirname):
-            if f.startswith(basename):
-                if os.path.isdir(os.path.join(dirname, f)):
-                    comp.append(f + "/")
-                else:
-                    comp.append(f + " ")
-
-        if len(comp) == 1:
-            return [tmp_line + comp[0][len(basename):]]
-
-        return comp
+        try:
+            for f in os.listdir(dirname):
+                if f.startswith(basename):
+                    if os.path.isdir(os.path.join(dirname, f)):
+                        comp.append(f + "/")
+                    else:
+                        comp.append(f + " ")
+            if len(comp) == 1:
+                return [tmp_line + comp[0][len(basename):]]
+            return comp
+        except FileNotFoundError:
+            return []
 
 
     def exec_command(self, line):
