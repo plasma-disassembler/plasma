@@ -19,6 +19,7 @@
 
 import os
 import sys
+import shlex
 
 from lib.utils import error
 from lib.readline import ReadLine
@@ -120,26 +121,31 @@ class Interactive():
 
 
     def complete(self, line):
-        args = line.split()
-        if len(args) == 0:
-            return []
-        if len(args) == 1:
+        # If last_word == "_" it means that there was spaces before
+        # and we want to complete a new arg
+        tmp_line = line + "_"
+        tokens = shlex.split(tmp_line)
+        last_tok = tokens[-1][:-1] # remove the _
+        tmp_line = tmp_line[:-1]
+
+        # Complete a command name
+        if len(tokens) == 1:
             all_cmd = []
             for cmd in self.COMMANDS:
-                 if cmd.startswith(args[0]):
-                     all_cmd.append(cmd)
-            if all_cmd:
-                return all_cmd
-        elif args[0] in self.COMMANDS:
-            f = self.COMMANDS[args[0]].callback_complete
+                if cmd.startswith(last_tok):
+                    # To keep spaces
+                    all_cmd.append(tmp_line + cmd[len(last_tok):])
+            return all_cmd
+
+        try:
+            first_tok = tokens[0]
+            f = self.COMMANDS[first_tok].callback_complete
             if f is not None:
-                f(args)
+                return f(len(tokens), last_tok)
+        except KeyError:
+            pass
 
         return []
-
-
-    def __unimplemented_complete(self, args):
-        return
 
 
     def exec_command(self, line):
@@ -162,6 +168,9 @@ class Interactive():
 
 
     def __exec_load(self, args):
+        if len(args) != 2:
+            error("filename requirred")
+            return
         self.ctx.filename = args[1]
         if not load_file(self.ctx):
             error("file doesn't exists")
