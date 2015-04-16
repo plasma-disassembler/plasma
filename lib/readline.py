@@ -386,6 +386,13 @@ class ReadLine():
     def k_tab(self):
         self.tty_restore()
         res = self.callback_complete(self.line[:self.cursor_j])
+
+        if res is None:
+            self.print_prompt()
+            self.print(self.line)
+            self.tty_set_raw()
+            return
+
         if len(res) == 0:
             self.tty_set_raw()
             return

@@ -37,6 +37,7 @@ class Command():
 class Interactive():
     COMMANDS = None
     TAB = " " * 10
+    MAX_PRINT_COMPLETE = 80
 
     def __init__(self, ctx):
         self.ctx = ctx
@@ -148,10 +149,15 @@ class Interactive():
         # Complete a command name
         if len(tokens) == 1:
             all_cmd = []
+            i = 0
             for cmd in self.COMMANDS:
                 if cmd.startswith(last_tok):
                     # To keep spaces
                     all_cmd.append(tmp_line + cmd[len(last_tok):] + " ")
+                    i += 1
+                    if i == self.MAX_PRINT_COMPLETE:
+                        print("too much possibilities")
+                        return None
             return all_cmd
 
         try:
@@ -170,7 +176,6 @@ class Interactive():
             return []
 
         comp = []
-        
         basename = os.path.basename(last_tok)
         dirname = os.path.dirname(last_tok)
 
@@ -178,6 +183,7 @@ class Interactive():
             dirname = "."
 
         try:
+            i = 0
             for f in os.listdir(dirname):
                 if f.startswith(basename):
                     f_backslahed = f.replace(" ", "\\ ")
@@ -185,8 +191,14 @@ class Interactive():
                         comp.append(f_backslahed + "/")
                     else:
                         comp.append(f_backslahed + " ")
+                    i += 1
+                    if i == self.MAX_PRINT_COMPLETE:
+                        print("too much possibilities")
+                        return None
+
             if len(comp) == 1:
                 return [tmp_line + comp[0][len(basename):]]
+
             return comp
         except FileNotFoundError:
             return []
@@ -206,9 +218,15 @@ class Interactive():
 
     def __find_symbol(self, tmp_line, nth_arg, last_tok):
         comp = []
+        i = 0
         for sym in self.ctx.dis.binary.symbols:
             if sym.startswith(last_tok):
                 comp.append(sym + " ")
+                i += 1
+                if i == self.MAX_PRINT_COMPLETE:
+                    print("\ntoo much possibilities")
+                    return None
+
         if len(comp) == 1:
             return [tmp_line + comp[0][len(last_tok):]]
         return comp
