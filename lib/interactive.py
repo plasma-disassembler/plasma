@@ -42,28 +42,40 @@ class Interactive():
         self.ctx = ctx
         ctx.vim = False
 
+        self.COMMANDS_ALPHA = [
+            "dump",
+            "exit",
+            "help",
+            "load",
+            "x",
+        ]
+
         self.COMMANDS = {
             "help": Command(
                 0,
                 self.__exec_help,
                 None,
-                "Display this help"
+                ["Display this help"]
             ),
 
             "load": Command(
                 1,
                 self.__exec_load,
                 self.__complete_load,
-                "Load a new file"
+                [
+                "filename",
+                "Load a new binary file.",
+                ]
             ),
 
             "x": Command(
                 1,
                 self.__exec_x,
                 self.__complete_x,
-                "Disassemble at a symbol or address, if no arguments are\n" +
-                self.TAB + "given it's main.\n" +
-                self.TAB + "x [symbol|0xNNNN|EP]"
+                [
+                "[symbol|0xNNNN|EP]",
+                "Disassemble. By default it will be main.",
+                ]
             ),
 
             # TODO add second args for the number of lines
@@ -72,35 +84,38 @@ class Interactive():
                 1,
                 self.__exec_dump,
                 self.__complete_dump,
-                "Dump"
+                [
+                "[symbol|0xNNNN|EP]",
+                "Dump asm. By default it will be main.",
+                ]
             ),
 
             "set": Command(
                 3,
                 None,
                 None,
-                "Set options"
+                ["Set options"]
             ),
 
             "sym": Command(
                 3,
                 None,
                 None,
-                "Symbol"
+                ["Symbol"]
             ),
 
             "call": Command(
                 3,
                 None,
                 None,
-                "Call"
+                ["Call"]
             ),
 
             "exit": Command(
                 0,
                 self.__exec_exit,
                 None,
-                "Exit"
+                ["Exit"]
             ),
         }
 
@@ -256,9 +271,13 @@ class Interactive():
 
 
     def __exec_help(self, args):
-        for name, cmd in self.COMMANDS.items():
+        for name in self.COMMANDS_ALPHA:
+            cmd = self.COMMANDS[name]
             if cmd.callback_exec is not None:
                 self.rl.print(name)
                 self.rl.print(" " * (10 - len(name)))
-                self.rl.print(cmd.desc)
-                self.rl.print("\n")
+                for i, line in enumerate(cmd.desc):
+                    if i > 0:
+                        self.rl.print(self.TAB)
+                    self.rl.print(line)
+                    self.rl.print("\n")
