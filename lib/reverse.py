@@ -30,7 +30,7 @@ from lib.context import Context
 from lib.output import Output
 from lib.ast import assign_colors
 from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
-     ExcFileFormat)
+     ExcFileFormat, ExcNotAddr)
 
 
 def parse_args():
@@ -153,6 +153,11 @@ def init_addr(ctx):
         ctx.dis.init(addr)
     except ExcNotExec as e:
         error("the address 0x%x is not in an executable section" % e.addr)
+        if ctx.interactive:
+            return False
+        die()
+    except ExcNotAddr as e:
+        error("the address 0x%x cannot be found" % e.addr)
         if ctx.interactive:
             return False
         die()

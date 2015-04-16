@@ -18,11 +18,13 @@
 
 
 import pefile
+from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
+from ctypes import sizeof
+
 import lib.utils
 import lib.fileformat.binary
+from lib.exceptions import ExcNotAddr
 from lib.fileformat.pefile2 import PE2, SymbolEntry
-from ctypes import sizeof
-from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 
 
 class PE:
@@ -173,6 +175,8 @@ class PE:
     def get_section(self, addr):
         base = self.pe.OPTIONAL_HEADER.ImageBase
         s = self.pe.get_section_by_rva(addr - base)
+        if s is None:
+            raise ExcNotAddr(addr)
         flags = {
             "exec": self.__section_is_exec(s)
         }

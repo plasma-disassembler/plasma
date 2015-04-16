@@ -43,3 +43,8 @@ class ExcFileFormat(Exception):
 class ExcIfelse(Exception):
     def __init__(self, addr):
         self.addr = addr
+
+
+class ExcNotAddr(Exception):
+    def __init__(self, addr):
+        self.addr = addr

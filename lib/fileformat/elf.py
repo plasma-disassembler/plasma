@@ -21,6 +21,7 @@ from elftools.elf.constants import SH_FLAGS
 
 import lib.fileformat.binary
 import lib.utils
+from lib.exceptions import ExcNotAddr
 
 
 # SHF_WRITE=0x1
@@ -128,6 +129,8 @@ class ELF:
 
     def get_section(self, addr):
         s = self.__find_section(addr)
+        if s is None:
+            raise ExcNotAddr(addr)
         flags = {
             "exec": self.__section_is_exec(s)
         }
