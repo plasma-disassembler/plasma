@@ -391,7 +391,6 @@ class ReadLine():
             return
 
         if len(res) == 1:
-            res[0] += " "
             self.line = res[0] + self.line[self.cursor_j:]
             self.cursor_j = 0
             self.set_cursor()

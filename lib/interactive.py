@@ -53,7 +53,7 @@ class Interactive():
             "load": Command(
                 1,
                 self.__exec_load,
-                None,
+                self.__complete_load,
                 "Load a new file"
             ),
 
@@ -134,18 +134,43 @@ class Interactive():
             for cmd in self.COMMANDS:
                 if cmd.startswith(last_tok):
                     # To keep spaces
-                    all_cmd.append(tmp_line + cmd[len(last_tok):])
+                    all_cmd.append(tmp_line + cmd[len(last_tok):] + " ")
             return all_cmd
 
         try:
             first_tok = tokens[0]
             f = self.COMMANDS[first_tok].callback_complete
             if f is not None:
-                return f(len(tokens), last_tok)
+                return f(tmp_line, len(tokens)-1, last_tok)
         except KeyError:
             pass
 
         return []
+
+
+    def __complete_load(self, tmp_line, nth_arg, last_tok):
+        if nth_arg != 1:
+            return []
+
+        comp = []
+        
+        basename = os.path.basename(last_tok)
+        dirname = os.path.dirname(last_tok)
+
+        if not dirname:
+            dirname = "."
+
+        for f in os.listdir(dirname):
+            if f.startswith(basename):
+                if os.path.isdir(os.path.join(dirname, f)):
+                    comp.append(f + "/")
+                else:
+                    comp.append(f + " ")
+
+        if len(comp) == 1:
+            return [tmp_line + comp[0][len(basename):]]
+
+        return comp
 
 
     def exec_command(self, line):
