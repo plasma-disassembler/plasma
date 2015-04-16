@@ -66,10 +66,12 @@ class Interactive():
                 self.TAB + "x [symbol|0xNNNN|EP]"
             ),
 
+            # TODO add second args for the number of lines
+            # by default it will be ctx.lines
             "dump": Command(
                 1,
-                None,
-                None,
+                self.__exec_dump,
+                self.__complete_dump,
                 "Dump"
             ),
 
@@ -177,21 +179,27 @@ class Interactive():
     def __complete_x(self, tmp_line, nth_arg, last_tok):
         if nth_arg != 1 or self.ctx.dis is None:
             return []
+        return self.__find_symbol(tmp_line, nth_arg, last_tok)
 
+
+    def __complete_dump(self, tmp_line, nth_arg, last_tok):
+        if nth_arg != 1 or self.ctx.dis is None:
+            return []
+        return self.__find_symbol(tmp_line, nth_arg, last_tok)
+
+
+    def __find_symbol(self, tmp_line, nth_arg, last_tok):
         comp = []
-
         for sym in self.ctx.dis.binary.symbols:
             if sym.startswith(last_tok):
                 comp.append(sym + " ")
-
         if len(comp) == 1:
             return [tmp_line + comp[0][len(last_tok):]]
-
         return comp
 
 
     def exec_command(self, line):
-        args = line.split()
+        args = shlex.split(line)
         if args[0] not in self.COMMANDS:
             error("unknown command")
             return
@@ -207,6 +215,20 @@ class Interactive():
 
     def __exec_exit(self, args):
         sys.exit(0)
+
+
+    def __exec_dump(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        if len(args) == 1:
+            self.ctx.entry = None
+        else:
+            self.ctx.entry = args[1]
+        if init_addr(self.ctx):
+            self.ctx.dis.dump(self.ctx, self.ctx.addr, self.ctx.lines)
+            self.ctx.entry = None
+            self.ctx.addr = 0
 
 
     def __exec_load(self, args):
