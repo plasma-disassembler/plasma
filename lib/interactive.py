@@ -60,7 +60,7 @@ class Interactive():
             "x": Command(
                 1,
                 self.__exec_x,
-                None,
+                self.__complete_x,
                 "Disassemble at a symbol or address, if no arguments are\n" +
                 self.TAB + "given it's main.\n" +
                 self.TAB + "x [symbol|0xNNNN|EP]"
@@ -172,6 +172,22 @@ class Interactive():
             return comp
         except FileNotFoundError:
             return []
+
+
+    def __complete_x(self, tmp_line, nth_arg, last_tok):
+        if nth_arg != 1 or self.ctx.dis is None:
+            return []
+
+        comp = []
+
+        for sym in self.ctx.dis.binary.symbols:
+            if sym.startswith(last_tok):
+                comp.append(sym + " ")
+
+        if len(comp) == 1:
+            return [tmp_line + comp[0][len(last_tok):]]
+
+        return comp
 
 
     def exec_command(self, line):
