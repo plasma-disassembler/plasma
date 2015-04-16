@@ -180,10 +180,11 @@ class Interactive():
         try:
             for f in os.listdir(dirname):
                 if f.startswith(basename):
+                    f_backslahed = f.replace(" ", "\\ ")
                     if os.path.isdir(os.path.join(dirname, f)):
-                        comp.append(f + "/")
+                        comp.append(f_backslahed + "/")
                     else:
-                        comp.append(f + " ")
+                        comp.append(f_backslahed + " ")
             if len(comp) == 1:
                 return [tmp_line + comp[0][len(basename):]]
             return comp
@@ -248,12 +249,11 @@ class Interactive():
 
     def __exec_load(self, args):
         if len(args) != 2:
-            error("filename requirred")
+            error("filename required")
             return
         self.ctx.filename = args[1]
-        if not load_file(self.ctx):
-            error("file doesn't exists")
-        self.rl.print("file loaded\n")
+        if load_file(self.ctx):
+            self.rl.print("file loaded\n")
 
 
     def __exec_x(self, args):

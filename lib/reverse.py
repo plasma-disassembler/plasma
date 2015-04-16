@@ -99,7 +99,7 @@ def parse_args():
 
 def load_file(ctx):
     if not os.path.exists(ctx.filename):
-        error("{ctx.filename} doesn't exist".format(ctx=ctx))
+        error("file {ctx.filename} doesn't exists".format(ctx=ctx))
         if ctx.interactive:
            return False
         die()
@@ -110,7 +110,6 @@ def load_file(ctx):
         raw_bits = 64
     else:
         raw_bits = 0
-
 
     try:
         dis = Disassembler(ctx.filename, raw_bits, ctx.forcejmp)
