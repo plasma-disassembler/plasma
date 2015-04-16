@@ -156,7 +156,7 @@ class Interactive():
                     all_cmd.append(tmp_line + cmd[len(last_tok):] + " ")
                     i += 1
                     if i == self.MAX_PRINT_COMPLETE:
-                        print("too much possibilities")
+                        print("\ntoo much possibilities")
                         return None
             return all_cmd
 
@@ -193,7 +193,7 @@ class Interactive():
                         comp.append(f_backslahed + " ")
                     i += 1
                     if i == self.MAX_PRINT_COMPLETE:
-                        print("too much possibilities")
+                        print("\ntoo much possibilities")
                         return None
 
             if len(comp) == 1:
