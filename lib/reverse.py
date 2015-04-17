@@ -83,7 +83,7 @@ def parse_args():
     ctx.color           = not args.nocolor
     ctx.comments        = not args.nocomment
     ctx.sectionsname    = not args.nosectionsname
-    ctx.max_string_data = args.datasize
+    ctx.max_data_size   = args.datasize
     ctx.filename        = args.filename
     ctx.raw32           = args.raw32
     ctx.raw64           = args.raw64

@@ -121,7 +121,8 @@ class Output():
                 if self.ctx.sectionsname:
                     print_no_end(" (" + color_section(sec_name) + ")")
                 if is_data: 
-                    print_no_end(" " + color_string(self.binary.get_string(imm)))
+                    s = self.binary.get_string(imm, self.ctx.max_data_size)
+                    print_no_end(" " + color_string(s))
                 if imm in self.binary.reverse_symbols:
                     print_no_end(" ")
                     self.print_symbol(imm)

@@ -196,7 +196,7 @@ class PE:
         return s.Characteristics & 0x20000000
 
 
-    def get_string(self, addr):
+    def get_string(self, addr, max_data_size):
         i = self.__get_data_section(addr)
         if i == -1:
             return ""
@@ -208,7 +208,7 @@ class PE:
         txt = ['"']
 
         i = 0
-        while i < lib.fileformat.binary.MAX_STRING_DATA and \
+        while i < max_data_size and \
               off < s.SizeOfRawData:
             c = data[off]
             if c == 0:

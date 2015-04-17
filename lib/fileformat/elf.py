@@ -141,7 +141,7 @@ class ELF:
         return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
 
-    def get_string(self, addr):
+    def get_string(self, addr, max_data_size):
         i = self.__get_data_section_idx(addr)
         if i == -1:
             return ""
@@ -152,7 +152,7 @@ class ELF:
         txt = ['"']
 
         i = 0
-        while i < lib.fileformat.binary.MAX_STRING_DATA and \
+        while i < max_data_size and \
               off < s.header.sh_size:
             c = data[off]
             if c == 0:

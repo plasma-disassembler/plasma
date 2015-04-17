@@ -25,12 +25,9 @@ from lib.utils import debug__
 from lib.exceptions import ExcFileFormat
 
 
-MAX_STRING_DATA = 30
-
 ARCH_x64 = 0
 ARCH_x86 = 1
 ARCH_INVALID = -1
-
 
 T_BIN_ELF = 0
 T_BIN_PE = 1
@@ -79,8 +76,8 @@ class Binary(object):
         return self.__binary.get_section(addr)
 
 
-    def get_string(self, addr):
-        return self.__binary.get_string(addr)
+    def get_string(self, addr, max_string_data):
+        return self.__binary.get_string(addr, max_string_data)
 
 
     def get_arch(self):

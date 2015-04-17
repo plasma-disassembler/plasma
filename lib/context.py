@@ -32,7 +32,7 @@ class Context():
         self.print_andif = True
         self.color = True
         self.forcejmp = False
-        self.max_string_data = 30
+        self.max_data_size = 30
         self.filename = None
         self.symfile = None
         self.sym = False
