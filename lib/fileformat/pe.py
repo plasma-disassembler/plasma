@@ -21,9 +21,9 @@ import pefile
 from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 from ctypes import sizeof
 
-import lib.utils
 import lib.fileformat.binary
-from lib.exceptions import ExcNotAddr
+from lib.utils import is_call, is_uncond_jump, get_char
+from lib.exceptions import ExcNotAddr, ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry
 
 
@@ -111,17 +111,17 @@ class PE:
         for ad in k:
             i = dis.code[ad]
 
-            if lib.utils.is_call(i) and i.operands[0].type == X86_OP_IMM:
+            if is_call(i) and i.operands[0].type == X86_OP_IMM:
                 goto = i.operands[0].value.imm
                 nxt = dis.lazy_disasm(goto)
 
-                if not lib.utils.is_uncond_jump(nxt) or \
+                if not is_uncond_jump(nxt) or \
                         nxt.operands[0].type != X86_OP_MEM:
                     continue
                
                 mm = nxt.operands[0].mem
 
-            elif lib.utils.is_uncond_jump(i) and \
+            elif is_uncond_jump(i) and \
                     i.address in self.classbinary.reverse_symbols:
                 goto = i.address
                 mm = i.operands[0].mem
@@ -213,7 +213,7 @@ class PE:
             c = data[off]
             if c == 0:
                 break
-            txt.append(lib.utils.get_char(c))
+            txt.append(get_char(c))
             off += 1
             i += 1
 
