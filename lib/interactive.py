@@ -49,6 +49,7 @@ class Interactive():
             "exit",
             "help",
             "load",
+            "sym",
             "x",
         ]
 
