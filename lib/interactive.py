@@ -272,6 +272,7 @@ class Interactive():
         if len(args) != 2:
             error("filename required")
             return
+        self.ctx.reset()
         self.ctx.filename = args[1]
         load_file(self.ctx)
 

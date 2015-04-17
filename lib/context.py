@@ -45,6 +45,7 @@ class Context():
         self.raw32 = False
         self.raw64 = False
         self.interactive = False
+        self.debug = False
 
 
     def reset(self):
@@ -55,7 +56,6 @@ class Context():
         # Other variables
         self.addr = 0 # address where we disassemble
         self.addr_color = {}
-        self.debug = False
         self.color_counter = 112
         self.local_vars_idx = {}
         self.local_vars_size = []
