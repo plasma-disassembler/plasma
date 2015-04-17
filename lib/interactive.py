@@ -293,7 +293,7 @@ class Interactive():
             error("an address is required")
             return
         if len(args) == 1:
-            self.ctx.dis.print_symbols()
+            self.ctx.dis.print_symbols(self.ctx.sectionsname)
             return
 
         addr = int(args[2], 16)

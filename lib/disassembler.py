@@ -26,8 +26,8 @@ from lib.graph import Graph
 from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
         is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
-from lib.output import Output
-from lib.colors import pick_color, color_addr, color_symbol
+from lib.output import Output, print_no_end
+from lib.colors import pick_color, color_addr, color_symbol, color_section
 from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
 
@@ -123,10 +123,15 @@ class Disassembler():
                 o.print_inst(i)
 
 
-    def print_symbols(self):
+    def print_symbols(self, print_sections):
         for addr in self.binary.reverse_symbols:
             sy = self.binary.reverse_symbols[addr]
-            print(color_addr(addr), color_symbol("<" + sy + ">"))
+            sec_name, _ = self.binary.is_address(addr)
+            print_no_end(color_addr(addr) + " " + color_symbol("<" + sy + ">"))
+            if print_sections and sec_name is not None:
+                print_no_end(" (" + color_section(sec_name) + ")")
+            print()
+
 
 
     def __error_jmp_reg(self, i):

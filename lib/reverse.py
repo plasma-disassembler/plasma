@@ -225,7 +225,7 @@ def reverse(ctx):
         return
 
     if ctx.syms:
-        ctx.dis.print_symbols()
+        ctx.dis.print_symbols(ctx.sectionsname)
         return
 
     if ctx.dump:
