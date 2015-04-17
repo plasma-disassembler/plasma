@@ -291,7 +291,7 @@ class Output():
             try:
                 addr = i.operands[0].value.imm
                 print(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
-            except Exception:
+            except KeyError:
                 print(i.mnemonic + " " + hex(addr))
             return
 
