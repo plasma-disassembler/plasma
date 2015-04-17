@@ -82,12 +82,12 @@ class Interactive():
             # TODO add second args for the number of lines
             # by default it will be ctx.lines
             "dump": Command(
-                1,
+                2,
                 self.__exec_dump,
-                self.__complete_dump,
+                self.__complete_x,
                 [
-                "[SYMBOL|0xXXXX|EP]",
-                "Dump asm. By default it will be main.",
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Dump asm.",
                 ]
             ),
 
@@ -213,12 +213,6 @@ class Interactive():
         return self.__find_symbol(tmp_line, nth_arg, last_tok)
 
 
-    def __complete_dump(self, tmp_line, nth_arg, last_tok):
-        if nth_arg != 1 or self.ctx.dis is None:
-            return []
-        return self.__find_symbol(tmp_line, nth_arg, last_tok)
-
-
     def __find_symbol(self, tmp_line, nth_arg, last_tok):
         comp = []
         i = 0
@@ -258,12 +252,15 @@ class Interactive():
         if self.ctx.dis is None:
             error("load a file before")
             return
+        lines = self.ctx.lines
         if len(args) == 1:
             self.ctx.entry = None
         else:
+            if len(args) == 3:
+                lines = int(args[2])
             self.ctx.entry = args[1]
         if init_addr(self.ctx):
-            self.ctx.dis.dump(self.ctx, self.ctx.addr, self.ctx.lines)
+            self.ctx.dis.dump(self.ctx, self.ctx.addr, lines)
             self.ctx.entry = None
             self.ctx.addr = 0
 
