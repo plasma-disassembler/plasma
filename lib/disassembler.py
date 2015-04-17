@@ -99,9 +99,9 @@ class Disassembler():
         i = self.lazy_disasm(addr)
         l = 0
         while i is not None and l < lines:
-            if i.address in self.binary.reverse_symbols:
-                o.print_symbol(i.address)
-                print()
+            # if i.address in self.binary.reverse_symbols:
+                # o.print_symbol(i.address)
+                # print()
             o.print_inst(i, 0)
             i = self.lazy_disasm(i.address + i.size)
             l += 1
