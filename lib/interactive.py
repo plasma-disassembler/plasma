@@ -74,7 +74,7 @@ class Interactive():
                 self.__exec_x,
                 self.__complete_x,
                 [
-                "[symbol|0xNNNN|EP]",
+                "[symbol|0xXXXX|EP]",
                 "Disassemble. By default it will be main.",
                 ]
             ),
@@ -86,7 +86,7 @@ class Interactive():
                 self.__exec_dump,
                 self.__complete_dump,
                 [
-                "[symbol|0xNNNN|EP]",
+                "[SYMBOL|0xXXXX|EP]",
                 "Dump asm. By default it will be main.",
                 ]
             ),
@@ -100,9 +100,12 @@ class Interactive():
 
             "sym": Command(
                 3,
-                None,
-                None,
-                ["Symbol"]
+                self.__exec_sym,
+                self.__complete_x,
+                [
+                "[SYMBOL 0xXXXX]",
+                "Print all symbols or set a new symbol."
+                ]
             ),
 
             "call": Command(
@@ -270,8 +273,23 @@ class Interactive():
             error("filename required")
             return
         self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.rl.print("file loaded\n")
+        load_file(self.ctx)
+
+
+    def __exec_sym(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        if len(args) == 2:
+            error("an address is required")
+            return
+        if len(args) == 1:
+            self.ctx.dis.print_symbols()
+            return
+
+        addr = int(args[2], 16)
+        self.ctx.dis.binary.symbols[args[1]] = addr
+        self.ctx.dis.binary.reverse_symbols[addr] = args[1]
 
 
     def __exec_x(self, args):
