@@ -77,9 +77,7 @@ class PE:
             self.pe.parse_data_directories(
                 pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'])
         except Exception as e:
-            lib.utils.error(str(e))
-            lib.utils.error("It seems that pefile.parse_data_directories is bugged.")
-            lib.utils.die("Maybe you should Retry")
+            raise ExcPEFail(e)
 
         for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:

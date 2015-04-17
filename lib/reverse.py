@@ -29,7 +29,7 @@ from lib.context import Context
 from lib.output import Output
 from lib.ast import assign_colors
 from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
-     ExcFileFormat, ExcNotAddr, ExcIfelse)
+     ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail)
 
 
 def parse_args():
@@ -119,6 +119,13 @@ def load_file(ctx):
         die()
     except ExcFileFormat:
         error("the file is not PE or ELF binary")
+        if ctx.interactive:
+            return False
+        die()
+    except ExcPEFail as e:
+        error(str(e.e))
+        error("It seems that pefile.parse_data_directories is bugged.")
+        error("Maybe you should Retry")
         if ctx.interactive:
             return False
         die()

@@ -48,3 +48,8 @@ class ExcIfelse(Exception):
 class ExcNotAddr(Exception):
     def __init__(self, addr):
         self.addr = addr
+
+
+class ExcPEFail(Exception):
+    def __init__(self, e):
+        self.e = e
