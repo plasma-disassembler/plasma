@@ -51,9 +51,9 @@ def parse_args():
             help='default main. EP stands for entry point.')
     parser.add_argument('--vim', action='store_true',
             help='Generate syntax colors for vim')
-    parser.add_argument('-s', '--sym', action='store_true',
+    parser.add_argument('-s', '--symbols', action='store_true',
             help='Print all symbols')
-    parser.add_argument('-c', '--call', action='store_true',
+    parser.add_argument('-c', '--calls', action='store_true',
             help='Print all calls')
     parser.add_argument('--raw32', action='store_true',
             help='Consider the input file as a raw binary')
@@ -87,8 +87,8 @@ def parse_args():
     ctx.raw32           = args.raw32
     ctx.raw64           = args.raw64
     ctx.symfile         = args.symfile
-    ctx.sym             = args.sym
-    ctx.call            = args.call
+    ctx.syms            = args.symbols
+    ctx.calls           = args.calls
     ctx.entry           = args.entry
     ctx.dump            = args.dump
     ctx.vim             = args.vim
@@ -135,7 +135,7 @@ def init_addr(ctx):
     # Maybe ctx.entry is a symbol and doesn't exist.
     # But we need an address for disassembling. After that, if the file
     # is PE we load imported symbols and search in the code for calls.
-    if ctx.sym or ctx.call or ctx.entry == "EP":
+    if ctx.syms or ctx.calls or ctx.entry == "EP":
         addr = ctx.dis.binary.get_entry_point()
     else:
         try:
@@ -213,11 +213,11 @@ def reverse(ctx):
 
     init_addr(ctx)
 
-    if ctx.call:
+    if ctx.calls:
         ctx.dis.print_calls(ctx)
         return
 
-    if ctx.sym:
+    if ctx.syms:
         ctx.dis.print_symbols()
         return
 

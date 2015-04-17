@@ -35,8 +35,8 @@ class Context():
         self.max_data_size = 30
         self.filename = None
         self.symfile = None
-        self.sym = False
-        self.call = False
+        self.syms = False
+        self.calls = False
         self.entry = None # string : symbol | EP | 0xNNNN
         self.dump = False
         self.vim = False
