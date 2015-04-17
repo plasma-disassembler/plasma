@@ -108,11 +108,11 @@ class Interactive():
                 ]
             ),
 
-            "call": Command(
+            "calls": Command(
                 3,
+                self.__exec_calls,
                 None,
-                None,
-                ["Call"]
+                ["Print all Calls."]
             ),
 
             "exit": Command(
@@ -274,6 +274,17 @@ class Interactive():
             return
         self.ctx.filename = args[1]
         load_file(self.ctx)
+
+
+    def __exec_calls(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        if len(args) != 1:
+            error("this command takes no args")
+            return
+        init_addr(self.ctx)
+        self.ctx.dis.print_calls(self.ctx)
 
 
     def __exec_sym(self, args):
