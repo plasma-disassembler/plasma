@@ -77,7 +77,7 @@ class Binary(object):
 
 
     def load_magic(self, filename):
-        f = open(filename, "rb+")
+        f = open(filename, "rb")
         magic = f.read(8)
         if magic.startswith(b"\x7fELF"):
             self.type = T_BIN_ELF
