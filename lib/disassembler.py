@@ -27,7 +27,7 @@ from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump,
         is_ret, debug__)
 from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
 from lib.output import Output
-from lib.colors import pick_color
+from lib.colors import pick_color, color_addr, color_symbol
 from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
 
@@ -126,7 +126,7 @@ class Disassembler():
     def print_symbols(self):
         for addr in self.binary.reverse_symbols:
             sy = self.binary.reverse_symbols[addr]
-            print("0x%x   %s" % (addr, sy))
+            print(color_addr(addr), color_symbol("<" + sy + ">"))
 
 
     def __error_jmp_reg(self, i):
