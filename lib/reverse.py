@@ -215,11 +215,11 @@ def reverse(ctx):
     init_addr(ctx)
 
     if ctx.call:
-        dis.print_calls(ctx)
+        ctx.dis.print_calls(ctx)
         return
 
     if ctx.sym:
-        dis.print_symbols()
+        ctx.dis.print_symbols()
         return
 
     if ctx.dump:
@@ -227,7 +227,7 @@ def reverse(ctx):
             base = os.path.basename(ctx.filename)
             ctx.color = False
             sys.stdout = open(base + ".rev", "w+")
-        dis.dump(ctx, addr, ctx.lines)
+        ctx.dis.dump(ctx, ctx.addr, ctx.lines)
         if ctx.vim:
             generate_vim_syntax(ctx, base + ".vim")
             print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
