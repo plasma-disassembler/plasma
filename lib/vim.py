@@ -314,5 +314,5 @@ def generate_vim_syntax(ctx, filename):
         fd.write(syn)
 
         for match, (addr, col) in enumerate(ctx.addr_color.items(), 1):
-            fd.write("syn match RevAddr_%d \"0x%x:\?\"\n" % (match, addr))
+            fd.write('syn match RevAddr_%d "0x%x:\?"\n' % (match, addr))
             fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))
