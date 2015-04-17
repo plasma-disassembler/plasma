@@ -30,7 +30,7 @@ from lib.context import Context
 from lib.output import Output
 from lib.ast import assign_colors
 from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
-     ExcFileFormat, ExcNotAddr)
+     ExcFileFormat, ExcNotAddr, ExcIfelse)
 
 
 def parse_args():
