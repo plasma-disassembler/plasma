@@ -21,6 +21,7 @@ import os
 import sys
 import shlex
 
+from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
 from lib.reverse import load_file, init_addr, disasm
@@ -36,7 +37,7 @@ class Command():
 
 class Interactive():
     COMMANDS = None
-    TAB = " " * 10
+    TAB = "      "
     MAX_PRINT_COMPLETE = 80
 
     def __init__(self, ctx):
@@ -56,7 +57,10 @@ class Interactive():
                 0,
                 self.__exec_help,
                 None,
-                ["Display this help"]
+                [
+                "",
+                "Display this help"
+                ]
             ),
 
             "load": Command(
@@ -95,7 +99,10 @@ class Interactive():
                 3,
                 None,
                 None,
-                ["Set options"]
+                [
+                "",
+                "Set options"
+                ]
             ),
 
             "sym": Command(
@@ -119,7 +126,10 @@ class Interactive():
                 0,
                 self.__exec_exit,
                 None,
-                ["Exit"]
+                [
+                "",
+                "Exit"
+                ]
             ),
         }
 
@@ -319,10 +329,12 @@ class Interactive():
         for name in self.COMMANDS_ALPHA:
             cmd = self.COMMANDS[name]
             if cmd.callback_exec is not None:
-                self.rl.print(name)
-                self.rl.print(" " * (10 - len(name)))
+                self.rl.print(color(name, 2))
+                self.rl.print(" ")
                 for i, line in enumerate(cmd.desc):
                     if i > 0:
                         self.rl.print(self.TAB)
                     self.rl.print(line)
+                    # else:
+                        # self.rl.print(color(line, 2))
                     self.rl.print("\n")
