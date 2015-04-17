@@ -17,13 +17,13 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib.interactive import Interactive
 from lib.reverse import reverse, parse_args
 
 if __name__ == '__main__':
     ctx = parse_args()
 
     if ctx.interactive:
+        from lib.interactive import Interactive
         i = Interactive(ctx)
     elif ctx.filename is not None:
         reverse(ctx)

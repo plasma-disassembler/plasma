@@ -17,7 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 from lib.colors import (color, color_addr, color_comment,
         color_keyword, color_retcall, color_string, color_type, color_var,
         color_section, color_symbol)

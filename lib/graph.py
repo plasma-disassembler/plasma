@@ -18,7 +18,6 @@
 #
 
 import os
-import os.path
 import time
 from lib.paths import Paths
 from lib.utils import (BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_jump, debug__)

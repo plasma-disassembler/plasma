@@ -19,11 +19,10 @@
 
 import sys
 import os
-import os.path
 from argparse import ArgumentParser, FileType
 
-from lib.utils import die, error
 from lib.disassembler import Disassembler
+from lib.utils import die, error
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context

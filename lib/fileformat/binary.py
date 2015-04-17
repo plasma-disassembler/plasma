@@ -18,9 +18,7 @@
 
 import time
 
-import lib.fileformat.elf
-import lib.fileformat.pe
-import lib.fileformat.raw
+from lib import import_once
 from lib.utils import debug__
 from lib.exceptions import ExcFileFormat
 
@@ -30,8 +28,9 @@ ARCH_x86 = 1
 ARCH_INVALID = -1
 
 T_BIN_ELF = 0
-T_BIN_PE = 1
-T_BIN_UNK = 2
+T_BIN_PE  = 1
+T_BIN_RAW = 2
+T_BIN_UNK = 3
 
 
 class Binary(object):
@@ -39,33 +38,52 @@ class Binary(object):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
+        self.type = None
 
         if raw_bits != 0:
-            self.__binary = lib.fileformat.raw.Raw(filename, raw_bits)
-        else:
-            start = time.clock()
+            LIB_RAW = import_once("lib.fileformat.raw", fromlist="Raw")
+            self.__binary = LIB_RAW.Raw(filename, raw_bits)
+            self.type = T_BIN_RAW
+            return
 
-            try:
-                self.__binary = lib.fileformat.elf.ELF(self, filename)
-            except Exception:
-                try:
-                    self.__binary = lib.fileformat.pe.PE(self, filename)
-                except Exception:
-                    raise ExcFileFormat()
+        start = time.clock()
+        self.load_magic(filename)
 
-            elapsed = time.clock()
-            elapsed = elapsed - start
-            debug__("Binary loaded in %fs" % elapsed)
+        try:
+            if self.type == T_BIN_ELF:
+                LIB_ELF = import_once("lib.fileformat.elf", fromlist="ELF")
+                self.__binary = LIB_ELF.ELF(self, filename)
+            elif self.type == T_BIN_PE:
+                LIB_PE = import_once("lib.fileformat.pe", fromlist="PE")
+                self.__binary = LIB_PE.PE(self, filename)
+            else:
+                raise ExcFileFormat()
+        except Exception:
+            raise ExcFileFormat()
 
-            start = time.clock()
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Binary loaded in %fs" % elapsed)
 
-            self.__binary.load_static_sym()
-            self.__binary.load_dyn_sym()
-            self.__binary.load_data_sections()
+        start = time.clock()
 
-            elapsed = time.clock()
-            elapsed = elapsed - start
-            debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+        self.__binary.load_static_sym()
+        self.__binary.load_dyn_sym()
+        self.__binary.load_data_sections()
+
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+
+
+    def load_magic(self, filename):
+        f = open(filename, "rb+")
+        magic = f.read(8)
+        if magic.startswith(b"\x7fELF"):
+            self.type = T_BIN_ELF
+        elif magic.startswith(b"MZ"):
+            self.type = T_BIN_PE
+        f.close()
 
 
     def is_data(self, addr):
@@ -89,14 +107,6 @@ class Binary(object):
     # (name, is_data)
     def is_address(self, imm):
         return self.__binary.is_address(imm)
-
-
-    def get_type(self):
-        if isinstance(self.__binary, lib.fileformat.elf.ELF):
-            return T_BIN_ELF
-        if isinstance(self.__binary, lib.fileformat.pe.PE):
-            return T_BIN_PE
-        return T_BIN_UNK
 
 
     def get_entry_point(self):

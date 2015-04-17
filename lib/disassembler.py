@@ -18,8 +18,9 @@
 
 import time
 
-from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, Cs
 from capstone.x86 import X86_OP_IMM
+
+from lib import import_once
 
 from lib.graph import Graph
 from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
@@ -45,8 +46,9 @@ class Disassembler():
         else:
             raise ExcArch()
 
-        mode = CS_MODE_64 if self.bits == 64 else CS_MODE_32
-        self.md = Cs(CS_ARCH_X86, mode)
+        CAPSTONE = import_once("capstone")
+        mode = CAPSTONE.CS_MODE_64 if self.bits == 64 else CAPSTONE.CS_MODE_32
+        self.md = CAPSTONE.Cs(CAPSTONE.CS_ARCH_X86, mode)
         self.md.detail = True
 
 
@@ -88,7 +90,7 @@ class Disassembler():
             l += 1
 
         # Here we have loaded all instructions we want to print
-        if self.binary.get_type() == T_BIN_PE:
+        if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
         o = Output(ctx)
@@ -111,7 +113,7 @@ class Disassembler():
                 self.code[i.address] = i
 
         # Here we have loaded all instructions we want to print
-        if self.binary.get_type() == T_BIN_PE:
+        if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
         o = Output(ctx)
@@ -217,7 +219,7 @@ class Disassembler():
             except IndexError:
                 break
 
-        if self.binary.get_type() == T_BIN_PE:
+        if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
         elapsed = time.clock()
