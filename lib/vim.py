@@ -17,9 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import lib.colors
-import lib.ast
-
 # https://gist.github.com/MicahElliott/719710
 RGB = {
     # Primary 3-bit (8 colors). Unique representation!

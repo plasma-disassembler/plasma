@@ -19,7 +19,6 @@
 
 import time
 
-import lib.colors
 from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
         fuse_inst_with_if, search_canary_plt)
