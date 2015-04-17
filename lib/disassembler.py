@@ -17,7 +17,6 @@
 #
 
 import time
-import sys
 
 from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, Cs
 from capstone.x86 import X86_OP_IMM

@@ -290,8 +290,8 @@ class Output():
                 return
             try:
                 addr = i.operands[0].value.imm
-                print(i.mnemonic + " " + color(hex(addr), addr_color[addr]))
-            except Exception:
+                print(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
+            except KeyError:
                 print(i.mnemonic + " " + hex(addr))
             return
 

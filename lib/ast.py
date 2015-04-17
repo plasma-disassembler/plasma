@@ -23,7 +23,7 @@ from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_INS_TEST, X86_OP_IMM,
 from lib.utils import is_call, is_uncond_jump, BRANCH_NEXT, invert_cond
 from lib.colors import pick_color, color_addr, color_keyword
 from lib.output import (print_comment, print_no_end, print_tabbed,
-        print_tabbed_no_end, ASSIGNMENT_OPS, Output)
+        print_tabbed_no_end, ASSIGNMENT_OPS)
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)

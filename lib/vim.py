@@ -17,9 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import lib.colors
-import lib.ast
-
 # https://gist.github.com/MicahElliott/719710
 RGB = {
     # Primary 3-bit (8 colors). Unique representation!
@@ -289,35 +286,30 @@ RGB = {
 
 
 def generate_vim_syntax(ctx, filename):
-    fd = open(filename, "w+")
+    with open(filename, "w+") as fd:
+        syn = """
+        syn keyword RevKeywords infiniteloop function goto if else loop and
+        syn keyword RevTypes int8_t int16_t int32_t int64_t
 
-    syn = """
-    syn keyword RevKeywords infiniteloop function goto if else loop and
-    syn keyword RevTypes int8_t int16_t int32_t int64_t
+        syn match RevComment "0x[0-9a-f]\+:"
+        syn match RevComment "#.\+$"
+        syn match RevVar "var[a-z0-9A-Z_]\+"
+        syn match RevRetCall "ret\|call"
 
-    syn match RevComment "0x[0-9a-f]\+:"
-    syn match RevComment "#.\+$"
-    syn match RevVar "var[a-z0-9A-Z_]\+"
-    syn match RevRetCall "ret\|call"
+        syn match RevString "<[a-zA-Z_@]\+>"
+        syn match RevString "\\".\+\\""
+        syn match RevString "'.\+'"
 
-    syn match RevString "<[a-zA-Z_@]\+>"
-    syn match RevString "\\".\+\\""
-    syn match RevString "'.\+'"
+        hi RevKeywords  ctermfg=161  cterm=bold  gui=bold  guifg=#d7005f
+        hi RevTypes  ctermfg=81  guifg=#5fd7ff
+        hi RevComment  ctermfg=242  guifg=#6c6c6c
+        hi RevString  ctermfg=144  guifg=#afaf87
+        hi RevVar  ctermfg=208 cterm=bold  gui=bold  guifg=#ff8700
+        hi RevRetCall  ctermfg=161  guifg=#d7005f\n
+        """
 
-    hi RevKeywords  ctermfg=161  cterm=bold  gui=bold  guifg=#d7005f
-    hi RevTypes  ctermfg=81  guifg=#5fd7ff
-    hi RevComment  ctermfg=242  guifg=#6c6c6c
-    hi RevString  ctermfg=144  guifg=#afaf87
-    hi RevVar  ctermfg=208 cterm=bold  gui=bold  guifg=#ff8700
-    hi RevRetCall  ctermfg=161  guifg=#d7005f\n
-    """
+        fd.write(syn)
 
-    fd.write(syn)
-
-    match = 1
-    for addr, col in ctx.addr_color.items():
-        fd.write("syn match RevAddr_%d \"0x%x:\?\"\n" % (match, addr))
-        fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))
-        match += 1
-
-    fd.close()
+        for match, (addr, col) in enumerate(ctx.addr_color.items(), 1):
+            fd.write('syn match RevAddr_%d "0x%x:\?"\n' % (match, addr))
+            fd.write("hi RevAddr_%d ctermfg=%d  guifg=#%s\n" % (match, col, RGB[col]))

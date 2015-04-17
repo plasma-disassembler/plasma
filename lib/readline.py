@@ -20,7 +20,6 @@ import os
 import sys
 import termios
 import tty
-import binascii
 
 
 def yellow(text):
