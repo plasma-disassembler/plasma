@@ -303,20 +303,20 @@ class ReadLine():
         self.tty_restore()
 
         self.print("\n")
-        self.cursor_i = self.get_position()[0]
-        self.cursor_j = - len(self.prompt)
-        self.set_cursor()
 
         if self.line != "":
             if self.idx_history != 0:
                 self.history = [self.line] + self.history
             self.callback_enter(self.line)
-            self.cursor_i = self.get_position()[0]
-            self.set_cursor()
 
+        self.cursor_i = self.get_position()[0]
+        self.set_cursor()
         self.line = ""
         self.idx_history = -1
         self.print_prompt()
+
+        self.cursor_j = 0
+        self.set_cursor()
 
         self.tty_set_raw()
 
@@ -384,7 +384,8 @@ class ReadLine():
 
     def k_tab(self):
         self.tty_restore()
-        res = self.callback_complete(self.line[:self.cursor_j])
+        begin = self.line[:self.cursor_j]
+        res, last_tok, common = self.callback_complete(begin)
 
         if res is None:
             self.print_prompt()
@@ -397,22 +398,27 @@ class ReadLine():
             return
 
         if len(res) == 1:
-            self.line = res[0] + self.line[self.cursor_j:]
-            self.cursor_j = 0
-            self.set_cursor()
-            self.delete_end_line()
-            self.print(self.line)
-            self.cursor_j = len(res[0])
-            self.set_cursor()
+            completed = begin + res[0]
         else:
+            completed = begin + common
             self.print("\n")
             for i in res:
-                self.print(i + "\n")
-            self.cursor_i = self.get_position()[0]
-            self.set_cursor()
-            self.print_prompt()
-            self.print(self.line)
+                self.print(last_tok)
+                self.print(i)
+                self.print("\n")
 
+        self.line = completed + self.line[self.cursor_j:]
+        self.cursor_j = 0
+        self.set_cursor()
+        self.delete_end_line()
+
+        if len(res) > 1:
+            self.cursor_i = self.get_position()[0]
+            self.print_prompt()
+
+        self.print(self.line)
+        self.cursor_j = len(completed)
+        self.set_cursor()
         self.tty_set_raw()
 
     def k_ctrl_a(self):

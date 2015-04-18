@@ -152,6 +152,15 @@ class Interactive():
         return
 
 
+    #
+    # Returns tuple :
+    # - list of completed string (i.e. rest of the current token)
+    # - string: the beginning of the current token
+    # - if len(list) > 1: it contains the common string between
+    #        all possibilities
+    #
+    # Each sub-complete functions returns only the list.
+    #
     def complete(self, line):
         # If last_word == "_" it means that there was spaces before
         # and we want to complete a new arg
@@ -160,29 +169,54 @@ class Interactive():
         last_tok = tokens[-1][:-1] # remove the _
         tmp_line = tmp_line[:-1]
 
+        comp = []
+
         # Complete a command name
         if len(tokens) == 1:
-            all_cmd = []
             i = 0
             for cmd in self.COMMANDS:
                 if cmd.startswith(last_tok):
                     # To keep spaces
-                    all_cmd.append(tmp_line + cmd[len(last_tok):] + " ")
+                    comp.append(cmd[len(last_tok):] + " ")
                     i += 1
                     if i == self.MAX_PRINT_COMPLETE:
-                        print("\ntoo much possibilities")
-                        return None
-            return all_cmd
+                        comp = None
+                        break
+        else:
+            try:
+                first_tok = tokens[0]
+                f = self.COMMANDS[first_tok].callback_complete
+                if f is not None:
+                    comp = f(tmp_line, len(tokens)-1, last_tok)
+            except KeyError:
+                pass
 
-        try:
-            first_tok = tokens[0]
-            f = self.COMMANDS[first_tok].callback_complete
-            if f is not None:
-                return f(tmp_line, len(tokens)-1, last_tok)
-        except KeyError:
-            pass
+        if comp is None:
+            print("\ntoo much possibilities")
+            return None, None, None
 
-        return []
+
+        if len(comp) <= 1:
+            return comp, last_tok, None
+
+        common = []
+        words_idx = {len(word):i for i, word in enumerate(comp)}
+        min_len = min(words_idx)
+        ref = words_idx[min_len]
+        del words_idx[min_len]
+
+        for i, char in enumerate(comp[ref]):
+            found = True
+            for j in words_idx.values():
+                word = comp[j]
+                if comp[j][i] != char:
+                    found = False
+                    break
+            if not found:
+                break
+            common.append(char)
+
+        return comp, last_tok, "".join(common)
 
 
     def __complete_load(self, tmp_line, nth_arg, last_tok):
@@ -202,17 +236,13 @@ class Interactive():
                 if f.startswith(basename):
                     f_backslahed = f.replace(" ", "\\ ")
                     if os.path.isdir(os.path.join(dirname, f)):
-                        comp.append(f_backslahed + "/")
+                        s = f_backslahed + "/"
                     else:
-                        comp.append(f_backslahed + " ")
+                        s = f_backslahed + " "
+                    comp.append(s[len(basename):])
                     i += 1
                     if i == self.MAX_PRINT_COMPLETE:
-                        print("\ntoo much possibilities")
                         return None
-
-            if len(comp) == 1:
-                return [tmp_line + comp[0][len(basename):]]
-
             return comp
         except FileNotFoundError:
             return []
@@ -229,14 +259,10 @@ class Interactive():
         i = 0
         for sym in self.ctx.dis.binary.symbols:
             if sym.startswith(last_tok):
-                comp.append(sym + " ")
+                comp.append((sym + " ")[len(last_tok):])
                 i += 1
                 if i == self.MAX_PRINT_COMPLETE:
-                    print("\ntoo much possibilities")
                     return None
-
-        if len(comp) == 1:
-            return [tmp_line + comp[0][len(last_tok):]]
         return comp
 
 
