@@ -134,8 +134,9 @@ class Interactive():
                 self.__exec_sym,
                 self.__complete_x,
                 [
-                "[SYMBOL 0xXXXX]",
-                "Print all symbols or set a new symbol."
+                "[SYMBOL 0xXXXX] [| FILTER]",
+                "Print all symbols or set a new symbol.",
+                "You can filter symbols by searching the word FILTER."
                 ]
             ),
 
@@ -374,13 +375,26 @@ class Interactive():
         if self.ctx.dis is None:
             error("load a file before")
             return
-        if len(args) == 2:
-            error("an address is required")
-            return
+
         if len(args) == 1:
             self.ctx.dis.print_symbols(self.ctx.sectionsname)
             return
 
+        if args[1][0] == "|":
+            if len(args) == 2 or len(args) > 3:
+                error("bad arguments (warn: need spaces between |)")
+                return
+            self.ctx.dis.print_symbols(self.ctx.sectionsname, args[2])
+            return
+
+        if len(args) == 2:
+            error("an address is required")
+            return
+
+
+
+
+        # Save new symbol
         addr = int(args[2], 16)
         self.ctx.dis.binary.symbols[args[1]] = addr
         self.ctx.dis.binary.reverse_symbols[addr] = args[1]

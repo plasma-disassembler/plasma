@@ -99,9 +99,6 @@ class Disassembler():
         i = self.lazy_disasm(addr)
         l = 0
         while i is not None and l < lines:
-            # if i.address in self.binary.reverse_symbols:
-                # o.print_symbol(i.address)
-                # print()
             o.print_inst(i, 0)
             i = self.lazy_disasm(i.address + i.size)
             l += 1
@@ -123,14 +120,18 @@ class Disassembler():
                 o.print_inst(i)
 
 
-    def print_symbols(self, print_sections):
+    def print_symbols(self, print_sections, sym_filter=None):
+        if sym_filter is not None:
+            sym_filter = sym_filter.lower()
+
         for addr in self.binary.reverse_symbols:
             sy = self.binary.reverse_symbols[addr]
-            sec_name, _ = self.binary.is_address(addr)
-            print_no_end(color_addr(addr) + " " + color_symbol("<" + sy + ">"))
-            if print_sections and sec_name is not None:
-                print_no_end(" (" + color_section(sec_name) + ")")
-            print()
+            if sym_filter is None or sym_filter in sy.lower():
+                sec_name, _ = self.binary.is_address(addr)
+                print_no_end(color_addr(addr) + " " + color_symbol("<" + sy + ">"))
+                if print_sections and sec_name is not None:
+                    print_no_end(" (" + color_section(sec_name) + ")")
+                print()
 
 
     def __error_jmp_reg(self, i):
