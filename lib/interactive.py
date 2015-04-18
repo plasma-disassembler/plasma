@@ -49,6 +49,8 @@ class Interactive():
             "exit",
             "help",
             "load",
+            "lraw32",
+            "lraw64",
             "sym",
             "x",
         ]
@@ -71,6 +73,26 @@ class Interactive():
                 [
                 "filename",
                 "Load a new binary file.",
+                ]
+            ),
+
+            "lraw32": Command(
+                1,
+                self.__exec_lraw32,
+                self.__complete_load,
+                [
+                "filename",
+                "Load a 32 bits raw file.",
+                ]
+            ),
+
+            "lraw64": Command(
+                1,
+                self.__exec_lraw64,
+                self.__complete_load,
+                [
+                "filename",
+                "Load a 64 bits raw file.",
                 ]
             ),
 
@@ -174,7 +196,7 @@ class Interactive():
         # Complete a command name
         if len(tokens) == 1:
             i = 0
-            for cmd in self.COMMANDS:
+            for cmd in self.COMMANDS_ALPHA:
                 if cmd.startswith(last_tok):
                     # To keep spaces
                     comp.append(cmd[len(last_tok):] + " ")
@@ -195,7 +217,6 @@ class Interactive():
             print("\ntoo much possibilities")
             return None, None, None
 
-
         if len(comp) <= 1:
             return comp, last_tok, None
 
@@ -203,11 +224,14 @@ class Interactive():
         words_idx = {len(word):i for i, word in enumerate(comp)}
         min_len = min(words_idx)
         ref = words_idx[min_len]
-        del words_idx[min_len]
+
+        # Recreate because we have maybe removed words with same length
+        words_idx = set(range(len(comp)))
+        words_idx.remove(ref)
 
         for i, char in enumerate(comp[ref]):
             found = True
-            for j in words_idx.values():
+            for j in words_idx:
                 word = comp[j]
                 if comp[j][i] != char:
                     found = False
@@ -311,6 +335,26 @@ class Interactive():
         load_file(self.ctx)
 
 
+    def __exec_lraw32(self, args):
+        if len(args) != 2:
+            error("filename required")
+            return
+        self.ctx.reset()
+        self.ctx.raw32 = True
+        self.ctx.filename = args[1]
+        load_file(self.ctx)
+
+
+    def __exec_lraw64(self, args):
+        if len(args) != 2:
+            error("filename required")
+            return
+        self.ctx.reset()
+        self.ctx.raw64 = True
+        self.ctx.filename = args[1]
+        load_file(self.ctx)
+
+
     def __exec_calls(self, args):
         if self.ctx.dis is None:
             error("load a file before")
@@ -362,6 +406,4 @@ class Interactive():
                     if i > 0:
                         self.rl.print(self.TAB)
                     self.rl.print(line)
-                    # else:
-                        # self.rl.print(color(line, 2))
                     self.rl.print("\n")

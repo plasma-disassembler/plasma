@@ -42,8 +42,6 @@ class Context():
         self.vim = False
         self.lines = 30
         self.graph = False # Print graph != gph -> object
-        self.raw32 = False
-        self.raw64 = False
         self.interactive = False
         self.debug = False
 
@@ -52,6 +50,9 @@ class Context():
         # Built objects
         self.dis = None
         self.gph = None
+
+        self.raw32 = False
+        self.raw64 = False
 
         # Other variables
         self.addr = 0 # address where we disassemble
