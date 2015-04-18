@@ -45,6 +45,7 @@ class Interactive():
         ctx.vim = False
 
         self.COMMANDS_ALPHA = [
+            "calls",
             "dump",
             "exit",
             "help",
@@ -142,7 +143,10 @@ class Interactive():
                 3,
                 self.__exec_calls,
                 None,
-                ["Print all Calls."]
+                [
+                "",
+                "Print all Calls."
+                ]
             ),
 
             "exit": Command(
