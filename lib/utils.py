@@ -52,9 +52,12 @@ BRANCH_NEXT_JUMP = 1   # or for the else part
 # Here, I don't use string.printable because it contains \r \n \t
 # and I want to print backslashed strings.
 PRINTABLE = [r'\x{0:02x}'.format(i) for i in range(256)]
+BYTES_PRINTABLE_SET = set()
 for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
         "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "):
     PRINTABLE[ord(c)] = c
+    BYTES_PRINTABLE_SET.add(ord(c))
+
 PRINTABLE[0] = r'\0'
 PRINTABLE[9] = r'\t'
 PRINTABLE[10] = r'\n'

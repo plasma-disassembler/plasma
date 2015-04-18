@@ -17,11 +17,13 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import struct
+
 from lib.colors import (color, color_addr, color_comment,
         color_keyword, color_retcall, color_string, color_type, color_var,
         color_section, color_symbol)
 from lib.utils import (get_char, inst_symbol, is_call, is_jump, is_ret, 
-        is_uncond_jump)
+        is_uncond_jump, BYTES_PRINTABLE_SET)
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
@@ -131,6 +133,15 @@ class Output():
                 print_no_end(hex(imm))
             else:
                 print_no_end(str(imm))
+
+                if imm > 0:
+                    packed = struct.pack("<L", imm)
+                    if set(packed).issubset(BYTES_PRINTABLE_SET):
+                        print_no_end(color_string(" \""))
+                        print_no_end(color_string("".join(map(chr, packed))))
+                        print_no_end(color_string("\""))
+                        return False
+
                 # returns True because capstone print immediate in hexa
                 # it will be printed in a comment, sometimes it better
                 # to have the value in hexa
