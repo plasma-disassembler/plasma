@@ -335,7 +335,7 @@ class Interactive():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset()
+        self.ctx.reset_all()
         self.ctx.filename = args[1]
         load_file(self.ctx)
 
@@ -344,7 +344,7 @@ class Interactive():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset()
+        self.ctx.reset_all()
         self.ctx.raw32 = True
         self.ctx.filename = args[1]
         load_file(self.ctx)
@@ -354,7 +354,7 @@ class Interactive():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset()
+        self.ctx.reset_all()
         self.ctx.raw64 = True
         self.ctx.filename = args[1]
         load_file(self.ctx)
@@ -408,6 +408,7 @@ class Interactive():
             self.ctx.entry = None
         else:
             self.ctx.entry = args[1]
+        self.ctx.reset_vars()
         if init_addr(self.ctx):
             disasm(self.ctx)
             self.ctx.entry = None

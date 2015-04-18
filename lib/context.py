@@ -24,7 +24,7 @@ import lib.colors
 class Context():
     def __init__(self):
         self.update()
-        self.reset()
+        self.reset_all()
 
         # Parameter options
         self.comments = True
@@ -46,7 +46,7 @@ class Context():
         self.debug = False
 
 
-    def reset(self):
+    def reset_all(self):
         # Built objects
         self.dis = None
         self.gph = None
@@ -54,6 +54,10 @@ class Context():
         self.raw32 = False
         self.raw64 = False
 
+        self.reset_vars()
+
+
+    def reset_vars(self):
         # Other variables
         self.addr = 0 # address where we disassemble
         self.addr_color = {}
