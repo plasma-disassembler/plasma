@@ -103,6 +103,12 @@ def load_file(ctx):
            return False
         die()
 
+    if not os.path.isfile(ctx.filename):
+        error("this is not a file".format(ctx=ctx))
+        if ctx.interactive:
+           return False
+        die()
+
     if ctx.raw32:
         raw_bits = 32
     elif ctx.raw64:
