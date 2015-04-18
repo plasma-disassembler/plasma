@@ -134,7 +134,7 @@ class Output():
                 # returns True because capstone print immediate in hexa
                 # it will be printed in a comment, sometimes it better
                 # to have the value in hexa
-                # return True
+                return True
 
             return False
 
