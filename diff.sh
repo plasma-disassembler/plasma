@@ -20,6 +20,8 @@ green() {
     color 32 "$1" "$2"
 }
 
+OPTIONS="--nosectionsname --nocolor"
+VERBOSE=0
 
 __diff() {
     local name=$1
@@ -34,9 +36,9 @@ __diff() {
 
 
     if [ -f "tests/${name}${suffix}.rev" ]; then
-        ./reverse.py "tests/${name}.bin" $more_opt --nosectionsname --nocolor >$tmp 2>/dev/null
+        ./reverse.py "tests/${name}.bin" $more_opt $OPTIONS >$tmp 2>/dev/null
         if [ $? -eq 0 ]; then
-            if [ $verbose -eq 1 ]; then
+            if [ $VERBOSE -eq 1 ]; then
                 diff $tmp "tests/${name}${suffix}.rev" 
             else
                 diff -q $tmp "tests/${name}${suffix}.rev" >/dev/null
@@ -56,14 +58,24 @@ __diff() {
     fi
 }
 
-verbose=0
 name=`basename "$1" .rev`
 shift
 
-if [ "$1" == "1" ]; then
-    verbose=1
+while true; do
+    case "$1" in
+        "1")
+            VERBOSE=1
+            ;;
+        -*)
+            OPTIONS="$OPTIONS $1"
+            ;;
+        *)
+            break
+            ;;
+    esac
+
     shift
-fi
+done
 
 if [ "$1" == "" ]; then
     __diff "$name"

@@ -7,8 +7,12 @@ BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
 FLAGS[tests/server.c] = "-lpthread"
 FLAGS[tests/canary_plt.c] = "-fstack-protector"
 FLAGS[tests/strlen.c] = "-Os"
+
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
 SYMBOLS[tests/pendu.rev] = "_main" "___main"
+SYMBOLS[tests/shellcode.rev] = "0x0"
+
+OPTIONS[tests/shellcode.rev] = "--raw32"
 
 all: check
 
@@ -23,7 +27,7 @@ all: check
 check: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
-	@./diff.sh $@ ${V} $(SYMBOLS[$@])
+	@./diff.sh $@ ${OPTIONS[$@]} ${V} $(SYMBOLS[$@])
 
 
 clean:
