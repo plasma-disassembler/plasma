@@ -262,11 +262,11 @@ class Interactive():
             i = 0
             for f in os.listdir(dirname):
                 if f.startswith(basename):
-                    f_backslahed = f.replace(" ", "\\ ")
+                    f_backslashed = f.replace(" ", "\\ ")
                     if os.path.isdir(os.path.join(dirname, f)):
-                        s = f_backslahed + "/"
+                        s = f_backslashed + "/"
                     else:
-                        s = f_backslahed + " "
+                        s = f_backslashed + " "
                     comp.append(s[len(basename):])
                     i += 1
                     if i == self.MAX_PRINT_COMPLETE:
