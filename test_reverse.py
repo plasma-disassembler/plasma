@@ -17,23 +17,23 @@ SYMBOLS = {
         }
 
 OPTIONS = {
-    'tests/shellcode.bin': ["--raw32"]
+    TESTS / 'shellcode.bin': ["--raw32"]
     }
 
 
 def test_reverse():
     for p in TESTS.glob('*.bin'):
         for symbol in sorted(SYMBOLS.get(p, [None])):
-            yield reverse_file, str(p), symbol
+            yield reverse_file, str(p), symbol, OPTIONS.get(p, [])
 
-def reverse_file(filename, symbol):
+def reverse_file(filename, symbol, options):
     ctx = Context()
     ctx.sectionsname = False
     ctx.color = False
     ctx.filename = filename
     ctx.entry = symbol
 
-    for o in OPTIONS.get(filename, [None]):
+    for o in options:
         if o == "--raw32":
             ctx.raw32 = True
         elif o == "--raw64":
