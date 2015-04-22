@@ -20,8 +20,6 @@ import time
 
 from capstone.x86 import X86_OP_IMM
 
-from lib import import_once
-
 from lib.graph import Graph
 from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
         is_ret, debug__)
@@ -46,7 +44,7 @@ class Disassembler():
         else:
             raise ExcArch()
 
-        CAPSTONE = import_once("capstone")
+        import capstone as CAPSTONE
         mode = CAPSTONE.CS_MODE_64 if self.bits == 64 else CAPSTONE.CS_MODE_32
         self.md = CAPSTONE.Cs(CAPSTONE.CS_ARCH_X86, mode)
         self.md.detail = True

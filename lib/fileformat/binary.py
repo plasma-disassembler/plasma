@@ -18,7 +18,6 @@
 
 import time
 
-from lib import import_once
 from lib.utils import debug__
 from lib.exceptions import ExcFileFormat
 
@@ -41,7 +40,7 @@ class Binary(object):
         self.type = None
 
         if raw_bits != 0:
-            LIB_RAW = import_once("lib.fileformat.raw", fromlist="Raw")
+            import lib.fileformat.raw as LIB_RAW
             self.__binary = LIB_RAW.Raw(filename, raw_bits)
             self.type = T_BIN_RAW
             return
@@ -51,10 +50,10 @@ class Binary(object):
 
         try:
             if self.type == T_BIN_ELF:
-                LIB_ELF = import_once("lib.fileformat.elf", fromlist="ELF")
+                import lib.fileformat.elf as LIB_ELF
                 self.__binary = LIB_ELF.ELF(self, filename)
             elif self.type == T_BIN_PE:
-                LIB_PE = import_once("lib.fileformat.pe", fromlist="PE")
+                import lib.fileformat.pe as LIB_PE
                 self.__binary = LIB_PE.PE(self, filename)
             else:
                 raise ExcFileFormat()

@@ -25,6 +25,7 @@ from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
 from lib.reverse import load_file, init_addr, disasm
+from pathlib import PurePath, Path
 
 
 class Command():
@@ -219,7 +220,7 @@ class Interactive():
                 pass
 
         if comp is None:
-            print("\ntoo much possibilities")
+            print("\ntoo many possibilities")
             return None, None, None
 
         if len(comp) <= 1:
@@ -237,7 +238,6 @@ class Interactive():
         for i, char in enumerate(comp[ref]):
             found = True
             for j in words_idx:
-                word = comp[j]
                 if comp[j][i] != char:
                     found = False
                     break
@@ -253,25 +253,25 @@ class Interactive():
             return []
 
         comp = []
-        basename = os.path.basename(last_tok)
-        dirname = os.path.dirname(last_tok)
-
-        if not dirname:
-            dirname = "."
+        fragment = os.path.expanduser(last_tok)
+        pp = PurePath(fragment)
+        if last_tok.endswith('/'):
+            entries = Path(pp).iterdir()
+        else:
+            entries = Path(pp.parent).glob(pp.name + '*')
 
         try:
             i = 0
-            for f in os.listdir(dirname):
-                if f.startswith(basename):
-                    f_backslahed = f.replace(" ", "\\ ")
-                    if os.path.isdir(os.path.join(dirname, f)):
-                        s = f_backslahed + "/"
-                    else:
-                        s = f_backslahed + " "
-                    comp.append(s[len(basename):])
-                    i += 1
-                    if i == self.MAX_PRINT_COMPLETE:
-                        return None
+            for f in entries:
+                f_backslashed = str(f).replace(" ", "\\ ")
+                if f.is_dir():
+                    s = f_backslashed + "/"
+                else:
+                    s = f_backslashed + " "
+                comp.append(s[len(fragment):])
+                i += 1
+                if i == self.MAX_PRINT_COMPLETE:
+                    return None
             return comp
         except FileNotFoundError:
             return []
@@ -336,7 +336,7 @@ class Interactive():
             error("filename required")
             return
         self.ctx.reset_all()
-        self.ctx.filename = args[1]
+        self.ctx.filename = os.path.expanduser(args[1])
         load_file(self.ctx)
 
 
