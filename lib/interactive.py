@@ -219,7 +219,7 @@ class Interactive():
                 pass
 
         if comp is None:
-            print("\ntoo much possibilities")
+            print("\ntoo many possibilities")
             return None, None, None
 
         if len(comp) <= 1:
