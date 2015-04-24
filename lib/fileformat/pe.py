@@ -233,3 +233,12 @@ class PE:
     def get_entry_point(self):
         return self.pe.OPTIONAL_HEADER.ImageBase + \
                self.pe.OPTIONAL_HEADER.AddressOfEntryPoint
+
+
+    def iter_sections(self):
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        for i, s in enumerate(self.__data_sections):
+            start = base + s.VirtualAddress
+            end = start + s.SizeOfRawData
+            if s.Name != b"":
+                yield (s.Name.decode().rstrip(' \0'), start, end)

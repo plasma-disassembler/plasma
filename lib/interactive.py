@@ -25,7 +25,6 @@ from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
 from lib.reverse import load_file, init_addr, disasm
-from pathlib import PurePath, Path
 
 
 class Command():
@@ -53,6 +52,7 @@ class Interactive():
             "load",
             "lraw32",
             "lraw64",
+            "sections",
             "sym",
             "x",
         ]
@@ -108,7 +108,6 @@ class Interactive():
                 ]
             ),
 
-            # TODO add second args for the number of lines
             # by default it will be ctx.lines
             "dump": Command(
                 2,
@@ -158,6 +157,16 @@ class Interactive():
                 [
                 "",
                 "Exit"
+                ]
+            ),
+
+            "sections": Command(
+                0,
+                self.__exec_sections,
+                None,
+                [
+                "",
+                "Print all sections",
                 ]
             ),
         }
@@ -220,7 +229,7 @@ class Interactive():
                 pass
 
         if comp is None:
-            print("\ntoo many possibilities")
+            print("\ntoo much possibilities")
             return None, None, None
 
         if len(comp) <= 1:
@@ -238,6 +247,7 @@ class Interactive():
         for i, char in enumerate(comp[ref]):
             found = True
             for j in words_idx:
+                word = comp[j]
                 if comp[j][i] != char:
                     found = False
                     break
@@ -253,25 +263,25 @@ class Interactive():
             return []
 
         comp = []
-        fragment = os.path.expanduser(last_tok)
-        pp = PurePath(fragment)
-        if last_tok.endswith('/'):
-            entries = Path(pp).iterdir()
-        else:
-            entries = Path(pp.parent).glob(pp.name + '*')
+        basename = os.path.basename(last_tok)
+        dirname = os.path.dirname(last_tok)
+
+        if not dirname:
+            dirname = "."
 
         try:
             i = 0
-            for f in entries:
-                f_backslashed = str(f).replace(" ", "\\ ")
-                if f.is_dir():
-                    s = f_backslashed + "/"
-                else:
-                    s = f_backslashed + " "
-                comp.append(s[len(fragment):])
-                i += 1
-                if i == self.MAX_PRINT_COMPLETE:
-                    return None
+            for f in os.listdir(dirname):
+                if f.startswith(basename):
+                    f_backslahed = f.replace(" ", "\\ ")
+                    if os.path.isdir(os.path.join(dirname, f)):
+                        s = f_backslahed + "/"
+                    else:
+                        s = f_backslahed + " "
+                    comp.append(s[len(basename):])
+                    i += 1
+                    if i == self.MAX_PRINT_COMPLETE:
+                        return None
             return comp
         except FileNotFoundError:
             return []
@@ -336,7 +346,7 @@ class Interactive():
             error("filename required")
             return
         self.ctx.reset_all()
-        self.ctx.filename = os.path.expanduser(args[1])
+        self.ctx.filename = args[1]
         load_file(self.ctx)
 
 
@@ -426,3 +436,19 @@ class Interactive():
                         self.rl.print(self.TAB)
                     self.rl.print(line)
                     self.rl.print("\n")
+
+
+    def __exec_sections(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+
+        self.rl.print("NAME".ljust(20))
+        self.rl.print("START".ljust(16))
+        self.rl.print("END\n")
+
+        for (name, start, end) in self.ctx.dis.binary.iter_sections():
+            self.rl.print(name.ljust(20))
+            self.rl.print(hex(start).ljust(16))
+            self.rl.print(hex(end).ljust(16))
+            self.rl.print("\n")

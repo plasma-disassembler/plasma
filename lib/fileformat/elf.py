@@ -174,3 +174,11 @@ class ELF:
 
     def get_entry_point(self):
         return self.elf.header['e_entry']
+
+
+    def iter_sections(self):
+        for s in self.elf.iter_sections():
+            start = s.header.sh_addr
+            end = start + s.header.sh_size
+            if s.name != b"":
+                yield (s.name.decode(), start, end)

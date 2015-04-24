@@ -112,6 +112,10 @@ class Binary(object):
         return self.__binary.get_entry_point()
 
 
+    def iter_sections(self):
+        return self.__binary.iter_sections()
+
+
     # Only for PE !
     def pe_reverse_stripped_symbols(self, dis):
         start = time.clock()
