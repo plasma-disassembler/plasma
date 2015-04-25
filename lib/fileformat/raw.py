@@ -63,3 +63,7 @@ class Raw:
 
     def get_entry_point(self):
         return 0
+
+
+    def iter_sections(self):
+        return []
