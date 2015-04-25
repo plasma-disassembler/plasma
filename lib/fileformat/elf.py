@@ -68,6 +68,9 @@ class ELF:
                 self.elf.get_section_by_name(b".rel.plt"))
         dyn = self.elf.get_section_by_name(b".dynsym")
 
+        if rel is None or dyn is None:
+            return
+
         relitems = list(rel.iter_relocations())
         dynsym = list(dyn.iter_symbols())
 
