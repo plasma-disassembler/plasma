@@ -23,7 +23,7 @@ from capstone.x86 import X86_OP_IMM
 from lib.graph import Graph
 from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
         is_ret, debug__)
-from lib.fileformat.binary import Binary, ARCH_x86, ARCH_x64, T_BIN_PE
+from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.output import Output, print_no_end
 from lib.colors import pick_color, color_addr, color_symbol, color_section
 from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
@@ -31,22 +31,19 @@ from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
 class Disassembler():
     def __init__(self, filename, raw_bits, forcejmp):
+        import capstone as CAPSTONE
+
         self.forcejmp = forcejmp
         self.code = {}
         self.code_idx = []
         self.binary = Binary(filename, raw_bits)
 
-        arch = self.binary.get_arch()
-        if arch == ARCH_x86:
-            self.bits = 32
-        elif arch == ARCH_x64:
-            self.bits = 64
-        else:
-            raise ExcArch()
+        arch, mode = self.binary.get_arch()
 
-        import capstone as CAPSTONE
-        mode = CAPSTONE.CS_MODE_64 if self.bits == 64 else CAPSTONE.CS_MODE_32
-        self.md = CAPSTONE.Cs(CAPSTONE.CS_ARCH_X86, mode)
+        if arch is None or mode is None:
+            raise ExcArch(self.binary.get_arch_string())
+
+        self.md = CAPSTONE.Cs(arch, mode)
         self.md.detail = True
 
 

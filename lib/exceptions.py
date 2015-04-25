@@ -33,7 +33,8 @@ class ExcNotExec(Exception):
 
 
 class ExcArch(Exception):
-    pass
+    def __init__(self, arch):
+        self.arch = arch
 
 
 class ExcFileFormat(Exception):

@@ -22,11 +22,13 @@ import lib.fileformat.binary
 
 class Raw:
     def __init__(self, filename, bits):
+        import capstone as CAPSTONE
+
         self.raw = open(filename, "rb").read()
         self.bits = bits
         self.arch_lookup = {
-          32: lib.fileformat.binary.ARCH_x86,
-          64: lib.fileformat.binary.ARCH_x64
+            32: CAPSTONE.CS_MODE_32,
+            64: CAPSTONE.CS_MODE_64,
         }
 
 
@@ -58,7 +60,12 @@ class Raw:
 
 
     def get_arch(self):
-        return self.arch_lookup[self.bits]
+        import capstone as CAPSTONE
+        return CAPSTONE.CS_ARCH_X86, self.arch_lookup[self.bits]
+
+
+    def get_arch_string(self):
+        return ""
 
 
     def get_entry_point(self):

@@ -21,11 +21,6 @@ import time
 from lib.utils import debug__
 from lib.exceptions import ExcFileFormat
 
-
-ARCH_x64 = 0
-ARCH_x86 = 1
-ARCH_INVALID = -1
-
 T_BIN_ELF = 0
 T_BIN_PE  = 1
 T_BIN_RAW = 2
@@ -99,6 +94,10 @@ class Binary(object):
 
     def get_arch(self):
         return self.__binary.get_arch()
+
+
+    def get_arch_string(self):
+        return self.__binary.get_arch_string()
 
 
     # Returns the name of the section if the value is an address

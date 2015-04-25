@@ -29,11 +29,24 @@ from lib.fileformat.pefile2 import PE2, SymbolEntry
 
 class PE:
     def __init__(self, classbinary, filename):
+        import capstone as CAPSTONE
+
         self.classbinary = classbinary
         self.pe = PE2(filename, fast_load=True)
         self.__data_sections = []
         self.__data_sections_data = []
         self.__imported_syms = {}
+
+        self.arch_lookup = {
+            # See machine_types in pefile.py
+            0x14c: CAPSTONE.CS_ARCH_X86, # i386
+            0x8664: CAPSTONE.CS_ARCH_X86, # AMD64
+        }
+
+        self.arch_mode_lookup = {
+            pefile.OPTIONAL_HEADER_MAGIC_PE: CAPSTONE.CS_MODE_32,
+            pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS: CAPSTONE.CS_MODE_64,
+        }
 
 
     def load_static_sym(self):
@@ -222,12 +235,12 @@ class PE:
 
 
     def get_arch(self):
-        arch = self.pe.OPTIONAL_HEADER.Magic
-        if arch == pefile.OPTIONAL_HEADER_MAGIC_PE:
-            return lib.fileformat.binary.ARCH_x86
-        if arch == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
-            return lib.fileformat.binary.ARCH_x64
-        return lib.fileformat.binary.ARCH_INVALID
+        return self.arch_lookup.get(self.pe.FILE_HEADER.Machine, None), \
+               self.arch_mode_lookup.get(self.pe.OPTIONAL_HEADER.Magic, None)
+
+
+    def get_arch_string(self):
+        return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
 
 
     def get_entry_point(self):

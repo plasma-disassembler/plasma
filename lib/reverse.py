@@ -118,8 +118,8 @@ def load_file(ctx):
 
     try:
         dis = Disassembler(ctx.filename, raw_bits, ctx.forcejmp)
-    except ExcArch:
-        error("only x86 and x64 are supported")
+    except ExcArch as e:
+        error("arch %s is not supported" % e.arch)
         if ctx.interactive:
             return False
         die()

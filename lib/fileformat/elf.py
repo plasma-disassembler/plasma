@@ -41,14 +41,22 @@ from lib.exceptions import ExcNotAddr
 
 class ELF:
     def __init__(self, classbinary, filename):
+        import capstone as CAPSTONE
+
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
         self.__data_sections = []
         self.__data_sections_data = []
+
         self.arch_lookup = {
-          "x86": lib.fileformat.binary.ARCH_x86,
-          "x64": lib.fileformat.binary.ARCH_x64
+            "x86": CAPSTONE.CS_ARCH_X86,
+            "x64": CAPSTONE.CS_ARCH_X86,
+        }
+
+        self.arch_mode_lookup = {
+            "x86": CAPSTONE.CS_MODE_32,
+            "x64": CAPSTONE.CS_MODE_64,
         }
 
 
@@ -171,8 +179,12 @@ class ELF:
 
 
     def get_arch(self):
-        return self.arch_lookup.get(self.elf.get_machine_arch(), \
-            lib.fileformat.binary.ARCH_INVALID)
+        return self.arch_lookup.get(self.elf.get_machine_arch(), None), \
+               self.arch_mode_lookup.get(self.elf.get_machine_arch(), None)
+
+
+    def get_arch_string(self):
+        return self.elf.get_machine_arch()
 
 
     def get_entry_point(self):
