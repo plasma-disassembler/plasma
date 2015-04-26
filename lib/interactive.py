@@ -21,10 +21,10 @@ import os
 import sys
 import shlex
 
+from lib import load_file, init_addr, disasm
 from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
-from lib.reverse import load_file, init_addr, disasm
 
 
 class Command():

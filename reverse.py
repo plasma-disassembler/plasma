@@ -17,7 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib.reverse import reverse, parse_args
+from lib import reverse, parse_args
 
 if __name__ == '__main__':
     ctx = parse_args()
