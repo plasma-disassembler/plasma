@@ -91,6 +91,7 @@ def parse_args():
     ctx.dump            = args.dump
     ctx.vim             = args.vim
     ctx.interactive     = args.interactive
+    ctx.lines           = args.lines
     return ctx
 
 
