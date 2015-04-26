@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 #
-# Reverse : reverse engineering for x86 binaries
+# Reverse : Generate an indented asm code (pseudo-C) with colored syntax.
 # Copyright (C) 2015    Joel
 #
 # This program is free software: you can redistribute it and/or modify

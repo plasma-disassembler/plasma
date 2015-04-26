@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 #
-# Reverse : reverse engineering for x86 binaries
+# Reverse : Generate an indented asm code (pseudo-C) with colored syntax.
 # Copyright (C) 2015    Joel
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,8 +18,6 @@
 #
 
 import time
-
-from capstone.x86 import X86_OP_IMM
 
 from lib.graph import Graph
 from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
@@ -75,11 +74,13 @@ class Disassembler():
 
 
     def dump(self, ctx, addr, lines):
+        from capstone import CS_OP_IMM
+
         # set jumps color
         i = self.lazy_disasm(addr)
         l = 0
         while i is not None and l < lines:
-            if is_jump(i) and i.operands[0].type == X86_OP_IMM:
+            if is_jump(i) and i.operands[0].type == CS_OP_IMM:
                 pick_color(i.operands[0].value.imm)
             i = self.lazy_disasm(i.address + i.size)
             l += 1
@@ -169,6 +170,8 @@ class Disassembler():
 
     # Generate a flow graph of the given function (addr)
     def get_graph(self, addr):
+        from capstone import CS_OP_IMM
+
         curr = self.lazy_disasm(addr)
         gph = Graph(self, addr)
         rest = []
@@ -178,7 +181,7 @@ class Disassembler():
         while 1:
             if not gph.exists(curr):
                 if is_uncond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[0].type == X86_OP_IMM:
+                    if curr.operands[0].type == CS_OP_IMM:
                         addr = curr.operands[0].value.imm
                         nxt = self.lazy_disasm(addr)
                         gph.set_next(curr, nxt)
@@ -190,7 +193,7 @@ class Disassembler():
                     gph.uncond_jumps_set.add(curr.address)
 
                 elif is_cond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[0].type == X86_OP_IMM:
+                    if curr.operands[0].type == CS_OP_IMM:
                         nxt_jump = self.lazy_disasm(curr.operands[0].value.imm)
                         direct_nxt = self.lazy_disasm(curr.address + curr.size)
                         gph.set_cond_next(curr, nxt_jump, direct_nxt)
