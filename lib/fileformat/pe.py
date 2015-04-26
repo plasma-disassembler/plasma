@@ -22,8 +22,7 @@ import pefile
 from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 from ctypes import sizeof
 
-import lib.fileformat.binary
-from lib.utils import is_call, is_uncond_jump, get_char
+from lib.utils import get_char
 from lib.exceptions import ExcNotAddr, ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry
 
@@ -117,23 +116,24 @@ class PE:
 
         # Search in the code every call which point to a "jmp SYMBOL"
 
+        ARCH_UTILS = dis.load_arch_module().utils
         k = list(dis.code.keys())
         count = 0
 
         for ad in k:
             i = dis.code[ad]
 
-            if is_call(i) and i.operands[0].type == X86_OP_IMM:
+            if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
                 goto = i.operands[0].value.imm
                 nxt = dis.lazy_disasm(goto)
 
-                if not is_uncond_jump(nxt) or \
+                if not ARCH_UTILS.is_uncond_jump(nxt) or \
                         nxt.operands[0].type != X86_OP_MEM:
                     continue
                
                 mm = nxt.operands[0].mem
 
-            elif is_uncond_jump(i) and \
+            elif ARCH_UTILS.is_uncond_jump(i) and \
                     i.address in self.classbinary.reverse_symbols:
                 goto = i.address
                 mm = i.operands[0].mem

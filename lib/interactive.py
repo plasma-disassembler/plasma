@@ -247,7 +247,6 @@ class Interactive():
         for i, char in enumerate(comp[ref]):
             found = True
             for j in words_idx:
-                word = comp[j]
                 if comp[j][i] != char:
                     found = False
                     break

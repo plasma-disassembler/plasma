@@ -18,15 +18,6 @@
 #
 
 import sys
-from capstone import CS_GRP_CALL, CS_GRP_JUMP, CS_GRP_RET
-from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
-        X86_INS_IMUL, X86_INS_INC, X86_INS_JA, X86_INS_JAE, X86_INS_JE,
-        X86_INS_JGE, X86_INS_JL, X86_INS_JLE, X86_INS_JG, X86_INS_JBE,
-        X86_INS_JB, X86_INS_JMP, X86_INS_JCXZ, X86_INS_JECXZ,
-        X86_INS_JNE, X86_INS_JNO, X86_INS_JNP, X86_INS_JNS, X86_INS_JO,
-        X86_INS_JP, X86_INS_JRCXZ, X86_INS_JS, X86_INS_MOV, X86_INS_SHL,
-        X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_INS_OR, X86_INS_MOVSX)
-
 
 ctx = None
 
@@ -65,113 +56,6 @@ PRINTABLE[13] = r'\r'
 
 get_char = PRINTABLE.__getitem__
 
-
-def is_jump(i):
-    return i.group(CS_GRP_JUMP)
-
-def is_cond_jump(i):
-    return i.group(CS_GRP_JUMP) and i.id != X86_INS_JMP
-
-def is_uncond_jump(i):
-    return i.id == X86_INS_JMP
-
-def is_ret(i):
-    # TODO more ret  ??
-    return i.group(CS_GRP_RET)
-
-def is_call(i):
-    return i.group(CS_GRP_CALL)
-
-
-OPPOSITES = [
-        [X86_INS_JE, X86_INS_JNE],
-        [X86_INS_JGE, X86_INS_JL],
-        [X86_INS_JLE, X86_INS_JG],
-        [X86_INS_JNS, X86_INS_JS],
-        [X86_INS_JAE, X86_INS_JB],
-        [X86_INS_JBE, X86_INS_JA],
-        [X86_INS_JP, X86_INS_JNP],
-        [X86_INS_JO, X86_INS_JNO],
-        [X86_INS_JS, X86_INS_JNS],
-    ]
-OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
-
-def invert_cond(ty):
-    return OPPOSITES.get(ty, -1)
-
-
-# def cond_inst_str(ty):
-    # conds = {
-        # -1: "UNKNOWN",
-        # X86_INS_JAE: "jae",
-        # X86_INS_JA: "ja",
-        # X86_INS_JBE: "jbe",
-        # X86_INS_JB: "jb",
-        # X86_INS_JCXZ: "jcxz",
-        # X86_INS_JECXZ: "jecxz",
-        # X86_INS_JE: "je",
-        # X86_INS_JGE: "jge",
-        # X86_INS_JG: "jg",
-        # X86_INS_JLE: "jle",
-        # X86_INS_JL: "jl",
-        # X86_INS_JMP: "jmp",
-        # X86_INS_JNE: "jne",
-        # X86_INS_JNO: "jno",
-        # X86_INS_JNP: "jnp",
-        # X86_INS_JNS: "jns",
-        # X86_INS_JO: "jo",
-        # X86_INS_JP: "jp",
-        # X86_INS_JRCXZ: "jrcxz",
-        # X86_INS_JS: "jz",
-    # }
-    # return conds[ty]
-
-# used most of the time
-INST_SYMB = {
-    X86_INS_JE: "==",
-    X86_INS_JNE: "!=",
-
-    # signed
-    X86_INS_JGE: ">=",
-    X86_INS_JL: "<",
-    X86_INS_JLE: "<=",
-    X86_INS_JG: ">",
-
-    # unsigned
-    X86_INS_JAE: "(unsigned) >=",
-    X86_INS_JA: "(unsigned) >",
-    X86_INS_JBE: "(unsigned) <=",
-    X86_INS_JB: "(unsigned) <",
-
-    # other flags
-    X86_INS_JNS: ">",
-    X86_INS_JS: "<",
-    X86_INS_JP: "% 2 ==",
-    X86_INS_JNP: "% 2 !=",
-    X86_INS_JCXZ: "cx ==",
-    X86_INS_JECXZ: "ecx ==",
-    X86_INS_JRCXZ: "rxc ==",
-    X86_INS_JNO: "overflow",
-    X86_INS_JO: "!overflow",
-
-    # other instructions
-    X86_INS_XOR: "^=",
-    X86_INS_OR: "|=",
-    X86_INS_AND: "&=",
-    X86_INS_SHR: ">>=",
-    X86_INS_SHL: "<<=",
-    X86_INS_IMUL: "*=",
-    X86_INS_ADD: "+=",
-    X86_INS_MOV: "=",
-    X86_INS_MOVSX: "=",
-    X86_INS_SUB: "-=",
-    X86_INS_CMP: "cmp",
-    X86_INS_DEC: "--",
-    X86_INS_INC: "++",
-}
-
-def inst_symbol(ty):
-    return INST_SYMB.get(ty, "UNKNOWN")
 
 
 def index(L, obj, k=0):

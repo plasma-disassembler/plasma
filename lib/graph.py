@@ -19,8 +19,9 @@
 
 import os
 import time
+
 from lib.paths import Paths
-from lib.utils import (BRANCH_NEXT, BRANCH_NEXT_JUMP, index, is_jump, debug__)
+from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, index, debug__
 
 
 class Graph:
@@ -100,13 +101,13 @@ class Graph:
     # Concat instructions in single block
     # jumps are in separated blocks
     def __simplify(self):
+        ARCH_UTILS = self.dis.load_arch_module().utils
         nodes = list(self.nodes.keys())
-
         start = time.clock()
 
         for curr in nodes:
             inst = self.nodes[curr]
-            if is_jump(inst[0]):
+            if ARCH_UTILS.is_jump(inst[0]):
                 continue
 
             if curr not in self.link_in or len(self.link_in[curr]) != 1:
@@ -115,7 +116,7 @@ class Graph:
             pred = self.link_in[curr][0]
 
             # don't fuse with jumps
-            if is_jump(self.nodes[pred][0]):
+            if ARCH_UTILS.is_jump(self.nodes[pred][0]):
                 continue
 
             if pred not in self.link_out or len(self.link_out[pred]) != 1:

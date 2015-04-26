@@ -26,8 +26,6 @@ from lib.utils import die, error
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
-from lib.output import Output
-from lib.ast import assign_colors
 from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
      ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail)
 
@@ -137,6 +135,7 @@ def load_file(ctx):
         die()
 
     ctx.dis = dis
+    ctx.libarch = dis.load_arch_module()
 
     if ctx.symfile:
         dis.load_user_sym_file(ctx.symfile)
@@ -208,12 +207,12 @@ def disasm(ctx):
     if ctx.vim:
         base = os.path.basename(ctx.filename)
         # re-assign if no colors
-        assign_colors(ctx, ast)
+        ctx.libarch.process_ast.assign_colors(ctx, ast)
         ctx.color = False
         generate_vim_syntax(ctx, base + ".vim")
         sys.stdout = open(base + ".rev", "w+")
 
-    o = Output(ctx)
+    o = ctx.libarch.output.Output(ctx)
     o.print_ast(ctx.addr, ast)
 
     if ctx.vim:

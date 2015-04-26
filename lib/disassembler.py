@@ -20,10 +20,9 @@
 import time
 
 from lib.graph import Graph
-from lib.utils import (is_call, is_cond_jump, is_uncond_jump, is_jump, 
-        is_ret, debug__)
+from lib.utils import debug__
 from lib.fileformat.binary import Binary, T_BIN_PE
-from lib.output import Output, print_no_end
+from lib.output import print_no_end
 from lib.colors import pick_color, color_addr, color_symbol, color_section
 from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
@@ -44,6 +43,17 @@ class Disassembler():
 
         self.md = CAPSTONE.Cs(arch, mode)
         self.md.detail = True
+        self.arch = arch
+        self.mode = mode
+
+
+    def load_arch_module(self):
+        import capstone as CAPSTONE
+        if self.arch == CAPSTONE.CS_ARCH_X86:
+            import lib.arch.x86 as ARCH
+        else:
+            raise Exception
+        return ARCH
 
 
     def init(self, addr):
@@ -75,12 +85,15 @@ class Disassembler():
 
     def dump(self, ctx, addr, lines):
         from capstone import CS_OP_IMM
+        ARCH = self.load_arch_module()
+        ARCH_UTILS = ARCH.utils
+        ARCH_OUTPUT = ARCH.output
 
         # set jumps color
         i = self.lazy_disasm(addr)
         l = 0
         while i is not None and l < lines:
-            if is_jump(i) and i.operands[0].type == CS_OP_IMM:
+            if ARCH_UTILS.is_jump(i) and i.operands[0].type == CS_OP_IMM:
                 pick_color(i.operands[0].value.imm)
             i = self.lazy_disasm(i.address + i.size)
             l += 1
@@ -89,7 +102,7 @@ class Disassembler():
         if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
-        o = Output(ctx)
+        o = ARCH_OUTPUT.Output(ctx)
 
         # dump
         i = self.lazy_disasm(addr)
@@ -101,18 +114,22 @@ class Disassembler():
 
 
     def print_calls(self, ctx):
+        ARCH = self.load_arch_module()
+        ARCH_UTILS = ARCH.utils
+        ARCH_OUTPUT = ARCH.output
+
         for i in self.md.disasm(self.data, self.virtual_addr):
-            if is_call(i):
+            if ARCH_UTILS.is_call(i):
                 self.code[i.address] = i
 
         # Here we have loaded all instructions we want to print
         if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
 
-        o = Output(ctx)
+        o = ARCH_OUTPUT.Output(ctx)
 
         for ad, i in self.code.items():
-            if is_call(i):
+            if ARCH_UTILS.is_call(i):
                 o.print_inst(i)
 
 
@@ -171,6 +188,7 @@ class Disassembler():
     # Generate a flow graph of the given function (addr)
     def get_graph(self, addr):
         from capstone import CS_OP_IMM
+        ARCH_UTILS = self.load_arch_module().utils
 
         curr = self.lazy_disasm(addr)
         gph = Graph(self, addr)
@@ -180,7 +198,7 @@ class Disassembler():
 
         while 1:
             if not gph.exists(curr):
-                if is_uncond_jump(curr) and len(curr.operands) > 0:
+                if ARCH_UTILS.is_uncond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == CS_OP_IMM:
                         addr = curr.operands[0].value.imm
                         nxt = self.lazy_disasm(addr)
@@ -192,7 +210,7 @@ class Disassembler():
                         gph.add_node(curr)
                     gph.uncond_jumps_set.add(curr.address)
 
-                elif is_cond_jump(curr) and len(curr.operands) > 0:
+                elif ARCH_UTILS.is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[0].type == CS_OP_IMM:
                         nxt_jump = self.lazy_disasm(curr.operands[0].value.imm)
                         direct_nxt = self.lazy_disasm(curr.address + curr.size)
@@ -205,7 +223,7 @@ class Disassembler():
                         gph.add_node(curr)
                     gph.cond_jumps_set.add(curr.address)
 
-                elif is_ret(curr):
+                elif ARCH_UTILS.is_ret(curr):
                     gph.add_node(curr)
 
                 else:

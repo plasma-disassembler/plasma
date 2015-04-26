@@ -20,7 +20,6 @@
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
-import lib.fileformat.binary
 import lib.utils
 from lib.exceptions import ExcNotAddr
 

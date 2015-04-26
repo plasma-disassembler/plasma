@@ -20,9 +20,8 @@
 import time
 
 from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
-        Ast_IfGoto, Ast_Ifelse, Ast_AndIf, assign_colors, search_local_vars,
-        fuse_inst_with_if, search_canary_plt)
-from lib.utils import invert_cond, BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
+        Ast_IfGoto, Ast_Ifelse, Ast_AndIf)
+from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from lib.exceptions import ExcIfelse
 
 
@@ -64,7 +63,7 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     cond_id = inst.id
     br = nxt[BRANCH_NEXT_JUMP]
     if c2:
-        cond_id = invert_cond(cond_id)
+        cond_id = ctx.libarch.utils.invert_cond(cond_id)
         br = nxt[BRANCH_NEXT]
 
     return Ast_IfGoto(inst, cond_id, br)
@@ -273,7 +272,9 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
             if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
                     last_else == endif and endif == endpoint and endpoint != -1:
                 endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
-                return (Ast_AndIf(jump_inst, invert_cond(jump_inst.id)), endpoint)
+                return (Ast_AndIf(jump_inst,
+                                  ctx.libarch.utils.invert_cond(jump_inst.id)),
+                                  endpoint)
 
     if else_addr == -1:
         else_addr = last_else
@@ -304,15 +305,15 @@ def generate_ast(ctx__, paths):
 
     start = time.clock()
 
-    search_local_vars(ctx, ast)
-    fuse_inst_with_if(ctx, ast)
-    search_canary_plt(ctx)
+    ctx.libarch.process_ast.search_local_vars(ctx, ast)
+    ctx.libarch.process_ast.fuse_inst_with_if(ctx, ast)
+    ctx.libarch.process_ast.search_canary_plt(ctx)
 
     elapsed = time.clock()
     elapsed = elapsed - start
     debug__("Functions for processing ast in %fs" % elapsed)
 
     if ctx.color:
-        assign_colors(ctx, ast)
+        ctx.libarch.process_ast.assign_colors(ctx, ast)
 
     return ast

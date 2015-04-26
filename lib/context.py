@@ -50,6 +50,7 @@ class Context():
         # Built objects
         self.dis = None
         self.gph = None
+        self.libarch = None
 
         self.raw32 = False
         self.raw64 = False

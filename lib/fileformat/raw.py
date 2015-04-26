@@ -18,9 +18,6 @@
 #
 
 
-import lib.fileformat.binary
-
-
 class Raw:
     def __init__(self, filename, bits):
         import capstone as CAPSTONE
