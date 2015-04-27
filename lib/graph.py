@@ -110,7 +110,8 @@ class Graph:
             if ARCH_UTILS.is_jump(inst[0]):
                 continue
 
-            if ad not in self.link_in or len(self.link_in[ad]) != 1:
+            if ad not in self.link_in or len(self.link_in[ad]) != 1 or \
+                    ad == self.entry_point_addr:
                 continue
 
             pred = self.link_in[ad][0]
