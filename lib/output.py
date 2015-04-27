@@ -115,7 +115,7 @@ class OutputAbs():
         raise NotImplementedError
 
 
-    def print_if_cond(self, jump_id, fused_inst):
+    def print_if_cond(self, jump_id, jump_cond, fused_inst):
         raise NotImplementedError
 
 

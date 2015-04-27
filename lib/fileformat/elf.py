@@ -52,11 +52,13 @@ class ELF:
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
             "x64": CAPSTONE.CS_ARCH_X86,
+            "ARM": CAPSTONE.CS_ARCH_ARM,
         }
 
         self.arch_mode_lookup = {
             "x86": CAPSTONE.CS_MODE_32,
             "x64": CAPSTONE.CS_MODE_64,
+            "ARM": CAPSTONE.CS_ARCH_ARM,
         }
 
 
@@ -79,13 +81,28 @@ class ELF:
         if rel is None or dyn is None:
             return
 
+        # TODO : are constants ?
+        PLT_SIZE = {
+            "x86": 16,
+            "x64": 16,
+            "ARM": 12,
+        }
+
+        PLT_FIRST_ENTRY_OFF = {
+            "x86": 16,
+            "x64": 16,
+            "ARM": 20,
+        }
+
+        arch = self.elf.get_machine_arch()
+
         relitems = list(rel.iter_relocations())
         dynsym = list(dyn.iter_symbols())
 
         plt = self.elf.get_section_by_name(b".plt") 
-        plt_entry_size = 16 # TODO
+        plt_entry_size = PLT_SIZE[arch]
 
-        off = plt.header.sh_addr + plt_entry_size
+        off = plt.header.sh_addr + PLT_FIRST_ENTRY_OFF[arch]
         k = 0
 
         while off < plt.header.sh_addr + plt.header.sh_size :

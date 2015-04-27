@@ -19,36 +19,29 @@
 
 import struct
 
+from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
+        ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
+        ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_CC_AL, ARM_INS_LDR, ARM_CC_PL,
+        ARM_CC_VS, ARM_CC_VC, ARM_CC_HI, ARM_CC_LS, ARM_CC_LO, ARM_CC_HS,
+        ARM_CC_MI)
+
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end)
 from lib.colors import (color, color_addr, color_retcall, color_string,
-        color_var, color_section)
+        color_var, color_section, color_keyword, color_type)
 from lib.utils import get_char, BYTES_PRINTABLE_SET
-from lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
+from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
-from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
-        X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
-        X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
-        X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
-        X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
-        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
-        X86_INS_TEST, X86_INS_JNS, X86_INS_JS, X86_INS_MUL, X86_INS_JP,
-        X86_INS_JNP, X86_INS_JCXZ, X86_INS_JECXZ, X86_INS_JRCXZ)
 
 
-ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR}
+ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
 
 
 # After these instructions we need to add a zero
-# example : jns ADDR -> if > 0
-JMP_ADD_ZERO = {
-    X86_INS_JNS,
-    X86_INS_JS,
-    X86_INS_JP,
-    X86_INS_JNP,
-    X86_INS_JCXZ,
-    X86_INS_JECXZ,
-    X86_INS_JRCXZ
+# example : bpl ADDR -> if >= 0
+COND_ADD_ZERO = {
+    ARM_CC_PL,
+    ARM_CC_MI,
 }
 
 
@@ -57,11 +50,11 @@ class Output(OutputAbs):
     # modified, we reprint the original instruction later)
     def print_operand(self, i, num_op, hexa=False, show_deref=True):
         def inv(n):
-            return n == X86_OP_INVALID
+            return n == ARM_OP_INVALID
 
         op = i.operands[num_op]
 
-        if op.type == X86_OP_IMM:
+        if op.type == ARM_OP_IMM:
             imm = op.value.imm
             sec_name, is_data = self.binary.is_address(imm)
 
@@ -75,8 +68,6 @@ class Output(OutputAbs):
                 if imm in self.binary.reverse_symbols:
                     print_no_end(" ")
                     self.print_symbol(imm)
-            elif op.size == 1:
-                print_no_end(color_string("'%s'" % get_char(imm)))
             elif hexa:
                 print_no_end(hex(imm))
             else:
@@ -97,29 +88,30 @@ class Output(OutputAbs):
 
             return False
 
-        elif op.type == X86_OP_REG:
+        elif op.type == ARM_OP_REG:
             print_no_end(i.reg_name(op.value.reg))
             return False
 
-        elif op.type == X86_OP_FP:
+        elif op.type == ARM_OP_FP:
             print_no_end("%f" % op.value.fp)
             return False
 
-        elif op.type == X86_OP_MEM:
+        elif op.type == ARM_OP_MEM:
             mm = op.mem
 
-            if not inv(mm.base) and mm.disp != 0 \
-                and inv(mm.segment) and inv(mm.index):
+            # TODO : try to do the same thing as x86
+            # if not inv(mm.base) and mm.disp != 0 \
+                # and inv(mm.segment) and inv(mm.index):
 
-                if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
-                       self.var_name_exists(i, num_op):
-                    print_no_end(color_var(self.get_var_name(i, num_op)))
-                    return True
-                elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                    addr = i.address + i.size + mm.disp
-                    print_no_end("*({0})".format(
-                        self.binary.reverse_symbols.get(addr, hex(addr))))
-                    return True
+                # if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
+                       # self.var_name_exists(i, num_op):
+                    # print_no_end(color_var(self.get_var_name(i, num_op)))
+                    # return True
+                # elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
+                    # addr = i.address + i.size + mm.disp
+                    # print_no_end("*({0})".format(
+                        # self.binary.reverse_symbols.get(addr, hex(addr))))
+                    # return True
 
             printed = False
             if show_deref:
@@ -164,11 +156,9 @@ class Output(OutputAbs):
 
 
     def print_if_cond(self, jump_id, jump_cond, fused_inst):
-        # NOTE: in x86 jump_id == jump_cond
-
         if fused_inst is None:
             print_no_end(cond_symbol(jump_cond))
-            if jump_cond in JMP_ADD_ZERO:
+            if jump_cond in COND_ADD_ZERO:
                 print_no_end(" 0")
             return
 
@@ -180,22 +170,12 @@ class Output(OutputAbs):
         self.print_operand(fused_inst, 0)
         print_no_end(" ")
 
-        if fused_inst.id == X86_INS_TEST:
-            print_no_end(cond_symbol(jump_cond))
-        elif assignment:
-            print_no_end(inst_symbol(fused_inst))
-            print_no_end(" ")
-            self.print_operand(fused_inst, 1)
-            print_no_end(") ")
-            print_no_end(cond_symbol(jump_cond))
-        else:
-            print_no_end(cond_symbol(jump_cond))
-            print_no_end(" ")
-            self.print_operand(fused_inst, 1)
+        print_no_end(cond_symbol(jump_cond))
+        print_no_end(" ")
+        self.print_operand(fused_inst, 1)
 
-        if fused_inst.id == X86_INS_TEST or \
-                (fused_inst.id != X86_INS_CMP and \
-                 (jump_cond in JMP_ADD_ZERO or assignment)):
+        if (fused_inst.id != ARM_INS_CMP and \
+                (jump_cond in COND_ADD_ZERO or assignment)):
             print_no_end(" 0")
 
         print_no_end(")")
@@ -236,7 +216,7 @@ class Output(OutputAbs):
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
-            if i.operands[0].type != X86_OP_IMM:
+            if i.operands[0].type != ARM_OP_IMM:
                 print_no_end(i.mnemonic + " ")
                 self.print_operand(i, 0)
                 if is_uncond_jump(i) and self.ctx.comments:
@@ -250,83 +230,37 @@ class Output(OutputAbs):
                 print(i.mnemonic + " " + hex(addr))
             return
 
-
         modified = False
 
-        inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
-                X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
-                X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR]
+        if i.cc != ARM_CC_AL:
+            print_no_end(color_keyword("if "))
+            print_no_end(cond_symbol(i.cc))
+            if i.cc in COND_ADD_ZERO:
+                print_no_end("0")
+            print_no_end(" : ")
+
+        inst_check = [ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
+                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_LDR]
 
         if i.id in inst_check:
             self.print_operand(i, 0)
 
-            if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
-                    i.operands[1].value.imm == -1):
-                print_no_end(" = -1")
-
-            elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
-                    i.operands[1].value.imm == 0):
-                print_no_end(" = 0")
-
-            elif (all(op.type == X86_OP_REG for op in i.operands) and
-                    len(set(op.value.reg for op in i.operands)) == 1 and
-                    i.id == X86_INS_XOR):
-                print_no_end(" = 0")
-
-            elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
-                print_no_end(inst_symbol(i))
-
-            elif i.id == X86_INS_LEA:
-                print_no_end(" = &(")
-                self.print_operand(i, 1)
-                print_no_end(")")
-
-            elif i.id == X86_INS_IMUL and len(i.operands) == 3:
-                print_no_end(" = ")
-                self.print_operand(i, 1)
-                print_no_end(" " + inst_symbol(i).rstrip('=') + " ")
-                self.print_operand(i, 2)
-
-            else:
+            if i.id == ARM_INS_CMP:
                 print_no_end(" " + inst_symbol(i) + " ")
                 self.print_operand(i, 1)
 
-            modified = True
+            elif i.id == ARM_INS_LDR:
+                # TODO
+                print_no_end(" " + inst_symbol(i) + " ")
+                self.print_operand(i, 1, show_deref=False)
 
-        elif i.id == X86_INS_CDQE:
-            print_no_end("rax = eax")
-            modified = True
+            else:
+                print_no_end(" = ")
+                self.print_operand(i, 1)
+                if len(i.operands) == 3:
+                    print_no_end(" " + inst_symbol(i) + " ")
+                    self.print_operand(i, 2)
 
-        elif i.id == X86_INS_IDIV:
-            print_no_end('eax = edx:eax / ')
-            self.print_operand(i, 0)
-            print_no_end('; edx = edx:eax % ')
-            self.print_operand(i, 0)
-            modified = True
-
-        elif i.id == X86_INS_MUL:
-            lut = {1: ("al", "ax"), 2: ("ax", "dx:ax"), 4: ("eax", "edx:eax"),
-                    8: ("rax", "rdx:rax")}
-            src, dst = lut[i.operands[0].size]
-            print_no_end('{0} = {1} * '.format(dst, src))
-            self.print_operand(i, 0)
-            modified = True
-
-        elif i.id == X86_INS_NOT:
-            self.print_operand(i, 0)
-            print_no_end(' ^= -1')
-            modified = True
-
-        elif i.id == X86_INS_SCASB and i.prefix[0] == X86_PREFIX_REPNE:
-            print_no_end('while (')
-            self.print_operand(i, 1)
-            print_no_end(' != ')
-            self.print_operand(i, 0)
-            print_no_end(') { ')
-            self.print_operand(i, 1, show_deref=False)
-            print_no_end('++; cx--; } ')
-            self.print_operand(i, 1, show_deref=False)
-            print_no_end('++; cx--;')
             modified = True
 
         else:
@@ -338,6 +272,9 @@ class Output(OutputAbs):
                     print_no_end(", ")
                     modified |= self.print_operand(i, k)
                     k += 1
+
+        if i.update_flags and i.id != ARM_INS_CMP:
+            print_no_end(color_type(" (FLAGS)"))
 
         if modified and self.ctx.comments:
             print_comment_no_end(" # " + get_inst_str())

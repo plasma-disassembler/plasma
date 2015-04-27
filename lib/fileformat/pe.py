@@ -39,8 +39,9 @@ class PE:
 
         self.arch_lookup = {
             # See machine_types in pefile.py
-            0x14c: CAPSTONE.CS_ARCH_X86, # i386
+            0x014c: CAPSTONE.CS_ARCH_X86, # i386
             0x8664: CAPSTONE.CS_ARCH_X86, # AMD64
+            # TODO ARM
         }
 
         self.arch_mode_lookup = {

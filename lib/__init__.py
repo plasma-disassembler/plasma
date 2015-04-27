@@ -33,7 +33,7 @@ from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
 def parse_args():
     # Parse arguments
     parser = ArgumentParser(description=
-        'Reverse engineering for x86 binaries. Generation of pseudo-C. '
+        'Reverse engineering for x86/ARM binaries. Generation of pseudo-C. '
         'Supported formats : ELF, PE. https://github.com/joelpx/reverse')
     parser.add_argument('filename', nargs='?', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')

@@ -63,7 +63,7 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     cond_id = inst.id
     br = nxt[BRANCH_NEXT_JUMP]
     if c2:
-        cond_id = ctx.libarch.utils.invert_cond(cond_id)
+        cond_id = ctx.libarch.utils.invert_cond(inst)
         br = nxt[BRANCH_NEXT]
 
     return Ast_IfGoto(inst, cond_id, br)
@@ -273,7 +273,7 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
                     last_else == endif and endif == endpoint and endpoint != -1:
                 endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
                 return (Ast_AndIf(jump_inst,
-                                  ctx.libarch.utils.invert_cond(jump_inst.id)),
+                                  ctx.libarch.utils.invert_cond(jump_inst)),
                                   endpoint)
 
     if else_addr == -1:

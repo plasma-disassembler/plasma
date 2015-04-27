@@ -1,8 +1,8 @@
 Reverse
 =======
 
-Reverse engineering for x86 binaries. Generate a more readable code (pseudo-C)
-with colored syntax.
+Reverse engineering for x86/ARM binaries. Generate a more readable code
+(pseudo-C) with colored syntax.
 
 Supported formats : `ELF`, `PE`.
 

@@ -60,8 +60,12 @@ OPPOSITES = [
     ]
 OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
 
-def invert_cond(ty):
-    return OPPOSITES.get(ty, -1)
+def invert_cond(i):
+    return OPPOSITES.get(i.id, -1)
+
+
+def get_cond(i):
+    return i.id
 
 
 # used most of the time
@@ -108,5 +112,10 @@ INST_SYMB = {
     X86_INS_INC: "++",
 }
 
-def inst_symbol(ty):
+
+def cond_symbol(ty):
     return INST_SYMB.get(ty, "UNKNOWN")
+
+
+def inst_symbol(i):
+    return INST_SYMB.get(i.id, "UNKNOWN")
