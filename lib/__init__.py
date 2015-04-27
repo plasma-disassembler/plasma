@@ -92,6 +92,7 @@ def parse_args():
     ctx.vim             = args.vim
     ctx.interactive     = args.interactive
     ctx.lines           = args.lines
+    ctx.graph           = args.graph
     return ctx
 
 
