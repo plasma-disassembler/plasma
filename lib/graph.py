@@ -105,15 +105,15 @@ class Graph:
         nodes = list(self.nodes.keys())
         start = time.clock()
 
-        for curr in nodes:
-            inst = self.nodes[curr]
+        for ad in nodes:
+            inst = self.nodes[ad]
             if ARCH_UTILS.is_jump(inst[0]):
                 continue
 
-            if curr not in self.link_in or len(self.link_in[curr]) != 1:
+            if ad not in self.link_in or len(self.link_in[ad]) != 1:
                 continue
 
-            pred = self.link_in[curr][0]
+            pred = self.link_in[ad][0]
 
             # don't fuse with jumps
             if ARCH_UTILS.is_jump(self.nodes[pred][0]):
@@ -122,23 +122,23 @@ class Graph:
             if pred not in self.link_out or len(self.link_out[pred]) != 1:
                 continue
 
-            if curr in self.link_out:
-                self.link_out[pred] = self.link_out[curr]
+            if ad in self.link_out:
+                self.link_out[pred] = self.link_out[ad]
             else:
                 del self.link_out[pred]
 
-            self.nodes[pred] += self.nodes[curr]
+            self.nodes[pred] += self.nodes[ad]
 
-            if curr in self.link_out:
-                del self.link_out[curr]
+            if ad in self.link_out:
+                del self.link_out[ad]
 
-            del self.link_in[curr]
-            del self.nodes[curr]
+            del self.link_in[ad]
+            del self.nodes[ad]
 
-            # replace all addr wich refers to curr
+            # replace all addr wich refers to ad
             for k, lst_i in self.link_in.items():
                 try:
-                    lst_i[lst_i.index(curr)] = pred
+                    lst_i[lst_i.index(ad)] = pred
                 except ValueError:
                     pass
 
