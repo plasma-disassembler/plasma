@@ -26,7 +26,8 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_CC_MI, ARM_INS_TST, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
         ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
         ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
-        ARM_SFT_LSR_REG, ARM_SFT_ROR_REG, ARM_SFT_RRX_REG)
+        ARM_SFT_LSR_REG, ARM_SFT_ROR_REG, ARM_SFT_RRX_REG, ARM_INS_STRB,
+        ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR)
 
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
@@ -47,6 +48,13 @@ LDR_TYPE = {
     ARM_INS_LDRSB: "unsigned byte",
     ARM_INS_LDRSH: "unsigned short",
     ARM_INS_LDRD: "double",
+}
+
+STR_TYPE = {
+    ARM_INS_STRB: "byte",
+    ARM_INS_STRH: "short",
+    ARM_INS_STR: "word",
+    ARM_INS_STRD: "double",
 }
 
 
@@ -284,12 +292,22 @@ class Output(OutputAbs):
         ldr_check = {ARM_INS_LDR, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
                 ARM_INS_LDRSH, ARM_INS_LDRD}
 
+        str_check = {ARM_INS_STR, ARM_INS_STRB, ARM_INS_STRH, ARM_INS_STRD}
+
         if i.id in ldr_check:
             self.print_operand(i, 0)
             print_no_end(" = (")
             print_no_end(LDR_TYPE[i.id])
             print_no_end(") ")
             self.print_operand(i, 1)
+            modified = True
+
+        elif i.id in str_check:
+            self.print_operand(i, 1)
+            print_no_end(" = (")
+            print_no_end(STR_TYPE[i.id])
+            print_no_end(") ")
+            self.print_operand(i, 0)
             modified = True
 
         elif i.id in inst_check:
