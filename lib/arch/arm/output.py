@@ -23,7 +23,7 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
         ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_CC_AL, ARM_INS_LDR, ARM_CC_PL,
         ARM_CC_VS, ARM_CC_VC, ARM_CC_HI, ARM_CC_LS, ARM_CC_LO, ARM_CC_HS,
-        ARM_CC_MI)
+        ARM_CC_MI, ARM_INS_TST)
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end)
@@ -273,7 +273,7 @@ class Output(OutputAbs):
                     modified |= self.print_operand(i, k)
                     k += 1
 
-        if i.update_flags and i.id != ARM_INS_CMP:
+        if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
             print_no_end(color_type(" (FLAGS)"))
 
         if modified and self.ctx.comments:
