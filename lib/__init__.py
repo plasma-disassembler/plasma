@@ -149,7 +149,7 @@ def init_addr(ctx):
     # Maybe ctx.entry is a symbol and doesn't exist.
     # But we need an address for disassembling. After that, if the file
     # is PE we load imported symbols and search in the code for calls.
-    if ctx.syms or ctx.calls or ctx.entry == "EP":
+    if ctx.calls or ctx.entry == "EP":
         addr = ctx.dis.binary.get_entry_point()
     else:
         try:
@@ -225,14 +225,14 @@ def reverse(ctx):
     if not load_file(ctx):
         die()
 
+    if ctx.syms:
+        ctx.dis.print_symbols(ctx.sectionsname)
+        return
+
     init_addr(ctx)
 
     if ctx.calls:
         ctx.dis.print_calls(ctx)
-        return
-
-    if ctx.syms:
-        ctx.dis.print_symbols(ctx.sectionsname)
         return
 
     if ctx.dump:

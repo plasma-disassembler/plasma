@@ -376,8 +376,12 @@ class Interactive():
         if len(args) != 1:
             error("this command takes no args")
             return
-        init_addr(self.ctx)
-        self.ctx.dis.print_calls(self.ctx)
+        self.ctx.calls = True
+        if init_addr(self.ctx):
+            self.ctx.dis.print_calls(self.ctx)
+            self.ctx.entry = None
+            self.ctx.addr = 0
+        self.ctx.calls = False
 
 
     def __exec_sym(self, args):
@@ -399,9 +403,6 @@ class Interactive():
         if len(args) == 2:
             error("an address is required")
             return
-
-
-
 
         # Save new symbol
         addr = int(args[2], 16)
