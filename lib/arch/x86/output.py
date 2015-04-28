@@ -253,9 +253,9 @@ class Output(OutputAbs):
 
         modified = False
 
-        inst_check = [X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
+        inst_check = {X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
                 X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
-                X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR]
+                X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR}
 
         if i.id in inst_check:
             self.print_operand(i, 0)

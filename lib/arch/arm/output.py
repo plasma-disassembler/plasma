@@ -239,8 +239,8 @@ class Output(OutputAbs):
                 print_no_end("0")
             print_no_end(" : ")
 
-        inst_check = [ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
-                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_LDR]
+        inst_check = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
+                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_LDR}
 
         if i.id in inst_check:
             self.print_operand(i, 0)
