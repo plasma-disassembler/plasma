@@ -23,7 +23,11 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
         ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_CC_AL, ARM_INS_LDR, ARM_CC_PL,
         ARM_CC_VS, ARM_CC_VC, ARM_CC_HI, ARM_CC_LS, ARM_CC_LO, ARM_CC_HS,
-        ARM_CC_MI, ARM_INS_TST)
+        ARM_CC_MI, ARM_INS_TST, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
+        ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
+        ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
+        ARM_SFT_LSR_REG, ARM_SFT_ROR_REG, ARM_SFT_RRX_REG)
+
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end)
@@ -35,6 +39,15 @@ from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
 
 
 ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
+
+LDR_TYPE = {
+    ARM_INS_LDRB: "unsigned byte",
+    ARM_INS_LDRH: "unsigned short",
+    ARM_INS_LDR: "unsigned word",
+    ARM_INS_LDRSB: "unsigned byte",
+    ARM_INS_LDRSH: "unsigned short",
+    ARM_INS_LDRD: "double",
+}
 
 
 # After these instructions we need to add a zero
@@ -126,12 +139,38 @@ class Output(OutputAbs):
                 printed = True
 
             if not inv(mm.index):
+                shift = op.shift
+
                 if printed:
                     print_no_end(" + ")
+
+                if shift.type != 0:
+                    print_no_end("(")
+
                 if mm.scale == 1:
                     print_no_end("%s" % i.reg_name(mm.index))
                 else:
                     print_no_end("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
+
+                if shift.type != 0:
+                    if shift.type == ARM_SFT_LSL:
+                        print_no_end(" << %d)" % shift.value)
+                    elif shift.type == ARM_SFT_LSR:
+                        print_no_end(" >> %d)" % shift.value)
+                    elif shift.type == ARM_SFT_ROR:
+                        print_no_end(" rot>> %d)" % shift.value)
+                    elif shift.type == ARM_SFT_ASR:
+                        print_no_end(" arith>> %d)" % shift.value)
+
+                    elif shift.type == ARM_SFT_LSL_REG:
+                        print_no_end(" << %s)" % i.reg_name(shift.value))
+                    elif shift.type == ARM_SFT_LSR_REG:
+                        print_no_end(" >> %s)" % i.reg_name(shift.value))
+                    elif shift.type == ARM_SFT_ROR_REG:
+                        print_no_end(" rot>> %s)" % i.reg_name(shift.value))
+                    elif shift.type == ARM_SFT_ASR_REG:
+                        print_no_end(" arith>> %s)" % i.reg_name(shift.value))
+
                 printed = True
 
             if mm.disp != 0:
@@ -240,19 +279,25 @@ class Output(OutputAbs):
             print_no_end(" : ")
 
         inst_check = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
-                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_LDR}
+                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP}
 
-        if i.id in inst_check:
+        ldr_check = {ARM_INS_LDR, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
+                ARM_INS_LDRSH, ARM_INS_LDRD}
+
+        if i.id in ldr_check:
+            self.print_operand(i, 0)
+            print_no_end(" = (")
+            print_no_end(LDR_TYPE[i.id])
+            print_no_end(") ")
+            self.print_operand(i, 1)
+            modified = True
+
+        elif i.id in inst_check:
             self.print_operand(i, 0)
 
             if i.id == ARM_INS_CMP:
                 print_no_end(" " + inst_symbol(i) + " ")
                 self.print_operand(i, 1)
-
-            elif i.id == ARM_INS_LDR:
-                # TODO
-                print_no_end(" " + inst_symbol(i) + " ")
-                self.print_operand(i, 1, show_deref=False)
 
             else:
                 print_no_end(" = ")
