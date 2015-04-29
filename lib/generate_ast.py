@@ -60,7 +60,7 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     # endloop:
     #
 
-    cond_id = inst.id
+    cond_id = ctx.libarch.utils.get_cond(inst)
     br = nxt[BRANCH_NEXT_JUMP]
     if c2:
         cond_id = ctx.libarch.utils.invert_cond(inst)
