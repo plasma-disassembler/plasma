@@ -266,15 +266,15 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
             # TODO not sure about endpoint == -1
             # tests/break3
             if if_addr == last_else and endpoint == -1:
-                return (Ast_AndIf(jump_inst, jump_inst.id), else_addr)
+                return (Ast_AndIf(jump_inst, ctx.libarch.utils.get_cond(jump_inst)),
+                        else_addr)
 
             # if else_addr == -1 or else_addr == last_else:
             if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
                     last_else == endif and endif == endpoint and endpoint != -1:
                 endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
-                return (Ast_AndIf(jump_inst,
-                                  ctx.libarch.utils.invert_cond(jump_inst)),
-                                  endpoint)
+                return (Ast_AndIf(jump_inst, ctx.libarch.utils.invert_cond(jump_inst)),
+                        endpoint)
 
     if else_addr == -1:
         else_addr = last_else
