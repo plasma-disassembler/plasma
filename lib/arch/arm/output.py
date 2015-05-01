@@ -66,7 +66,7 @@ COND_ADD_ZERO = {
 
 
 class Output(OutputAbs):
-    def print_shift(self, shift):
+    def print_shift(self, i, shift):
         if shift.type == ARM_SFT_LSL:
             print_no_end(" << %d)" % shift.value)
         elif shift.type == ARM_SFT_LSR:
@@ -138,13 +138,13 @@ class Output(OutputAbs):
         elif op.type == ARM_OP_REG:
             print_no_end(i.reg_name(op.value.reg))
             if op.shift.type:
-                self.print_shift(op.shift)
+                self.print_shift(i, op.shift)
             return False
 
         elif op.type == ARM_OP_FP:
             print_no_end("%f" % op.value.fp)
             if op.shift.type:
-                self.print_shift(op.shift)
+                self.print_shift(i, op.shift)
             return False
 
         elif op.type == ARM_OP_MEM:
@@ -184,7 +184,7 @@ class Output(OutputAbs):
                     print_no_end("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
 
                 if op.shift.type:
-                    self.print_shift(op.shift)
+                    self.print_shift(i, op.shift)
 
                 printed = True
 
