@@ -26,7 +26,7 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
         ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
         ARM_SFT_LSR_REG, ARM_SFT_ROR_REG, ARM_SFT_RRX_REG, ARM_INS_STRB,
-        ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR)
+        ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR, ARM_REG_PC)
 
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
@@ -150,19 +150,17 @@ class Output(OutputAbs):
         elif op.type == ARM_OP_MEM:
             mm = op.mem
 
-            # TODO : try to do the same thing as x86
-            # if not inv(mm.base) and mm.disp != 0 \
-                # and inv(mm.segment) and inv(mm.index):
+            if not inv(mm.base) and mm.disp != 0 and inv(mm.index):
 
                 # if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
                        # self.var_name_exists(i, num_op):
                     # print_no_end(color_var(self.get_var_name(i, num_op)))
                     # return True
-                # elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                    # addr = i.address + i.size + mm.disp
-                    # print_no_end("*({0})".format(
-                        # self.binary.reverse_symbols.get(addr, hex(addr))))
-                    # return True
+                if mm.base == ARM_REG_PC:
+                    addr = i.address + i.size + mm.disp
+                    print_no_end("*({0})".format(
+                        self.binary.reverse_symbols.get(addr, hex(addr))))
+                    return True
 
             printed = False
             if show_deref:
