@@ -66,6 +66,30 @@ COND_ADD_ZERO = {
 
 
 class Output(OutputAbs):
+    def print_shift(self, shift):
+        if shift.type == ARM_SFT_LSL:
+            print_no_end(" << %d)" % shift.value)
+        elif shift.type == ARM_SFT_LSR:
+            print_no_end(" >> %d)" % shift.value)
+        elif shift.type == ARM_SFT_ROR:
+            print_no_end(" rot>> %d)" % shift.value)
+        elif shift.type == ARM_SFT_ASR:
+            print_no_end(" arith>> %d)" % shift.value)
+        elif shift.type == ARM_SFT_RRX:
+            print_no_end(" rrx>> %s)" % shift.value)
+
+        elif shift.type == ARM_SFT_LSL_REG:
+            print_no_end(" << %s)" % i.reg_name(shift.value))
+        elif shift.type == ARM_SFT_LSR_REG:
+            print_no_end(" >> %s)" % i.reg_name(shift.value))
+        elif shift.type == ARM_SFT_ROR_REG:
+            print_no_end(" rot>> %s)" % i.reg_name(shift.value))
+        elif shift.type == ARM_SFT_ASR_REG:
+            print_no_end(" arith>> %s)" % i.reg_name(shift.value))
+        elif shift.type == ARM_SFT_RRX_REG:
+            print_no_end(" rrx>> %s)" % i.reg_name(shift.value))
+
+
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
     def print_operand(self, i, num_op, hexa=False, show_deref=True):
@@ -73,6 +97,9 @@ class Output(OutputAbs):
             return n == ARM_OP_INVALID
 
         op = i.operands[num_op]
+
+        if op.shift.type:
+            print_no_end("(")
 
         if op.type == ARM_OP_IMM:
             imm = op.value.imm
@@ -110,10 +137,14 @@ class Output(OutputAbs):
 
         elif op.type == ARM_OP_REG:
             print_no_end(i.reg_name(op.value.reg))
+            if op.shift.type:
+                self.print_shift(op.shift)
             return False
 
         elif op.type == ARM_OP_FP:
             print_no_end("%f" % op.value.fp)
+            if op.shift.type:
+                self.print_shift(op.shift)
             return False
 
         elif op.type == ARM_OP_MEM:
@@ -146,41 +177,16 @@ class Output(OutputAbs):
                 printed = True
 
             if not inv(mm.index):
-                shift = op.shift
-
                 if printed:
                     print_no_end(" + ")
-
-                if shift.type != 0:
-                    print_no_end("(")
 
                 if mm.scale == 1:
                     print_no_end("%s" % i.reg_name(mm.index))
                 else:
                     print_no_end("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
 
-                if shift.type != 0:
-                    if shift.type == ARM_SFT_LSL:
-                        print_no_end(" << %d)" % shift.value)
-                    elif shift.type == ARM_SFT_LSR:
-                        print_no_end(" >> %d)" % shift.value)
-                    elif shift.type == ARM_SFT_ROR:
-                        print_no_end(" rot>> %d)" % shift.value)
-                    elif shift.type == ARM_SFT_ASR:
-                        print_no_end(" arith>> %d)" % shift.value)
-                    elif shift.type == ARM_SFT_RRX:
-                        print_no_end(" rrx>> %s)" % shift.value)
-
-                    elif shift.type == ARM_SFT_LSL_REG:
-                        print_no_end(" << %s)" % i.reg_name(shift.value))
-                    elif shift.type == ARM_SFT_LSR_REG:
-                        print_no_end(" >> %s)" % i.reg_name(shift.value))
-                    elif shift.type == ARM_SFT_ROR_REG:
-                        print_no_end(" rot>> %s)" % i.reg_name(shift.value))
-                    elif shift.type == ARM_SFT_ASR_REG:
-                        print_no_end(" arith>> %s)" % i.reg_name(shift.value))
-                    elif shift.type == ARM_SFT_RRX_REG:
-                        print_no_end(" rrx>> %s)" % i.reg_name(shift.value))
+                if op.shift.type:
+                    self.print_shift(op.shift)
 
                 printed = True
 
