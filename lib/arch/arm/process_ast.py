@@ -17,12 +17,12 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from capstone.arm import ARM_OP_IMM, ARM_INS_CMP
+from capstone.arm import ARM_OP_IMM, ARM_INS_CMP, ARM_CC_AL
 
 from lib.colors import pick_color
 from lib.utils import BRANCH_NEXT
 from lib.ast import (Ast_Branch, Ast_Jmp, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
-        Ast_AndIf)
+        Ast_AndIf, Ast_If_cond)
 from lib.arch.arm.output import ASSIGNMENT_OPS
 from lib.arch.arm.utils import is_uncond_jump
 
@@ -53,10 +53,13 @@ def assign_colors(ctx, ast):
         if ast.epilog != None:
             assign_colors(ctx, ast.epilog)
 
+    elif isinstance(ast, Ast_If_cond):
+        assign_colors(ctx, ast.br)
+
 
 def fuse_inst_with_if(ctx, ast):
     if isinstance(ast, Ast_Branch):
-        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
+        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf, Ast_If_cond)
         for i, n in enumerate(ast.nodes):
             # TODO : try to do the same thing as x86
             if isinstance(n, list):
@@ -75,3 +78,56 @@ def fuse_inst_with_if(ctx, ast):
         fuse_inst_with_if(ctx, ast.branch)
         if ast.epilog != None:
             fuse_inst_with_if(ctx, ast.epilog)
+
+
+def convert_cond_to_if(ctx, ast):
+    # Temporary dict, because we can't modify nodes while we are
+    # looping, we store new branchs here with the corresponding index
+    added = {}
+
+    def add_br(i, last_cond, br_lst):
+        if br_lst:
+            br = Ast_Branch()
+            br.add(br_lst)
+            if last_cond == ARM_CC_AL:
+                added[i].add(br)
+            else:
+                added[i].add(Ast_If_cond(last_cond, br))
+
+    if isinstance(ast, Ast_Branch):
+        for i, n in enumerate(ast.nodes):
+            if isinstance(n, list):
+                # Instead of splitting the block in the parent branch
+                # we add a new branch which contains all splits
+
+                added[i] = Ast_Branch()
+                blk = n
+                last_cond = blk[0].cc
+                br = []
+
+                # Fuse instructions with same condition
+                k = 0
+                for k, inst in enumerate(blk):
+                    if inst.cc == last_cond:
+                        br.append(inst)
+                    else:
+                        add_br(i, last_cond, br)
+                        br = [inst]
+                    last_cond = inst.cc
+
+                add_br(i, last_cond, br)
+
+            else: # ast
+                convert_cond_to_if(ctx, n)
+
+        for i, br in added.items():
+            ast.nodes[i] = br
+
+    elif isinstance(ast, Ast_Ifelse):
+        convert_cond_to_if(ctx, ast.br_next_jump)
+        convert_cond_to_if(ctx, ast.br_next)
+
+    elif isinstance(ast, Ast_Loop):
+        convert_cond_to_if(ctx, ast.branch)
+        if ast.epilog != None:
+            convert_cond_to_if(ctx, ast.epilog)

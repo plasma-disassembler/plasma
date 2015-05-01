@@ -79,12 +79,14 @@ class OutputAbs():
         if self.ctx.comments:
             if fused_inst != None:
                 self.print_inst(fused_inst, tab, "# ")
-            self.print_inst(jump_inst, tab, "# ")
+            if jump_inst != None:
+                self.print_inst(jump_inst, tab, "# ")
         else:
             # Otherwise print only the address if referenced
             if fused_inst != None:
                 self.print_addr_if_needed(fused_inst, tab)
-            self.print_addr_if_needed(jump_inst, tab)
+            if jump_inst != None:
+                self.print_addr_if_needed(jump_inst, tab)
 
 
     def print_vars_type(self):

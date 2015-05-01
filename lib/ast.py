@@ -69,6 +69,29 @@ class Ast_AndIf:
         print()
 
 
+# This is used for ARM to fuse instructions which have the same condition
+class Ast_If_cond:
+    def __init__(self, cond_id, br):
+        self.cond_id = cond_id
+        self.br = br
+        self.fused_inst = None
+
+    def print(self, o, tab=0):
+        o.print_commented_jump(None, self.fused_inst, tab)
+        print_tabbed_no_end(color_keyword("if "), tab)
+        o.print_if_cond(self.cond_id, self.fused_inst)
+
+        # If it contains only one instruction
+        if self.fused_inst == None and len(self.br.nodes) == 1 and \
+                len(self.br.nodes[0]) == 1 and isinstance(self.br.nodes[0], list):
+            print_no_end(" :  ")
+            o.print_inst(self.br.nodes[0][0], 0)
+        else:
+            print(" {")
+            self.br.print(o, tab+1)
+            print_tabbed("}", tab)
+
+
 class Ast_Ifelse:
     def __init__(self, jump_inst, br_next_jump, br_next):
         self.jump_inst = jump_inst

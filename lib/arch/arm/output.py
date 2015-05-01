@@ -21,7 +21,7 @@ import struct
 
 from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
-        ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_CC_AL, ARM_INS_LDR, ARM_CC_PL,
+        ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_INS_LDR, ARM_CC_PL,
         ARM_CC_MI, ARM_INS_TST, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
         ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
         ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
@@ -32,7 +32,7 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end)
 from lib.colors import (color, color_addr, color_retcall, color_string,
-        color_section, color_keyword, color_type)
+        color_section, color_type)
 from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
@@ -285,13 +285,6 @@ class Output(OutputAbs):
             return
 
         modified = False
-
-        if i.cc != ARM_CC_AL:
-            print_no_end(color_keyword("if "))
-            print_no_end(cond_symbol(i.cc))
-            if i.cc in COND_ADD_ZERO:
-                print_no_end("0")
-            print_no_end(" : ")
 
         inst_check = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
                 ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP}
