@@ -85,7 +85,7 @@ def search_local_vars(ctx, ast):
         return n == X86_OP_INVALID
 
     def save_vars(ctx, i):
-        for op in inst.operands:
+        for op in i.operands:
             mm = op.mem
             if not inv(mm.base) and mm.disp != 0 \
                     and inv(mm.segment) and inv(mm.index) \
@@ -121,7 +121,7 @@ def search_local_vars(ctx, ast):
             search_local_vars(ctx, ast.epilog)
 
 
-def search_canary_plt(ctx):
+def search_canary_plt(ctx, unused_ast):
     def inv(n):
         return n == X86_OP_INVALID
 

@@ -75,11 +75,3 @@ def fuse_inst_with_if(ctx, ast):
         fuse_inst_with_if(ctx, ast.branch)
         if ast.epilog != None:
             fuse_inst_with_if(ctx, ast.epilog)
-
-
-def search_local_vars(ctx, ast):
-    return
-
-
-def search_canary_plt(ctx):
-    return

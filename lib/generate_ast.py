@@ -305,9 +305,8 @@ def generate_ast(ctx__, paths):
 
     start = time.clock()
 
-    ctx.libarch.process_ast.search_local_vars(ctx, ast)
-    ctx.libarch.process_ast.fuse_inst_with_if(ctx, ast)
-    ctx.libarch.process_ast.search_canary_plt(ctx)
+    for func in ctx.libarch.registered:
+        func(ctx, ast)
 
     elapsed = time.clock()
     elapsed = elapsed - start
