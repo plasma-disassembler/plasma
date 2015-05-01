@@ -24,7 +24,7 @@ from lib.utils import BRANCH_NEXT
 from lib.ast import (Ast_Branch, Ast_Jmp, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
         Ast_AndIf)
 from lib.arch.arm.output import ASSIGNMENT_OPS
-from lib.arch.arm.utils import is_uncond_jump, is_call
+from lib.arch.arm.utils import is_uncond_jump
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)

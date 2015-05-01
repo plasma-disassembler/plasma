@@ -17,14 +17,13 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from capstone import CS_GRP_CALL, CS_GRP_JUMP, CS_GRP_RET
-from capstone.arm import (ARM_CC_INVALID, ARM_CC_EQ, ARM_CC_NE, ARM_CC_HS,
-        ARM_CC_LO, ARM_CC_MI, ARM_CC_PL, ARM_CC_VS, ARM_CC_VC, ARM_CC_HI,
+from capstone import CS_GRP_CALL, CS_GRP_RET
+from capstone.arm import (ARM_CC_EQ, ARM_CC_NE, ARM_CC_HS, ARM_CC_LO,
+        ARM_CC_MI, ARM_CC_PL, ARM_CC_VS, ARM_CC_VC, ARM_CC_HI,
         ARM_CC_LS, ARM_CC_GE, ARM_CC_LT, ARM_CC_GT, ARM_CC_LE, ARM_CC_AL,
         ARM_INS_EOR, ARM_INS_ADD, ARM_INS_ORR, ARM_INS_AND, ARM_INS_MOV,
         ARM_INS_CMP, ARM_INS_SUB, ARM_INS_LDR, ARM_INS_B, ARM_INS_BLX,
         ARM_INS_BL, ARM_INS_BX, ARM_REG_LR, ARM_OP_REG)
-
 
 # TODO : More jumps
 # pop {..., pc}

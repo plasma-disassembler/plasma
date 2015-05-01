@@ -22,7 +22,6 @@ import struct
 from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
         ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_CC_AL, ARM_INS_LDR, ARM_CC_PL,
-        ARM_CC_VS, ARM_CC_VC, ARM_CC_HI, ARM_CC_LS, ARM_CC_LO, ARM_CC_HS,
         ARM_CC_MI, ARM_INS_TST, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
         ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
         ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
@@ -33,8 +32,8 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end)
 from lib.colors import (color, color_addr, color_retcall, color_string,
-        color_var, color_section, color_keyword, color_type)
-from lib.utils import get_char, BYTES_PRINTABLE_SET
+        color_section, color_keyword, color_type)
+from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
 
@@ -169,6 +168,8 @@ class Output(OutputAbs):
                         print_no_end(" rot>> %d)" % shift.value)
                     elif shift.type == ARM_SFT_ASR:
                         print_no_end(" arith>> %d)" % shift.value)
+                    elif shift.type == ARM_SFT_RRX:
+                        print_no_end(" rrx>> %s)" % shift.value)
 
                     elif shift.type == ARM_SFT_LSL_REG:
                         print_no_end(" << %s)" % i.reg_name(shift.value))
@@ -178,6 +179,8 @@ class Output(OutputAbs):
                         print_no_end(" rot>> %s)" % i.reg_name(shift.value))
                     elif shift.type == ARM_SFT_ASR_REG:
                         print_no_end(" arith>> %s)" % i.reg_name(shift.value))
+                    elif shift.type == ARM_SFT_RRX_REG:
+                        print_no_end(" rrx>> %s)" % i.reg_name(shift.value))
 
                 printed = True
 
