@@ -163,9 +163,7 @@ class Output(OutputAbs):
             return True
 
 
-    def print_if_cond(self, jump_id, jump_cond, fused_inst):
-        # NOTE: in x86 jump_id == jump_cond
-
+    def print_if_cond(self, jump_cond, fused_inst):
         if fused_inst is None:
             print_no_end(cond_symbol(jump_cond))
             if jump_cond in JMP_ADD_ZERO:

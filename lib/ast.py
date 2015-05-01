@@ -51,7 +51,7 @@ class Ast_IfGoto:
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
         print_tabbed_no_end(color_keyword("if "), tab)
-        o.print_if_cond(self.orig_jump.id, self.cond_id, self.fused_inst)
+        o.print_if_cond(self.cond_id, self.fused_inst)
         print_no_end(color_keyword("  goto "))
         print(color_addr(self.addr_jump, False))
 
@@ -65,7 +65,7 @@ class Ast_AndIf:
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
-        o.print_if_cond(self.orig_jump.id, self.cond_id, self.fused_inst)
+        o.print_if_cond(self.cond_id, self.fused_inst)
         print()
 
 
@@ -109,12 +109,10 @@ class Ast_Ifelse:
 
         # jump_inst is the condition to go to the else-part
         if inv_if:
-            o.print_if_cond(self.jump_inst.id,
-                            ARCH_UTILS.get_cond(self.jump_inst),
+            o.print_if_cond(ARCH_UTILS.get_cond(self.jump_inst),
                             self.fused_inst)
         else:
-            o.print_if_cond(self.jump_inst.id,
-                            ARCH_UTILS.invert_cond(self.jump_inst),
+            o.print_if_cond(ARCH_UTILS.invert_cond(self.jump_inst),
                             self.fused_inst)
 
         print(" {")

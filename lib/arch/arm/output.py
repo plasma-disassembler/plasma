@@ -209,10 +209,10 @@ class Output(OutputAbs):
             return True
 
 
-    def print_if_cond(self, jump_id, jump_cond, fused_inst):
+    def print_if_cond(self, cond, fused_inst):
         if fused_inst is None:
-            print_no_end(cond_symbol(jump_cond))
-            if jump_cond in COND_ADD_ZERO:
+            print_no_end(cond_symbol(cond))
+            if cond in COND_ADD_ZERO:
                 print_no_end(" 0")
             return
 
@@ -224,12 +224,12 @@ class Output(OutputAbs):
         self.print_operand(fused_inst, 0)
         print_no_end(" ")
 
-        print_no_end(cond_symbol(jump_cond))
+        print_no_end(cond_symbol(cond))
         print_no_end(" ")
         self.print_operand(fused_inst, 1)
 
         if (fused_inst.id != ARM_INS_CMP and \
-                (jump_cond in COND_ADD_ZERO or assignment)):
+                (cond in COND_ADD_ZERO or assignment)):
             print_no_end(" 0")
 
         print_no_end(")")
