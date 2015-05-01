@@ -66,7 +66,6 @@ class Raw:
 
 
     def get_arch(self):
-        import capstone as CAPSTONE
         return self.arch_lookup.get(self.raw_type, None), \
                self.arch_mode_lookup.get(self.raw_type, None)
 
