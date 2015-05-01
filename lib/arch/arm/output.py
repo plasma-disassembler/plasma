@@ -300,7 +300,7 @@ class Output(OutputAbs):
         if i.id in ldr_check:
             self.print_operand(i, 0)
             print_no_end(" = (")
-            print_no_end(LDR_TYPE[i.id])
+            print_no_end(color_type(LDR_TYPE[i.id]))
             print_no_end(") ")
             self.print_operand(i, 1)
             modified = True
@@ -308,7 +308,7 @@ class Output(OutputAbs):
         elif i.id in str_check:
             self.print_operand(i, 1)
             print_no_end(" = (")
-            print_no_end(STR_TYPE[i.id])
+            print_no_end(color_type(STR_TYPE[i.id]))
             print_no_end(") ")
             self.print_operand(i, 0)
             modified = True
