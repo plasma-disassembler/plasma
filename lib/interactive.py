@@ -50,8 +50,9 @@ class Interactive():
             "exit",
             "help",
             "load",
-            "lraw32",
-            "lraw64",
+            "lrawarm",
+            "lrawx86",
+            "lrawx64",
             "sections",
             "sym",
             "x",
@@ -78,23 +79,33 @@ class Interactive():
                 ]
             ),
 
-            "lraw32": Command(
+            "lrawx86": Command(
                 1,
-                self.__exec_lraw32,
+                self.__exec_lrawx86,
                 self.__complete_load,
                 [
                 "filename",
-                "Load a 32 bits raw file.",
+                "Load a x86 raw file.",
                 ]
             ),
 
-            "lraw64": Command(
+            "lrawx64": Command(
                 1,
-                self.__exec_lraw64,
+                self.__exec_lrawx64,
                 self.__complete_load,
                 [
                 "filename",
-                "Load a 64 bits raw file.",
+                "Load a x64 raw file.",
+                ]
+            ),
+
+            "lrawarm": Command(
+                1,
+                self.__exec_lrawarm,
+                self.__complete_load,
+                [
+                "filename",
+                "Load a ARM raw file.",
                 ]
             ),
 
@@ -349,22 +360,32 @@ class Interactive():
         load_file(self.ctx)
 
 
-    def __exec_lraw32(self, args):
+    def __exec_lrawx86(self, args):
         if len(args) != 2:
             error("filename required")
             return
         self.ctx.reset_all()
-        self.ctx.raw32 = True
+        self.ctx.raw_type = "x86"
         self.ctx.filename = args[1]
         load_file(self.ctx)
 
 
-    def __exec_lraw64(self, args):
+    def __exec_lrawx64(self, args):
         if len(args) != 2:
             error("filename required")
             return
         self.ctx.reset_all()
-        self.ctx.raw64 = True
+        self.ctx.raw_type = "x64"
+        self.ctx.filename = args[1]
+        load_file(self.ctx)
+
+
+    def __exec_lrawarm(self, args):
+        if len(args) != 2:
+            error("filename required")
+            return
+        self.ctx.reset_all()
+        self.ctx.raw_type = "arm"
         self.ctx.filename = args[1]
         load_file(self.ctx)
 

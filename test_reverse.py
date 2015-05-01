@@ -17,7 +17,7 @@ SYMBOLS = {
         }
 
 OPTIONS = {
-    TESTS / 'shellcode.bin': ["--raw32"]
+    TESTS / 'shellcode.bin': ["--raw x86"]
     }
 
 
@@ -34,10 +34,10 @@ def reverse_file(filename, symbol, options):
     ctx.entry = symbol
 
     for o in options:
-        if o == "--raw32":
-            ctx.raw32 = True
-        elif o == "--raw64":
-            ctx.raw64 = True
+        if o == "--raw x86":
+            ctx.raw_type = "x86"
+        elif o == "--raw x64":
+            ctx.raw_type = "x64"
 
     sio = StringIO()
     with redirect_stdout(sio):

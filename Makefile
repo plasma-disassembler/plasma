@@ -12,7 +12,7 @@ SYMBOLS[tests/server.rev] = "main" "connection_handler"
 SYMBOLS[tests/pendu.rev] = "_main" "___main"
 SYMBOLS[tests/shellcode.rev] = "0x0"
 
-OPTIONS[tests/shellcode.rev] = "--raw32"
+OPTIONS[tests/shellcode.rev] = "--raw x86"
 
 all: check
 

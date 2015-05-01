@@ -19,14 +19,22 @@
 
 
 class Raw:
-    def __init__(self, filename, bits):
+    def __init__(self, filename, raw_type):
         import capstone as CAPSTONE
 
         self.raw = open(filename, "rb").read()
-        self.bits = bits
+        self.raw_type = raw_type
+
         self.arch_lookup = {
-            32: CAPSTONE.CS_MODE_32,
-            64: CAPSTONE.CS_MODE_64,
+            "x86": CAPSTONE.CS_ARCH_X86,
+            "x64": CAPSTONE.CS_ARCH_X86,
+            "arm": CAPSTONE.CS_ARCH_ARM,
+        }
+
+        self.arch_mode_lookup = {
+            "x86": CAPSTONE.CS_MODE_32,
+            "x64": CAPSTONE.CS_MODE_64,
+            "arm": CAPSTONE.CS_ARCH_ARM,
         }
 
 
@@ -59,7 +67,8 @@ class Raw:
 
     def get_arch(self):
         import capstone as CAPSTONE
-        return CAPSTONE.CS_ARCH_X86, self.arch_lookup[self.bits]
+        return self.arch_lookup.get(self.raw_type, None), \
+               self.arch_mode_lookup.get(self.raw_type, None)
 
 
     def get_arch_string(self):

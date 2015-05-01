@@ -28,13 +28,13 @@ from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
 
 
 class Disassembler():
-    def __init__(self, filename, raw_bits, forcejmp):
+    def __init__(self, filename, raw_type, forcejmp):
         import capstone as CAPSTONE
 
         self.forcejmp = forcejmp
         self.code = {}
         self.code_idx = []
-        self.binary = Binary(filename, raw_bits)
+        self.binary = Binary(filename, raw_type)
 
         arch, mode = self.binary.get_arch()
 

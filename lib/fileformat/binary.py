@@ -29,15 +29,15 @@ T_BIN_UNK = 3
 
 
 class Binary(object):
-    def __init__(self, filename, raw_bits=0):
+    def __init__(self, filename, raw_type=None):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
         self.type = None
 
-        if raw_bits != 0:
+        if raw_type != None:
             import lib.fileformat.raw as LIB_RAW
-            self.__binary = LIB_RAW.Raw(filename, raw_bits)
+            self.__binary = LIB_RAW.Raw(filename, raw_type)
             self.type = T_BIN_RAW
             return
 

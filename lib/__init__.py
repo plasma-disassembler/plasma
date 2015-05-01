@@ -53,9 +53,7 @@ def parse_args():
             help='Print all symbols')
     parser.add_argument('-c', '--calls', action='store_true',
             help='Print all calls')
-    parser.add_argument('--raw32', action='store_true',
-            help='Consider the input file as a raw binary')
-    parser.add_argument('--raw64', action='store_true',
+    parser.add_argument('--raw', metavar='x86|x64|arm',
             help='Consider the input file as a raw binary')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
@@ -82,8 +80,7 @@ def parse_args():
     ctx.sectionsname    = not args.nosectionsname
     ctx.max_data_size   = args.datasize
     ctx.filename        = args.filename
-    ctx.raw32           = args.raw32
-    ctx.raw64           = args.raw64
+    ctx.raw_type        = args.raw
     ctx.symfile         = args.symfile
     ctx.syms            = args.symbols
     ctx.calls           = args.calls
@@ -109,15 +106,8 @@ def load_file(ctx):
            return False
         die()
 
-    if ctx.raw32:
-        raw_bits = 32
-    elif ctx.raw64:
-        raw_bits = 64
-    else:
-        raw_bits = 0
-
     try:
-        dis = Disassembler(ctx.filename, raw_bits, ctx.forcejmp)
+        dis = Disassembler(ctx.filename, ctx.raw_type, ctx.forcejmp)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:
@@ -153,7 +143,7 @@ def init_addr(ctx):
         addr = ctx.dis.binary.get_entry_point()
     else:
         try:
-            addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw32 | ctx.raw64)
+            addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
         except ExcSymNotFound as e:
             error("symbol %s not found" % e.symname)
             if ctx.interactive:
