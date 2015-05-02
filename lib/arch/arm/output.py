@@ -45,8 +45,8 @@ LDR_TYPE = {
     ARM_INS_LDRB: "unsigned byte",
     ARM_INS_LDRH: "unsigned short",
     ARM_INS_LDR: "unsigned word",
-    ARM_INS_LDRSB: "unsigned byte",
-    ARM_INS_LDRSH: "unsigned short",
+    ARM_INS_LDRSB: "byte",
+    ARM_INS_LDRSH: "short",
     ARM_INS_LDRD: "double",
 }
 
