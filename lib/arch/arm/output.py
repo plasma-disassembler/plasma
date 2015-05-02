@@ -26,7 +26,8 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_INS_LDRSH, ARM_INS_LDRD, ARM_SFT_ASR, ARM_SFT_LSL, ARM_SFT_LSR,
         ARM_SFT_ROR, ARM_SFT_RRX, ARM_SFT_ASR_REG, ARM_SFT_LSL_REG,
         ARM_SFT_LSR_REG, ARM_SFT_ROR_REG, ARM_SFT_RRX_REG, ARM_INS_STRB,
-        ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR, ARM_REG_PC)
+        ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR, ARM_REG_PC, ARM_INS_ASR,
+        ARM_INS_LSL, ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX)
 
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
@@ -287,7 +288,8 @@ class Output(OutputAbs):
         modified = False
 
         inst_check = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
-                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP}
+                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_ASR, ARM_INS_LSL,
+                ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX}
 
         ldr_check = {ARM_INS_LDR, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
                 ARM_INS_LDRSH, ARM_INS_LDRD}
