@@ -70,6 +70,9 @@ def fuse_inst_with_if(ctx, ast):
             else: # ast
                 fuse_inst_with_if(ctx, n)
 
+    # elif isinstance(ast, Ast_If_cond):
+        # fuse_inst_with_if(ctx, ast.br)
+
     elif isinstance(ast, Ast_Ifelse):
         fuse_inst_with_if(ctx, ast.br_next)
         fuse_inst_with_if(ctx, ast.br_next_jump)
@@ -81,47 +84,54 @@ def fuse_inst_with_if(ctx, ast):
 
 
 def convert_cond_to_if(ctx, ast):
-    # Temporary dict, because we can't modify nodes while we are
-    # looping, we store new branchs here with the corresponding index
-    added = {}
 
-    def add_br(i, last_cond, br_lst):
+    def add_node(i, last_cond, br_lst):
         if br_lst:
-            br = Ast_Branch()
-            br.add(br_lst)
             if last_cond == ARM_CC_AL:
-                added[i].add(br)
+                added_nodes[i].append(br_lst)
             else:
-                added[i].add(Ast_If_cond(last_cond, br))
+                br = Ast_Branch()
+                br.add(br_lst)
+                added_nodes[i].append(Ast_If_cond(last_cond, br))
 
     if isinstance(ast, Ast_Branch):
+        # Temporary dict, because we can't modify nodes while we are
+        # looping, we store new nodes here with the corresponding index
+        added_nodes = {}
+
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
-                # Instead of splitting the block in the parent branch
-                # we add a new branch which contains all splits
+                # This will split the current block in other branch if
+                # we found conditional instructions.
 
-                added[i] = Ast_Branch()
                 blk = n
+                added_nodes[i] = []
                 last_cond = blk[0].cc
                 br = []
 
-                # Fuse instructions with same condition
-                k = 0
-                for k, inst in enumerate(blk):
+                # Fuse instructions with same condition in a same branch
+                for inst in blk:
                     if inst.cc == last_cond:
                         br.append(inst)
                     else:
-                        add_br(i, last_cond, br)
+                        add_node(i, last_cond, br)
                         br = [inst]
                     last_cond = inst.cc
-
-                add_br(i, last_cond, br)
+                add_node(i, last_cond, br)
 
             else: # ast
                 convert_cond_to_if(ctx, n)
 
-        for i, br in added.items():
-            ast.nodes[i] = br
+        # Now we update the nodes list. If we have split a block n
+        # we remove it, and add new nodes.
+        idx_keys = list(added_nodes.keys())
+        idx_keys.sort()
+        for i in reversed(idx_keys):
+            if len(added_nodes[i]) > 1:
+                del ast.nodes[i]
+                # node is a list (blk of instructions) or Ast_If_cond
+                for k, node in enumerate(added_nodes[i]):
+                    ast.nodes.insert(i+k, node)
 
     elif isinstance(ast, Ast_Ifelse):
         convert_cond_to_if(ctx, ast.br_next_jump)
