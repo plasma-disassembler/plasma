@@ -66,6 +66,16 @@ COND_ADD_ZERO = {
 }
 
 
+INST_CHECK = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
+    ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_ASR, ARM_INS_LSL,
+    ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX}
+
+LDR_CHECK = {ARM_INS_LDR, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
+    ARM_INS_LDRSH, ARM_INS_LDRD}
+
+STR_CHECK = {ARM_INS_STR, ARM_INS_STRB, ARM_INS_STRH, ARM_INS_STRD}
+
+
 class Output(OutputAbs):
     def print_shift(self, i, shift):
         if shift.type == ARM_SFT_LSL:
@@ -287,16 +297,7 @@ class Output(OutputAbs):
 
         modified = False
 
-        inst_check = {ARM_INS_SUB, ARM_INS_ADD, ARM_INS_MOV, ARM_INS_AND,
-                ARM_INS_EOR, ARM_INS_ORR, ARM_INS_CMP, ARM_INS_ASR, ARM_INS_LSL,
-                ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX}
-
-        ldr_check = {ARM_INS_LDR, ARM_INS_LDRB, ARM_INS_LDRSB, ARM_INS_LDRH,
-                ARM_INS_LDRSH, ARM_INS_LDRD}
-
-        str_check = {ARM_INS_STR, ARM_INS_STRB, ARM_INS_STRH, ARM_INS_STRD}
-
-        if i.id in ldr_check:
+        if i.id in LDR_CHECK:
             self.print_operand(i, 0)
             print_no_end(" = (")
             print_no_end(color_type(LDR_TYPE[i.id]))
@@ -304,7 +305,7 @@ class Output(OutputAbs):
             self.print_operand(i, 1)
             modified = True
 
-        elif i.id in str_check:
+        elif i.id in STR_CHECK:
             self.print_operand(i, 1)
             print_no_end(" = (")
             print_no_end(color_type(STR_TYPE[i.id]))
@@ -312,7 +313,7 @@ class Output(OutputAbs):
             self.print_operand(i, 0)
             modified = True
 
-        elif i.id in inst_check:
+        elif i.id in INST_CHECK:
             self.print_operand(i, 0)
 
             if i.id == ARM_INS_CMP:

@@ -52,6 +52,11 @@ JMP_ADD_ZERO = {
 }
 
 
+INST_CHECK = {X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
+    X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
+    X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR}
+
+
 class Output(OutputAbs):
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
@@ -251,11 +256,7 @@ class Output(OutputAbs):
 
         modified = False
 
-        inst_check = {X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
-                X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
-                X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR}
-
-        if i.id in inst_check:
+        if i.id in INST_CHECK:
             self.print_operand(i, 0)
 
             if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
