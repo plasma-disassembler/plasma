@@ -147,7 +147,10 @@ class Output(OutputAbs):
             return False
 
         elif op.type == ARM_OP_REG:
-            print_no_end(i.reg_name(op.value.reg))
+            if op.value.reg == ARM_REG_PC:
+                print_no_end(hex(i.address))
+            else:
+                print_no_end(i.reg_name(op.value.reg))
             if op.shift.type:
                 self.print_shift(i, op.shift)
             return False
