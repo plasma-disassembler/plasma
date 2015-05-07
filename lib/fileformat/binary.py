@@ -44,16 +44,13 @@ class Binary(object):
         start = time.clock()
         self.load_magic(filename)
 
-        try:
-            if self.type == T_BIN_ELF:
-                import lib.fileformat.elf as LIB_ELF
-                self.__binary = LIB_ELF.ELF(self, filename)
-            elif self.type == T_BIN_PE:
-                import lib.fileformat.pe as LIB_PE
-                self.__binary = LIB_PE.PE(self, filename)
-            else:
-                raise ExcFileFormat()
-        except Exception:
+        if self.type == T_BIN_ELF:
+            import lib.fileformat.elf as LIB_ELF
+            self.__binary = LIB_ELF.ELF(self, filename)
+        elif self.type == T_BIN_PE:
+            import lib.fileformat.pe as LIB_PE
+            self.__binary = LIB_PE.PE(self, filename)
+        else:
             raise ExcFileFormat()
 
         elapsed = time.clock()
