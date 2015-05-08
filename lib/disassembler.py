@@ -33,7 +33,6 @@ class Disassembler():
 
         self.forcejmp = forcejmp
         self.code = {}
-        self.code_idx = []
         self.binary = Binary(filename, raw_type)
         self.raw_type = raw_type
 
@@ -169,7 +168,6 @@ class Disassembler():
         try:
             first = next(gen)
             self.code[first.address] = first
-            self.code_idx.append(first.address)
 
             # Max N instructions (N is in bytes)
             for n in range(N):
@@ -177,7 +175,6 @@ class Disassembler():
                 if i.address in self.code:
                     return first
                 self.code[i.address] = i
-                self.code_idx.append(i.address)
         except StopIteration:
             pass
 

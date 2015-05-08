@@ -32,6 +32,10 @@ FUSE_OPS = set(ASSIGNMENT_OPS)
 FUSE_OPS.add(X86_INS_CMP)
 
 
+def inv(n):
+    return n == X86_OP_INVALID
+
+
 def assign_colors(ctx, ast):
     if isinstance(ast, Ast_Branch):
         for n in ast.nodes:
@@ -81,9 +85,6 @@ def fuse_inst_with_if(ctx, ast):
 
 
 def search_local_vars(ctx, ast):
-    def inv(n):
-        return n == X86_OP_INVALID
-
     def save_vars(ctx, i):
         for op in i.operands:
             mm = op.mem
@@ -121,46 +122,59 @@ def search_local_vars(ctx, ast):
             search_local_vars(ctx, ast.epilog)
 
 
-def search_canary_plt(ctx, unused_ast):
-    def inv(n):
-        return n == X86_OP_INVALID
-
+def search_canary_plt(ctx, ast):
     fname = "__stack_chk_fail@plt"
     if fname not in ctx.dis.binary.symbols:
         return
-
     faddr = ctx.dis.binary.symbols[fname]
+    __rec_search_canary_plt(faddr, ctx, ast, [])
 
-    k = 0
-    for idx in ctx.dis.code_idx:
-        i = ctx.dis.code[idx]
-        if is_call(i):
-            op = i.operands[0]
-            if op.type == X86_OP_IMM and op.value.imm == faddr:
-                # Try to get VAR
-                #
-                # rax = VAR # mov rax, qword ptr [rbp - 8]
-                # xor rax, [fs + 40]
-                # je 0x400714
-                # if != {
-                #     call 0x4004f0 <__stack_chk_fail@plt>
-                # }
-                #
 
-                kk = k - 1
-                while kk > 0 and kk > k - 4:
-                    inst = ctx.dis.code[ctx.dis.code_idx[kk]]
+def get_var_canary(ctx, last_block):
+    # Try to get VAR
+    #
+    # rax = VAR # mov rax, qword ptr [rbp - 8]
+    # xor rax, [fs + 40]
+    # je 0x400714
+    # if != {
+    #     call 0x4004f0 <__stack_chk_fail@plt>
+    # }
+    #
 
-                    if inst.id == X86_INS_MOV:
-                        mm = inst.operands[1].mem
-                        if mm.disp != 0  and inv(mm.segment) and inv(mm.index) and \
-                                mm.base in [X86_REG_RBP, X86_REG_EBP] and \
-                                mm.disp in ctx.local_vars_idx:
-                            ctx.local_vars_name[ctx.local_vars_idx[mm.disp]] += "_canary"
-                            break
+    # Search in the last four instructions
+    for i in reversed(last_block[-4:]):
+        if i.id != X86_INS_MOV:
+            continue
 
-                    kk -= 1
+        mm = i.operands[1].mem
+        if mm.disp != 0  and inv(mm.segment) and inv(mm.index) and \
+                mm.base in [X86_REG_RBP, X86_REG_EBP] and \
+                mm.disp in ctx.local_vars_idx:
+            ctx.local_vars_name[ctx.local_vars_idx[mm.disp]] += "_canary"
+            break
 
-                break
 
-        k += 1
+def __rec_search_canary_plt(faddr, ctx, ast, last_block):
+    if isinstance(ast, Ast_Branch):
+        for n in ast.nodes:
+            if isinstance(n, list):
+                for i in n:
+                    if not is_call(i):
+                        continue
+                    op = i.operands[0]
+                    if op.type == X86_OP_IMM and op.value.imm == faddr:
+                        get_var_canary(ctx, last_block)
+
+                last_block = n
+
+            else: # ast
+                __rec_search_canary_plt(faddr, ctx, n, last_block)
+
+    elif isinstance(ast, Ast_Ifelse):
+        __rec_search_canary_plt(faddr, ctx, ast.br_next_jump, last_block)
+        __rec_search_canary_plt(faddr, ctx, ast.br_next, last_block)
+
+    elif isinstance(ast, Ast_Loop):
+        __rec_search_canary_plt(faddr, ctx, ast.branch, last_block)
+        if ast.epilog != None:
+            __rec_search_canary_plt(faddr, ctx, ast.epilog, last_block)
