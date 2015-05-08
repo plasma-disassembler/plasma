@@ -147,7 +147,7 @@ class Output(OutputAbs):
             return False
 
         elif op.type == ARM_OP_REG:
-            if op.value.reg == ARM_REG_PC:
+            if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
                 print_no_end(hex(i.address))
             else:
                 print_no_end(i.reg_name(op.value.reg))

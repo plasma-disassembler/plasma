@@ -224,5 +224,3 @@ def reverse(ctx):
         return
 
     disasm(ctx)
-
-
