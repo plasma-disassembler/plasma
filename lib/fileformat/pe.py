@@ -23,7 +23,7 @@ from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 from ctypes import sizeof
 
 from lib.utils import get_char
-from lib.exceptions import ExcNotAddr, ExcPEFail, ExcNotExec
+from lib.exceptions import ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry
 
 
@@ -196,25 +196,21 @@ class PE:
         return None
 
 
-    def __get_section(self, addr, no_raise=False):
+    def __get_section(self, addr):
         s = self.__get_cached_exec_section(addr)
         if s is not None:
             return s
-
         base = self.pe.OPTIONAL_HEADER.ImageBase
         s = self.pe.get_section_by_rva(addr - base)
         if s is None:
-            if no_raise:
-                return None
-            raise ExcNotAddr(addr)
-
-        if not self.__section_is_exec(s):
-            if no_raise:
-                return None
-            raise ExcNotExec(addr)
-
+            return None
         self.__exec_sections.append(s)
         return s
+
+
+    def check_addr(self, addr):
+        s = self.__get_section(addr)
+        return (s is not None, self.__section_is_exec(s))
 
 
     def get_section_start(self, addr):

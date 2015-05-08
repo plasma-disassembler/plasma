@@ -399,8 +399,6 @@ class Interactive():
         if len(args) == 1:
             self.ctx.entry = "EP"
         else:
-            if len(args) == 3:
-                lines = int(args[2])
             self.ctx.entry = args[1]
         if init_addr(self.ctx):
             self.ctx.dis.print_calls(self.ctx)

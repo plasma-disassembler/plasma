@@ -24,7 +24,7 @@ from lib.utils import debug__
 from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.output import print_no_end
 from lib.colors import pick_color, color_addr, color_symbol, color_section
-from lib.exceptions import ExcSymNotFound, ExcArch
+from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
 class Disassembler():
@@ -44,6 +44,14 @@ class Disassembler():
         self.md.detail = True
         self.arch = arch
         self.mode = mode
+
+
+    def check_addr(self, addr):
+        addr_exists, is_exec = self.binary.check_addr(addr)
+        if not is_exec:
+            raise ExcNotExec(addr)
+        if not addr_exists:
+            raise ExcNotAddr(addr)
 
 
     def load_arch_module(self):

@@ -86,6 +86,10 @@ class Binary(object):
         return self.__binary.get_section_start(addr)
 
 
+    def check_addr(self, addr):
+        return self.__binary.check_addr(addr)
+
+
     def section_stream_read(self, addr, size):
         return self.__binary.section_stream_read(addr, size)
 

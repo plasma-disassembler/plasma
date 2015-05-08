@@ -146,7 +146,21 @@ def init_addr(ctx):
             error("Try with --sym to see all symbols.")
             die()
 
+    try:
+        ctx.dis.check_addr(addr)
+    except ExcNotExec as e:
+        error("the address 0x%x is not in an executable section" % e.addr)
+        if ctx.interactive:
+            return False
+        die()
+    except ExcNotAddr as e:
+        error("the address 0x%x cannot be found" % e.addr)
+        if ctx.interactive:
+            return False
+        die()
+
     ctx.addr = addr
+
     return True
 
 
@@ -192,33 +206,23 @@ def reverse(ctx):
 
     init_addr(ctx)
 
-    try:
-        if ctx.calls:
-            ctx.dis.print_calls(ctx)
-            return
+    if ctx.calls:
+        ctx.dis.print_calls(ctx)
+        return
 
-        if ctx.dump:
-            if ctx.vim:
-                base = os.path.basename(ctx.filename)
-                ctx.color = False
-                sys.stdout = open(base + ".rev", "w+")
+    if ctx.dump:
+        if ctx.vim:
+            base = os.path.basename(ctx.filename)
+            ctx.color = False
+            sys.stdout = open(base + ".rev", "w+")
 
-            ctx.dis.dump(ctx, ctx.lines)
+        ctx.dis.dump(ctx, ctx.lines)
 
-            if ctx.vim:
-                generate_vim_syntax(ctx, base + ".vim")
-                print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
-            return
+        if ctx.vim:
+            generate_vim_syntax(ctx, base + ".vim")
+            print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
+        return
 
-        disasm(ctx)
+    disasm(ctx)
 
-    except ExcNotExec as e:
-        error("the address 0x%x is not in an executable section" % e.addr)
-        if ctx.interactive:
-            return False
-        die()
-    except ExcNotAddr as e:
-        error("the address 0x%x cannot be found" % e.addr)
-        if ctx.interactive:
-            return False
-        die()
+

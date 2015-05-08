@@ -21,7 +21,6 @@ from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
 import lib.utils
-from lib.exceptions import ExcNotAddr, ExcNotExec
 
 
 # SHF_WRITE=0x1
@@ -165,24 +164,20 @@ class ELF:
         return None
 
 
-    def __get_section(self, addr, no_raise=False):
+    def __get_section(self, addr):
         s = self.__get_cached_exec_section(addr)
         if s is not None:
             return s
-
         s = self.__find_section(addr)
         if s is None:
-            if no_raise:
-                return None
-            raise ExcNotAddr(addr)
-
-        if not self.__section_is_exec(s):
-            if no_raise:
-                return None
-            raise ExcNotExec(addr)
-
+            return None
         self.__exec_sections.append(s)
         return s
+
+
+    def check_addr(self, addr):
+        s = self.__get_section(addr)
+        return (s is not None, self.__section_is_exec(s))
 
 
     def get_section_start(self, addr):

@@ -17,8 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib.exceptions import ExcNotAddr
-
 
 class Raw:
     def __init__(self, filename, raw_type):
@@ -60,9 +58,15 @@ class Raw:
         return 0
 
 
+    def check_addr(self, addr):
+        if addr >= len(self.raw) or addr < 0:
+            return (False, False)
+        return (True, True)
+
+
     def section_stream_read(self, addr, size):
-        if addr >= len(self.raw):
-            raise ExcNotAddr(addr)
+        if addr >= len(self.raw) or addr < 0:
+            return b""
         return self.raw[addr:addr+size]
 
 
