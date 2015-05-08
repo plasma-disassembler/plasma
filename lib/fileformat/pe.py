@@ -23,7 +23,7 @@ from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 from ctypes import sizeof
 
 from lib.utils import get_char
-from lib.exceptions import ExcNotAddr, ExcPEFail
+from lib.exceptions import ExcNotAddr, ExcPEFail, ExcNotExec
 from lib.fileformat.pefile2 import PE2, SymbolEntry
 
 

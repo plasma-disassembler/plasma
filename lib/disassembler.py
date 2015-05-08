@@ -24,7 +24,7 @@ from lib.utils import debug__
 from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.output import print_no_end
 from lib.colors import pick_color, color_addr, color_symbol, color_section
-from lib.exceptions import ExcSymNotFound, ExcNotExec, ExcArch
+from lib.exceptions import ExcSymNotFound, ExcArch
 
 
 class Disassembler():
