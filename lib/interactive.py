@@ -114,7 +114,7 @@ class Interactive():
                 self.__exec_x,
                 self.__complete_x,
                 [
-                "[symbol|0xXXXX|EP]",
+                "[SYMBOL|0xXXXX|EP]",
                 "Disassemble. By default it will be main.",
                 ]
             ),
@@ -152,12 +152,13 @@ class Interactive():
             ),
 
             "calls": Command(
-                3,
+                1,
                 self.__exec_calls,
-                None,
+                self.__complete_x,
                 [
-                "",
-                "Print all Calls."
+                "[SYMBOL|0xXXXX|EP]",
+                "Print all calls which are in the section containing the address.",
+                "By default the address is the entry point (EP)."
                 ]
             ),
 
@@ -394,10 +395,13 @@ class Interactive():
         if self.ctx.dis is None:
             error("load a file before")
             return
-        if len(args) != 1:
-            error("this command takes no args")
-            return
         self.ctx.calls = True
+        if len(args) == 1:
+            self.ctx.entry = "EP"
+        else:
+            if len(args) == 3:
+                lines = int(args[2])
+            self.ctx.entry = args[1]
         if init_addr(self.ctx):
             self.ctx.dis.print_calls(self.ctx)
             self.ctx.entry = None
