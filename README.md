@@ -24,6 +24,8 @@ can install it from PyPi, like followings:
 
     sudo pip3 install capstone
 
+You can also run `requirements.sh` which will retrieve all requirements.
+
 
 ## Interactive mode
 
