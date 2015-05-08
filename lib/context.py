@@ -31,7 +31,6 @@ class Context():
         self.sectionsname = False
         self.print_andif = True
         self.color = True
-        self.forcejmp = False
         self.max_data_size = 30
         self.filename = None
         self.symfile = None

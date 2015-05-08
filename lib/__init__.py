@@ -26,7 +26,7 @@ from lib.utils import die, error
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
-from lib.exceptions import (ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch,
+from lib.exceptions import (ExcSymNotFound, ExcNotExec, ExcArch,
      ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail)
 
 
@@ -67,14 +67,11 @@ def parse_args():
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
     parser.add_argument('-d', '--opt_debug', action='store_true')
     parser.add_argument('-ns', '--nosectionsname', action='store_true')
-    parser.add_argument('--forcejmp', action='store_true',
-            help=('Try to disassemble if a "jmp [ADDR]" or jmp rax is found.'))
 
     args = parser.parse_args()
 
     ctx = Context()
     ctx.debug           = args.opt_debug
-    ctx.forcejmp        = args.forcejmp
     ctx.print_andif     = not args.noandif
     ctx.color           = not args.nocolor
     ctx.comments        = not args.nocomment
@@ -108,7 +105,7 @@ def load_file(ctx):
         die()
 
     try:
-        dis = Disassembler(ctx.filename, ctx.raw_type, ctx.forcejmp)
+        dis = Disassembler(ctx.filename, ctx.raw_type)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:
@@ -154,18 +151,7 @@ def init_addr(ctx):
 
 
 def disasm(ctx):
-    try:
-        ctx.gph = ctx.dis.get_graph(ctx.addr)
-    except ExcJmpReg as e:
-        error("failed on 0x%x: %s %s" %
-                (e.inst.address, e.inst.mnemonic, e.inst.op_str))
-        error("Sorry, I can't generate the flow graph.")
-        if ctx.interactive:
-            error("Try the dump command or set forcejmp.")
-            return
-        error("Try with --dump or with --forcejmp.")
-        die()
-
+    ctx.gph = ctx.dis.get_graph(ctx.addr)
     paths = ctx.gph.get_paths()
     paths.gph = ctx.gph
     paths.cache_obj()

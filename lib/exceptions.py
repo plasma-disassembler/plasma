@@ -17,10 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-class ExcJmpReg(Exception):
-    def __init__(self, inst):
-        self.inst = inst
-
 
 class ExcSymNotFound(Exception):
     def __init__(self, symname):

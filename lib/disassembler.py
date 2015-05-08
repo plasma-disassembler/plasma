@@ -24,14 +24,13 @@ from lib.utils import debug__
 from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.output import print_no_end
 from lib.colors import pick_color, color_addr, color_symbol, color_section
-from lib.exceptions import ExcJmpReg, ExcSymNotFound, ExcNotExec, ExcArch
+from lib.exceptions import ExcSymNotFound, ExcNotExec, ExcArch
 
 
 class Disassembler():
-    def __init__(self, filename, raw_type, forcejmp):
+    def __init__(self, filename, raw_type):
         import capstone as CAPSTONE
 
-        self.forcejmp = forcejmp
         self.code = {}
         self.binary = Binary(filename, raw_type)
         self.raw_type = raw_type
@@ -141,10 +140,6 @@ class Disassembler():
                 print()
 
 
-    def __error_jmp_reg(self, i):
-        raise ExcJmpReg(i)
-
-
     def load_user_sym_file(self, fd):
         for l in fd:
             arg = l.split()
@@ -204,8 +199,7 @@ class Disassembler():
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
                     else:
-                        if not self.forcejmp:
-                            self.__error_jmp_reg(curr)
+                        # Can't interpret jmp ADDR|reg
                         gph.add_node(curr)
                     gph.uncond_jumps_set.add(curr.address)
 
@@ -217,8 +211,7 @@ class Disassembler():
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
                     else:
-                        if not self.forcejmp:
-                            self.__error_jmp_reg(curr)
+                        # Can't interpret jmp ADDR|reg
                         gph.add_node(curr)
                     gph.cond_jumps_set.add(curr.address)
 
