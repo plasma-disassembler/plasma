@@ -286,7 +286,7 @@ class Output(OutputAbs):
         if is_jump(i):
             if i.operands[0].type != ARM_OP_IMM:
                 print_no_end(i.mnemonic + " ")
-                self.print_operand(i, 0)
+                print_no_end(i.op_str)
                 if is_uncond_jump(i) and self.ctx.comments:
                     print_comment_no_end(" # STOPPED")
                 print()

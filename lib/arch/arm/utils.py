@@ -23,7 +23,7 @@ from capstone.arm import (ARM_CC_EQ, ARM_CC_NE, ARM_CC_HS, ARM_CC_LO,
         ARM_CC_LS, ARM_CC_GE, ARM_CC_LT, ARM_CC_GT, ARM_CC_LE, ARM_CC_AL,
         ARM_INS_EOR, ARM_INS_ADD, ARM_INS_ORR, ARM_INS_AND, ARM_INS_MOV,
         ARM_INS_CMP, ARM_INS_SUB, ARM_INS_LDR, ARM_INS_B, ARM_INS_BLX,
-        ARM_INS_BL, ARM_INS_BX, ARM_REG_LR, ARM_OP_REG)
+        ARM_INS_BL, ARM_INS_BX, ARM_REG_LR, ARM_OP_REG, ARM_REG_PC)
 
 # TODO : More jumps
 # pop {..., pc}
@@ -39,6 +39,9 @@ def is_cmp(i):
 
 def is_jump(i):
     op = i.operands[0]
+    if i.id == ARM_INS_LDR and op.type == ARM_OP_REG and \
+            op.value.reg == ARM_REG_PC:
+        return True
     return i.id in JUMPS and not (op.type == ARM_OP_REG and \
         op.value.reg == ARM_REG_LR)
 
