@@ -214,7 +214,7 @@ class PE:
 
 
     def get_section_start(self, addr):
-        s = self.__get_section(addr, no_raise=True)
+        s = self.__get_section(addr)
         if s is None:
             return 0
         return s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
