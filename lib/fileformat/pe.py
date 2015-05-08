@@ -34,7 +34,8 @@ class PE:
         self.classbinary = classbinary
         self.pe = PE2(filename, fast_load=True)
         self.__data_sections = []
-        self.__data_sections_data = []
+        self.__data_sections_content = []
+        self.__exec_sections = []
         self.__imported_syms = {}
 
         self.arch_lookup = {
@@ -156,7 +157,7 @@ class PE:
         for s in self.pe.sections:
             if self.__section_is_data(s):
                 self.__data_sections.append(s)
-                self.__data_sections_data.append(s.get_data())
+                self.__data_sections_content.append(s.get_data())
 
 
     def __section_is_data(self, s):
@@ -185,15 +186,36 @@ class PE:
         return -1
 
 
+    def __get_cached_exec_section(self, addr):
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        for s in self.__exec_sections:
+            start = base + s.VirtualAddress
+            end = start + s.SizeOfRawData
+            if start <= addr < end:
+                return s
+        return None
+
+
     def get_section(self, addr):
+        s = self.__get_cached_exec_section(addr)
+        if s is not None:
+            return s
+
         base = self.pe.OPTIONAL_HEADER.ImageBase
         s = self.pe.get_section_by_rva(addr - base)
         if s is None:
             raise ExcNotAddr(addr)
-        flags = {
-            "exec": self.__section_is_exec(s)
-        }
-        return (s.get_data(), base + s.VirtualAddress, flags)
+
+        if not self.__section_is_exec(s):
+            raise ExcNotExec(addr)
+
+        self.__exec_sections.append(s)
+        return s
+
+
+    def section_stream_read(self, addr, size):
+        s = self.get_section(addr)
+        return s.get_data(addr - self.pe.OPTIONAL_HEADER.ImageBase, size)
 
 
     def is_address(self, imm):
@@ -215,7 +237,7 @@ class PE:
             return ""
 
         s = self.__data_sections[i]
-        data = self.__data_sections_data[i]
+        data = self.__data_sections_content[i]
         base = self.pe.OPTIONAL_HEADER.ImageBase
         off = addr - s.VirtualAddress - base
         txt = ['"']

@@ -151,8 +151,13 @@ def init_addr(ctx):
             error("Try with --sym to see all symbols.")
             die()
 
+    ctx.addr = addr
+    return True
+
+
+def disasm(ctx):
     try:
-        ctx.dis.init(addr)
+        ctx.gph = ctx.dis.get_graph(ctx.addr)
     except ExcNotExec as e:
         error("the address 0x%x is not in an executable section" % e.addr)
         if ctx.interactive:
@@ -163,14 +168,6 @@ def init_addr(ctx):
         if ctx.interactive:
             return False
         die()
-
-    ctx.addr = addr
-    return True
-
-
-def disasm(ctx):
-    try:
-        ctx.gph = ctx.dis.get_graph(ctx.addr)
     except ExcJmpReg as e:
         error("failed on 0x%x: %s %s" %
                 (e.inst.address, e.inst.mnemonic, e.inst.op_str))

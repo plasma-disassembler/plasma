@@ -54,11 +54,10 @@ class Raw:
         return None, False
 
 
-    def get_section(self, addr):
-        flags = {
-            "exec": True
-        }
-        return (self.raw, 0, flags)
+    def section_stream_read(self, addr, size):
+        if addr >= len(self.raw):
+            raise ExcNotAddr(addr)
+        return self.raw[addr:addr+size]
 
 
     def get_string(self, addr):

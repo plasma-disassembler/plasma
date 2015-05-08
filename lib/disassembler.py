@@ -35,6 +35,7 @@ class Disassembler():
         self.code = {}
         self.code_idx = []
         self.binary = Binary(filename, raw_type)
+        self.raw_type = raw_type
 
         arch, mode = self.binary.get_arch()
 
@@ -56,13 +57,6 @@ class Disassembler():
         else:
             raise NotImplementedError
         return ARCH
-
-
-    def init(self, addr):
-        # Get section data
-        (self.data, self.virtual_addr, flags) = self.binary.get_section(addr)
-        if not flags["exec"]:
-            raise ExcNotExec(addr)
 
 
     def get_addr_from_string(self, opt_addr, raw=False):
@@ -165,20 +159,23 @@ class Disassembler():
         if addr in self.code:
             return self.code[addr]
         
-        # Disasm by block of 16 instructions
+        # Disassemble by block of N bytes
+        N = 1024
+
+        d = self.binary.section_stream_read(addr, N)
+        gen = self.md.disasm(d, addr)
 
         first = None
-        off = addr - self.virtual_addr
-
-        gen = self.md.disasm(self.data[off:off+64], addr)
-
         try:
             first = next(gen)
             self.code[first.address] = first
             self.code_idx.append(first.address)
 
-            for n in range(15):
+            # Max N instructions (N is in bytes)
+            for n in range(N):
                 i = next(gen)
+                if i.address in self.code:
+                    return first
                 self.code[i.address] = i
                 self.code_idx.append(i.address)
         except StopIteration:

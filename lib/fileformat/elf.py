@@ -47,7 +47,8 @@ class ELF:
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
         self.__data_sections = []
-        self.__data_sections_data = []
+        self.__data_sections_content = []
+        self.__exec_sections = []
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -118,7 +119,7 @@ class ELF:
         for s in self.elf.iter_sections():
             if self.__section_is_data(s):
                 self.__data_sections.append(s)
-                self.__data_sections_data.append(s.data())
+                self.__data_sections_content.append(s.data())
 
 
     def __get_data_section_idx(self, addr):
@@ -146,6 +147,15 @@ class ELF:
         return None, False
 
 
+    def __get_cached_exec_section(self, addr):
+        for s in self.__exec_sections:
+            start = s.header.sh_addr
+            end = start + s.header.sh_size
+            if start <= addr < end:
+                return s
+        return None
+
+
     def __find_section(self, addr):
         for s in self.elf.iter_sections():
             start = s.header.sh_addr
@@ -155,14 +165,27 @@ class ELF:
         return None
 
 
-    def get_section(self, addr):
+    def __get_section(self, addr):
+        s = self.__get_cached_exec_section(addr)
+        if s is not None:
+            return s
+
         s = self.__find_section(addr)
         if s is None:
             raise ExcNotAddr(addr)
-        flags = {
-            "exec": self.__section_is_exec(s)
-        }
-        return (s.data(), s.header.sh_addr, flags)
+
+        if not self.__section_is_exec(s):
+            raise ExcNotExec(addr)
+
+        self.__exec_sections.append(s)
+        return s
+
+
+    def section_stream_read(self, addr, size):
+        s = self.__get_section(addr)
+        off = addr - s.header.sh_addr
+        s.stream.seek(s.header.sh_offset + off)
+        return s.stream.read(size)
 
 
     def __section_is_exec(self, s):
@@ -175,7 +198,7 @@ class ELF:
             return ""
 
         s = self.__data_sections[i]
-        data = self.__data_sections_data[i]
+        data = self.__data_sections_content[i]
         off = addr - s.header.sh_addr
         txt = ['"']
 

@@ -82,8 +82,8 @@ class Binary(object):
         return self.__binary.is_data(addr)
 
 
-    def get_section(self, addr):
-        return self.__binary.get_section(addr)
+    def section_stream_read(self, addr, size):
+        return self.__binary.section_stream_read(addr, size)
 
 
     def get_string(self, addr, max_string_data):
