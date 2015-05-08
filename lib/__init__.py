@@ -52,7 +52,8 @@ def parse_args():
     parser.add_argument('-s', '--symbols', action='store_true',
             help='Print all symbols')
     parser.add_argument('-c', '--calls', action='store_true',
-            help='Print all calls')
+            help='Print all calls which are in the section containing the address'
+                 'given with -x.')
     parser.add_argument('--raw', metavar='x86|x64|arm',
             help='Consider the input file as a raw binary')
     parser.add_argument('--dump', action='store_true',
@@ -136,10 +137,7 @@ def load_file(ctx):
 
 
 def init_addr(ctx):
-    # Maybe ctx.entry is a symbol and doesn't exist.
-    # But we need an address for disassembling. After that, if the file
-    # is PE we load imported symbols and search in the code for calls.
-    if ctx.calls or ctx.entry == "EP":
+    if ctx.entry == "EP":
         addr = ctx.dis.binary.get_entry_point()
     else:
         try:
@@ -158,16 +156,6 @@ def init_addr(ctx):
 def disasm(ctx):
     try:
         ctx.gph = ctx.dis.get_graph(ctx.addr)
-    except ExcNotExec as e:
-        error("the address 0x%x is not in an executable section" % e.addr)
-        if ctx.interactive:
-            return False
-        die()
-    except ExcNotAddr as e:
-        error("the address 0x%x cannot be found" % e.addr)
-        if ctx.interactive:
-            return False
-        die()
     except ExcJmpReg as e:
         error("failed on 0x%x: %s %s" %
                 (e.inst.address, e.inst.mnemonic, e.inst.op_str))
@@ -218,19 +206,33 @@ def reverse(ctx):
 
     init_addr(ctx)
 
-    if ctx.calls:
-        ctx.dis.print_calls(ctx)
-        return
+    try:
+        if ctx.calls:
+            ctx.dis.print_calls(ctx)
+            return
 
-    if ctx.dump:
-        if ctx.vim:
-            base = os.path.basename(ctx.filename)
-            ctx.color = False
-            sys.stdout = open(base + ".rev", "w+")
-        ctx.dis.dump(ctx, ctx.addr, ctx.lines)
-        if ctx.vim:
-            generate_vim_syntax(ctx, base + ".vim")
-            print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
-        return
+        if ctx.dump:
+            if ctx.vim:
+                base = os.path.basename(ctx.filename)
+                ctx.color = False
+                sys.stdout = open(base + ".rev", "w+")
 
-    disasm(ctx)
+            ctx.dis.dump(ctx, ctx.lines)
+
+            if ctx.vim:
+                generate_vim_syntax(ctx, base + ".vim")
+                print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
+            return
+
+        disasm(ctx)
+
+    except ExcNotExec as e:
+        error("the address 0x%x is not in an executable section" % e.addr)
+        if ctx.interactive:
+            return False
+        die()
+    except ExcNotAddr as e:
+        error("the address 0x%x cannot be found" % e.addr)
+        if ctx.interactive:
+            return False
+        die()

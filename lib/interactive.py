@@ -346,7 +346,7 @@ class Interactive():
                 lines = int(args[2])
             self.ctx.entry = args[1]
         if init_addr(self.ctx):
-            self.ctx.dis.dump(self.ctx, self.ctx.addr, lines)
+            self.ctx.dis.dump(self.ctx, lines)
             self.ctx.entry = None
             self.ctx.addr = 0
 

@@ -196,7 +196,7 @@ class PE:
         return None
 
 
-    def get_section(self, addr):
+    def __get_section(self, addr, no_raise=False):
         s = self.__get_cached_exec_section(addr)
         if s is not None:
             return s
@@ -204,17 +204,28 @@ class PE:
         base = self.pe.OPTIONAL_HEADER.ImageBase
         s = self.pe.get_section_by_rva(addr - base)
         if s is None:
+            if no_raise:
+                return None
             raise ExcNotAddr(addr)
 
         if not self.__section_is_exec(s):
+            if no_raise:
+                return None
             raise ExcNotExec(addr)
 
         self.__exec_sections.append(s)
         return s
 
 
+    def get_section_start(self, addr):
+        s = self.__get_section(addr, no_raise=True)
+        if s is None:
+            return 0
+        return s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
+
+
     def section_stream_read(self, addr, size):
-        s = self.get_section(addr)
+        s = self.__get_section(addr)
         return s.get_data(addr - self.pe.OPTIONAL_HEADER.ImageBase, size)
 
 

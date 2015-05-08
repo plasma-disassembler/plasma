@@ -82,6 +82,10 @@ class Binary(object):
         return self.__binary.is_data(addr)
 
 
+    def get_section_start(self, addr):
+        return self.__binary.get_section_start(addr)
+
+
     def section_stream_read(self, addr, size):
         return self.__binary.section_stream_read(addr, size)
 

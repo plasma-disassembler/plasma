@@ -54,6 +54,10 @@ class Raw:
         return None, False
 
 
+    def get_section_start(self, addr):
+        return 0
+
+
     def section_stream_read(self, addr, size):
         if addr >= len(self.raw):
             raise ExcNotAddr(addr)

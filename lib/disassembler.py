@@ -78,19 +78,21 @@ class Disassembler():
         raise ExcSymNotFound(search[0])
 
 
-    def dump(self, ctx, addr, lines):
+    def dump(self, ctx, lines):
         from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
+        s_start = self.binary.get_section_start(ctx.addr)
+
         # set jumps color
-        i = self.lazy_disasm(addr)
+        i = self.lazy_disasm(ctx.addr, s_start)
         l = 0
         while i is not None and l < lines:
             if ARCH_UTILS.is_jump(i) and i.operands[0].type == CS_OP_IMM:
                 pick_color(i.operands[0].value.imm)
-            i = self.lazy_disasm(i.address + i.size)
+            i = self.lazy_disasm(i.address + i.size, s_start)
             l += 1
 
         # Here we have loaded all instructions we want to print
@@ -100,32 +102,29 @@ class Disassembler():
         o = ARCH_OUTPUT.Output(ctx)
 
         # dump
-        i = self.lazy_disasm(addr)
+        i = self.lazy_disasm(ctx.addr, s_start)
         l = 0
         while i is not None and l < lines:
             o.print_inst(i, 0)
-            i = self.lazy_disasm(i.address + i.size)
+            i = self.lazy_disasm(i.address + i.size, s_start)
             l += 1
 
 
     def print_calls(self, ctx):
+        # Print all calls which are in the section containing ctx.addr
+
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        for i in self.md.disasm(self.data, self.virtual_addr):
-            if ARCH_UTILS.is_call(i):
-                self.code[i.address] = i
-
-        # Here we have loaded all instructions we want to print
-        if self.binary.type == T_BIN_PE:
-            self.binary.pe_reverse_stripped_symbols(self)
-
+        s_start = self.binary.get_section_start(ctx.addr)
         o = ARCH_OUTPUT.Output(ctx)
 
-        for ad, i in self.code.items():
+        i = self.lazy_disasm(s_start, s_start)
+        while i is not None:
             if ARCH_UTILS.is_call(i):
                 o.print_inst(i)
+            i = self.lazy_disasm(i.address + i.size, s_start)
 
 
     def print_symbols(self, print_sections, sym_filter=None):
@@ -154,7 +153,11 @@ class Disassembler():
             self.binary.symbols[arg[1]] = addr
 
 
-    def lazy_disasm(self, addr):
+    def lazy_disasm(self, addr, stay_in_section=-1):
+        if stay_in_section != -1 and \
+                self.binary.get_section_start(addr) != stay_in_section:
+            return None
+
         if addr in self.code:
             return self.code[addr]
         
