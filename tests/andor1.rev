@@ -17,10 +17,7 @@ function main {
             # 0x400539: cmp dword ptr [rbp - 8], 9
             # 0x40053d: jle 0x400517
             if (var4 > 9) {
-                0x40053f: eax = var3 # mov eax, dword ptr [rbp - 4]
-                # 0x400542: cmp eax, dword ptr [rbp - 0xc]
-                # 0x400545: je 0x400517
-                if (eax != var5)  goto 0x400547
+                goto 0x40053f
             }
         } else {
             0x40053f: eax = var3 # mov eax, dword ptr [rbp - 4]

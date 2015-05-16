@@ -77,6 +77,11 @@ def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
         return ast
 
     while 1:
+        ad = paths.first()
+        if ad in ctx.seen:
+            ast.add(Ast_Goto(ad))
+            return ast
+
         # Stop at the first split or loop
         nb_commons, is_loop, is_ifelse, force_stop_addr = \
             paths.head_last_common(curr_loop_idx)
@@ -85,6 +90,7 @@ def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
             common_path = paths.pop(nb_commons)
 
             for ad in common_path:
+                ctx.seen.add(ad)
                 blk = ctx.gph.nodes[ad]
 
                 # Here if we have conditional jump, it's not a ifelse,
@@ -97,6 +103,11 @@ def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
                     ast.add(blk)
 
             if paths.rm_empty_paths():
+                return ast
+
+            ad = paths.first()
+            if ad in ctx.seen:
+                ast.add(Ast_Goto(ad))
                 return ast
 
         # See comments in paths.__enter_new_loop
@@ -160,7 +171,8 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     # tests/nestedloop2
     ast.set_infinite(paths_is_infinite(loop_paths))
 
-    loop_paths.pop(1)
+    addr = loop_paths.pop(1)[0]
+    ctx.seen.add(addr)
     ast.add(get_ast_branch(ctx, loop_paths, curr_loop_idx, last_else))
 
     if not endloops:
@@ -183,6 +195,7 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
 
 def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     addr = paths.pop(1)[0]
+    ctx.seen.add(addr)
     paths.rm_empty_paths()
     jump_inst = ctx.gph.nodes[addr][0]
     nxt = ctx.gph.link_out[addr]

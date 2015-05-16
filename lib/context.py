@@ -63,6 +63,7 @@ class Context():
         self.local_vars_size = []
         self.local_vars_name = []
         self.vars_counter = 1
+        self.seen = set()
 
         # If an address of an instruction cmp is here, it means that we
         # have fused with an if, so don't print this instruction.
