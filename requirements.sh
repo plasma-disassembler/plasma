@@ -2,6 +2,8 @@
 
 CS_VERSION=3.0.3-rc1
 
+rm -rf /usr/lib/python3.*/site-packages/capstone*
+
 mkdir -p build
 cd build
 
