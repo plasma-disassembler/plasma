@@ -186,12 +186,12 @@ class Ast_Ifelse:
         print_tabbed("}", tab)
 
 
-class Ast_Jmp:
+class Ast_Goto:
     def __init__(self, addr):
         self.addr_jump = addr
 
     def print(self, o, tab=0):
-        print_tabbed_no_end("jmp ", tab)
+        print_tabbed_no_end(color_keyword("goto "), tab)
         print(color_addr(self.addr_jump, False))
 
 

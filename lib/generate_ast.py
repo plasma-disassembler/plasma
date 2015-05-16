@@ -19,7 +19,7 @@
 
 import time
 
-from lib.ast import (Ast_Branch, Ast_Comment, Ast_Jmp, Ast_Loop, 
+from lib.ast import (Ast_Branch, Ast_Comment, Ast_Goto, Ast_Loop,
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf)
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from lib.exceptions import ExcIfelse
@@ -99,13 +99,14 @@ def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
             if paths.rm_empty_paths():
                 return ast
 
+        # See comments in paths.__enter_new_loop
         if force_stop_addr != 0:
             ad = paths.first()
             blk = ctx.gph.nodes[ad]
             ast.add(blk)
 
             if ad not in ctx.gph.uncond_jumps_set:
-                ast.add(Ast_Jmp(ctx.gph.link_out[blk[0].address][BRANCH_NEXT]))
+                ast.add(Ast_Goto(ctx.gph.link_out[blk[0].address][BRANCH_NEXT]))
             break
 
         if is_loop:

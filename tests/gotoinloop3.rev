@@ -39,5 +39,5 @@ function main {
     }
     0x400520: edi = 0x400606 "2" # mov edi, 0x400606
     0x400525: call 0x4003e0 <puts@plt>
-    jmp 0x40052a
+    goto 0x40052a
 }

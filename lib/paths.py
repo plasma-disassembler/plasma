@@ -113,7 +113,9 @@ class Paths():
     #
     # A "marked" loop is a loop which have an equivalent loop
     # It means that these loops are the same but one starts
-    # in the middle of the second (see tests/gotoinloop*)
+    # in the middle of the second (see tests/gotoinloop*). So
+    # we go on the loop which starts in the middle, we returns
+    # force_stop = True.
     #
     def __enter_new_loop(self, curr_loop_idx, key_path, i):
         addr = self.paths[key_path][i]
@@ -219,6 +221,7 @@ class Paths():
     # is_loop (bool) : stopped on a begining loop
     # is_ifelse (bool) : stopped on a ifelse (found two differents address on paths)
     # force_stop_addr : return the address we have stopped the algorithm
+    #                   see comments in paths.__enter_new_loop
     #
     def head_last_common(self, curr_loop_idx):
         # The path used as a reference (each value of this path is

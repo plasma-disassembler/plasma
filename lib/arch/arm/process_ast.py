@@ -21,7 +21,7 @@ from capstone.arm import ARM_OP_IMM, ARM_INS_CMP, ARM_CC_AL
 
 from lib.colors import pick_color
 from lib.utils import BRANCH_NEXT
-from lib.ast import (Ast_Branch, Ast_Jmp, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
+from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
         Ast_AndIf, Ast_If_cond)
 from lib.arch.arm.output import ASSIGNMENT_OPS
 from lib.arch.arm.utils import is_uncond_jump
@@ -41,7 +41,7 @@ def assign_colors(ctx, ast):
             else: # ast
                 assign_colors(ctx, n)
 
-    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Jmp):
+    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
         pick_color(ast.addr_jump)
 
     elif isinstance(ast, Ast_Ifelse):
