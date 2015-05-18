@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument('-s', '--symbols', action='store_true',
             help='Print all symbols')
     parser.add_argument('-c', '--calls', action='store_true',
-            help='Print all calls which are in the section containing the address'
+            help='Print all calls which are in the section containing the address '
                  'given with -x.')
     parser.add_argument('--raw', metavar='x86|x64|arm',
             help='Consider the input file as a raw binary')
@@ -144,6 +144,8 @@ def init_addr(ctx):
             if ctx.interactive:
                 return False
             error("Try with --sym to see all symbols.")
+            error("If you have set the option --dump or --calls you need to set")
+            error("the option -x (see --help).")
             die()
 
     try:
