@@ -17,7 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from capstone.arm import ARM_OP_IMM, ARM_INS_CMP, ARM_CC_AL
+from capstone.arm import ARM_OP_IMM, ARM_INS_CMP, ARM_CC_AL, ARM_INS_TST
 
 from lib.colors import pick_color
 from lib.utils import BRANCH_NEXT
@@ -29,6 +29,7 @@ from lib.arch.arm.utils import is_uncond_jump
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
 FUSE_OPS.add(ARM_INS_CMP)
+FUSE_OPS.add(ARM_INS_TST)
 
 
 def assign_colors(ctx, ast):
