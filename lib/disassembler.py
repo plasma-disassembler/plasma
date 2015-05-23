@@ -167,7 +167,7 @@ class Disassembler():
         # Disassemble by block of N bytes
         N = 1024
 
-        d = self.binary.section_stream_read(addr, 4)
+        d = self.binary.section_stream_read(addr, N)
         gen = self.md.disasm(d, addr)
 
         first = None
