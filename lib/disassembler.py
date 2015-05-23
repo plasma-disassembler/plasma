@@ -167,7 +167,7 @@ class Disassembler():
         # Disassemble by block of N bytes
         N = 1024
 
-        d = self.binary.section_stream_read(addr, N)
+        d = self.binary.section_stream_read(addr, 4)
         gen = self.md.disasm(d, addr)
 
         first = None
@@ -193,9 +193,11 @@ class Disassembler():
         ARCH_UTILS = self.load_arch_module().utils
 
         curr = self.lazy_disasm(addr)
+        if curr == None:
+            return None
+
         gph = Graph(self, addr)
         rest = []
-
         start = time.clock()
 
         while 1:

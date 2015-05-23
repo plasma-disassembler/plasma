@@ -168,6 +168,9 @@ def init_addr(ctx):
 
 def disasm(ctx):
     ctx.gph = ctx.dis.get_graph(ctx.addr)
+    if ctx.gph == None:
+        error("capstone can't disassemble here")
+        return
     paths = ctx.gph.get_paths()
     paths.gph = ctx.gph
     paths.cache_obj()
