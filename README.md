@@ -12,9 +12,8 @@ The `Makefile` is used only for checking tests.
 
 ## Requirements
 
-    capstone
-    python3
-    python-capstone (>= 3.0.1)
+    python >= 3.4
+    capstone + python bindings (see requirements.sh)
     python-pyelftools
     https://github.com/simonzack/pefile-py3k
     terminal with 256 colors (if not use the option `--nocolor`)

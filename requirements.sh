@@ -1,6 +1,10 @@
 #!/bin/sh
 
-CS_VERSION=3.0.3
+PYTHON_VERSION=`python3 -c 'import sys; print("%i" % (sys.hexversion<0x03040000))'`
+if [ $PYTHON_VERSION -ne 0 ]; then
+    echo "error: you need at least python 3.4 to run this project"    
+    exit
+fi
 
 rm -rf /usr/lib/python3.*/site-packages/capstone*
 rm -rf build
@@ -8,17 +12,24 @@ rm -rf build
 mkdir -p build
 cd build
 
-git clone -b $CS_VERSION --depth 1 https://github.com/aquynh/capstone
+CAPSTONE_VERSION=3.0.3
+
+# Capstone
+git clone -b $CAPSTONE_VERSION --depth 1 https://github.com/aquynh/capstone
 cd capstone/
 ./make.sh
 sudo ./make.sh install
+
+# Bindings
 cd bindings/python
-sudo make install
+sudo make install3
 cd ../../..
 
+# PE
 git clone -b master --depth 1 https://github.com/simonzack/pefile-py3k
 cd pefile-py3k
-sudo python setup.py install
+sudo python3 setup.py install
 cd ..
 
+# ELF
 sudo pip3 install pyelftools
