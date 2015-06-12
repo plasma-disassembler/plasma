@@ -43,6 +43,7 @@ class Context():
         self.graph = False # Print graph != gph -> object
         self.interactive = False
         self.debug = False
+        self.raw_base = 0
 
 
     def reset_all(self):

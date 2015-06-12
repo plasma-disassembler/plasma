@@ -29,7 +29,7 @@ T_BIN_UNK = 3
 
 
 class Binary(object):
-    def __init__(self, filename, raw_type=None):
+    def __init__(self, filename, raw_type=None, raw_base=None):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
@@ -37,7 +37,7 @@ class Binary(object):
 
         if raw_type != None:
             import lib.fileformat.raw as LIB_RAW
-            self.__binary = LIB_RAW.Raw(filename, raw_type)
+            self.__binary = LIB_RAW.Raw(filename, raw_type, raw_base)
             self.type = T_BIN_RAW
             return
 

@@ -56,6 +56,8 @@ def parse_args():
                  'given with -x.')
     parser.add_argument('--raw', metavar='x86|x64|arm',
             help='Consider the input file as a raw binary')
+    parser.add_argument('--rawbase', metavar='0xXXXXX',
+            help='Set base address of a raw file (default=0)')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
     parser.add_argument('--lines', type=int, default=30, metavar='N',
@@ -79,6 +81,7 @@ def parse_args():
     ctx.max_data_size   = args.datasize
     ctx.filename        = args.filename
     ctx.raw_type        = args.raw
+    ctx.raw_base        = args.rawbase
     ctx.symfile         = args.symfile
     ctx.syms            = args.symbols
     ctx.calls           = args.calls
@@ -88,6 +91,14 @@ def parse_args():
     ctx.interactive     = args.interactive
     ctx.lines           = args.lines
     ctx.graph           = args.graph
+
+    if ctx.raw_base is not None:
+        if ctx.raw_base.startswith("0x"):
+            ctx.raw_base = int(ctx.raw_base, 16)
+        else:
+            error("--rawbase must in hex format")
+            die()
+
     return ctx
 
 
@@ -105,7 +116,7 @@ def load_file(ctx):
         die()
 
     try:
-        dis = Disassembler(ctx.filename, ctx.raw_type)
+        dis = Disassembler(ctx.filename, ctx.raw_type, ctx.raw_base)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:

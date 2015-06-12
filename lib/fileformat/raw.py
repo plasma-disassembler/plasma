@@ -19,11 +19,12 @@
 
 
 class Raw:
-    def __init__(self, filename, raw_type):
+    def __init__(self, filename, raw_type, raw_base):
         import capstone as CAPSTONE
 
         self.raw = open(filename, "rb").read()
         self.raw_type = raw_type
+        self.raw_base = raw_base
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -55,19 +56,21 @@ class Raw:
 
 
     def get_section_start(self, addr):
-        return 0
+        return self.raw_base
 
 
     def check_addr(self, addr):
-        if addr >= len(self.raw) or addr < 0:
+        ad = addr - self.raw_base
+        if ad >= len(self.raw) or ad < 0:
             return (False, False)
         return (True, True)
 
 
     def section_stream_read(self, addr, size):
-        if addr >= len(self.raw) or addr < 0:
+        ad = addr - self.raw_base
+        if ad >= len(self.raw) or ad < 0:
             return b""
-        return self.raw[addr:addr+size]
+        return self.raw[ad:ad+size]
 
 
     def get_string(self, addr):
