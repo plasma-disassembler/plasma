@@ -213,11 +213,13 @@ class PE:
         return (s is not None, self.__section_is_exec(s))
 
 
-    def get_section_start(self, addr):
+    def get_section_meta(self, addr):
         s = self.__get_section(addr)
         if s is None:
             return 0
-        return s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
+        n = s.Name.decode().rstrip(' \0')
+        a = s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
+        return n, a, a + s.SizeOfRawData - 1
 
 
     def section_stream_read(self, addr, size):

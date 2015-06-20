@@ -180,11 +180,12 @@ class ELF:
         return (s is not None, self.__section_is_exec(s))
 
 
-    def get_section_start(self, addr):
+    def get_section_meta(self, addr):
         s = self.__get_section(addr)
         if s is None:
             return 0
-        return s.header.sh_addr
+        a = s.header.sh_addr
+        return s.name.decode(), a, a + s.header.sh_size - 1
 
 
     def section_stream_read(self, addr, size):

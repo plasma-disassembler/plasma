@@ -82,8 +82,8 @@ class Binary(object):
         return self.__binary.is_data(addr)
 
 
-    def get_section_start(self, addr):
-        return self.__binary.get_section_start(addr)
+    def get_section_meta(self, addr):
+        return self.__binary.get_section_meta(addr)
 
 
     def check_addr(self, addr):

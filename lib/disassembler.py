@@ -84,13 +84,23 @@ class Disassembler():
         raise ExcSymNotFound(search[0])
 
 
+    def print_section_meta(self, name, start, end):
+        print_no_end(color_section(name))
+        print_no_end(" [")
+        print_no_end(hex(start))
+        print_no_end(" - ")
+        print_no_end(hex(end))
+        print("]")
+
+
     def dump(self, ctx, lines):
         from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_start = self.binary.get_section_start(ctx.addr)
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.addr)
+        self.print_section_meta(s_name, s_start, s_end)
 
         # set jumps color
         i = self.lazy_disasm(ctx.addr, s_start)
@@ -123,7 +133,8 @@ class Disassembler():
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_start = self.binary.get_section_start(ctx.addr)
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.addr)
+        self.print_section_meta(s_name, s_start, s_end)
         o = ARCH_OUTPUT.Output(ctx)
 
         i = self.lazy_disasm(s_start, s_start)
@@ -156,8 +167,8 @@ class Disassembler():
 
 
     def lazy_disasm(self, addr, stay_in_section=-1):
-        if stay_in_section != -1 and \
-                self.binary.get_section_start(addr) != stay_in_section:
+        _, start, _ = self.binary.get_section_meta(addr)
+        if stay_in_section != -1 and start != stay_in_section:
             return None
 
         if addr in self.code:
