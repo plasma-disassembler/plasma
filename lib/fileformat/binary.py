@@ -57,6 +57,8 @@ class Binary(object):
         elapsed = elapsed - start
         debug__("Binary loaded in %fs" % elapsed)
 
+
+    def load_extra(self):
         start = time.clock()
 
         self.__binary.load_static_sym()

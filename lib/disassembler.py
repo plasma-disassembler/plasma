@@ -39,6 +39,8 @@ class Disassembler():
         if arch is None or mode is None:
             raise ExcArch(self.binary.get_arch_string())
 
+        self.binary.load_extra()
+
         self.md = CAPSTONE.Cs(arch, mode)
         self.md.detail = True
         self.arch = arch

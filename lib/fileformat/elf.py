@@ -227,8 +227,23 @@ class ELF:
 
 
     def get_arch(self):
-        return self.arch_lookup.get(self.elf.get_machine_arch(), None), \
-               self.arch_mode_lookup.get(self.elf.get_machine_arch(), None)
+        import capstone as CAPSTONE
+        arch = self.arch_lookup.get(self.elf.get_machine_arch(), None)
+        mode = self.arch_mode_lookup.get(self.elf.get_machine_arch(), None)
+
+        if arch is None:
+            return None, None
+
+        # If one arch name has multiple "word size"
+        if isinstance(mode, dict):
+            mode = mode[self.elf.elfclass]
+
+        if self.elf.little_endian:
+            mode |= CAPSTONE.CS_MODE_LITTLE_ENDIAN
+        else:
+            mode |= CAPSTONE.CS_MODE_BIG_ENDIAN
+
+        return arch, mode
 
 
     def get_arch_string(self):
