@@ -152,10 +152,12 @@ class Disassembler():
             sy = self.binary.reverse_symbols[addr]
             if sym_filter is None or sym_filter in sy.lower():
                 sec_name, _ = self.binary.is_address(addr)
-                print_no_end(color_addr(addr) + " " + color_symbol("<" + sy + ">"))
-                if print_sections and sec_name is not None:
-                    print_no_end(" (" + color_section(sec_name) + ")")
-                print()
+                if sy:
+                    print_no_end(color_addr(addr) + " " +
+                                 color_symbol("<" + sy + ">"))
+                    if print_sections and sec_name is not None:
+                        print_no_end(" (" + color_section(sec_name) + ")")
+                    print()
 
 
     def load_user_sym_file(self, fd):
