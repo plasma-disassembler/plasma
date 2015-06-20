@@ -222,7 +222,10 @@ class PE:
 
     def section_stream_read(self, addr, size):
         s = self.__get_section(addr)
-        return s.get_data(addr - self.pe.OPTIONAL_HEADER.ImageBase, size)
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        off = addr - base
+        end = base + s.VirtualAddress + s.SizeOfRawData
+        return s.get_data(off, min(size, end - addr))
 
 
     def is_address(self, imm):

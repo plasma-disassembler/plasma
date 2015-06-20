@@ -190,8 +190,9 @@ class ELF:
     def section_stream_read(self, addr, size):
         s = self.__get_section(addr)
         off = addr - s.header.sh_addr
+        end = s.header.sh_addr + s.header.sh_size
         s.stream.seek(s.header.sh_offset + off)
-        return s.stream.read(size)
+        return s.stream.read(min(size, end - addr))
 
 
     def __section_is_exec(self, s):
