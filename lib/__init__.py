@@ -98,6 +98,8 @@ def parse_args():
         else:
             error("--rawbase must in hex format")
             die()
+    else:
+        ctx.raw_base = 0
 
     return ctx
 
