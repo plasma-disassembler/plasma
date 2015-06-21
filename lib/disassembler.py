@@ -104,12 +104,15 @@ class Disassembler():
         s_name, s_start, s_end = self.binary.get_section_meta(ctx.addr)
         self.print_section_meta(s_name, s_start, s_end)
 
+        # WARNING: this assume that on every architectures the jump
+        # address is the last operand (operands[-1])
+
         # set jumps color
         i = self.lazy_disasm(ctx.addr, s_start)
         l = 0
         while i is not None and l < lines:
-            if ARCH_UTILS.is_jump(i) and i.operands[0].type == CS_OP_IMM:
-                pick_color(i.operands[0].value.imm)
+            if ARCH_UTILS.is_jump(i) and i.operands[-1].type == CS_OP_IMM:
+                pick_color(i.operands[-1].value.imm)
             i = self.lazy_disasm(i.address + i.size, s_start)
             l += 1
 
@@ -123,7 +126,7 @@ class Disassembler():
         i = self.lazy_disasm(ctx.addr, s_start)
         l = 0
         while i is not None and l < lines:
-            o.print_inst(i, 0)
+            o.print_inst(i)
             i = self.lazy_disasm(i.address + i.size, s_start)
             l += 1
 
@@ -214,11 +217,14 @@ class Disassembler():
         rest = []
         start = time.clock()
 
+        # WARNING: this assume that on every architectures the jump
+        # address is the last operand (operands[-1])
+
         while 1:
             if not gph.exists(curr):
                 if ARCH_UTILS.is_uncond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[0].type == CS_OP_IMM:
-                        addr = curr.operands[0].value.imm
+                    if curr.operands[-1].type == CS_OP_IMM:
+                        addr = curr.operands[-1].value.imm
                         nxt = self.lazy_disasm(addr)
                         gph.set_next(curr, nxt)
                         rest.append(nxt.address)
@@ -228,8 +234,8 @@ class Disassembler():
                     gph.uncond_jumps_set.add(curr.address)
 
                 elif ARCH_UTILS.is_cond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[0].type == CS_OP_IMM:
-                        nxt_jump = self.lazy_disasm(curr.operands[0].value.imm)
+                    if curr.operands[-1].type == CS_OP_IMM:
+                        nxt_jump = self.lazy_disasm(curr.operands[-1].value.imm)
                         direct_nxt = self.lazy_disasm(curr.address + curr.size)
                         gph.set_cond_next(curr, nxt_jump, direct_nxt)
                         rest.append(nxt_jump.address)
