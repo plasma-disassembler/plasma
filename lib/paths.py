@@ -18,6 +18,7 @@
 #
 
 import sys
+import copy
 
 import lib.utils
 from lib.utils import (index, BRANCH_NEXT, BRANCH_NEXT_JUMP, print_list)
@@ -40,6 +41,13 @@ class Paths():
         self.gph_cond_jumps_set   = self.gph.cond_jumps_set
         self.gph_uncond_jumps_set = self.gph.uncond_jumps_set
         self.gph_link_out         = self.gph.link_out
+
+
+    def copy(self):
+        newp = Paths(self.gph)
+        newp.looping = copy.deepcopy(self.looping)
+        newp.paths = copy.deepcopy(self.paths)
+        return newp
 
 
     def __contains__(self, addr):
@@ -654,7 +662,7 @@ class Paths():
 
 
         # ------------------------------------------------------
-        # Cut paths to avoid dupplicate code and create new
+        # Cut paths to avoid duplicate code and create new
         # groups. Paths are cut at each endpoints.
         # ------------------------------------------------------
 
@@ -780,7 +788,7 @@ class Paths():
             # endpoints was in the group, we start to cut at this
             # one (see prev_cut_idx).
             for g in all_endpoints[e]:
-                # This prevent to not dupplicate endpoints which are at
+                # This prevent to not duplicate endpoints which are at
                 # the same time the beginning of a group.
                 if g != e:
                     newp, all_finish_by_jump = cut_path(g, e)
@@ -843,13 +851,24 @@ class Paths():
 
         # debug__(endloops_sort)
 
+        el_seen = set()
+
         for i, ad in enumerate(endloops_sort):
-            list_grp_endloops.append(saved_paths[ad])
+            # Sometimes it's not possible to merge endpoints due to some goto.
+            # (tests/goto4). If a Path is duplicated it may crash the program
+            # because a path is modified when a branch is traversed. The solution
+            # is to make a copy of the object.
+            if ad in el_seen:
+                list_grp_endloops.append(saved_paths[ad].copy())
+            else:
+                list_grp_endloops.append(saved_paths[ad])
+
+            el_seen.add(ad)
 
             # This is a HACK.
             # It's possible that endloops were not correclty sorted (due to
             # weird gotos). So check that and add a goto, if the next is not the
-            # one expected.
+            # one expected. (tests/goto5)
             nxt = next_no_jump[ad]
             if nxt != -1 and i < len(endloops_sort)-1 and nxt != endloops_sort[i+1]:
                 list_grp_endloops.append(Ast_Goto(nxt))
