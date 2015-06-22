@@ -84,7 +84,7 @@ class Paths():
 
 
     def debug(self):
-        if not lib.utils.dbg:
+        if not lib.utils.ctx.debug:
           return
         print("paths :", file=sys.stderr)
         for k, p in self.paths.items():
@@ -119,15 +119,15 @@ class Paths():
     #
     def __enter_new_loop(self, curr_loop_idx, key_path, i):
         addr = self.paths[key_path][i]
-        is_loop = key_path not in self.looping
+        is_loop = key_path in self.looping
 
         # TODO not sure
         # tests/gotoinloop{6,7}
         if addr in self.gph_marked_addr:
-            if not curr_loop_idx or is_loop:
+            if not curr_loop_idx or not is_loop:
                 return False, True
 
-        if is_loop:
+        if not is_loop:
             return False, False
 
         l_idx = self.looping[key_path]
@@ -231,22 +231,17 @@ class Paths():
         refpath = self.__longuest_path()
 
         nb_commons = 0
-
         for i in range(len(self.paths[refpath])):
             addr0 = self.paths[refpath][i]
 
+            # Searching if it's a loop or a ifelse must be in differents loops
+            # because for a conditional jump can a loop or a ifelse. Priority
+            # is for loops.
+
+            # Check if addr0 is the beginning of a loop
             is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, refpath, i)
             if is_loop or force_stop:
                 return nb_commons, is_loop, False, (force_stop and addr0)
-
-            # Check addr0
-            if addr0 in self.gph_cond_jumps_set:
-                nxt = self.gph_link_out[addr0]
-                c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
-                c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
-                if c1 and c2:
-                    return nb_commons, False, True, 0
-
 
             # Compare with other paths
             for k, p in self.paths.items():
@@ -261,6 +256,24 @@ class Paths():
                 is_loop, force_stop = self.__enter_new_loop(curr_loop_idx, k, i)
                 if is_loop or force_stop:
                     return nb_commons, is_loop, False, (force_stop and addr)
+
+            # Check if addr0 is a ifelse
+            if addr0 in self.gph_cond_jumps_set:
+                nxt = self.gph_link_out[addr0]
+                c1 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
+                c2 = self.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
+                if c1 and c2:
+                    return nb_commons, False, True, 0
+
+            # Compare with other paths
+            for k, p in self.paths.items():
+                if k == refpath:
+                    continue
+
+                if addr0 not in p:
+                    return nb_commons, False, False, 0
+
+                addr = p[i]
 
                 if addr in self.gph_cond_jumps_set:
                     nxt = self.gph_link_out[addr]

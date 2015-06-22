@@ -17,13 +17,14 @@ function ___main {
             0x401910: eax = 0 # xor eax, eax
             0x401912: test ecx, ecx
             0x401914: jmp 0x401920
-            # 0x401920: jne 0x401916
-            if == {
-                0x401922: jmp 0x4018e5
+            loop {
+                # 0x401920: jne 0x401916
+                if ==  goto 0x401922
+                0x401916: eax++ # inc eax
+                0x401917: edx = *((eax*4) + 4202132) # mov edx, dword ptr [eax*4 + 0x401e94]
+                0x40191e: test edx, edx
             }
-            0x401916: eax++ # inc eax
-            0x401917: edx = *((eax*4) + 4202132) # mov edx, dword ptr [eax*4 + 0x401e94]
-            0x40191e: test edx, edx
+            0x401922: jmp 0x4018e5
         }
         0x4018e5: test eax, eax
         0x4018e7: ebx = eax # mov ebx, eax

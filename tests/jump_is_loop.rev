@@ -1,0 +1,12 @@
+function main {
+    0x4004b6: push rbp
+    0x4004b7: rbp = rsp # mov rbp, rsp
+    0x4004ba: jmp 0x4004bf
+    loop {
+        # 0x4004bf: jle 0x4004bc
+        if >  goto 0x4004c1
+        <myloop>
+        0x4004bc: rax++ # inc rax
+    }
+    0x4004c1: ret 
+}
