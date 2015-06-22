@@ -180,13 +180,20 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
 
     epilog = Ast_Branch()
     if len(endloops) > 1:
-        i = 1
-        for el in endloops[:-1]:
+        epilog_num = 1
+
+        for i, el in enumerate(endloops[:-1]):
+            if isinstance(el, Ast_Goto):
+                epilog.add(el)
+                continue
+
             if el.first() in endloops_start:
-                epilog.add(Ast_Comment("endloop " + str(i)))
-                i += 1
+                epilog.add(Ast_Comment("endloop " + str(epilog_num)))
+                epilog_num += 1
+
             epilog.add(get_ast_branch(ctx, el, last_loop_idx, last_else))
-        epilog.add(Ast_Comment("endloop " + str(i)))
+
+        epilog.add(Ast_Comment("endloop " + str(epilog_num)))
 
         ast.set_epilog(epilog)
 

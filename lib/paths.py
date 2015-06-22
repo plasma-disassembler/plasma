@@ -21,7 +21,7 @@ import sys
 
 import lib.utils
 from lib.utils import (index, BRANCH_NEXT, BRANCH_NEXT_JUMP, print_list)
-
+from lib.ast import Ast_Goto
 
 
 class Paths():
@@ -843,7 +843,15 @@ class Paths():
 
         # debug__(endloops_sort)
 
-        for ad in endloops_sort:
+        for i, ad in enumerate(endloops_sort):
             list_grp_endloops.append(saved_paths[ad])
+
+            # This is a HACK.
+            # It's possible that endloops were not correclty sorted (due to
+            # weird gotos). So check that and add a goto, if the next is not the
+            # one expected.
+            nxt = next_no_jump[ad]
+            if nxt != -1 and i < len(endloops_sort)-1 and nxt != endloops_sort[i+1]:
+                list_grp_endloops.append(Ast_Goto(nxt))
 
         return loop_paths, list_grp_endloops, endloops_start
