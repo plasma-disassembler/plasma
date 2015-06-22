@@ -136,7 +136,6 @@ function main {
         }
         0x400655: var1 += 1 # add dword ptr [rbp - 4], 1
     }
-    # endloop 8
     # 0x40065f: cmp dword ptr [rbp - 8], 1
     # 0x400663: jne 0x400671
     if (var3 == 1) {

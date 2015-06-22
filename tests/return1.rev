@@ -33,7 +33,6 @@ function main {
     0x400556: edi = 0x4005f8 "3" # mov edi, 0x4005f8
     0x40055b: call 0x4003e0 <puts@plt>
     0x400560: eax = 0 # mov eax, 0
-    # endloop 4
     0x400565: leave 
     0x400566: ret 
 }

@@ -193,7 +193,8 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
 
             epilog.add(get_ast_branch(ctx, el, last_loop_idx, last_else))
 
-        epilog.add(Ast_Comment("endloop " + str(epilog_num)))
+        if endloops[-1].first() in endloops_start:
+            epilog.add(Ast_Comment("endloop " + str(epilog_num)))
 
         ast.set_epilog(epilog)
 
