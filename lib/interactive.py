@@ -51,6 +51,8 @@ class Interactive():
             "help",
             "load",
             "lrawarm",
+            "lrawmips",
+            "lrawmips64",
             "lrawx86",
             "lrawx64",
             "sections",
@@ -106,6 +108,26 @@ class Interactive():
                 [
                 "filename",
                 "Load a ARM raw file.",
+                ]
+            ),
+
+            "lrawmips": Command(
+                1,
+                self.__exec_lrawmips,
+                self.__complete_load,
+                [
+                "filename",
+                "Load a MIPS raw file.",
+                ]
+            ),
+
+            "lrawmips64": Command(
+                1,
+                self.__exec_lrawmips64,
+                self.__complete_load,
+                [
+                "filename",
+                "Load a MIPS64 raw file.",
                 ]
             ),
 
@@ -387,6 +409,26 @@ class Interactive():
             return
         self.ctx.reset_all()
         self.ctx.raw_type = "arm"
+        self.ctx.filename = args[1]
+        load_file(self.ctx)
+
+
+    def __exec_lrawmips(self, args):
+        if len(args) != 2:
+            error("filename required")
+            return
+        self.ctx.reset_all()
+        self.ctx.raw_type = "mips"
+        self.ctx.filename = args[1]
+        load_file(self.ctx)
+
+
+    def __exec_lrawmips64(self, args):
+        if len(args) != 2:
+            error("filename required")
+            return
+        self.ctx.reset_all()
+        self.ctx.raw_type = "mips64"
         self.ctx.filename = args[1]
         load_file(self.ctx)
 

@@ -54,7 +54,7 @@ def parse_args():
     parser.add_argument('-c', '--calls', action='store_true',
             help='Print all calls which are in the section containing the address '
                  'given with -x.')
-    parser.add_argument('--raw', metavar='x86|x64|arm',
+    parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
             help='Consider the input file as a raw binary')
     parser.add_argument('--rawbase', metavar='0xXXXXX',
             help='Set base address of a raw file (default=0)')

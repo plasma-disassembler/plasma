@@ -53,12 +53,17 @@ class ELF:
             "x86": CAPSTONE.CS_ARCH_X86,
             "x64": CAPSTONE.CS_ARCH_X86,
             "ARM": CAPSTONE.CS_ARCH_ARM,
+            "MIPS": CAPSTONE.CS_ARCH_MIPS,
         }
 
         self.arch_mode_lookup = {
             "x86": CAPSTONE.CS_MODE_32,
             "x64": CAPSTONE.CS_MODE_64,
             "ARM": CAPSTONE.CS_ARCH_ARM,
+            "MIPS": {
+                32: CAPSTONE.CS_MODE_MIPS32,
+                64: CAPSTONE.CS_MODE_MIPS64,
+            }
         }
 
 
@@ -95,6 +100,9 @@ class ELF:
         }
 
         arch = self.elf.get_machine_arch()
+
+        if arch == "MIPS":
+            return
 
         relitems = list(rel.iter_relocations())
         dynsym = list(dyn.iter_symbols())

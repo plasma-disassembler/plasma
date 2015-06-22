@@ -30,12 +30,16 @@ class Raw:
             "x86": CAPSTONE.CS_ARCH_X86,
             "x64": CAPSTONE.CS_ARCH_X86,
             "arm": CAPSTONE.CS_ARCH_ARM,
+            "mips": CAPSTONE.CS_ARCH_MIPS,
+            "mips64": CAPSTONE.CS_ARCH_MIPS,
         }
 
         self.arch_mode_lookup = {
             "x86": CAPSTONE.CS_MODE_32,
             "x64": CAPSTONE.CS_MODE_64,
             "arm": CAPSTONE.CS_ARCH_ARM,
+            "mips": CAPSTONE.CS_MODE_MIPS32,
+            "mips64": CAPSTONE.CS_MODE_MIPS64,
         }
 
 

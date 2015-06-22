@@ -61,6 +61,8 @@ class Disassembler():
             import lib.arch.x86 as ARCH
         elif self.arch == CAPSTONE.CS_ARCH_ARM:
             import lib.arch.arm as ARCH
+        elif self.arch == CAPSTONE.CS_ARCH_MIPS:
+            import lib.arch.mips as ARCH
         else:
             raise NotImplementedError
         return ARCH
