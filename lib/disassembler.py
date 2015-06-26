@@ -28,11 +28,11 @@ from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
 class Disassembler():
-    def __init__(self, filename, raw_type, raw_base):
+    def __init__(self, filename, raw_type, raw_base, raw_big_endian):
         import capstone as CAPSTONE
 
         self.code = {}
-        self.binary = Binary(filename, raw_type, raw_base)
+        self.binary = Binary(filename, raw_type, raw_base, raw_big_endian)
 
         arch, mode = self.binary.get_arch()
 

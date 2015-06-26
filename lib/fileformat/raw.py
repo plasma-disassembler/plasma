@@ -19,12 +19,13 @@
 
 
 class Raw:
-    def __init__(self, filename, raw_type, raw_base):
+    def __init__(self, filename, raw_type, raw_base, raw_big_endian):
         import capstone as CAPSTONE
 
         self.raw = open(filename, "rb").read()
         self.raw_type = raw_type
         self.raw_base = raw_base
+        self.raw_big_endian = raw_big_endian
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -83,8 +84,14 @@ class Raw:
 
 
     def get_arch(self):
-        return self.arch_lookup.get(self.raw_type, None), \
-               self.arch_mode_lookup.get(self.raw_type, None)
+        import capstone as CAPSTONE
+        arch = self.arch_lookup.get(self.raw_type, None)
+        mode = self.arch_mode_lookup.get(self.raw_type, None)
+        if self.raw_big_endian:
+            mode |= CAPSTONE.CS_MODE_BIG_ENDIAN
+        else:
+            mode |= CAPSTONE.CS_MODE_LITTLE_ENDIAN
+        return arch, mode
 
 
     def get_arch_string(self):

@@ -44,6 +44,7 @@ class Context():
         self.interactive = False
         self.debug = False
         self.raw_base = 0
+        self.raw_big_endian = False
 
 
     def reset_all(self):

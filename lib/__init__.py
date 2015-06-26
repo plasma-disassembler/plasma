@@ -33,7 +33,7 @@ from lib.exceptions import (ExcSymNotFound, ExcNotExec, ExcArch,
 def parse_args():
     # Parse arguments
     parser = ArgumentParser(description=
-        'Reverse engineering for x86/ARM binaries. Generation of pseudo-C. '
+        'Reverse engineering for x86/ARM/MIPS binaries. Generation of pseudo-C. '
         'Supported formats : ELF, PE. https://github.com/joelpx/reverse')
     parser.add_argument('filename', nargs='?', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')
@@ -54,10 +54,6 @@ def parse_args():
     parser.add_argument('-c', '--calls', action='store_true',
             help='Print all calls which are in the section containing the address '
                  'given with -x.')
-    parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
-            help='Consider the input file as a raw binary')
-    parser.add_argument('--rawbase', metavar='0xXXXXX',
-            help='Set base address of a raw file (default=0)')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
     parser.add_argument('--lines', type=int, default=30, metavar='N',
@@ -69,6 +65,12 @@ def parse_args():
             'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
     parser.add_argument('-d', '--opt_debug', action='store_true')
     parser.add_argument('-ns', '--nosectionsname', action='store_true')
+    parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
+            help='Consider the input file as a raw binary')
+    parser.add_argument('--rawbase', metavar='0xXXXXX',
+            help='Set base address of a raw file (default=0)')
+    parser.add_argument('--raw-big-endian', action='store_true',
+            help='If not set it\'s in little endian')
 
     args = parser.parse_args()
 
@@ -91,6 +93,7 @@ def parse_args():
     ctx.interactive     = args.interactive
     ctx.lines           = args.lines
     ctx.graph           = args.graph
+    ctx.raw_big_endian  = args.raw_big_endian
 
     if ctx.raw_base is not None:
         if ctx.raw_base.startswith("0x"):
@@ -118,7 +121,8 @@ def load_file(ctx):
         die()
 
     try:
-        dis = Disassembler(ctx.filename, ctx.raw_type, ctx.raw_base)
+        dis = Disassembler(ctx.filename, ctx.raw_type,
+                           ctx.raw_base, ctx.raw_big_endian)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:
