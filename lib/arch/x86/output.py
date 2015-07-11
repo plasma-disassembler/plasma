@@ -257,36 +257,57 @@ class Output(OutputAbs):
         modified = False
 
         if i.id in INST_CHECK:
-            self.print_operand(i, 0)
-
             if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
                     i.operands[1].value.imm == -1):
+                self.print_operand(i, 0)
                 print_no_end(" = -1")
 
             elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
                     i.operands[1].value.imm == 0):
+                self.print_operand(i, 0)
                 print_no_end(" = 0")
 
             elif (all(op.type == X86_OP_REG for op in i.operands) and
                     len(set(op.value.reg for op in i.operands)) == 1 and
                     i.id == X86_INS_XOR):
+                self.print_operand(i, 0)
                 print_no_end(" = 0")
 
             elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
+                self.print_operand(i, 0)
                 print_no_end(inst_symbol(i))
 
             elif i.id == X86_INS_LEA:
+                self.print_operand(i, 0)
                 print_no_end(" = &(")
                 self.print_operand(i, 1)
                 print_no_end(")")
 
-            elif i.id == X86_INS_IMUL and len(i.operands) == 3:
-                print_no_end(" = ")
-                self.print_operand(i, 1)
-                print_no_end(" " + inst_symbol(i).rstrip('=') + " ")
-                self.print_operand(i, 2)
+            elif i.id == X86_INS_IMUL:
+                if len(i.operands) == 3:
+                    self.print_operand(i, 0)
+                    print_no_end(" = ")
+                    self.print_operand(i, 1)
+                    print_no_end(" " + inst_symbol(i).rstrip('=') + " ")
+                    self.print_operand(i, 2)
+                elif len(i.operands) == 2:
+                    self.print_operand(i, 0)
+                    print_no_end(" " + inst_symbol(i) + " ")
+                    self.print_operand(i, 2)
+                elif len(i.operands) == 1:
+                    sz = i.operands[0].size
+                    if sz == 1:
+                        print_no_end("ax = al * ")
+                    elif sz == 2:
+                        print_no_end("dx:ax = ax * ")
+                    elif sz == 4:
+                        print_no_end("edx:eax = eax * ")
+                    elif sz == 8:
+                        print_no_end("rdx:rax = rax * ")
+                    self.print_operand(i, 0)
 
             else:
+                self.print_operand(i, 0)
                 print_no_end(" " + inst_symbol(i) + " ")
                 self.print_operand(i, 1)
 
