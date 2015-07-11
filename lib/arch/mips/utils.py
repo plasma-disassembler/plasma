@@ -17,7 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from capstone import CS_GRP_CALL, CS_GRP_RET
 from capstone.mips import (MIPS_INS_BEQ, MIPS_INS_BNE, MIPS_INS_BGTZ,
         MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
         MIPS_INS_BLTZ, MIPS_INS_B, MIPS_INS_BAL, MIPS_INS_J,
