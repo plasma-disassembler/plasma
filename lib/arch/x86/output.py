@@ -37,7 +37,8 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SAR, X86_INS_SAL)
 
 
-ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR}
+ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR,
+        X86_INS_SAR, X86_INS_SAL, X86_INS_SHR, X86_INS_SHL}
 
 
 # After these instructions we need to add a zero
