@@ -243,7 +243,7 @@ class PE:
         return s.Characteristics & 0x20000000
 
 
-    def get_string(self, addr, max_data_size):
+    def get_string(self, addr, max_data_size, may_be_utf16le=True):
         i = self.__get_data_section(addr)
         if i == -1:
             return ""
@@ -255,12 +255,19 @@ class PE:
         txt = ['"']
 
         i = 0
-        while i < max_data_size and \
+        skipped = 0
+        while i - skipped < max_data_size and \
               off < s.SizeOfRawData:
             c = data[off]
             if c == 0:
-                break
-            txt.append(get_char(c))
+                if may_be_utf16le and i % 2 == 1:
+                    skipped += 1
+                else:
+                    break
+            else:
+                if may_be_utf16le and i % 2 == 1:
+                    return self.get_string(addr, max_data_size, False)
+                txt.append(get_char(c))
             off += 1
             i += 1
 
