@@ -25,7 +25,7 @@ function main {
         0x400541: call 0x4003e0 <puts@plt>
         0x400546: jmp 0x40056a
     } 
-    # 0x400548: cmp byte ptr [rbp - 1], -6
+    # 0x400548: cmp byte ptr [rbp - 1], 0xfa
     # 0x40054c: jne 0x40055a
     else if (var1 == '\xfa') {
         0x40054e: edi = 0x40060a "4" # mov edi, 0x40060a

@@ -17,7 +17,7 @@ function _main {
     0x401290: push ebp
     0x401291: ebp = esp # mov ebp, esp
     0x401293: esp -= 216 # sub esp, 0xd8
-    0x401299: esp &= -16 # and esp, 0xfffffff0
+    0x401299: esp &= 4294967280 # and esp, 0xfffffff0
     0x40129c: eax = 0 # mov eax, 0
     0x4012a1: eax += 15 # add eax, 0xf
     0x4012a4: eax += 15 # add eax, 0xf

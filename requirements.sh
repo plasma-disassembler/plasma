@@ -12,7 +12,7 @@ rm -rf build
 mkdir -p build
 cd build
 
-CAPSTONE_VERSION=3.0.3
+CAPSTONE_VERSION=3.0.4
 
 # Capstone
 git clone -b $CAPSTONE_VERSION --depth 1 https://github.com/aquynh/capstone
