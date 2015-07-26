@@ -3,7 +3,12 @@ KNOWN BUGS
 
 
 
-No Major bugs
+Major bugs
+----------
+
+
+MIPS is not disassembled correctly: the prefetched instruction is not
+actually considered.
 
 
 
