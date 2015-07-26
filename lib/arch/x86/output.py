@@ -20,9 +20,9 @@
 import struct
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end)
+        print_comment, print_comment_no_end, INTERN_COMMENTS)
 from lib.colors import (color, color_addr, color_retcall, color_string,
-        color_var, color_section)
+        color_var, color_section, color_intern_comment)
 from lib.utils import get_char, BYTES_PRINTABLE_SET
 from lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
@@ -228,16 +228,32 @@ class Output(OutputAbs):
             self.print_symbol(i.address)
             print()
 
+        modified = self.__print_inst(i, tab, prefix)
+
+        if i.address in INTERN_COMMENTS:
+            print_no_end(color_intern_comment(" ; "))
+            print_no_end(color_intern_comment(INTERN_COMMENTS[i.address]))
+
+        if modified and self.ctx.comments:
+            print_comment_no_end(" # " + get_inst_str())
+
+        print()
+
+
+    def __print_inst(self, i, tab=0, prefix=""):
+        def get_inst_str():
+            nonlocal i
+            return "%s %s" % (i.mnemonic, i.op_str)
+
         print_tabbed_no_end(color_addr(i.address), tab)
 
         if is_ret(i):
-            print(color_retcall(get_inst_str()))
+            print_no_end(color_retcall(get_inst_str()))
             return
 
         if is_call(i):
             print_no_end(color_retcall(i.mnemonic) + " ")
             self.print_operand(i, 0, hexa=True)
-            print()
             return
 
         # Here we can have conditional jump with the option --dump
@@ -247,13 +263,12 @@ class Output(OutputAbs):
                 self.print_operand(i, 0)
                 if is_uncond_jump(i) and self.ctx.comments:
                     print_comment_no_end(" # STOPPED")
-                print()
                 return
             try:
                 addr = i.operands[0].value.imm
-                print(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
+                print_no_end(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
             except KeyError:
-                print(i.mnemonic + " " + hex(addr))
+                print_no_end(i.mnemonic + " " + hex(addr))
             return
 
 
@@ -362,7 +377,4 @@ class Output(OutputAbs):
                     modified |= self.print_operand(i, k)
                     k += 1
 
-        if modified and self.ctx.comments:
-            print_comment_no_end(" # " + get_inst_str())
-
-        print()
+        return modified

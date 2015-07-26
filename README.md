@@ -50,6 +50,25 @@ default values. Here you can set your own colors.
 ![reverse](http://hippersoft.fr/projects/rev2.jpg)
 
 
+## Analyze shellcodes
+
+For every `int 0x80`, the tool try to detect the syscall.
+
+    $ ./reverse.py --raw x86 tests/shellcode.bin
+    function 0x0 {
+        0x0: eax = 0 # xor eax, eax
+        0x2: al = '\x0b' # mov al, 0xb
+        0x4: cdq
+        0x5: push edx
+        0x6: push 1752379246 "n/sh"
+        0xb: push 1768042287 "//bi"
+        0x10: ebx = esp # mov ebx, esp
+        0x12: push edx
+        0x13: push ebx
+        0x14: ecx = esp # mov ecx, esp
+        0x16: int 128 ; execve(ebx, ecx, edx) # int 0x80
+    }
+
 By opening `d3/index.html` (with the option `--graph`) you will be able to
 see the flow graph :
 

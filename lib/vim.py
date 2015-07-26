@@ -293,6 +293,7 @@ def generate_vim_syntax(ctx, filename):
 
         syn match RevComment "0x[0-9a-f]\+:"
         syn match RevComment "#.\+$"
+        syn match RevInternComment ";.\+$"
         syn match RevVar "var[a-z0-9A-Z_]\+"
         syn match RevRetCall "ret\|call"
 
@@ -303,6 +304,7 @@ def generate_vim_syntax(ctx, filename):
         hi RevKeywords  ctermfg=161  cterm=bold  gui=bold  guifg=#d7005f
         hi RevTypes  ctermfg=81  guifg=#5fd7ff
         hi RevComment  ctermfg=242  guifg=#6c6c6c
+        hi RevInternComment  ctermfg=38  guifg=#00afd7
         hi RevString  ctermfg=144  guifg=#afaf87
         hi RevVar  ctermfg=208 cterm=bold  gui=bold  guifg=#ff8700
         hi RevRetCall  ctermfg=161  guifg=#d7005f\n

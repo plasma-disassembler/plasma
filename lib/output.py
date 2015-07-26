@@ -21,6 +21,12 @@ from lib.colors import (color_addr, color_comment, color_keyword, color_type,
         color_var, color_symbol)
 
 
+# It contains any new comments added by the program.
+# They are used to improve readability.
+# addr -> string comment
+INTERN_COMMENTS = {}
+
+
 def print_tabbed(string, tab):
     print("    " * tab, end="")
     print(string)
