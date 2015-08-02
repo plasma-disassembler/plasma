@@ -60,19 +60,25 @@ class Graph:
         self.__key_path_count = 0
 
 
-    def add_node(self, inst):
+    def add_node(self, inst, prefetch=None):
         self.nodes[inst.address] = [inst]
+        if prefetch is not None:
+            self.nodes[inst.address].append(prefetch)
 
 
-    def set_next(self, curr, inst):
+    def set_next(self, curr, inst, prefetch=None):
         self.nodes[curr.address] = [curr]
         self.link_out[curr.address] = [inst.address]
+
         if inst.address not in self.link_in:
             self.link_in[inst.address] = []
         self.link_in[inst.address].append(curr.address)
 
+        if prefetch is not None:
+            self.nodes[curr.address].append(prefetch)
 
-    def set_cond_next(self, curr, next_jump, direct_next):
+
+    def set_cond_next(self, curr, next_jump, direct_next, prefetch=None):
         self.nodes[curr.address] = [curr]
         self.link_out[curr.address] = [direct_next.address, next_jump.address]
 
@@ -84,6 +90,9 @@ class Graph:
 
         self.link_in[next_jump.address].append(curr.address)
         self.link_in[direct_next.address].append(curr.address)
+
+        if prefetch is not None:
+            self.nodes[curr.address].append(prefetch)
 
 
     def exists(self, inst):

@@ -28,6 +28,11 @@ from lib.exceptions import ExcIfelse
 def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     nxt = ctx.gph.link_out[inst.address]
 
+    if len(ctx.gph.nodes[inst.address]) == 2:
+        prefetch = ctx.gph.nodes[inst.address][1]
+    else:
+        prefetch = None
+
     c1 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT])
     c2 = paths.loop_contains(curr_loop_idx, nxt[BRANCH_NEXT_JUMP])
 
@@ -66,7 +71,7 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
         cond_id = ctx.libarch.utils.invert_cond(inst)
         br = nxt[BRANCH_NEXT]
 
-    return Ast_IfGoto(inst, cond_id, br)
+    return Ast_IfGoto(inst, cond_id, br, prefetch)
 
 
 def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
@@ -158,6 +163,8 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     curr_loop_idx = paths.get_loops_idx()
     first_blk = ctx.gph.nodes[paths.get_loop_start(curr_loop_idx)]
 
+    # if the first instruction of the loop is a jump, it means
+    # it's a loop condition.
     if first_blk[0].address in ctx.gph.cond_jumps_set:
         ast.add(get_ast_ifgoto(ctx, paths, curr_loop_idx, first_blk[0]))
     else:
@@ -205,8 +212,13 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     addr = paths.pop(1)[0]
     ctx.seen.add(addr)
     paths.rm_empty_paths()
-    jump_inst = ctx.gph.nodes[addr][0]
     nxt = ctx.gph.link_out[addr]
+    jump_inst = ctx.gph.nodes[addr][0]
+
+    if len(ctx.gph.nodes[addr]) == 2:
+        prefetch = ctx.gph.nodes[addr][1]
+    else:
+        prefetch = None
 
     if_addr = nxt[BRANCH_NEXT]
     else_addr = nxt[BRANCH_NEXT_JUMP] if len(nxt) == 2 else -1
@@ -222,7 +234,7 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # example C file :
     #
     # if 1 {
-    #   if 2 { 
+    #   if 2 {
     #     ...
     #   }
     #   if 3 {
@@ -288,14 +300,18 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
             # TODO not sure about endpoint == -1
             # tests/break3
             if if_addr == last_else and endpoint == -1:
-                return (Ast_AndIf(jump_inst, ctx.libarch.utils.get_cond(jump_inst)),
+                return (Ast_AndIf(jump_inst,
+                                  ctx.libarch.utils.get_cond(jump_inst),
+                                  prefetch),
                         else_addr)
 
             # if else_addr == -1 or else_addr == last_else:
             if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
                     last_else == endif and endif == endpoint and endpoint != -1:
                 endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
-                return (Ast_AndIf(jump_inst, ctx.libarch.utils.invert_cond(jump_inst)),
+                return (Ast_AndIf(jump_inst,
+                                  ctx.libarch.utils.invert_cond(jump_inst),
+                                  prefetch),
                         endpoint)
 
     if else_addr == -1:
@@ -307,7 +323,7 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     a1 = get_ast_branch(ctx, split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
     a2 = get_ast_branch(ctx, split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)
 
-    return (Ast_Ifelse(jump_inst, a1, a2), endpoint)
+    return (Ast_Ifelse(jump_inst, a1, a2, prefetch), endpoint)
 
 
 

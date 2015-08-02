@@ -206,9 +206,14 @@ class Disassembler():
         return first
 
 
+    def __prefetch_inst(self, inst):
+        return self.lazy_disasm(inst.address + inst.size)
+
+
     # Generate a flow graph of the given function (addr)
     def get_graph(self, addr):
-        from capstone import CS_OP_IMM
+        from capstone import CS_OP_IMM, CS_ARCH_MIPS
+
         ARCH_UTILS = self.load_arch_module().utils
 
         curr = self.lazy_disasm(addr)
@@ -218,37 +223,48 @@ class Disassembler():
         gph = Graph(self, addr)
         rest = []
         start = time.clock()
+        prefetch = None
 
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
 
         while 1:
             if not gph.exists(curr):
+                if self.arch == CS_ARCH_MIPS:
+                    prefetch = self.__prefetch_inst(curr)
+
                 if ARCH_UTILS.is_uncond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[-1].type == CS_OP_IMM:
                         addr = curr.operands[-1].value.imm
                         nxt = self.lazy_disasm(addr)
-                        gph.set_next(curr, nxt)
+                        gph.set_next(curr, nxt, prefetch)
                         rest.append(nxt.address)
                     else:
                         # Can't interpret jmp ADDR|reg
-                        gph.add_node(curr)
+                        gph.add_node(curr, prefetch)
                     gph.uncond_jumps_set.add(curr.address)
 
                 elif ARCH_UTILS.is_cond_jump(curr) and len(curr.operands) > 0:
                     if curr.operands[-1].type == CS_OP_IMM:
                         nxt_jump = self.lazy_disasm(curr.operands[-1].value.imm)
-                        direct_nxt = self.lazy_disasm(curr.address + curr.size)
-                        gph.set_cond_next(curr, nxt_jump, direct_nxt)
+
+                        if self.arch == CS_ARCH_MIPS:
+                            direct_nxt = \
+                                self.lazy_disasm(prefetch.address + prefetch.size)
+                        else:
+                            direct_nxt = \
+                                self.lazy_disasm(curr.address + curr.size)
+
+                        gph.set_cond_next(curr, nxt_jump, direct_nxt, prefetch)
                         rest.append(nxt_jump.address)
                         rest.append(direct_nxt.address)
                     else:
                         # Can't interpret jmp ADDR|reg
-                        gph.add_node(curr)
+                        gph.add_node(curr, prefetch)
                     gph.cond_jumps_set.add(curr.address)
 
                 elif ARCH_UTILS.is_ret(curr):
-                    gph.add_node(curr)
+                    gph.add_node(curr, prefetch)
 
                 else:
                     try:

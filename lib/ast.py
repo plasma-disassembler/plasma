@@ -42,14 +42,17 @@ class Ast_Branch:
 
 
 class Ast_IfGoto:
-    def __init__(self, orig_jump, cond_id, addr_jump):
+    def __init__(self, orig_jump, cond_id, addr_jump, prefetch=None):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
         self.addr_jump = addr_jump
         self.fused_inst = None
+        self.prefetch = None
 
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
+        if self.prefetch is not None:
+            o.print_inst(self.prefetch, tab)
         print_tabbed_no_end(color_keyword("if "), tab)
         o.print_if_cond(self.cond_id, self.fused_inst)
         print_no_end(color_keyword("  goto "))
@@ -57,13 +60,16 @@ class Ast_IfGoto:
 
 
 class Ast_AndIf:
-    def __init__(self, orig_jump, cond_id):
+    def __init__(self, orig_jump, cond_id, prefetch=None):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
         self.fused_inst = None
+        self.prefetch = prefetch
 
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
+        if self.prefetch is not None:
+            o.print_inst(self.prefetch, tab)
         print_tabbed_no_end(color_keyword("and ") + color_keyword("if "), tab)
         o.print_if_cond(self.cond_id, self.fused_inst)
         print()
@@ -93,11 +99,12 @@ class Ast_If_cond:
 
 
 class Ast_Ifelse:
-    def __init__(self, jump_inst, br_next_jump, br_next):
+    def __init__(self, jump_inst, br_next_jump, br_next, prefetch=None):
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
         self.fused_inst = None
+        self.prefetch = prefetch
 
     def print(self, o, tab=0, print_else_keyword=False):
         ARCH_UTILS = o.ctx.libarch.utils
@@ -124,6 +131,9 @@ class Ast_Ifelse:
             inv_if = True
             
         o.print_commented_jump(self.jump_inst, self.fused_inst, tab)
+
+        if self.prefetch is not None:
+            o.print_inst(self.prefetch, tab)
 
         if print_else_keyword:
             print_tabbed_no_end(color_keyword("else if "), tab)
