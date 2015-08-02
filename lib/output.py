@@ -121,6 +121,11 @@ class OutputAbs():
         print("}")
 
 
+    def print_bad(self, addr, tab=0):
+        print_tabbed_no_end(color_addr(addr), tab)
+        print("(bad)")
+
+
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
     def print_operand(self, i, num_op, hexa=False, show_deref=True):

@@ -110,12 +110,16 @@ class Disassembler():
         # address is the last operand (operands[-1])
 
         # set jumps color
-        i = self.lazy_disasm(ctx.addr, s_start)
+        ad = ctx.addr
         l = 0
-        while i is not None and l < lines:
-            if ARCH_UTILS.is_jump(i) and i.operands[-1].type == CS_OP_IMM:
-                pick_color(i.operands[-1].value.imm)
-            i = self.lazy_disasm(i.address + i.size, s_start)
+        while l < lines and ad < s_end:
+            i = self.lazy_disasm(ad, s_start)
+            if i is None:
+                ad += 1
+            else:
+                if ARCH_UTILS.is_jump(i) and i.operands[-1].type == CS_OP_IMM:
+                    pick_color(i.operands[-1].value.imm)
+                ad += i.size
             l += 1
 
         # Here we have loaded all instructions we want to print
@@ -125,11 +129,16 @@ class Disassembler():
         o = ARCH_OUTPUT.Output(ctx)
 
         # dump
-        i = self.lazy_disasm(ctx.addr, s_start)
+        ad = ctx.addr
         l = 0
-        while i is not None and l < lines:
-            o.print_inst(i)
-            i = self.lazy_disasm(i.address + i.size, s_start)
+        while l < lines and ad < s_end:
+            i = self.lazy_disasm(ad, s_start)
+            if i is None:
+                ad += 1
+                o.print_bad(ad)
+            else:
+                o.print_inst(i)
+                ad += i.size
             l += 1
 
 
@@ -142,11 +151,15 @@ class Disassembler():
         self.print_section_meta(s_name, s_start, s_end)
         o = ARCH_OUTPUT.Output(ctx)
 
-        i = self.lazy_disasm(s_start, s_start)
-        while i is not None:
-            if ARCH_UTILS.is_call(i):
-                o.print_inst(i)
-            i = self.lazy_disasm(i.address + i.size, s_start)
+        ad = s_start
+        while ad < s_end:
+            i = self.lazy_disasm(ad, s_start)
+            if i is None:
+                ad += 1
+            else:
+                ad += i.size
+                if ARCH_UTILS.is_call(i):
+                    o.print_inst(i)
 
 
     def print_symbols(self, print_sections, sym_filter=None):
