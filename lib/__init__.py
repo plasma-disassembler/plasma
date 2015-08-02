@@ -27,7 +27,7 @@ from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
 from lib.exceptions import (ExcSymNotFound, ExcNotExec, ExcArch,
-     ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail)
+     ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail, ExcSectionNotFound)
 
 
 def parse_args():
@@ -51,9 +51,8 @@ def parse_args():
             help='Generate syntax colors for vim')
     parser.add_argument('-s', '--symbols', action='store_true',
             help='Print all symbols')
-    parser.add_argument('-c', '--calls', action='store_true',
-            help='Print all calls which are in the section containing the address '
-                 'given with -x.')
+    parser.add_argument('-c', '--calls', metavar='SECTION_NAME', type=str,
+            help='Print all calls which are in the given section')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
     parser.add_argument('--lines', type=int, default=30, metavar='N',
@@ -86,7 +85,7 @@ def parse_args():
     ctx.raw_base        = args.rawbase
     ctx.symfile         = args.symfile
     ctx.syms            = args.symbols
-    ctx.calls           = args.calls
+    ctx.calls_in_section = args.calls
     ctx.entry           = args.entry
     ctx.dump            = args.dump
     ctx.vim             = args.vim
@@ -151,8 +150,18 @@ def load_file(ctx):
 
 
 def init_addr(ctx):
-    if ctx.entry == "EP":
+    if ctx.calls_in_section is not None:
+        try:
+            addr = ctx.dis.binary.section_start(ctx.calls_in_section)
+        except ExcSectionNotFound as e:
+            error("section %s not found" % e.section)
+            if ctx.interactive:
+                return False
+            die()
+
+    elif ctx.entry == "EP":
         addr = ctx.dis.binary.get_entry_point()
+
     else:
         try:
             addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
@@ -228,7 +237,7 @@ def reverse(ctx):
 
     init_addr(ctx)
 
-    if ctx.calls:
+    if ctx.calls_in_section is not None:
         ctx.dis.print_calls(ctx)
         return
 

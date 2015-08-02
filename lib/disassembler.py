@@ -134,8 +134,6 @@ class Disassembler():
 
 
     def print_calls(self, ctx):
-        # Print all calls which are in the section containing ctx.addr
-
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
@@ -176,7 +174,12 @@ class Disassembler():
 
 
     def lazy_disasm(self, addr, stay_in_section=-1):
-        _, start, _ = self.binary.get_section_meta(addr)
+        meta  = self.binary.get_section_meta(addr)
+        if meta is None:
+            return None
+
+        _, start, _ = meta
+
         if stay_in_section != -1 and start != stay_in_section:
             return None
 

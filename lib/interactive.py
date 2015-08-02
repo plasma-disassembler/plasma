@@ -178,9 +178,8 @@ class Interactive():
                 self.__exec_calls,
                 self.__complete_x,
                 [
-                "[SYMBOL|0xXXXX|EP]",
-                "Print all calls which are in the section containing the address.",
-                "By default the address is the entry point (EP)."
+                "[SECTION_NAME]",
+                "Print all calls which are in the given section"
                 ]
             ),
 
@@ -434,19 +433,18 @@ class Interactive():
 
 
     def __exec_calls(self, args):
+        if len(args) != 2:
+            error("section required")
+            return
         if self.ctx.dis is None:
             error("load a file before")
             return
-        self.ctx.calls = True
-        if len(args) == 1:
-            self.ctx.entry = "EP"
-        else:
-            self.ctx.entry = args[1]
+        self.ctx.calls_in_section = args[1]
         if init_addr(self.ctx):
             self.ctx.dis.print_calls(self.ctx)
             self.ctx.entry = None
             self.ctx.addr = 0
-        self.ctx.calls = False
+        self.ctx.calls_in_section = None
 
 
     def __exec_sym(self, args):

@@ -35,7 +35,7 @@ class Context():
         self.filename = None
         self.symfile = None
         self.syms = False
-        self.calls = False
+        self.calls_in_section = None
         self.entry = None # string : symbol | EP | 0xNNNN
         self.dump = False
         self.vim = False

@@ -23,6 +23,11 @@ class ExcSymNotFound(Exception):
         self.symname = symname
 
 
+class ExcSectionNotFound(Exception):
+    def __init__(self, section):
+        self.section = section
+
+
 class ExcNotExec(Exception):
     def __init__(self, addr):
         self.addr = addr

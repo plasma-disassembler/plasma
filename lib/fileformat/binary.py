@@ -20,7 +20,7 @@
 import time
 
 from lib.utils import debug__
-from lib.exceptions import ExcFileFormat
+from lib.exceptions import ExcFileFormat, ExcSectionNotFound
 
 T_BIN_ELF = 0
 T_BIN_PE  = 1
@@ -106,6 +106,13 @@ class Binary(object):
 
     def get_arch_string(self):
         return self.__binary.get_arch_string()
+
+
+    def section_start(self, section_name):
+        ad = self.__binary.section_start(str.encode(section_name))
+        if ad == -1:
+            raise(ExcSectionNotFound(section_name))
+        return ad
 
 
     # Returns the name of the section if the value is an address

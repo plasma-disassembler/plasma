@@ -94,6 +94,10 @@ class Raw:
         return arch, mode
 
 
+    def section_start(self, section_name):
+        return 0
+
+
     def get_arch_string(self):
         return ""
 

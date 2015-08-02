@@ -191,7 +191,7 @@ class ELF:
     def get_section_meta(self, addr):
         s = self.__get_section(addr)
         if s is None:
-            return 0
+            return None
         a = s.header.sh_addr
         return s.name.decode(), a, a + s.header.sh_size - 1
 
@@ -256,6 +256,13 @@ class ELF:
 
     def get_arch_string(self):
         return self.elf.get_machine_arch()
+
+
+    def section_start(self, section_name):
+        s = self.elf.get_section_by_name(section_name)
+        if s is None:
+            return -1
+        return s.header.sh_addr
 
 
     def get_entry_point(self):

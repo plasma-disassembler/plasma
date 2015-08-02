@@ -216,7 +216,7 @@ class PE:
     def get_section_meta(self, addr):
         s = self.__get_section(addr)
         if s is None:
-            return 0
+            return None
         n = s.Name.decode().rstrip(' \0')
         a = s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
         return n, a, a + s.SizeOfRawData - 1
@@ -284,6 +284,13 @@ class PE:
 
     def get_arch_string(self):
         return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
+
+
+    def section_start(self, section_name):
+        for s in self.pe.sections:
+            if s.Name.rstrip(b" \0") == section_name:
+                return self.pe.OPTIONAL_HEADER.ImageBase + s.VirtualAddress
+        return -1
 
 
     def get_entry_point(self):
