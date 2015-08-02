@@ -1,4 +1,4 @@
-function main {
+function main (.text) {
     int32_t var1
     0x400546: push rbp
     0x400547: rbp = rsp # mov rbp, rsp

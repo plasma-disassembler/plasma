@@ -18,7 +18,7 @@
 #
 
 from lib.colors import (color_addr, color_comment, color_keyword, color_type,
-        color_var, color_symbol)
+        color_var, color_symbol, color_section)
 
 
 # It contains any new comments added by the program.
@@ -111,7 +111,11 @@ class OutputAbs():
     def print_ast(self, entry, ast):
         print_no_end(color_keyword("function "))
         print_no_end(self.binary.reverse_symbols.get(entry, hex(entry)))
-        print(" {")
+        sec_name, _ = self.binary.is_address(entry)
+        if sec_name is not None:
+            print(" (%s) {" % color_section(sec_name))
+        else:
+            print(" {")
         self.print_vars_type()
         ast.print(self, 1)
         print("}")

@@ -1,4 +1,4 @@
-function main {
+function main (.text) {
     int64_t var1
     int64_t var2
     0x4004b6: push rbp

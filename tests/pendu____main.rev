@@ -1,4 +1,4 @@
-function ___main {
+function ___main (.text) {
     0x4018c0: push ebp
     0x4018c1: ebp = esp # mov ebp, esp
     0x4018c3: push ebx

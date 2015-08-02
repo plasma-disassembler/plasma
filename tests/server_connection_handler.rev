@@ -1,4 +1,4 @@
-function connection_handler {
+function connection_handler (.text) {
     int64_t var1
     int32_t var2
     int64_t var3

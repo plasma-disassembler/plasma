@@ -1,4 +1,4 @@
-function _main {
+function _main (.text) {
     int32_t var1
     int32_t var2
     int32_t var3

@@ -1,4 +1,4 @@
-function main {
+function main (.text) {
     int64_t var1_canary
     int32_t var2
     0x400526: push rbp
