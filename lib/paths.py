@@ -421,7 +421,7 @@ class Paths():
 
     # For a loop : check if the path need to be kept (the loop 
     # contains the path). For this we see the last address of the path.
-    # Otherwise it's an endloop
+    # Otherwise it's an loopend
     def __keep_path(self, curr_loop_idx, path, key_path):
         last = path[-1]
 
@@ -447,16 +447,16 @@ class Paths():
 
 
     # Returns :
-    # loop_paths (Paths), endloop (list(Paths)), address_endloops
+    # loop_paths (Paths), loopend (list(Paths)), address_loopends
     def extract_loop_paths(self, curr_loop_idx, last_loop_idx, endif):
         # TODO optimize....
 
         loop_paths = Paths(self.gph)
-        tmp_endloops = Paths(self.gph)
+        tmp_loopends = Paths(self.gph)
 
 
         # ------------------------------------------------------
-        # Distinction of loop-paths / endloops
+        # Distinction of loop-paths / loopends
         # ------------------------------------------------------
 
         for k, p in self.paths.items():
@@ -465,49 +465,49 @@ class Paths():
                 if keep:
                     loop_paths.add_path(k, p, self.__get_loop_idx(k))
                 else:
-                    tmp_endloops.add_path(k, p, self.__get_loop_idx(k))
+                    tmp_loopends.add_path(k, p, self.__get_loop_idx(k))
 
-        # Remove the beginning of the loop to get only the endloop
-        for k, el in tmp_endloops.paths.items():
+        # Remove the beginning of the loop to get only the loopend
+        for k, el in tmp_loopends.paths.items():
             for i, addr in enumerate(el):
                 if addr not in loop_paths:
                     p = el[i:]
-                    if not p in tmp_endloops.paths.values():
-                        tmp_endloops.paths[k] = p
+                    if not p in tmp_loopends.paths.values():
+                        tmp_loopends.paths[k] = p
                     else:
-                        tmp_endloops.paths[k] = []
+                        tmp_loopends.paths[k] = []
                     break
 
-        tmp_endloops.rm_empty_paths()
+        tmp_loopends.rm_empty_paths()
 
 
         # ------------------------------------------------------
         # Regroup paths if they start with the same addr
         # ------------------------------------------------------
 
-        grp_endloops = {}
+        grp_loopends = {}
 
-        for k, el in tmp_endloops.paths.items():
-            if el[0] not in grp_endloops:
-                grp_endloops[el[0]] = Paths(self.gph)
+        for k, el in tmp_loopends.paths.items():
+            if el[0] not in grp_loopends:
+                grp_loopends[el[0]] = Paths(self.gph)
 
-            grp_endloops[el[0]].add_path(k, el, tmp_endloops.__get_loop_idx(k))
+            grp_loopends[el[0]].add_path(k, el, tmp_loopends.__get_loop_idx(k))
 
 
         # ------------------------------------------------------
-        # Just store the beginning of each endloop. It will
+        # Just store the beginning of each loopend. It will
         # be returned by the function. We need it for printing
-        # a comment "endloop NUMBER". Later we add more endloops
+        # a comment "loopend NUMBER". Later we add more loopends
         # due to common endpoints.
         # ------------------------------------------------------
 
-        endloops_start = {ad for ad in grp_endloops}
-        # debug__("endloops_start")
-        # debug__(endloops_start)
+        loopends_start = {ad for ad in grp_loopends}
+        # debug__("loopends_start")
+        # debug__(loopends_start)
 
 
-        if len(grp_endloops) <= 1:
-            return loop_paths, list(grp_endloops.values()), endloops_start
+        if len(grp_loopends) <= 1:
+            return loop_paths, list(grp_loopends.values()), loopends_start
 
 
         # ------------------------------------------------------
@@ -538,16 +538,16 @@ class Paths():
             return False
 
 
-        grp2_keys = set(grp_endloops.keys())
+        grp2_keys = set(grp_loopends.keys())
         all_endpoints = {}
 
-        for ad1, els1 in grp_endloops.items():
+        for ad1, els1 in grp_loopends.items():
             # Optimization to not compare twice two sets (for
             # example g1 with g2 g2 with g1).
             grp2_keys.remove(ad1) 
 
             for ad2 in grp2_keys:
-                els2 = grp_endloops[ad2]
+                els2 = grp_loopends[ad2]
 
                 endpoint = search_first_common(last_loop_idx, els1, els2)
                 # print("endpoint: ", hex(ad1), hex(ad2), "=", hex(endpoint))
@@ -559,19 +559,19 @@ class Paths():
                     all_endpoints[endpoint].add(ad2)
 
 
-        # If we have all endloops at the end of an if, there will
+        # If we have all loopends at the end of an if, there will
         # be no endpoints between them (the endpoints is outside)
         # So check all groups if the next is the "endif".
-        if endif != -1 and endif not in grp_endloops:
+        if endif != -1 and endif not in grp_loopends:
             # Add a fake group
-            for ad, els in grp_endloops.items():
+            for ad, els in grp_loopends.items():
                 if has_next(els, endif):
                     if endif not in all_endpoints:
                         all_endpoints[endif] = set()
                     all_endpoints[endif].add(ad)
 
-            grp_endloops[endif] = Paths(self.gph)
-            grp_endloops[endif].paths[-1] = [endif]
+            grp_loopends[endif] = Paths(self.gph)
+            grp_loopends[endif].paths[-1] = [endif]
 
 
         # ------------------------------------------------------
@@ -667,7 +667,7 @@ class Paths():
         # ------------------------------------------------------
 
         prev_cut_idx = {}
-        for k in tmp_endloops.paths:
+        for k in tmp_loopends.paths:
             prev_cut_idx[k] = 0
 
         # Function to cut each path of the group g. Because we can
@@ -676,7 +676,7 @@ class Paths():
         # All paths are cut like this : [prev_cut_idx:endpoint]
         # or [index(force_start_e):next_endpoint]
         def cut_path(g, e, force_start_e=-1):
-            els = grp_endloops[g]
+            els = grp_loopends[g]
             newp = Paths(self.gph)
             all_finish_by_jump = True
 
@@ -738,7 +738,7 @@ class Paths():
         next_no_jump = {} # group_addr -> next_address
         saved_paths = {}  # group_addr -> Paths
 
-        seen_endloops = set()
+        seen_loopends = set()
 
         # All groups are recreated. They are copied to saved_paths
         # or with_jump.
@@ -757,12 +757,12 @@ class Paths():
                 if e in rev_depends_on and tmp_e in rev_depends_on[e]:
                     next_e = tmp_e
 
-            if e in grp_endloops:
+            if e in grp_loopends:
                 # TODO optimize by avoiding the copy of
-                # grp_endloops[e] if next_e == -1
+                # grp_loopends[e] if next_e == -1
                 # -> until the end
                 newp, all_finish_by_jump = cut_path(e, next_e, force_start_e=e)
-                seen_endloops.add(e)
+                seen_loopends.add(e)
             else:
                 # Take one group it doesn't matter which one is it
                 # If one group contains the endpoint e, all paths must
@@ -770,10 +770,10 @@ class Paths():
                 g = next(iter(all_endpoints[e]))
 
                 # TODO optimize by avoiding the copy of
-                # grp_endloops[e] if next_e == -1
+                # grp_loopends[e] if next_e == -1
                 # -> until the end
                 newp, all_finish_by_jump = cut_path(g, next_e, force_start_e=e)
-                seen_endloops.add(g)
+                seen_loopends.add(g)
 
             if all_finish_by_jump:
                 # print("4 ---->", hex(newp.first()), hex(e), hex(next_e))
@@ -800,40 +800,40 @@ class Paths():
                         head = newp.first()
                         next_no_jump[head] = e
                         saved_paths[head] = newp
-                    seen_endloops.add(g)
+                    seen_loopends.add(g)
 
 
         # ------------------------------------------------------
-        # Sort endloops.
+        # Sort loopends.
         # ------------------------------------------------------
 
-        list_grp_endloops = []
+        list_grp_loopends = []
 
         # It's possible that a path have no endpoints with others.
         # For example if we have an infinite loop in the loop.
         # Or if these paths are at the end of an if (tests/server).
 
-        # debug__(endloops_start)
-        # debug__(seen_endloops)
+        # debug__(loopends_start)
+        # debug__(seen_loopends)
 
-        other_paths = endloops_start - seen_endloops
+        other_paths = loopends_start - seen_loopends
         for ad in other_paths:
-            list_grp_endloops.append(grp_endloops[ad])
+            list_grp_loopends.append(grp_loopends[ad])
             
         # Because all these paths finish with a jump, the order
         # is not important.
         for els in with_jump:
             if len(els.paths) > 0:
-                list_grp_endloops.append(els)
+                list_grp_loopends.append(els)
 
 
         # Now we must order these paths. They have a direct access to
         # the next group (no jump), so must sort them.
-        endloops_sort = []
+        loopends_sort = []
 
         # Just for a better output, we sort the addresses. We want that
-        # the last endloop is the "real last". get_ast_loop will return
-        # endloops[-1]. We assume that the last in no_dep has the longuest
+        # the last loopend is the "real last". get_ast_loop will return
+        # loopends[-1]. We assume that the last in no_dep has the longuest
         # path than the first one.
         el_with_dep = {n for n in next_no_jump.values() if n != -1}
         el_no_dep = list(next_no_jump.keys() - el_with_dep)
@@ -846,31 +846,31 @@ class Paths():
             n = ad
             while n != -1:
                 if n != endif:
-                    endloops_sort.append(n)
+                    loopends_sort.append(n)
                 n = next_no_jump[n]
 
-        # debug__(endloops_sort)
+        # debug__(loopends_sort)
 
         el_seen = set()
 
-        for i, ad in enumerate(endloops_sort):
+        for i, ad in enumerate(loopends_sort):
             # Sometimes it's not possible to merge endpoints due to some goto.
             # (tests/goto4). If a Path is duplicated it may crash the program
             # because a path is modified when a branch is traversed. The solution
             # is to make a copy of the object.
             if ad in el_seen:
-                list_grp_endloops.append(saved_paths[ad].copy())
+                list_grp_loopends.append(saved_paths[ad].copy())
             else:
-                list_grp_endloops.append(saved_paths[ad])
+                list_grp_loopends.append(saved_paths[ad])
 
             el_seen.add(ad)
 
             # This is a HACK.
-            # It's possible that endloops were not correclty sorted (due to
+            # It's possible that loopends were not correclty sorted (due to
             # weird gotos). So check that and add a goto, if the next is not the
             # one expected. (tests/goto5)
             nxt = next_no_jump[ad]
-            if nxt != -1 and i < len(endloops_sort)-1 and nxt != endloops_sort[i+1]:
-                list_grp_endloops.append(Ast_Goto(nxt))
+            if nxt != -1 and i < len(loopends_sort)-1 and nxt != loopends_sort[i+1]:
+                list_grp_loopends.append(Ast_Goto(nxt))
 
-        return loop_paths, list_grp_endloops, endloops_start
+        return loop_paths, list_grp_loopends, loopends_start

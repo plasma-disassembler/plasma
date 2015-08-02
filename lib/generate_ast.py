@@ -47,22 +47,22 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     #    code ...
     # conditions:
     #    cmp ...
-    #    jg endloop
+    #    jg loopend
     #    cmp ...
     #    jne loop
-    # endloop:
+    # loopend:
     #
     # Here the last jump point inside the loop. We want to
     # replace by this : 
     #
     # loop {
     #    cmp ...
-    #    jg endloop
+    #    jg loopend
     #    cmp ...
-    #    je endloop
+    #    je loopend
     #    code ...
     # } # here there is an implicit jmp to loop
-    # endloop:
+    # loopend:
     #
 
     cond_id = ctx.libarch.utils.get_cond(inst)
@@ -170,10 +170,10 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     else:
         ast.add(first_blk)
 
-    loop_paths, endloops, endloops_start = \
+    loop_paths, loopends, loopends_start = \
         paths.extract_loop_paths(curr_loop_idx, last_loop_idx, endif)
 
-    # Checking if endloop == [] to determine if it's an 
+    # Checking if loopend == [] to determine if it's an 
     # infinite loop is not sufficient
     # tests/nestedloop2
     ast.set_infinite(paths_is_infinite(loop_paths))
@@ -182,30 +182,30 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     ctx.seen.add(addr)
     ast.add(get_ast_branch(ctx, loop_paths, curr_loop_idx, last_else))
 
-    if not endloops:
+    if not loopends:
         return ast, -1
 
     epilog = Ast_Branch()
-    if len(endloops) > 1:
+    if len(loopends) > 1:
         epilog_num = 1
 
-        for i, el in enumerate(endloops[:-1]):
+        for i, el in enumerate(loopends[:-1]):
             if isinstance(el, Ast_Goto):
                 epilog.add(el)
                 continue
 
-            if el.first() in endloops_start:
-                epilog.add(Ast_Comment("endloop " + str(epilog_num)))
+            if el.first() in loopends_start:
+                epilog.add(Ast_Comment("loopend " + str(epilog_num)))
                 epilog_num += 1
 
             epilog.add(get_ast_branch(ctx, el, last_loop_idx, last_else))
 
-        if endloops[-1].first() in endloops_start:
-            epilog.add(Ast_Comment("endloop " + str(epilog_num)))
+        if loopends[-1].first() in loopends_start:
+            epilog.add(Ast_Comment("loopend " + str(epilog_num)))
 
         ast.set_epilog(epilog)
 
-    return ast, endloops[-1].first()
+    return ast, loopends[-1].first()
 
 
 def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):

@@ -51,13 +51,13 @@ function main {
         }
         0x400589: var3 += 1 # add dword ptr [rbp - 0xc], 1
     }
-    # endloop 1
+    # loopend 1
     infiniteloop {
         0x400549: edi = 0x400638 "3" # mov edi, 0x400638
         0x40054e: call 0x4003e0 <puts@plt>
         0x400553: jmp 0x400549
     }
-    # endloop 2
+    # loopend 2
     0x400593: edi = 0x40063e "6" # mov edi, 0x40063e
     0x400598: call 0x4003e0 <puts@plt>
     0x40059d: eax = 0 # mov eax, 0

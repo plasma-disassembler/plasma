@@ -52,14 +52,14 @@ function main {
             0x4005ae: call 0x400410 <puts@plt>
             0x4005b3: jmp 0x40056b
         }
-        # endloop 1
+        # loopend 1
         0x4005db: edi = 0x4006ad "4" # mov edi, 0x4006ad
         0x4005e0: call 0x400410 <puts@plt>
         0x4005e5: edi = 0x4006af "5" # mov edi, 0x4006af
         0x4005ea: call 0x400410 <puts@plt>
         0x4005ef: eax = 0 # mov eax, 0
         0x4005f4: jmp 0x400605
-        # endloop 2
+        # loopend 2
         0x4005bb: edi = 0x4006a8 "stop" # mov edi, 0x4006a8
         0x4005c0: call 0x400410 <puts@plt>
         0x4005c5: jmp 0x4005f6

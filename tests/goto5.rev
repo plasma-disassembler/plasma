@@ -21,14 +21,14 @@ function main {
             0x400532: edi = 0x400608 "3" # mov edi, 0x400608
             0x400537: call 0x4003e0 <puts@plt>
         }
-        # endloop 1
+        # loopend 1
         0x400526: edi = 0x400606 "2" # mov edi, 0x400606
         0x40052b: call 0x4003e0 <puts@plt>
         0x400530: jmp 0x40055e
         0x40055e: edi = 0x40060e "end" # mov edi, 0x40060e
         0x400563: call 0x4003e0 <puts@plt>
         goto 0x400568
-        # endloop 2
+        # loopend 2
         goto 0x400542
     } 
     # 0x400542: cmp dword ptr [rbp - 8], 0x7b

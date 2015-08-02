@@ -29,7 +29,7 @@ function main {
         # 0x4005cb: jne 0x4005eb
         if (var1 == 40)  goto 0x4005cd
     }
-    # endloop 1
+    # loopend 1
     infiniteloop {
         # 0x4005cd: cmp dword ptr [rbp - 0xc], 1
         # 0x4005d1: jne 0x4005df
@@ -43,11 +43,11 @@ function main {
         }
         0x4005e9: jmp 0x4005cd
     }
-    # endloop 2
+    # loopend 2
     0x40056d: edi = 0x400724 "goto exit" # mov edi, 0x400724
     0x400572: call 0x4003e0 <puts@plt>
     0x400577: jmp 0x40059b
-    # endloop 3
+    # loopend 3
     # 0x400543: cmp dword ptr [rbp - 8], 1
     # 0x400547: jne 0x400558
     if (var3 == 1) {
@@ -59,7 +59,7 @@ function main {
         0x40055d: call 0x4003e0 <puts@plt>
         0x400562: jmp 0x4005f5
     }
-    # endloop 4
+    # loopend 4
     # 0x400519: cmp dword ptr [rbp - 8], 1
     # 0x40051d: jne 0x40052e
     if (var3 == 1) {
@@ -71,7 +71,7 @@ function main {
         0x400533: call 0x4003e0 <puts@plt>
         0x400538: jmp 0x400614
     }
-    # endloop 5
+    # loopend 5
     # 0x4005a3: cmp dword ptr [rbp - 8], 1
     # 0x4005a7: jne 0x4005b8
     if (var3 == 1) {
@@ -83,7 +83,7 @@ function main {
         0x4005bd: call 0x4003e0 <puts@plt>
         0x4005c2: jmp 0x40065f
     }
-    # endloop 6
+    # loopend 6
     # 0x40057f: cmp dword ptr [rbp - 8], 1
     # 0x400583: jne 0x400591
     if (var3 == 1) {
@@ -96,7 +96,7 @@ function main {
     }
     0x40059b: leave 
     0x40059c: ret 
-    # endloop 7
+    # loopend 7
     0x4005f5: edi = 0x40074e "end" # mov edi, 0x40074e
     0x4005fa: call 0x4003e0 <puts@plt>
     # 0x4005ff: cmp dword ptr [rbp - 4], 0x539
