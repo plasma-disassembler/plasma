@@ -311,7 +311,7 @@ class Output(OutputAbs):
                 elif len(i.operands) == 2:
                     self.print_operand(i, 0)
                     print_no_end(" " + inst_symbol(i) + " ")
-                    self.print_operand(i, 2)
+                    self.print_operand(i, 1)
                 elif len(i.operands) == 1:
                     sz = i.operands[0].size
                     if sz == 1:
