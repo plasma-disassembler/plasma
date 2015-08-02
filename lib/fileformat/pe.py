@@ -300,7 +300,7 @@ class PE:
 
     def iter_sections(self):
         base = self.pe.OPTIONAL_HEADER.ImageBase
-        for i, s in enumerate(self.__data_sections):
+        for s in self.pe.sections:
             start = base + s.VirtualAddress
             end = start + s.SizeOfRawData
             if s.Name != b"":

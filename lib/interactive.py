@@ -507,11 +507,7 @@ class Interactive():
             return
 
         self.rl.print("NAME".ljust(20))
-        self.rl.print("START".ljust(16))
-        self.rl.print("END\n")
+        self.rl.print(" [START - END]\n")
 
         for (name, start, end) in self.ctx.dis.binary.iter_sections():
-            self.rl.print(name.ljust(20))
-            self.rl.print(hex(start).ljust(16))
-            self.rl.print(hex(end).ljust(16))
-            self.rl.print("\n")
+            self.ctx.dis.print_section_meta(name, start, end) 

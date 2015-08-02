@@ -45,6 +45,7 @@ class Context():
         self.debug = False
         self.raw_base = 0
         self.raw_big_endian = False
+        self.list_sections = False
 
 
     def reset_all(self):

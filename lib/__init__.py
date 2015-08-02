@@ -53,6 +53,8 @@ def parse_args():
             help='Print all symbols')
     parser.add_argument('-c', '--calls', metavar='SECTION_NAME', type=str,
             help='Print all calls which are in the given section')
+    parser.add_argument('--sections', action='store_true',
+            help='Print all sections')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
     parser.add_argument('--lines', type=int, default=30, metavar='N',
@@ -93,6 +95,7 @@ def parse_args():
     ctx.lines           = args.lines
     ctx.graph           = args.graph
     ctx.raw_big_endian  = args.raw_big_endian
+    ctx.list_sections   = args.sections
 
     if ctx.raw_base is not None:
         if ctx.raw_base.startswith("0x"):
@@ -230,6 +233,11 @@ def disasm(ctx):
 def reverse(ctx):
     if not load_file(ctx):
         die()
+
+    if ctx.list_sections:
+        for name, start, end in ctx.dis.binary.iter_sections():
+           ctx.dis.print_section_meta(name, start, end) 
+        return
 
     if ctx.syms:
         ctx.dis.print_symbols(ctx.sectionsname)

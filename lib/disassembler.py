@@ -89,7 +89,7 @@ class Disassembler():
 
 
     def print_section_meta(self, name, start, end):
-        print_no_end(color_section(name))
+        print_no_end(color_section(name.ljust(20)))
         print_no_end(" [")
         print_no_end(hex(start))
         print_no_end(" - ")
