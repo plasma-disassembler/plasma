@@ -28,8 +28,11 @@ from lib.exceptions import ExcIfelse
 def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     nxt = ctx.gph.link_out[inst.address]
 
-    if len(ctx.gph.nodes[inst.address]) == 2:
-        prefetch = ctx.gph.nodes[inst.address][1]
+    # A jump is normally alone in a block, but for some architectures
+    # we save the prefetched instruction after.
+    blk = ctx.gph.nodes[inst.address]
+    if len(blk) == 2:
+        prefetch = blk[1]
     else:
         prefetch = None
 
@@ -215,8 +218,11 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     nxt = ctx.gph.link_out[addr]
     jump_inst = ctx.gph.nodes[addr][0]
 
-    if len(ctx.gph.nodes[addr]) == 2:
-        prefetch = ctx.gph.nodes[addr][1]
+    # A jump is normally alone in a block, but for some architectures
+    # we save the prefetched instruction after.
+    blk = ctx.gph.nodes[addr]
+    if len(blk) == 2:
+        prefetch = blk[1]
     else:
         prefetch = None
 

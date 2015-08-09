@@ -60,6 +60,10 @@ class Graph:
         self.__key_path_count = 0
 
 
+    # A jump is normally alone in a block, but for some architectures
+    # we save the prefetched instruction after.
+
+
     def add_node(self, inst, prefetch=None):
         self.nodes[inst.address] = [inst]
         if prefetch is not None:

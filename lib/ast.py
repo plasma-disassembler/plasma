@@ -47,7 +47,7 @@ class Ast_IfGoto:
         self.cond_id = cond_id
         self.addr_jump = addr_jump
         self.fused_inst = None
-        self.prefetch = None
+        self.prefetch = prefetch
 
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
