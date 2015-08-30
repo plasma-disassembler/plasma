@@ -30,6 +30,7 @@ class Paths():
         self.looping = {}  # key_path -> idx_loop
         self.paths = {}
         self.gph = gph
+        self.next_addr = -1 # next address of all paths
         if gph != None:
             self.cache_obj()
 
@@ -356,7 +357,7 @@ class Paths():
             if found and is_enter:
                 return val
 
-        return -1
+        return self.next_addr
 
 
     def split(self, ifaddr, endpoint):
@@ -385,10 +386,13 @@ class Paths():
                     else:
                         add_path_2(k, p, get_loop_idx(k))
 
-        else_addr = nxt[BRANCH_NEXT_JUMP] \
-                    if len(split[BRANCH_NEXT_JUMP].paths) > 0 else -1
+        # else_addr = nxt[BRANCH_NEXT_JUMP] \
+                    # if len(split[BRANCH_NEXT_JUMP].paths) > 0 else -1
 
-        return split, else_addr
+        split[BRANCH_NEXT].next_addr = endpoint
+        split[BRANCH_NEXT_JUMP].next_addr = endpoint
+
+        return split  #, else_addr
 
 
     def goto_addr(self, addr):
@@ -448,11 +452,13 @@ class Paths():
 
     # Returns :
     # loop_paths (Paths), loopend (list(Paths)), address_loopends
-    def extract_loop_paths(self, curr_loop_idx, last_loop_idx, endif):
+    def extract_loop_paths(self, curr_loop_idx, last_loop_idx):
         # TODO optimize....
 
         loop_paths = Paths(self.gph)
         tmp_loopends = Paths(self.gph)
+
+        loop_paths.next_addr = -1
 
 
         # ------------------------------------------------------
@@ -562,6 +568,7 @@ class Paths():
         # If we have all loopends at the end of an if, there will
         # be no endpoints between them (the endpoints is outside)
         # So check all groups if the next is the "endif".
+        endif = self.next_addr
         if endif != -1 and endif not in grp_loopends:
             # Add a fake group
             for ad, els in grp_loopends.items():

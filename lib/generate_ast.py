@@ -77,9 +77,9 @@ def get_ast_ifgoto(ctx, paths, curr_loop_idx, inst):
     return Ast_IfGoto(inst, cond_id, br, prefetch)
 
 
-def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
+def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1):
     ast = Ast_Branch()
-    if_printed = False
+    is_if_printed = False
 
     if paths.rm_empty_paths():
         return ast
@@ -131,13 +131,13 @@ def get_ast_branch(ctx, paths, curr_loop_idx=[], last_else=-1, endif=-1):
         if is_loop:
             # last_else == -1
             # -> we can't go to a same else inside a loop
-            a, endpoint = get_ast_loop(ctx, paths, curr_loop_idx, -1, endif)
+            a, endpoint = get_ast_loop(ctx, paths, curr_loop_idx, -1)
             ast.add(a)
         elif is_ifelse:
             a, endpoint = get_ast_ifelse(
                                ctx, paths, curr_loop_idx,
-                               last_else, if_printed, endif)
-            if_printed = isinstance(a, Ast_Ifelse)
+                               last_else, is_if_printed)
+            is_if_printed = isinstance(a, Ast_Ifelse)
             ast.add(a)
         else:
             endpoint = paths.first()
@@ -161,7 +161,7 @@ def paths_is_infinite(paths):
     return True
 
 
-def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
+def get_ast_loop(ctx, paths, last_loop_idx, last_else):
     ast = Ast_Loop()
     curr_loop_idx = paths.get_loops_idx()
     first_blk = ctx.gph.nodes[paths.get_loop_start(curr_loop_idx)]
@@ -174,7 +174,7 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
         ast.add(first_blk)
 
     loop_paths, loopends, loopends_start = \
-        paths.extract_loop_paths(curr_loop_idx, last_loop_idx, endif)
+        paths.extract_loop_paths(curr_loop_idx, last_loop_idx)
 
     # Checking if loopend == [] to determine if it's an 
     # infinite loop is not sufficient
@@ -183,7 +183,7 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
 
     addr = loop_paths.pop(1)[0]
     ctx.seen.add(addr)
-    ast.add(get_ast_branch(ctx, loop_paths, curr_loop_idx, last_else))
+    ast.add(get_ast_branch(ctx, loop_paths, curr_loop_idx))
 
     if not loopends:
         return ast, -1
@@ -201,7 +201,7 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
                 epilog.add(Ast_Comment("loopend " + str(epilog_num)))
                 epilog_num += 1
 
-            epilog.add(get_ast_branch(ctx, el, last_loop_idx, last_else))
+            epilog.add(get_ast_branch(ctx, el, last_loop_idx))
 
         if loopends[-1].first() in loopends_start:
             epilog.add(Ast_Comment("loopend " + str(epilog_num)))
@@ -211,7 +211,7 @@ def get_ast_loop(ctx, paths, last_loop_idx, last_else, endif):
     return ast, loopends[-1].first()
 
 
-def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
+def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_if_printed):
     addr = paths.pop(1)[0]
     ctx.seen.add(addr)
     paths.rm_empty_paths()
@@ -227,15 +227,15 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
         prefetch = None
 
     if_addr = nxt[BRANCH_NEXT]
-    else_addr = nxt[BRANCH_NEXT_JUMP] if len(nxt) == 2 else -1
+    else_addr = nxt[BRANCH_NEXT_JUMP]
 
     # If endpoint == -1, it means we are in a sub-if and the endpoint 
     # is after. When we create_split, only address inside current
     # if and else are kept.
     endpoint = paths.first_common_ifelse(curr_loop_idx, else_addr)
-    split, else_addr = paths.split(addr, endpoint)
+    split = paths.split(addr, endpoint)
 
-    # is_prev_and_if : better output (tests/if5)
+    # is_if_printed : better output (tests/if5)
     #
     # example C file :
     #
@@ -249,7 +249,7 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # }
     #
     #
-    # output without the is_prev_andif. This is correct, the andif is 
+    # output without the is_if_printed. This is correct, the andif is 
     # attached to the "if 1", but it's not very clear.
     #
     # if 1 {
@@ -260,7 +260,7 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     #   ...
     # }
     #
-    # output with the is_prev_andif :
+    # output with the is_if_printed :
     # Instead of the andif, we have the same code as the original.
     #
 
@@ -301,36 +301,27 @@ def get_ast_ifelse(ctx, paths, curr_loop_idx, last_else, is_prev_andif, endif):
     # }
     #
 
-    if ctx.print_andif:
-        if last_else != -1 and not is_prev_andif:
-            # TODO not sure about endpoint == -1
-            # tests/break3
-            if if_addr == last_else and endpoint == -1:
-                return (Ast_AndIf(jump_inst,
-                                  ctx.libarch.utils.get_cond(jump_inst),
-                                  prefetch),
-                        else_addr)
+    if ctx.print_andif and last_else != -1 and not is_if_printed:
+        if else_addr == last_else:
+            return (Ast_AndIf(jump_inst,
+                              ctx.libarch.utils.invert_cond(jump_inst),
+                              prefetch),
+                    if_addr)
 
-            # if else_addr == -1 or else_addr == last_else:
-            if else_addr != -1 and (else_addr == last_else or else_addr == endif) or \
-                    last_else == endif and endif == endpoint and endpoint != -1:
-                endpoint = ctx.gph.link_out[addr][BRANCH_NEXT]
-                return (Ast_AndIf(jump_inst,
-                                  ctx.libarch.utils.invert_cond(jump_inst),
-                                  prefetch),
-                        endpoint)
+        if if_addr == last_else:
+            return (Ast_AndIf(jump_inst,
+                              ctx.libarch.utils.get_cond(jump_inst),
+                              prefetch),
+                    else_addr)
 
-    if else_addr == -1:
-        else_addr = last_else
+    if split[BRANCH_NEXT_JUMP].next_addr == else_addr:
+        a1 = Ast_Branch()
+        a2 = get_ast_branch(ctx, split[BRANCH_NEXT], curr_loop_idx, else_addr)
+        return (Ast_Ifelse(jump_inst, a1, a2, prefetch), else_addr)
 
-    if endpoint == -1:
-        endpoint = endif
-
-    a1 = get_ast_branch(ctx, split[BRANCH_NEXT_JUMP], curr_loop_idx, -1, endpoint)
-    a2 = get_ast_branch(ctx, split[BRANCH_NEXT], curr_loop_idx, else_addr, endpoint)
-
+    a1 = get_ast_branch(ctx, split[BRANCH_NEXT_JUMP], curr_loop_idx, -1)
+    a2 = get_ast_branch(ctx, split[BRANCH_NEXT], curr_loop_idx, else_addr)
     return (Ast_Ifelse(jump_inst, a1, a2, prefetch), endpoint)
-
 
 
 def generate_ast(ctx__, paths):
