@@ -17,14 +17,15 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from capstone.mips import MIPS_OP_IMM
+from capstone.mips import (MIPS_OP_IMM, MIPS_INS_ADDIU, MIPS_INS_ORI, 
+        MIPS_INS_LUI, MIPS_OP_REG, MIPS_REG_ZERO)
 
 from lib.colors import pick_color
 from lib.utils import BRANCH_NEXT
 from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
         Ast_AndIf, Ast_If_cond)
 from lib.arch.mips.output import ASSIGNMENT_OPS
-from lib.arch.mips.utils import is_uncond_jump
+from lib.arch.mips.utils import is_uncond_jump, PseudoInst, NopInst
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
@@ -83,3 +84,65 @@ def fuse_inst_with_if(ctx, ast):
         fuse_inst_with_if(ctx, ast.branch)
         if ast.epilog != None:
             fuse_inst_with_if(ctx, ast.epilog)
+
+
+LI_INST = [MIPS_INS_ADDIU, MIPS_INS_ORI]
+
+
+def __blk_search_li(blk):
+    prev_k = -1
+    prev_i = None
+    prev_op = None
+
+    for k, i in enumerate(blk):
+        if i.id in LI_INST:
+            op = i.operands
+
+            if prev_k != -1 and prev_i.id == MIPS_INS_LUI:
+                if op[0].type == MIPS_OP_REG and \
+                    op[1].type == MIPS_OP_REG and \
+                    op[2].type == MIPS_OP_IMM and \
+                    op[0].value.reg == op[1].value.reg and \
+                    prev_op[0].type == MIPS_OP_REG and \
+                    prev_op[1].type == MIPS_OP_IMM and \
+                    prev_op[0].value.reg == op[0].value.reg:
+
+                    blk[k] = PseudoInst("li $%s, %s" % (
+                            i.reg_name(op[0].value.reg),
+                            hex((prev_op[1].value.imm << 16) + op[2].value.imm)),
+                            [prev_i, i])
+
+                    blk[prev_k] = NopInst()
+
+            else:
+                if op[0].type == MIPS_OP_REG and \
+                    op[1].type == MIPS_OP_REG and \
+                    op[2].type == MIPS_OP_IMM and \
+                    op[1].value.reg == MIPS_REG_ZERO:
+
+                    blk[k] = PseudoInst("li $%s, %s" % (
+                            i.reg_name(op[0].value.reg),
+                            op[2].value.imm),
+                            [i])
+
+        prev_k = k
+        prev_i = i
+        prev_op = i.operands
+
+
+def search_li(ctx, ast):
+    if isinstance(ast, Ast_Branch):
+        for n in ast.nodes:
+            if isinstance(n, list):
+                __blk_search_li(n)
+            else: # ast
+                search_li(ctx, n)
+
+    elif isinstance(ast, Ast_Ifelse):
+        search_li(ctx, ast.br_next_jump)
+        search_li(ctx, ast.br_next)
+
+    elif isinstance(ast, Ast_Loop):
+        search_li(ctx, ast.branch)
+        if ast.epilog != None:
+            search_li(ctx, ast.epilog)

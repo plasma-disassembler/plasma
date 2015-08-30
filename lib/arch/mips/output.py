@@ -29,12 +29,12 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_BLEZ, MIPS_INS_BLTZ, MIPS_REG_ZERO)
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end)
+        print_comment, print_comment_no_end, print_tabbed)
 from lib.colors import (color, color_addr, color_retcall, color_string,
         color_section, color_type)
 from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
-    is_uncond_jump, cond_symbol)
+    is_uncond_jump, cond_symbol, PseudoInst, NopInst)
 
 
 # ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
@@ -175,6 +175,16 @@ class Output(OutputAbs):
         def get_inst_str():
             nonlocal i
             return "%s %s" % (i.mnemonic, i.op_str)
+
+        if isinstance(i, NopInst):
+            return
+
+        if isinstance(i, PseudoInst):
+            for i2 in i.real_inst:
+                self.print_inst(i2, tab, "# ")
+            print_tabbed_no_end(color_addr(i.real_inst[0].address), tab)
+            print(i.pseudo)
+            return
 
         if prefix == "# ":
             if self.ctx.comments:

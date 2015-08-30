@@ -172,9 +172,8 @@ def init_addr(ctx):
             error("symbol %s not found" % e.symname)
             if ctx.interactive:
                 return False
-            error("Try with -s to see all symbols.")
-            error("If you have set the option --dump or --calls you need to set")
-            error("the option -x (see --help).")
+            error("You can see all symbols with -s (if resolution is done).")
+            error("Note: --dump need the option -x.")
             die()
 
     try:

@@ -124,3 +124,13 @@ def cond_symbol(ty):
 
 def inst_symbol(i):
     return INST_SYMB.get(i.id, "UNKNOWN")
+
+
+class PseudoInst():
+    def __init__(self, pseudo, real_inst):
+        self.pseudo = pseudo
+        self.real_inst = real_inst
+
+
+class NopInst():
+    pass
