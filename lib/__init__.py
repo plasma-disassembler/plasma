@@ -57,7 +57,7 @@ def parse_args():
             help='Print all sections')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
-    parser.add_argument('--lines', type=int, default=30, metavar='N',
+    parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
             help='Max lines to dump')
     parser.add_argument('-i', '--interactive', action='store_true',
             help='Interactive mode')
@@ -70,7 +70,7 @@ def parse_args():
             help='Consider the input file as a raw binary')
     parser.add_argument('--rawbase', metavar='0xXXXXX',
             help='Set base address of a raw file (default=0)')
-    parser.add_argument('--raw-big-endian', action='store_true',
+    parser.add_argument('--rawbe', action='store_true',
             help='If not set it\'s in little endian')
 
     args = parser.parse_args()
@@ -94,7 +94,7 @@ def parse_args():
     ctx.interactive     = args.interactive
     ctx.lines           = args.lines
     ctx.graph           = args.graph
-    ctx.raw_big_endian  = args.raw_big_endian
+    ctx.raw_big_endian  = args.rawbe
     ctx.list_sections   = args.sections
 
     if ctx.raw_base is not None:
