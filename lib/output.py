@@ -17,6 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import binascii
+
 from lib.colors import (color_addr, color_comment, color_keyword, color_type,
         color_var, color_symbol, color_section)
 
@@ -73,6 +75,17 @@ class OutputAbs():
 
     def print_symbol(self, addr):
         print_no_end(color_symbol("<" + self.binary.reverse_symbols[addr] + ">"))
+
+
+    def print_bytes(self, i, comment_this=False):
+        if self.ctx.print_bytes:
+            if comment_this:
+                if self.ctx.comments:
+                    print_comment_no_end(binascii.hexlify(i.bytes).decode())
+                    print_comment_no_end(" ")
+            else:
+                print_no_end(binascii.hexlify(i.bytes).decode())
+                print_no_end(" ")
 
 
     # Only used when --nocomment is enabled and a jump point to this instruction

@@ -57,6 +57,8 @@ def parse_args():
             help='Print all sections')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
+    parser.add_argument('--bytes', action='store_true',
+            help='Print bytes')
     parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
             help='Max lines to dump')
     parser.add_argument('-i', '--interactive', action='store_true',
@@ -96,6 +98,7 @@ def parse_args():
     ctx.graph           = args.graph
     ctx.raw_big_endian  = args.rawbe
     ctx.list_sections   = args.sections
+    ctx.print_bytes     = args.bytes
 
     if ctx.raw_base is not None:
         if ctx.raw_base.startswith("0x"):

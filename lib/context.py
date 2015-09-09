@@ -46,6 +46,7 @@ class Context():
         self.raw_base = 0
         self.raw_big_endian = False
         self.list_sections = False
+        self.print_bytes = False
 
 
     def reset_all(self):

@@ -216,6 +216,7 @@ class Output(OutputAbs):
             if self.ctx.comments:
                 print_comment_no_end(prefix, tab)
                 print_no_end(color_addr(i.address))
+                self.print_bytes(i, True)
                 print_comment(get_inst_str())
             return
 
@@ -246,6 +247,8 @@ class Output(OutputAbs):
             return "%s %s" % (i.mnemonic, i.op_str)
 
         print_tabbed_no_end(color_addr(i.address), tab)
+
+        self.print_bytes(i)
 
         if is_ret(i):
             print_no_end(color_retcall(get_inst_str()))

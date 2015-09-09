@@ -127,10 +127,12 @@ def inst_symbol(i):
 
 
 class PseudoInst():
-    def __init__(self, pseudo, real_inst):
+    def __init__(self, pseudo, real_inst_list):
         self.pseudo = pseudo
-        self.real_inst = real_inst
+        self.real_inst_list = real_inst_list
+        self.id = -1
 
 
 class NopInst():
-    pass
+    def __init__(self):
+        self.id = -1
