@@ -197,8 +197,7 @@ class Output(OutputAbs):
         if i.address in self.ctx.all_fused_inst:
             return
 
-        if i.address != self.ctx.addr and \
-                i.address in self.ctx.dis.binary.reverse_symbols:
+        if self.is_symbol(i.address):
             print_tabbed_no_end("", tab)
             self.print_symbol(i.address)
             print()

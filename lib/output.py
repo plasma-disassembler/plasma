@@ -94,6 +94,11 @@ class OutputAbs():
             print_tabbed_no_end(color_addr(i.address), tab)
 
 
+    def is_symbol(self, ad):
+        return (self.ctx.dump or ad != self.ctx.entry_addr) and \
+            ad in self.ctx.dis.binary.reverse_symbols
+
+
     def print_commented_jump(self, jump_inst, fused_inst, tab):
         if self.ctx.comments:
             if fused_inst != None:

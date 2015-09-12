@@ -370,7 +370,7 @@ class Interactive():
         if init_addr(self.ctx):
             self.ctx.dis.dump(self.ctx, lines)
             self.ctx.entry = None
-            self.ctx.addr = 0
+            self.ctx.entry_addr = 0
 
 
     def __exec_load(self, args):
@@ -443,7 +443,7 @@ class Interactive():
         if init_addr(self.ctx):
             self.ctx.dis.print_calls(self.ctx)
             self.ctx.entry = None
-            self.ctx.addr = 0
+            self.ctx.entry_addr = 0
         self.ctx.calls_in_section = None
 
 
@@ -485,7 +485,7 @@ class Interactive():
         if init_addr(self.ctx):
             disasm(self.ctx)
             self.ctx.entry = None
-            self.ctx.addr = 0
+            self.ctx.entry_addr = 0
 
 
     def __exec_help(self, args):

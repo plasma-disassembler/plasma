@@ -192,13 +192,13 @@ def init_addr(ctx):
             return False
         die()
 
-    ctx.addr = addr
+    ctx.entry_addr = addr
 
     return True
 
 
 def disasm(ctx):
-    ctx.gph = ctx.dis.get_graph(ctx.addr)
+    ctx.gph = ctx.dis.get_graph(ctx.entry_addr)
     if ctx.gph == None:
         error("capstone can't disassemble here")
         return
@@ -226,7 +226,7 @@ def disasm(ctx):
         sys.stdout = open(base + ".rev", "w+")
 
     o = ctx.libarch.output.Output(ctx)
-    o.print_ast(ctx.addr, ast)
+    o.print_ast(ctx.entry_addr, ast)
 
     if ctx.vim:
         print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)

@@ -60,7 +60,8 @@ class Context():
 
     def reset_vars(self):
         # Other variables
-        self.addr = 0 # address where we disassemble
+        self.entry_addr = 0 # address where we disassemble,
+                            # same as self.entry but it's an int
         self.addr_color = {}
         self.color_counter = 112
         self.local_vars_idx = {}

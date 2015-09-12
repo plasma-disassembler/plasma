@@ -103,14 +103,14 @@ class Disassembler():
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.addr)
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
         self.print_section_meta(s_name, s_start, s_end)
 
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
 
         # set jumps color
-        ad = ctx.addr
+        ad = ctx.entry_addr
         l = 0
         while l < lines and ad < s_end:
             i = self.lazy_disasm(ad, s_start)
@@ -129,7 +129,7 @@ class Disassembler():
         o = ARCH_OUTPUT.Output(ctx)
 
         # dump
-        ad = ctx.addr
+        ad = ctx.entry_addr
         l = 0
         while l < lines and ad < s_end:
             i = self.lazy_disasm(ad, s_start)
@@ -147,7 +147,7 @@ class Disassembler():
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.addr)
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
         self.print_section_meta(s_name, s_start, s_end)
         o = ARCH_OUTPUT.Output(ctx)
 
