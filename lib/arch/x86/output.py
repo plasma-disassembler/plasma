@@ -263,7 +263,7 @@ class Output(OutputAbs):
             if i.operands[0].type != X86_OP_IMM:
                 print_no_end(i.mnemonic + " ")
                 self.print_operand(i, 0)
-                if is_uncond_jump(i) and self.ctx.comments:
+                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
                     print_comment_no_end(" # STOPPED")
                 return
             try:

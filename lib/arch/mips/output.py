@@ -221,7 +221,7 @@ class Output(OutputAbs):
             print_no_end(i.mnemonic + " ")
             if i.operands[-1].type != MIPS_OP_IMM:
                 print_no_end(i.op_str)
-                if is_uncond_jump(i) and self.ctx.comments:
+                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
                     print_comment_no_end(" # STOPPED")
                 print()
                 return
