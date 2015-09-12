@@ -20,10 +20,11 @@
 import time
 
 from lib.graph import Graph
-from lib.utils import debug__
+from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char
 from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.output import print_no_end
-from lib.colors import pick_color, color_addr, color_symbol, color_section
+from lib.colors import (pick_color, color_addr, color_symbol,
+        color_section, color_string, color_comment)
 from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
@@ -47,9 +48,9 @@ class Disassembler():
         self.mode = mode
 
 
-    def check_addr(self, addr):
+    def check_addr(self, ctx, addr):
         addr_exists, is_exec = self.binary.check_addr(addr)
-        if not is_exec:
+        if not ctx.print_data and not is_exec:
             raise ExcNotExec(addr)
         if not addr_exists:
             raise ExcNotAddr(addr)
@@ -97,7 +98,7 @@ class Disassembler():
         print("]")
 
 
-    def dump(self, ctx, lines):
+    def dump_asm(self, ctx, lines):
         from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
@@ -140,6 +141,89 @@ class Disassembler():
                 o.print_inst(i)
                 ad += i.size
             l += 1
+
+
+    def dump_data(self, ctx, lines):
+        N = 128
+        addr = ctx.entry_addr
+
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
+        self.print_section_meta(s_name, s_start, s_end)
+
+        addr_ascii_str = -1
+        ascii_str = []
+        l = 0
+        is_new_line = True
+
+        while l < lines:
+            buf = self.binary.section_stream_read(addr, N)
+            if not buf:
+                break
+            i = 0
+
+            while i < len(buf):
+                c = buf[i]
+
+                if c in BYTES_PRINTABLE_SET:
+                    if addr_ascii_str == -1:
+                        addr_ascii_str = addr
+                    ascii_str.append(c)
+                    addr += 1
+                    i += 1
+                    continue
+
+                stack_char = []
+
+                if addr_ascii_str != -1:
+                    if c == 0 and len(ascii_str) >= 2:
+                        if not is_new_line:
+                            print()
+                            l += 1
+                            if l >= lines:
+                                return
+
+                        print_no_end(color_addr(addr_ascii_str))
+                        print_no_end(color_string("\"" + "".join(map(get_char, ascii_str)) + "\""))
+                        print(", 0")
+                        is_new_line = True
+                        l += 1
+                        if l >= lines:
+                            return
+                        ascii_str = []
+                        addr_ascii_str = -1
+                        addr += 1
+                        i += 1
+                        continue
+
+                    stack_char = ascii_str
+                    i -= len(ascii_str)
+                    addr -= len(ascii_str)
+
+                stack_char.append(c)
+
+                for c in stack_char:
+                    if is_new_line:
+                        print_no_end(color_addr(addr))
+
+                    elif addr % 4 == 0 and addr != ctx.entry_addr:
+                        print()
+                        is_new_line = True
+                        l += 1
+                        if l >= lines:
+                            return
+                        print_no_end(color_addr(addr))
+
+                    print_no_end("%.2x " % c)
+
+                    addr += 1
+                    i += 1
+                    is_new_line = False
+
+                ascii_str = []
+                addr_ascii_str = -1
+
+        if not is_new_line:
+            print()
 
 
     def print_calls(self, ctx):

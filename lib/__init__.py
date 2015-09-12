@@ -57,10 +57,12 @@ def parse_args():
             help='Print all sections')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
-    parser.add_argument('--bytes', action='store_true',
-            help='Print bytes')
+    parser.add_argument('--data', action='store_true',
+            help='Don\'t disassemble, print only bytes and detect ascii strings')
     parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
-            help='Max lines to dump')
+            help='Max lines used with --dump or --data')
+    parser.add_argument('--bytes', action='store_true',
+            help='Print instruction bytes')
     parser.add_argument('-i', '--interactive', action='store_true',
             help='Interactive mode')
     parser.add_argument('--symfile', metavar='FILENAME', type=FileType('r'),
@@ -99,6 +101,7 @@ def parse_args():
     ctx.raw_big_endian  = args.rawbe
     ctx.list_sections   = args.sections
     ctx.print_bytes     = args.bytes
+    ctx.print_data      = args.data
 
     if ctx.raw_base is not None:
         if ctx.raw_base.startswith("0x"):
@@ -180,7 +183,7 @@ def init_addr(ctx):
             die()
 
     try:
-        ctx.dis.check_addr(addr)
+        ctx.dis.check_addr(ctx, addr)
     except ExcNotExec as e:
         error("the address 0x%x is not in an executable section" % e.addr)
         if ctx.interactive:
@@ -251,13 +254,16 @@ def reverse(ctx):
         ctx.dis.print_calls(ctx)
         return
 
-    if ctx.dump:
+    if ctx.dump or ctx.print_data:
         if ctx.vim:
             base = os.path.basename(ctx.filename)
             ctx.color = False
             sys.stdout = open(base + ".rev", "w+")
 
-        ctx.dis.dump(ctx, ctx.lines)
+        if ctx.dump:
+            ctx.dis.dump_asm(ctx, ctx.lines)
+        else:
+            ctx.dis.dump_data(ctx, ctx.lines)
 
         if ctx.vim:
             generate_vim_syntax(ctx, base + ".vim")

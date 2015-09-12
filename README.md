@@ -4,7 +4,7 @@ Reverse
 Reverse engineering for x86/ARM/MIPS binaries. Generate a more readable code
 (pseudo-C) with colored syntax.
 
-Supported formats : `ELF`, `PE`.
+Supported formats : `ELF`, `PE`, `RAW`.
 
 
 The `Makefile` is used only for checking tests.
@@ -46,7 +46,7 @@ For every `int 0x80`, the tool try to detect syscalls with parameters.
     }
 
 
-## Example
+## Decompile functions
 
     $ ./reverse.py tests/nestedloop1.bin
 
@@ -56,6 +56,31 @@ By opening `d3/index.html` (with the option `--graph`) you will be able to
 see the flow graph :
 
 ![graph](http://hippersoft.fr/projects/graph.jpg)
+
+
+## Read ascii strings
+
+    $ reverse tests/server.bin --data -x 0x400ca0
+    .rodata              [0x400ca0 - 0x400de5]
+    0x400ca0: 01 00 02 00
+    0x400ca4: 00 00 00 00
+    0x400ca8: "Could not create socket", 0
+    0x400cc0: "Socket created", 0
+    0x400ccf: "bind failed. Error", 0
+    0x400ce2: "bind done", 0
+    0x400cec: 00 00 00 00
+    0x400cf0: "Waiting for incoming connections...", 0
+    0x400d14: "Connection accepted", 0
+    0x400d28: "could not create thread", 0
+    0x400d40: "Handler assigned", 0
+    0x400d51: "accept failed", 0
+    0x400d5f: 00
+    0x400d60: "Greetings! I am your connection handler\n", 0
+    0x400d89: 00 00 00
+    0x400d8c: 00 00 00 00
+    0x400d90: "Now type something and i shall repeat what you type \n", 0
+    0x400dc6: "Client disconnected", 0
+    0x400dda: "recv failed", 0
 
 
 ## Edit with vim

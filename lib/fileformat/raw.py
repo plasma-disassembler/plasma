@@ -61,7 +61,7 @@ class Raw:
 
 
     def get_section_meta(self, addr):
-        return "", self.raw_base, self.raw_base + len(self.raw) - 1
+        return "raw", self.raw_base, self.raw_base + len(self.raw) - 1
 
 
     def check_addr(self, addr):

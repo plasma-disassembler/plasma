@@ -224,6 +224,8 @@ class PE:
 
     def section_stream_read(self, addr, size):
         s = self.__get_section(addr)
+        if s is None:
+            return b""
         base = self.pe.OPTIONAL_HEADER.ImageBase
         off = addr - base
         end = base + s.VirtualAddress + s.SizeOfRawData

@@ -45,7 +45,7 @@ BRANCH_NEXT_JUMP = 1   # or for the else part
 PRINTABLE = [r'\x{0:02x}'.format(i) for i in range(256)]
 BYTES_PRINTABLE_SET = set()
 for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
-        "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ "):
+        "NOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ \r\t\n"):
     PRINTABLE[ord(c)] = c
     BYTES_PRINTABLE_SET.add(ord(c))
 
