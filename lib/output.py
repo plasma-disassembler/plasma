@@ -81,11 +81,11 @@ class OutputAbs():
         if self.ctx.print_bytes:
             if comment_this:
                 if self.ctx.comments:
-                    print_comment_no_end(binascii.hexlify(i.bytes).decode())
-                    print_comment_no_end(" ")
+                    for c in i.bytes:
+                        print_comment_no_end("%x " % c)
             else:
-                print_no_end(binascii.hexlify(i.bytes).decode())
-                print_no_end(" ")
+                for c in i.bytes:
+                    print_comment_no_end("%.2x " % c)
 
 
     # Only used when --nocomment is enabled and a jump point to this instruction
