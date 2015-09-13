@@ -46,6 +46,7 @@ class Interactive():
 
         self.COMMANDS_ALPHA = [
             "calls",
+            "data",
             "dump",
             "exit",
             "help",
@@ -140,6 +141,18 @@ class Interactive():
                 "Disassemble. By default it will be main.",
                 ]
             ),
+
+            # by default it will be ctx.lines
+            "data": Command(
+                2,
+                self.__exec_data,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Print data and detect ascii strings.",
+                ]
+            ),
+
 
             # by default it will be ctx.lines
             "dump": Command(
@@ -368,9 +381,28 @@ class Interactive():
                 lines = int(args[2])
             self.ctx.entry = args[1]
         if init_addr(self.ctx):
-            self.ctx.dis.dump(self.ctx, lines)
+            self.ctx.dis.dump_asm(self.ctx, lines)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
+
+
+    def __exec_data(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        lines = self.ctx.lines
+        if len(args) == 1:
+            self.ctx.entry = None
+        else:
+            if len(args) == 3:
+                lines = int(args[2])
+            self.ctx.entry = args[1]
+        self.ctx.print_data = True
+        if init_addr(self.ctx):
+            self.ctx.dis.dump_data(self.ctx, lines)
+            self.ctx.entry = None
+            self.ctx.entry_addr = 0
+            self.ctx.print_data = False
 
 
     def __exec_load(self, args):
