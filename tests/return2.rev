@@ -13,7 +13,7 @@ function main (.text) {
         0x400527: call 0x4003e0 <puts@plt>
         0x40052c: eax = 1 # mov eax, 1
         0x400531: jmp 0x400559
-    } 
+    }
     # 0x400533: cmp dword ptr [rbp - 4], 6
     # 0x400537: jne 0x40054a
     else if (var1 == 6) {

@@ -29,8 +29,7 @@ function main (.text) {
         # 0x4005cb: jne 0x4005eb
         if (var1 == 40)  goto 0x4005cd
     }
-    # loopend 1
-    infiniteloop {
+    for (;;) {
         # 0x4005cd: cmp dword ptr [rbp - 0xc], 1
         # 0x4005d1: jne 0x4005df
         if (var2 == 1) {
@@ -43,35 +42,6 @@ function main (.text) {
         }
         0x4005e9: jmp 0x4005cd
     }
-    # loopend 2
-    0x40056d: edi = 0x400724 "goto exit" # mov edi, 0x400724
-    0x400572: call 0x4003e0 <puts@plt>
-    0x400577: jmp 0x40059b
-    # loopend 3
-    # 0x400543: cmp dword ptr [rbp - 8], 1
-    # 0x400547: jne 0x400558
-    if (var3 == 1) {
-        0x400549: edi = 0x40071c "1 1" # mov edi, 0x40071c
-        0x40054e: call 0x4003e0 <puts@plt>
-        0x400553: jmp 0x4005f5
-    } else {
-        0x400558: edi = 0x400720 "1 2" # mov edi, 0x400720
-        0x40055d: call 0x4003e0 <puts@plt>
-        0x400562: jmp 0x4005f5
-    }
-    # loopend 4
-    # 0x400519: cmp dword ptr [rbp - 8], 1
-    # 0x40051d: jne 0x40052e
-    if (var3 == 1) {
-        0x40051f: edi = 0x400714 "0 1" # mov edi, 0x400714
-        0x400524: call 0x4003e0 <puts@plt>
-        0x400529: jmp 0x400614
-    } else {
-        0x40052e: edi = 0x400718 "0 2" # mov edi, 0x400718
-        0x400533: call 0x4003e0 <puts@plt>
-        0x400538: jmp 0x400614
-    }
-    # loopend 5
     # 0x4005a3: cmp dword ptr [rbp - 8], 1
     # 0x4005a7: jne 0x4005b8
     if (var3 == 1) {
@@ -83,7 +53,7 @@ function main (.text) {
         0x4005bd: call 0x4003e0 <puts@plt>
         0x4005c2: jmp 0x40065f
     }
-    # loopend 6
+    goto 0x40065f
     # 0x40057f: cmp dword ptr [rbp - 8], 1
     # 0x400583: jne 0x400591
     if (var3 == 1) {
@@ -94,15 +64,42 @@ function main (.text) {
         0x400591: edi = 0x400732 "2 2" # mov edi, 0x400732
         0x400596: call 0x4003e0 <puts@plt>
     }
+    goto 0x40059b
+    0x40056d: edi = 0x400724 "goto exit" # mov edi, 0x400724
+    0x400572: call 0x4003e0 <puts@plt>
+    0x400577: jmp 0x40059b
     0x40059b: leave 
     0x40059c: ret 
-    # loopend 7
+    # 0x400543: cmp dword ptr [rbp - 8], 1
+    # 0x400547: jne 0x400558
+    if (var3 == 1) {
+        0x400549: edi = 0x40071c "1 1" # mov edi, 0x40071c
+        0x40054e: call 0x4003e0 <puts@plt>
+        0x400553: jmp 0x4005f5
+    } else {
+        0x400558: edi = 0x400720 "1 2" # mov edi, 0x400720
+        0x40055d: call 0x4003e0 <puts@plt>
+        0x400562: jmp 0x4005f5
+    }
+    goto 0x4005f5
+    # 0x400519: cmp dword ptr [rbp - 8], 1
+    # 0x40051d: jne 0x40052e
+    if (var3 == 1) {
+        0x40051f: edi = 0x400714 "0 1" # mov edi, 0x400714
+        0x400524: call 0x4003e0 <puts@plt>
+        0x400529: jmp 0x400614
+    } else {
+        0x40052e: edi = 0x400718 "0 2" # mov edi, 0x400718
+        0x400533: call 0x4003e0 <puts@plt>
+        0x400538: jmp 0x400614
+    }
+    goto 0x400614
     0x4005f5: edi = 0x40074e "end" # mov edi, 0x40074e
     0x4005fa: call 0x4003e0 <puts@plt>
     # 0x4005ff: cmp dword ptr [rbp - 4], 0x539
     # 0x400606: jne 0x400614
     if (var1 == 1337) {
-        infiniteloop {
+        for (;;) {
             0x400608: edi = 0x400752 "loop2" # mov edi, 0x400752
             0x40060d: call 0x4003e0 <puts@plt>
             0x400612: jmp 0x400608

@@ -8,59 +8,56 @@ function main (.text) {
     # 0x40050e: cmp dword ptr [rbp - 4], 1
     # 0x400512: jne 0x400520
     if (var1 == 1) {
-        0x400514: edi = 0x400624 "1" # mov edi, 0x400624
+        0x400514: edi = 0x400614 "1" # mov edi, 0x400614
         0x400519: call 0x4003e0 <puts@plt>
-        0x40051e: jmp 0x400538
-    } else {
-        0x400520: edi = 0x400626 "2" # mov edi, 0x400626
-        0x400525: call 0x4003e0 <puts@plt>
-        0x40052a: jmp 0x400586
+        0x40051e: jmp 0x400534
     }
+    0x400520: edi = 0x400616 "2" # mov edi, 0x400616
+    0x400525: call 0x4003e0 <puts@plt>
+    0x40052a: jmp 0x400582
     loop {
-        # 0x400586: cmp dword ptr [rbp - 4], 0x7a
-        # 0x40058a: jle 0x40052c
-        if (var1 > 122)  goto 0x40058c
-        0x40052c: jmp 0x40057d
+        # 0x400582: cmp dword ptr [rbp - 4], 0x7a
+        # 0x400586: jle 0x400579
+        if (var1 > 122)  goto 0x400588
         loop {
-            # 0x40057d: cmp dword ptr [rbp - 0xc], 0x1c7
-            # 0x400584: jle 0x40052e
-            if (var2 > 455)  goto 0x400586
-            0x40052e: jmp 0x400574
+            # 0x400579: cmp dword ptr [rbp - 0xc], 0x1c7
+            # 0x400580: jle 0x400570
+            if (var2 > 455)  goto 0x400582
             loop {
-                # 0x400574: cmp dword ptr [rbp - 8], 0x314
-                # 0x40057b: jle 0x400530
-                if (var3 > 788)  goto 0x40057d
-                0x400530: eax = var1 # mov eax, dword ptr [rbp - 4]
-                # 0x400533: cmp eax, dword ptr [rbp - 0xc]
-                # 0x400536: jne 0x400544
+                # 0x400570: cmp dword ptr [rbp - 8], 0x314
+                # 0x400577: jle 0x40052c
+                if (var3 > 788)  goto 0x400579
+                0x40052c: eax = var1 # mov eax, dword ptr [rbp - 4]
+                # 0x40052f: cmp eax, dword ptr [rbp - 0xc]
+                # 0x400532: jne 0x400540
                 if (eax == var2) {
-                    0x400538: edi = 0x400628 "3" # mov edi, 0x400628
-                    0x40053d: call 0x4003e0 <puts@plt>
-                    0x400542: jmp 0x40056a
+                    0x400534: edi = 0x400618 "3" # mov edi, 0x400618
+                    0x400539: call 0x4003e0 <puts@plt>
+                    0x40053e: jmp 0x400566
                 } else {
-                    0x400544: eax = var2 # mov eax, dword ptr [rbp - 0xc]
-                    # 0x400547: cmp eax, dword ptr [rbp - 8]
-                    # 0x40054a: jne 0x400558
+                    0x400540: eax = var2 # mov eax, dword ptr [rbp - 0xc]
+                    # 0x400543: cmp eax, dword ptr [rbp - 8]
+                    # 0x400546: jne 0x400554
                     if (eax == var3) {
-                        0x40054c: edi = 0x40062a "4" # mov edi, 0x40062a
-                        0x400551: call 0x4003e0 <puts@plt>
-                        0x400556: jmp 0x40056a
+                        0x400548: edi = 0x40061a "4" # mov edi, 0x40061a
+                        0x40054d: call 0x4003e0 <puts@plt>
+                        0x400552: jmp 0x400566
                     } else {
-                        0x400558: eax = var1 # mov eax, dword ptr [rbp - 4]
-                        # 0x40055b: cmp eax, dword ptr [rbp - 8]
-                        # 0x40055e: jne 0x40056a
+                        0x400554: eax = var1 # mov eax, dword ptr [rbp - 4]
+                        # 0x400557: cmp eax, dword ptr [rbp - 8]
+                        # 0x40055a: jne 0x400566
                         if (eax == var3) {
-                            0x400560: edi = 0x40062c "5" # mov edi, 0x40062c
-                            0x400565: call 0x4003e0 <puts@plt>
+                            0x40055c: edi = 0x40061c "5" # mov edi, 0x40061c
+                            0x400561: call 0x4003e0 <puts@plt>
                         }
                     }
                 }
-                0x40056a: edi = 0x40062e "6" # mov edi, 0x40062e
-                0x40056f: call 0x4003e0 <puts@plt>
+                0x400566: edi = 0x40061e "6" # mov edi, 0x40061e
+                0x40056b: call 0x4003e0 <puts@plt>
             }
         }
     }
-    0x40058c: eax = 0 # mov eax, 0
-    0x400591: leave 
-    0x400592: ret 
+    0x400588: eax = 0 # mov eax, 0
+    0x40058d: leave 
+    0x40058e: ret 
 }

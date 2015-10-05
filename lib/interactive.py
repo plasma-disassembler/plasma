@@ -21,7 +21,7 @@ import os
 import sys
 import shlex
 
-from lib import load_file, init_addr, disasm
+from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
@@ -472,7 +472,7 @@ class Interactive():
             error("load a file before")
             return
         self.ctx.calls_in_section = args[1]
-        if init_addr(self.ctx):
+        if init_entry_addr(self.ctx):
             self.ctx.dis.print_calls(self.ctx)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
@@ -514,7 +514,7 @@ class Interactive():
         else:
             self.ctx.entry = args[1]
         self.ctx.reset_vars()
-        if init_addr(self.ctx):
+        if init_entry_addr(self.ctx):
             disasm(self.ctx)
             self.ctx.entry = None
             self.ctx.entry_addr = 0

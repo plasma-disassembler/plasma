@@ -17,6 +17,7 @@ function main (.text) {
             # 0x400539: cmp dword ptr [rbp - 8], 9
             # 0x40053d: jle 0x400517
             and if (var4 <= 9)
+            goto 0x400517
         } else {
             0x40053f: eax = var3 # mov eax, dword ptr [rbp - 4]
             # 0x400542: cmp eax, dword ptr [rbp - 0xc]

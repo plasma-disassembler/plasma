@@ -1,0 +1,397 @@
+function main (.text) {
+    int32_t var1
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
+    0x400515: jmp 0x400946
+    loop {
+        # 0x400946: cmp dword ptr [rbp - 4], 9
+        # 0x40094a: jle 0x40051a
+        if (var1 > 9)  goto 0x400950
+        # 0x40051a: cmp dword ptr [rbp - 4], 0
+        # 0x40051e: jne 0x40052c
+        if (var1 == 0) {
+            0x400520: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400525: call 0x4003e0 <puts@plt>
+            0x40052a: jmp 0x400536
+        } else {
+            0x40052c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400531: call 0x4003e0 <puts@plt>
+        }
+        # 0x400536: cmp dword ptr [rbp - 4], 0
+        # 0x40053a: jne 0x400548
+        if (var1 == 0) {
+            0x40053c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400541: call 0x4003e0 <puts@plt>
+            0x400546: jmp 0x400552
+        } else {
+            0x400548: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40054d: call 0x4003e0 <puts@plt>
+        }
+        # 0x400552: cmp dword ptr [rbp - 4], 0
+        # 0x400556: jne 0x400564
+        if (var1 == 0) {
+            0x400558: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x40055d: call 0x4003e0 <puts@plt>
+            0x400562: jmp 0x40056e
+        } else {
+            0x400564: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400569: call 0x4003e0 <puts@plt>
+        }
+        # 0x40056e: cmp dword ptr [rbp - 4], 0
+        # 0x400572: jne 0x400580
+        if (var1 == 0) {
+            0x400574: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400579: call 0x4003e0 <puts@plt>
+            0x40057e: jmp 0x40058a
+        } else {
+            0x400580: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400585: call 0x4003e0 <puts@plt>
+        }
+        # 0x40058a: cmp dword ptr [rbp - 4], 0
+        # 0x40058e: jne 0x40059c
+        if (var1 == 0) {
+            0x400590: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400595: call 0x4003e0 <puts@plt>
+            0x40059a: jmp 0x4005a6
+        } else {
+            0x40059c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4005a1: call 0x4003e0 <puts@plt>
+        }
+        # 0x4005a6: cmp dword ptr [rbp - 4], 0
+        # 0x4005aa: jne 0x4005b8
+        if (var1 == 0) {
+            0x4005ac: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4005b1: call 0x4003e0 <puts@plt>
+            0x4005b6: jmp 0x4005c2
+        } else {
+            0x4005b8: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4005bd: call 0x4003e0 <puts@plt>
+        }
+        # 0x4005c2: cmp dword ptr [rbp - 4], 0
+        # 0x4005c6: jne 0x4005d4
+        if (var1 == 0) {
+            0x4005c8: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4005cd: call 0x4003e0 <puts@plt>
+            0x4005d2: jmp 0x4005de
+        } else {
+            0x4005d4: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4005d9: call 0x4003e0 <puts@plt>
+        }
+        # 0x4005de: cmp dword ptr [rbp - 4], 0
+        # 0x4005e2: jne 0x4005f0
+        if (var1 == 0) {
+            0x4005e4: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4005e9: call 0x4003e0 <puts@plt>
+            0x4005ee: jmp 0x4005fa
+        } else {
+            0x4005f0: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4005f5: call 0x4003e0 <puts@plt>
+        }
+        # 0x4005fa: cmp dword ptr [rbp - 4], 0
+        # 0x4005fe: jne 0x40060c
+        if (var1 == 0) {
+            0x400600: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400605: call 0x4003e0 <puts@plt>
+            0x40060a: jmp 0x400616
+        } else {
+            0x40060c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400611: call 0x4003e0 <puts@plt>
+        }
+        # 0x400616: cmp dword ptr [rbp - 4], 0
+        # 0x40061a: jne 0x400628
+        if (var1 == 0) {
+            0x40061c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400621: call 0x4003e0 <puts@plt>
+            0x400626: jmp 0x400632
+        } else {
+            0x400628: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40062d: call 0x4003e0 <puts@plt>
+        }
+        # 0x400632: cmp dword ptr [rbp - 4], 0
+        # 0x400636: jne 0x400644
+        if (var1 == 0) {
+            0x400638: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x40063d: call 0x4003e0 <puts@plt>
+            0x400642: jmp 0x40064e
+        } else {
+            0x400644: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400649: call 0x4003e0 <puts@plt>
+        }
+        # 0x40064e: cmp dword ptr [rbp - 4], 0
+        # 0x400652: jne 0x400660
+        if (var1 == 0) {
+            0x400654: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400659: call 0x4003e0 <puts@plt>
+            0x40065e: jmp 0x40066a
+        } else {
+            0x400660: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400665: call 0x4003e0 <puts@plt>
+        }
+        # 0x40066a: cmp dword ptr [rbp - 4], 0
+        # 0x40066e: jne 0x40067c
+        if (var1 == 0) {
+            0x400670: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400675: call 0x4003e0 <puts@plt>
+            0x40067a: jmp 0x400686
+        } else {
+            0x40067c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400681: call 0x4003e0 <puts@plt>
+        }
+        # 0x400686: cmp dword ptr [rbp - 4], 0
+        # 0x40068a: jne 0x400698
+        if (var1 == 0) {
+            0x40068c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400691: call 0x4003e0 <puts@plt>
+            0x400696: jmp 0x4006a2
+        } else {
+            0x400698: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40069d: call 0x4003e0 <puts@plt>
+        }
+        # 0x4006a2: cmp dword ptr [rbp - 4], 0
+        # 0x4006a6: jne 0x4006b4
+        if (var1 == 0) {
+            0x4006a8: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4006ad: call 0x4003e0 <puts@plt>
+            0x4006b2: jmp 0x4006be
+        } else {
+            0x4006b4: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4006b9: call 0x4003e0 <puts@plt>
+        }
+        # 0x4006be: cmp dword ptr [rbp - 4], 0
+        # 0x4006c2: jne 0x4006d0
+        if (var1 == 0) {
+            0x4006c4: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4006c9: call 0x4003e0 <puts@plt>
+            0x4006ce: jmp 0x4006da
+        } else {
+            0x4006d0: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4006d5: call 0x4003e0 <puts@plt>
+        }
+        # 0x4006da: cmp dword ptr [rbp - 4], 0
+        # 0x4006de: jne 0x4006ec
+        if (var1 == 0) {
+            0x4006e0: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4006e5: call 0x4003e0 <puts@plt>
+            0x4006ea: jmp 0x4006f6
+        } else {
+            0x4006ec: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4006f1: call 0x4003e0 <puts@plt>
+        }
+        # 0x4006f6: cmp dword ptr [rbp - 4], 0
+        # 0x4006fa: jne 0x400708
+        if (var1 == 0) {
+            0x4006fc: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400701: call 0x4003e0 <puts@plt>
+            0x400706: jmp 0x400712
+        } else {
+            0x400708: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40070d: call 0x4003e0 <puts@plt>
+        }
+        # 0x400712: cmp dword ptr [rbp - 4], 0
+        # 0x400716: jne 0x400724
+        if (var1 == 0) {
+            0x400718: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x40071d: call 0x4003e0 <puts@plt>
+            0x400722: jmp 0x40072e
+        } else {
+            0x400724: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400729: call 0x4003e0 <puts@plt>
+        }
+        # 0x40072e: cmp dword ptr [rbp - 4], 0
+        # 0x400732: jne 0x400740
+        if (var1 == 0) {
+            0x400734: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400739: call 0x4003e0 <puts@plt>
+            0x40073e: jmp 0x40074a
+        } else {
+            0x400740: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400745: call 0x4003e0 <puts@plt>
+        }
+        # 0x40074a: cmp dword ptr [rbp - 4], 0
+        # 0x40074e: jne 0x40075c
+        if (var1 == 0) {
+            0x400750: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400755: call 0x4003e0 <puts@plt>
+            0x40075a: jmp 0x400766
+        } else {
+            0x40075c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400761: call 0x4003e0 <puts@plt>
+        }
+        # 0x400766: cmp dword ptr [rbp - 4], 0
+        # 0x40076a: jne 0x400778
+        if (var1 == 0) {
+            0x40076c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400771: call 0x4003e0 <puts@plt>
+            0x400776: jmp 0x400782
+        } else {
+            0x400778: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40077d: call 0x4003e0 <puts@plt>
+        }
+        # 0x400782: cmp dword ptr [rbp - 4], 0
+        # 0x400786: jne 0x400794
+        if (var1 == 0) {
+            0x400788: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x40078d: call 0x4003e0 <puts@plt>
+            0x400792: jmp 0x40079e
+        } else {
+            0x400794: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400799: call 0x4003e0 <puts@plt>
+        }
+        # 0x40079e: cmp dword ptr [rbp - 4], 0
+        # 0x4007a2: jne 0x4007b0
+        if (var1 == 0) {
+            0x4007a4: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4007a9: call 0x4003e0 <puts@plt>
+            0x4007ae: jmp 0x4007ba
+        } else {
+            0x4007b0: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4007b5: call 0x4003e0 <puts@plt>
+        }
+        # 0x4007ba: cmp dword ptr [rbp - 4], 0
+        # 0x4007be: jne 0x4007cc
+        if (var1 == 0) {
+            0x4007c0: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4007c5: call 0x4003e0 <puts@plt>
+            0x4007ca: jmp 0x4007d6
+        } else {
+            0x4007cc: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4007d1: call 0x4003e0 <puts@plt>
+        }
+        # 0x4007d6: cmp dword ptr [rbp - 4], 0
+        # 0x4007da: jne 0x4007e8
+        if (var1 == 0) {
+            0x4007dc: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4007e1: call 0x4003e0 <puts@plt>
+            0x4007e6: jmp 0x4007f2
+        } else {
+            0x4007e8: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4007ed: call 0x4003e0 <puts@plt>
+        }
+        # 0x4007f2: cmp dword ptr [rbp - 4], 0
+        # 0x4007f6: jne 0x400804
+        if (var1 == 0) {
+            0x4007f8: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4007fd: call 0x4003e0 <puts@plt>
+            0x400802: jmp 0x40080e
+        } else {
+            0x400804: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400809: call 0x4003e0 <puts@plt>
+        }
+        # 0x40080e: cmp dword ptr [rbp - 4], 0
+        # 0x400812: jne 0x400820
+        if (var1 == 0) {
+            0x400814: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400819: call 0x4003e0 <puts@plt>
+            0x40081e: jmp 0x40082a
+        } else {
+            0x400820: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400825: call 0x4003e0 <puts@plt>
+        }
+        # 0x40082a: cmp dword ptr [rbp - 4], 0
+        # 0x40082e: jne 0x40083c
+        if (var1 == 0) {
+            0x400830: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400835: call 0x4003e0 <puts@plt>
+            0x40083a: jmp 0x400846
+        } else {
+            0x40083c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400841: call 0x4003e0 <puts@plt>
+        }
+        # 0x400846: cmp dword ptr [rbp - 4], 0
+        # 0x40084a: jne 0x400858
+        if (var1 == 0) {
+            0x40084c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400851: call 0x4003e0 <puts@plt>
+            0x400856: jmp 0x400862
+        } else {
+            0x400858: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40085d: call 0x4003e0 <puts@plt>
+        }
+        # 0x400862: cmp dword ptr [rbp - 4], 0
+        # 0x400866: jne 0x400874
+        if (var1 == 0) {
+            0x400868: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x40086d: call 0x4003e0 <puts@plt>
+            0x400872: jmp 0x40087e
+        } else {
+            0x400874: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400879: call 0x4003e0 <puts@plt>
+        }
+        # 0x40087e: cmp dword ptr [rbp - 4], 0
+        # 0x400882: jne 0x400890
+        if (var1 == 0) {
+            0x400884: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400889: call 0x4003e0 <puts@plt>
+            0x40088e: jmp 0x40089a
+        } else {
+            0x400890: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400895: call 0x4003e0 <puts@plt>
+        }
+        # 0x40089a: cmp dword ptr [rbp - 4], 0
+        # 0x40089e: jne 0x4008ac
+        if (var1 == 0) {
+            0x4008a0: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4008a5: call 0x4003e0 <puts@plt>
+            0x4008aa: jmp 0x4008b6
+        } else {
+            0x4008ac: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4008b1: call 0x4003e0 <puts@plt>
+        }
+        # 0x4008b6: cmp dword ptr [rbp - 4], 0
+        # 0x4008ba: jne 0x4008c8
+        if (var1 == 0) {
+            0x4008bc: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4008c1: call 0x4003e0 <puts@plt>
+            0x4008c6: jmp 0x4008d2
+        } else {
+            0x4008c8: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4008cd: call 0x4003e0 <puts@plt>
+        }
+        # 0x4008d2: cmp dword ptr [rbp - 4], 0
+        # 0x4008d6: jne 0x4008e4
+        if (var1 == 0) {
+            0x4008d8: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4008dd: call 0x4003e0 <puts@plt>
+            0x4008e2: jmp 0x4008ee
+        } else {
+            0x4008e4: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x4008e9: call 0x4003e0 <puts@plt>
+        }
+        # 0x4008ee: cmp dword ptr [rbp - 4], 0
+        # 0x4008f2: jne 0x400900
+        if (var1 == 0) {
+            0x4008f4: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x4008f9: call 0x4003e0 <puts@plt>
+            0x4008fe: jmp 0x40090a
+        } else {
+            0x400900: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400905: call 0x4003e0 <puts@plt>
+        }
+        # 0x40090a: cmp dword ptr [rbp - 4], 0
+        # 0x40090e: jne 0x40091c
+        if (var1 == 0) {
+            0x400910: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400915: call 0x4003e0 <puts@plt>
+            0x40091a: jmp 0x400926
+        } else {
+            0x40091c: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x400921: call 0x4003e0 <puts@plt>
+        }
+        # 0x400926: cmp dword ptr [rbp - 4], 0
+        # 0x40092a: jne 0x400938
+        if (var1 == 0) {
+            0x40092c: edi = 0x4009e4 "1" # mov edi, 0x4009e4
+            0x400931: call 0x4003e0 <puts@plt>
+            0x400936: jmp 0x400942
+        } else {
+            0x400938: edi = 0x4009e6 "2" # mov edi, 0x4009e6
+            0x40093d: call 0x4003e0 <puts@plt>
+        }
+        0x400942: var1 += 1 # add dword ptr [rbp - 4], 1
+    }
+    0x400950: eax = 0 # mov eax, 0
+    0x400955: leave 
+    0x400956: ret 
+}

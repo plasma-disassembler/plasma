@@ -21,15 +21,11 @@ from capstone.x86 import (X86_REG_EBX, X86_REG_ECX, X86_REG_EDX, X86_REG_ESI,
         X86_INS_INT, X86_OP_IMM, X86_REG_AL, X86_REG_AX, X86_REG_EAX,
         X86_REG_RAX, X86_REG_BL, X86_REG_CL, X86_REG_DL, X86_REG_BX,
         X86_REG_CX, X86_REG_DX, X86_REG_RBX, X86_REG_RCX, X86_REG_RDX,
-        X86_INS_MOV, X86_INS_XOR, X86_OP_REG, X86_REG_ESI, X86_REG_RSI,
-        X86_REG_RDI, X86_REG_EDI)
+        X86_INS_MOV, X86_INS_XOR, X86_OP_REG, X86_REG_RSI, X86_REG_RDI,
+        X86_REG_EDI)
 
-from lib.colors import pick_color
-from lib.utils import BRANCH_NEXT
 from lib.output import INTERN_COMMENTS
-from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
-        Ast_AndIf)
-from lib.arch.x86.utils import is_uncond_jump, is_call
+from lib.ast import Ast_Branch, Ast_Loop, Ast_Ifelse
 
 
 ARGS_ORDER = {

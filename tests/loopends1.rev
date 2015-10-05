@@ -14,9 +14,7 @@ function main (.text) {
         # 0x40051e: jne 0x400522
         if (var1 == 1)  goto 0x400520
     }
-    # loopend 1
     0x400520: jmp 0x400528
-    # loopend 2
     0x400528: jmp 0x400534
     loop {
         # 0x400534: cmp dword ptr [rbp - 4], 0x13

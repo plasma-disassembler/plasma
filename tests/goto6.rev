@@ -34,15 +34,12 @@ function main (.text) {
         0x400571: call 0x4003e0 <puts@plt>
         0x400576: var1 += 1 # add dword ptr [rbp - 4], 1
     }
-    # loopend 1
-    0x40053a: edi = 0x400638 "4" # mov edi, 0x400638
-    0x40053f: call 0x4003e0 <puts@plt>
-    0x400544: jmp 0x40058a
-    # loopend 2
     0x40054c: edi = 0x40063a "8" # mov edi, 0x40063a
     0x400551: call 0x4003e0 <puts@plt>
     0x400556: jmp 0x400594
-    # loopend 3
+    0x40053a: edi = 0x400638 "4" # mov edi, 0x400638
+    0x40053f: call 0x4003e0 <puts@plt>
+    0x400544: jmp 0x40058a
     0x400580: edi = 0x400640 "6" # mov edi, 0x400640
     0x400585: call 0x4003e0 <puts@plt>
     0x40058a: edi = 0x400642 "7" # mov edi, 0x400642

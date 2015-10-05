@@ -180,9 +180,9 @@ class Output(OutputAbs):
             return
 
         if isinstance(i, PseudoInst):
-            for i2 in i.real_inst:
+            for i2 in i.real_inst_list:
                 self.print_inst(i2, tab, "# ")
-            print_tabbed_no_end(color_addr(i.real_inst[0].address), tab)
+            print_tabbed_no_end(color_addr(i.real_inst_list[0].address), tab)
             print(i.pseudo)
             return
 

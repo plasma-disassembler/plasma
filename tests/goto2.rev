@@ -17,8 +17,6 @@ function main (.text) {
             0x40052f: edi = 0x4005f4 "1" # mov edi, 0x4005f4
             0x400534: call 0x4003e0 <puts@plt>
             0x400539: jmp 0x400551
-            0x400551: edi = 0x4005fa "4" # mov edi, 0x4005fa
-            0x400556: call 0x4003e0 <puts@plt>
         } else {
             0x40053b: jmp 0x40055b
         }

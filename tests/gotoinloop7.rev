@@ -18,11 +18,10 @@ function main (.text) {
             0x400520: edi = 0x400609 "1" # mov edi, 0x400609
             0x400525: call 0x4003e0 <puts@plt>
             0x40052a: jmp 0x40054b
-        } else {
-            0x40052c: edi = 0x40060b "2" # mov edi, 0x40060b
-            0x400531: call 0x4003e0 <puts@plt>
-            0x400536: jmp 0x40055f
         }
+        0x40052c: edi = 0x40060b "2" # mov edi, 0x40060b
+        0x400531: call 0x4003e0 <puts@plt>
+        0x400536: jmp 0x40055f
         loop {
             # 0x40055f: cmp dword ptr [rbp - 0xc], 0x18
             # 0x400563: jle 0x400538

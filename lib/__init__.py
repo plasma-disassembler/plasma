@@ -158,10 +158,10 @@ def load_file(ctx):
     return True
 
 
-def init_addr(ctx):
+def init_entry_addr(ctx):
     if ctx.calls_in_section is not None:
         try:
-            addr = ctx.dis.binary.section_start(ctx.calls_in_section)
+            entry_addr = ctx.dis.binary.section_start(ctx.calls_in_section)
         except ExcSectionNotFound as e:
             error("section %s not found" % e.section)
             if ctx.interactive:
@@ -169,11 +169,11 @@ def init_addr(ctx):
             die()
 
     elif ctx.entry == "EP":
-        addr = ctx.dis.binary.get_entry_point()
+        entry_addr = ctx.dis.binary.get_entry_point()
 
     else:
         try:
-            addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
+            entry_addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
         except ExcSymNotFound as e:
             error("symbol %s not found" % e.symname)
             if ctx.interactive:
@@ -183,7 +183,7 @@ def init_addr(ctx):
             die()
 
     try:
-        ctx.dis.check_addr(ctx, addr)
+        ctx.dis.check_addr(ctx, entry_addr)
     except ExcNotExec as e:
         error("the address 0x%x is not in an executable section" % e.addr)
         if ctx.interactive:
@@ -195,7 +195,7 @@ def init_addr(ctx):
             return False
         die()
 
-    ctx.entry_addr = addr
+    ctx.entry_addr = entry_addr
 
     return True
 
@@ -205,15 +205,13 @@ def disasm(ctx):
     if ctx.gph == None:
         error("capstone can't disassemble here")
         return
-    paths = ctx.gph.get_paths()
-    paths.gph = ctx.gph
-    paths.cache_obj()
+    ctx.gph.graph_init(ctx)
     
     if ctx.graph:
         ctx.gph.html_graph()
 
     try:
-        ast = generate_ast(ctx, paths)
+        ast = generate_ast(ctx)
     except ExcIfelse as e:
         error("can't have a ifelse here     %x" % e.addr)
         if ctx.interactive:
@@ -248,7 +246,7 @@ def reverse(ctx):
         ctx.dis.print_symbols(ctx.sectionsname)
         return
 
-    init_addr(ctx)
+    init_entry_addr(ctx)
 
     if ctx.calls_in_section is not None:
         ctx.dis.print_calls(ctx)

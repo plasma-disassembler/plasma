@@ -1,0 +1,58 @@
+function main (.text) {
+    int32_t var1
+    int32_t var2
+    int32_t var3
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    # 0x40050e: cmp dword ptr [rbp - 4], 1
+    # 0x400512: jne 0x400520
+    if (var1 == 1) {
+        0x400514: edi = 0x400614 "1" # mov edi, 0x400614
+        0x400519: call 0x4003e0 <puts@plt>
+        0x40051e: jmp 0x400536
+    }
+    0x400520: edi = 0x400616 "2" # mov edi, 0x400616
+    0x400525: call 0x4003e0 <puts@plt>
+    0x40052a: jmp 0x40057b
+    for (;;) {
+        # 0x40057b: cmp dword ptr [rbp - 8], 0x1c7
+        # 0x400582: jle 0x400572
+        if (var2 > 455) {
+            0x400584: jmp 0x40052c
+            0x40052c: jmp 0x40057b
+        }
+        loop {
+            # 0x400572: cmp dword ptr [rbp - 0xc], 0x314
+            # 0x400579: jle 0x40052e
+            if (var3 > 788)  goto 0x40057b
+            0x40052e: eax = var1 # mov eax, dword ptr [rbp - 4]
+            # 0x400531: cmp eax, dword ptr [rbp - 8]
+            # 0x400534: jne 0x400542
+            if (eax == var2) {
+                0x400536: edi = 0x400618 "3" # mov edi, 0x400618
+                0x40053b: call 0x4003e0 <puts@plt>
+                0x400540: jmp 0x400568
+            } else {
+                0x400542: eax = var2 # mov eax, dword ptr [rbp - 8]
+                # 0x400545: cmp eax, dword ptr [rbp - 0xc]
+                # 0x400548: jne 0x400556
+                if (eax == var3) {
+                    0x40054a: edi = 0x40061a "4" # mov edi, 0x40061a
+                    0x40054f: call 0x4003e0 <puts@plt>
+                    0x400554: jmp 0x400568
+                } else {
+                    0x400556: eax = var1 # mov eax, dword ptr [rbp - 4]
+                    # 0x400559: cmp eax, dword ptr [rbp - 0xc]
+                    # 0x40055c: jne 0x400568
+                    if (eax == var3) {
+                        0x40055e: edi = 0x40061c "5" # mov edi, 0x40061c
+                        0x400563: call 0x4003e0 <puts@plt>
+                    }
+                }
+            }
+            0x400568: edi = 0x40061e "6" # mov edi, 0x40061e
+            0x40056d: call 0x4003e0 <puts@plt>
+        }
+    }
+}

@@ -62,7 +62,7 @@ function connection_handler (.text) {
         0x400bef: rdi = rax # mov rdi, rax
         0x400bf2: call 0x400870 <fflush@plt>
         0x400bf7: jmp 0x400c09
-    } 
+    }
     # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
     # 0x400bfd: jne 0x400c09
     else if (var5 == -1) {

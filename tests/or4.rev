@@ -18,6 +18,7 @@ function main (.text) {
             # 0x400534: cmp dword ptr [rbp - 4], 3
             # 0x400538: jne 0x400544
             and if (var1 != 3)
+            goto 0x400544
         } else {
             0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
             0x40053f: call 0x4003e0 <puts@plt>

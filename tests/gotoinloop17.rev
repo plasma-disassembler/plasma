@@ -1,0 +1,37 @@
+function main (.text) {
+    int32_t var1
+    int32_t var2
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    # 0x40050e: cmp dword ptr [rbp - 4], 1
+    # 0x400512: jne 0x400544
+    if (var1 == 1) {
+        0x400514: edi = 0x4005e4 "1" # mov edi, 0x4005e4
+        0x400519: call 0x4003e0 <puts@plt>
+        0x40051e: jmp 0x400526
+        loop {
+            # 0x400526: cmp dword ptr [rbp - 4], 9
+            # 0x40052a: jle 0x400520
+            if (var1 > 9)  goto 0x40052c
+            # 0x400520: cmp dword ptr [rbp - 4], 2
+            # 0x400524: je 0x400539
+            if (var1 == 2)  goto 0x400539
+        }
+        0x400539: nop 
+        goto 0x40053a
+        0x40052c: edi = 0x4005e6 "2" # mov edi, 0x4005e6
+        0x400531: call 0x4003e0 <puts@plt>
+        0x400536: ret 
+    }
+    loop {
+        # 0x400544: cmp dword ptr [rbp - 8], 0xe
+        # 0x400548: jle 0x40053a
+        if (var2 > 14)  goto 0x40054a
+        0x40053a: edi = 0x4005e8 "3" # mov edi, 0x4005e8
+        0x40053f: call 0x4003e0 <puts@plt>
+    }
+    0x40054a: eax = 0 # mov eax, 0
+    0x40054f: leave 
+    0x400550: ret 
+}

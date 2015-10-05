@@ -311,16 +311,16 @@ class Disassembler():
 
 
     # Generate a flow graph of the given function (addr)
-    def get_graph(self, addr):
+    def get_graph(self, entry_addr):
         from capstone import CS_OP_IMM, CS_ARCH_MIPS
 
         ARCH_UTILS = self.load_arch_module().utils
 
-        curr = self.lazy_disasm(addr)
+        curr = self.lazy_disasm(entry_addr)
         if curr == None:
             return None
 
-        gph = Graph(self, addr)
+        gph = Graph(self, entry_addr)
         rest = []
         start = time.clock()
         prefetch = None

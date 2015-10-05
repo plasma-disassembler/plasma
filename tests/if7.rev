@@ -24,7 +24,7 @@ function main (.text) {
         0x400537: edi = 0x4005f8 "2" # mov edi, 0x4005f8
         0x40053c: call 0x4003e0 <puts@plt>
         0x400541: jmp 0x400553
-    } 
+    }
     # 0x400543: cmp dword ptr [rbp - 8], -1
     # 0x400547: jne 0x400553
     else if (var4 == -1) {

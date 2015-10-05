@@ -26,6 +26,9 @@ from lib.output import (print_comment, print_no_end, print_tabbed,
 class Ast_Branch:
     def __init__(self):
         self.nodes = []
+        self.parent = None
+        self.level = 0
+        self.idx_in_parent = -1 # index in nodes list in the parent branch
 
     def add(self, node):
         if isinstance(node, Ast_Branch):
@@ -48,6 +51,8 @@ class Ast_IfGoto:
         self.addr_jump = addr_jump
         self.fused_inst = None
         self.prefetch = prefetch
+        self.parent = None
+        self.level = 0
 
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
@@ -60,11 +65,14 @@ class Ast_IfGoto:
 
 
 class Ast_AndIf:
-    def __init__(self, orig_jump, cond_id, prefetch=None):
+    def __init__(self, orig_jump, cond_id, expected_next_addr, prefetch=None):
         self.orig_jump = orig_jump
         self.cond_id = cond_id
         self.fused_inst = None
         self.prefetch = prefetch
+        self.parent = None
+        self.level = 0
+        self.expected_next_addr = expected_next_addr
 
     def print(self, o, tab=0):
         o.print_commented_jump(self.orig_jump, self.fused_inst, tab)
@@ -81,6 +89,8 @@ class Ast_If_cond:
         self.cond_id = cond_id
         self.br = br
         self.fused_inst = None
+        self.parent = None
+        self.level = 0
 
     def print(self, o, tab=0):
         o.print_commented_jump(None, self.fused_inst, tab)
@@ -99,12 +109,16 @@ class Ast_If_cond:
 
 
 class Ast_Ifelse:
-    def __init__(self, jump_inst, br_next_jump, br_next, prefetch=None):
+    def __init__(self, jump_inst, br_next_jump, br_next,
+                 expected_next_addr, prefetch=None):
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
         self.fused_inst = None
         self.prefetch = prefetch
+        self.parent = None
+        self.level = 0
+        self.expected_next_addr = expected_next_addr
 
     def print(self, o, tab=0, print_else_keyword=False):
         ARCH_UTILS = o.ctx.libarch.utils
@@ -152,12 +166,11 @@ class Ast_Ifelse:
 
         # if-part
         br_next.print(o, tab+1)
+        print_tabbed_no_end("}", tab)
 
         # else-part
         if len(br_next_jump.nodes) > 0:
-            print_tabbed_no_end("} ", tab)
-            
-            # 
+            #
             # if {
             #   ...
             # } else {
@@ -180,25 +193,34 @@ class Ast_Ifelse:
 
             if len(br.nodes) == 1 and isinstance(br.nodes[0], Ast_Ifelse):
                 print()
-                br.nodes[0].print(o, tab, True)
+                br.nodes[0].print(o, tab, print_else_keyword=True)
                 return
 
             if len(br.nodes) == 2 and isinstance(br.nodes[0], list) and \
                   len(br.nodes[0]) == 1 and ARCH_UTILS.is_cmp(br.nodes[0][0]) and \
                   isinstance(br.nodes[1], Ast_Ifelse):
                 print()
-                br.nodes[1].print(o, tab, True)
+                br.nodes[1].print(o, tab, print_else_keyword=True)
                 return
 
-            print(color_keyword("else ") + "{")
+            print(color_keyword(" else ") + "{")
             br.print(o, tab+1)
 
-        print_tabbed("}", tab)
+            print_tabbed_no_end("}", tab)
+
+        print()
 
 
 class Ast_Goto:
     def __init__(self, addr):
         self.addr_jump = addr
+        self.parent = None
+        self.level = 0
+
+        # The algorithm can add some goto and remove some of them
+        # if they are unnecessary. But sometimes, goto are added
+        # for more readability, so set to True to keep them.
+        self.dont_remove = False
 
     def print(self, o, tab=0):
         print_tabbed_no_end(color_keyword("goto "), tab)
@@ -210,6 +232,8 @@ class Ast_Loop:
         self.branch = Ast_Branch()
         self.epilog = None
         self.is_infinite = False
+        self.parent = None
+        self.level = 0
 
     def add(self, node):
         self.branch.add(node)
@@ -225,7 +249,7 @@ class Ast_Loop:
 
     def print(self, o, tab=0):
         if self.is_infinite:
-            print_tabbed(color_keyword("infiniteloop") + " {", tab)
+            print_tabbed(color_keyword("for") + " (;;) {", tab)
         else:
             print_tabbed(color_keyword("loop") + " {", tab)
         self.branch.print(o, tab+1)
@@ -237,6 +261,8 @@ class Ast_Loop:
 class Ast_Comment:
     def __init__(self, text):
         self.text = text
+        self.parent = None
+        self.level = 0
 
     def print(self, o, tab=0):
         if o.ctx.comments:

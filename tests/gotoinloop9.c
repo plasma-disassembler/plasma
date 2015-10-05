@@ -15,7 +15,11 @@ int main() {
 
 
         while (i < 123) {
+<<<<<<< HEAD
             while (j < 456) { 
+=======
+            while (j < 456) {
+>>>>>>> new algo
                 while (k < 789) {
                     if (i == j) {
     next:

@@ -24,7 +24,7 @@ ctx = None
 
 def debug__(obj="", end="\n"):
     if ctx.debug:
-        if isinstance(obj, str):
+        if isinstance(obj, str) or isinstance(obj, int):
             print(obj, end=end, file=sys.stderr)
         elif isinstance(obj, list):
             print_list(obj)
@@ -32,6 +32,8 @@ def debug__(obj="", end="\n"):
             print_dict(obj)
         elif isinstance(obj, set):
             print_set(obj)
+        elif isinstance(obj, tuple):
+            print_tuple(obj)
 
 
 
@@ -81,8 +83,22 @@ def die(txt=None):
 def print_set(s, end="\n"):
     print("{", end="", file=sys.stderr)
     for i in s:
-        print(" %x" % i, end="", file=sys.stderr)
+        if isinstance(i, tuple):
+            print_tuple(i)
+        else:
+            print(" %x" % i, end="", file=sys.stderr)
     print(" }" + end, end="", file=sys.stderr)
+
+
+def print_tuple(t, end="\n"):
+    print("(", end="", file=sys.stderr)
+    for i in t:
+        if isinstance(i, set):
+            print(" ", end="", file=sys.stderr)
+            print_set(i)
+        else:
+            print(" %x" % i, end="", file=sys.stderr)
+    print(")", end=" ", file=sys.stderr)
 
 
 def print_dict(dic, end="\n"):
@@ -90,11 +106,16 @@ def print_dict(dic, end="\n"):
     for i in dic:
         if isinstance(i, str):
             print("%s: " % i, end="", file=sys.stderr)
+        elif isinstance(i, tuple):
+            print_tuple(i, end="")
         else:
             print("%x: " % i, end="", file=sys.stderr)
         v = dic[i]
         if isinstance(v, list):
             print_list(v)
+        elif isinstance(v, tuple):
+            print_tuple(v)
+            print(file=sys.stderr)
         elif isinstance(v, dict):
             print_dict(v)
         elif isinstance(v, set):
@@ -112,12 +133,14 @@ def print_list(lst, end="\n"):
     for i in lst[:-1]:
         if isinstance(i, list):
             print_list(i, "")
-            print(",\n ", end="")
+            print(",\n ", end="", file=sys.stderr)
         elif isinstance(i, dict):
             print_dict(i)
             print(",\n ", end="", file=sys.stderr)
         elif isinstance(i, set):
-            print(i, file=sys.stderr)
+            print_set(i)
+        elif isinstance(i, tuple):
+            print_tuple(i)
         else:
             print("0x%x, " % i, end="", file=sys.stderr)
 
@@ -127,7 +150,9 @@ def print_list(lst, end="\n"):
         elif isinstance(lst[-1], dict):
             print_dict(lst[-1])
         elif isinstance(lst[-1], set):
-            print(lst[-1], file=sys.stderr)
+            print_set(lst[-1])
+        elif isinstance(lst[-1], tuple):
+            print_tuple(lst[-1])
         else:
             print("0x%x" % lst[-1], end="", file=sys.stderr)
 

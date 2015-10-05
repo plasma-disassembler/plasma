@@ -45,11 +45,9 @@ function main (.text) {
                 0x40057d: jmp 0x40058b
                 0x40058b: var2 += 1 # add dword ptr [rbp - 8], 1
             }
-            # loopend 1
             0x40057f: edi = 0x400687 "5" # mov edi, 0x400687
             0x400584: call 0x4003e0 <puts@plt>
             0x400589: jmp 0x40059f
-            # loopend 2
             0x400595: edi = 0x400689 "6" # mov edi, 0x400689
             0x40059a: call 0x4003e0 <puts@plt>
         }

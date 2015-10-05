@@ -7,6 +7,8 @@ BIN = $(patsubst $(TESTS_DIR)/%.c, $(TESTS_DIR)/%.bin, $(SRC))
 FLAGS[tests/server.c] = "-lpthread"
 FLAGS[tests/canary_plt.c] = "-fstack-protector"
 FLAGS[tests/strlen.c] = "-Os"
+FLAGS[tests/andor5.c] = "-O3"
+FLAGS[tests/andor6.c] = "-O3"
 
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
 SYMBOLS[tests/pendu.rev] = "_main" "___main"

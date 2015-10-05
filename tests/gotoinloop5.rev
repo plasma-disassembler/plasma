@@ -10,18 +10,17 @@ function main (.text) {
         0x400514: edi = 0x400644 "1" # mov edi, 0x400644
         0x400519: call 0x4003e0 <puts@plt>
         0x40051e: jmp 0x400564
-    } 
+    }
     # 0x400520: cmp dword ptr [rbp - 4], 2
     # 0x400524: jne 0x400532
-    else if (var1 == 2) {
+    if (var1 == 2) {
         0x400526: edi = 0x400646 "2" # mov edi, 0x400646
         0x40052b: call 0x4003e0 <puts@plt>
         0x400530: jmp 0x400583
-    } else {
-        0x400532: edi = 0x400648 "3" # mov edi, 0x400648
-        0x400537: call 0x4003e0 <puts@plt>
-        0x40053c: jmp 0x4005a6
     }
+    0x400532: edi = 0x400648 "3" # mov edi, 0x400648
+    0x400537: call 0x4003e0 <puts@plt>
+    0x40053c: jmp 0x4005a6
     loop {
         # 0x4005a6: cmp dword ptr [rbp - 4], 9
         # 0x4005aa: jle 0x40053e
