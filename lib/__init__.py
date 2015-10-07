@@ -174,6 +174,10 @@ def init_entry_addr(ctx):
     else:
         try:
             entry_addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
+
+            # An exception is raised if the symbol was not found
+            if ctx.entry is None:
+                ctx.entry = "main"
         except ExcSymNotFound as e:
             error("symbol %s not found" % e.symname)
             if ctx.interactive:
@@ -219,7 +223,7 @@ def disasm(ctx):
         die()
 
     if ctx.vim:
-        base = os.path.basename(ctx.filename)
+        base = os.path.basename(ctx.filename) + "_" + ctx.entry
         # re-assign if no colors
         ctx.libarch.process_ast.assign_colors(ctx, ast)
         ctx.color = False
@@ -254,7 +258,7 @@ def reverse(ctx):
 
     if ctx.dump or ctx.print_data:
         if ctx.vim:
-            base = os.path.basename(ctx.filename)
+            base = os.path.basename(ctx.filename) + "_" + ctx.entry
             ctx.color = False
             sys.stdout = open(base + ".rev", "w+")
 
