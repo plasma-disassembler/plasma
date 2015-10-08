@@ -430,12 +430,13 @@ def generate_ast(ctx__):
         if curr in visited:
             if curr == l_start:
                 continue
-            if not isinstance(ast.nodes[-1], list):
-                ast.add(Ast_Goto(curr))
-            else:
-                prev_inst = ast.nodes[-1][0]
-                if not ctx.libarch.utils.is_uncond_jump(prev_inst):
+            if len(ast.nodes) > 0:
+                if not isinstance(ast.nodes[-1], list):
                     ast.add(Ast_Goto(curr))
+                else:
+                    prev_inst = ast.nodes[-1][0]
+                    if not ctx.libarch.utils.is_uncond_jump(prev_inst):
+                        ast.add(Ast_Goto(curr))
             continue
 
         visited.add(curr)
