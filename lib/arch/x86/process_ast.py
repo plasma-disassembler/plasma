@@ -55,8 +55,6 @@ def assign_colors(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         assign_colors(ctx, ast.branch)
-        if ast.epilog != None:
-            assign_colors(ctx, ast.epilog)
 
 
 def fuse_inst_with_if(ctx, ast):
@@ -80,8 +78,6 @@ def fuse_inst_with_if(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         fuse_inst_with_if(ctx, ast.branch)
-        if ast.epilog != None:
-            fuse_inst_with_if(ctx, ast.epilog)
 
 
 def search_local_vars(ctx, ast):
@@ -118,8 +114,6 @@ def search_local_vars(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         search_local_vars(ctx, ast.branch)
-        if ast.epilog != None:
-            search_local_vars(ctx, ast.epilog)
 
 
 def search_canary_plt(ctx, ast):
@@ -176,5 +170,3 @@ def __rec_search_canary_plt(faddr, ctx, ast, last_block):
 
     elif isinstance(ast, Ast_Loop):
         __rec_search_canary_plt(faddr, ctx, ast.branch, last_block)
-        if ast.epilog != None:
-            __rec_search_canary_plt(faddr, ctx, ast.epilog, last_block)

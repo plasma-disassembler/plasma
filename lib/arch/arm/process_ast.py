@@ -51,8 +51,6 @@ def assign_colors(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         assign_colors(ctx, ast.branch)
-        if ast.epilog != None:
-            assign_colors(ctx, ast.epilog)
 
     elif isinstance(ast, Ast_If_cond):
         assign_colors(ctx, ast.br)
@@ -80,8 +78,6 @@ def fuse_inst_with_if(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         fuse_inst_with_if(ctx, ast.branch)
-        if ast.epilog != None:
-            fuse_inst_with_if(ctx, ast.epilog)
 
 
 def convert_cond_to_if(ctx, ast):
@@ -140,5 +136,3 @@ def convert_cond_to_if(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         convert_cond_to_if(ctx, ast.branch)
-        if ast.epilog != None:
-            convert_cond_to_if(ctx, ast.epilog)

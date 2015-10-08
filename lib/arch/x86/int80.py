@@ -336,6 +336,3 @@ def int80(ctx, ast):
 
     elif isinstance(ast, Ast_Loop):
         int80(ctx, ast.branch)
-        if ast.epilog != None:
-            int80(ctx, ast.epilog)
-

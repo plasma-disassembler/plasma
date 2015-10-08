@@ -230,16 +230,12 @@ class Ast_Goto:
 class Ast_Loop:
     def __init__(self):
         self.branch = Ast_Branch()
-        self.epilog = None
         self.is_infinite = False
         self.parent = None
         self.level = 0
 
     def add(self, node):
         self.branch.add(node)
-
-    def set_epilog(self, epilog):
-        self.epilog = epilog
 
     def set_infinite(self, v):
         self.is_infinite = v
@@ -254,8 +250,6 @@ class Ast_Loop:
             print_tabbed(color_keyword("loop") + " {", tab)
         self.branch.print(o, tab+1)
         print_tabbed("}", tab)
-        if self.epilog != None:
-            self.epilog.print(o, tab)
 
 
 class Ast_Comment:
