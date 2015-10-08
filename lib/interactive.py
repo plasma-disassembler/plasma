@@ -380,7 +380,7 @@ class Interactive():
             if len(args) == 3:
                 lines = int(args[2])
             self.ctx.entry = args[1]
-        if init_addr(self.ctx):
+        if init_entry_addr(self.ctx):
             self.ctx.dis.dump_asm(self.ctx, lines)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
@@ -398,7 +398,7 @@ class Interactive():
                 lines = int(args[2])
             self.ctx.entry = args[1]
         self.ctx.print_data = True
-        if init_addr(self.ctx):
+        if init_entry_addr(self.ctx):
             self.ctx.dis.dump_data(self.ctx, lines)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
