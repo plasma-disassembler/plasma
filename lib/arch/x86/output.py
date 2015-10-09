@@ -402,17 +402,6 @@ class Output(OutputAbs):
             modified = True
 
         elif i.id in INST_SCAS:
-            # print_no_end('while (')
-            # self.print_operand(i, 1)
-            # print_no_end(' != ')
-            # self.print_operand(i, 0)
-            # print_no_end(') { ')
-            # self.print_operand(i, 1, show_deref=False)
-            # print_no_end('++; cx--; } ')
-            # self.print_operand(i, 1, show_deref=False)
-            # print_no_end('++; cx--;')
-            # modified = True
-
             self.print_operand(i, 0)
             print_no_end(" cmp ")
             self.print_operand(i, 1)
