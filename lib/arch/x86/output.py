@@ -22,7 +22,7 @@ import struct
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
         print_comment, print_comment_no_end, INTERN_COMMENTS)
 from lib.colors import (color, color_addr, color_retcall, color_string,
-        color_var, color_section, color_intern_comment)
+        color_var, color_section, color_intern_comment, color_keyword)
 from lib.utils import get_char, BYTES_PRINTABLE_SET
 from lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
@@ -31,10 +31,16 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
-        X86_INS_OR, X86_INS_NOT, X86_INS_SCASB, X86_PREFIX_REPNE,
+        X86_INS_OR, X86_INS_NOT, X86_PREFIX_REP, X86_PREFIX_REPNE,
         X86_INS_TEST, X86_INS_JNS, X86_INS_JS, X86_INS_MUL, X86_INS_JP,
         X86_INS_JNP, X86_INS_JCXZ, X86_INS_JECXZ, X86_INS_JRCXZ,
-        X86_INS_SAR, X86_INS_SAL)
+        X86_INS_SAR, X86_INS_SAL, X86_INS_MOVZX, X86_INS_STOSB,
+        X86_INS_STOSW, X86_INS_STOSD, X86_INS_STOSQ, X86_INS_MOVSB,
+        X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ, X86_INS_LODSB,
+        X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ, X86_INS_CMPSB,
+        X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ, X86_INS_SCASB,
+        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ)
+
 
 
 ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR,
@@ -56,8 +62,17 @@ JMP_ADD_ZERO = {
 
 INST_CHECK = {X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
     X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
-    X86_INS_SAR, X86_INS_SAL,
+    X86_INS_SAR, X86_INS_SAL, X86_INS_MOVZX,
     X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR}
+
+
+INST_STOS = {X86_INS_STOSB, X86_INS_STOSW, X86_INS_STOSD, X86_INS_STOSQ}
+INST_LODS = {X86_INS_LODSB, X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ}
+INST_MOVS = {X86_INS_MOVSB, X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ}
+INST_CMPS = {X86_INS_CMPSB, X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ}
+INST_SCAS = {X86_INS_SCASB, X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ}
+
+REP_PREFIX = {X86_PREFIX_REPNE, X86_PREFIX_REP}
 
 
 class Output(OutputAbs):
@@ -245,6 +260,30 @@ class Output(OutputAbs):
             nonlocal i
             return "%s %s" % (i.mnemonic, i.op_str)
 
+        def print_rep_begin():
+            nonlocal tab
+            if i.prefix[0] in REP_PREFIX:
+                print_tabbed_no_end(color_keyword("while"), tab)
+                # TODO: for 16 and 32 bits
+                print_no_end(" (!rcx)")
+                print(") {")
+                tab += 1
+
+        def print_rep_end():
+            nonlocal tab
+            if i.prefix[0] in REP_PREFIX:
+                print()
+                print_tabbed_no_end(color_addr(i.address), tab)
+                print("rcx--")
+                if i.prefix[0] == X86_PREFIX_REPNE:
+                    print_tabbed_no_end(color_keyword("if"), tab)
+                    print_no_end(" (!Z) ")
+                    print(color_keyword("break"))
+                tab -= 1
+                print_tabbed_no_end("}", tab)
+
+        print_rep_begin()
+
         print_tabbed_no_end(color_addr(i.address), tab)
 
         self.print_bytes(i)
@@ -303,6 +342,11 @@ class Output(OutputAbs):
                 self.print_operand(i, 1)
                 print_no_end(")")
 
+            elif i.id == X86_INS_MOVZX:
+                self.print_operand(i, 0)
+                print_no_end(" = (zero ext) ")
+                self.print_operand(i, 1)
+
             elif i.id == X86_INS_IMUL:
                 if len(i.operands) == 3:
                     self.print_operand(i, 0)
@@ -357,16 +401,71 @@ class Output(OutputAbs):
             print_no_end(' ^= -1')
             modified = True
 
-        elif i.id == X86_INS_SCASB and i.prefix[0] == X86_PREFIX_REPNE:
-            print_no_end('while (')
-            self.print_operand(i, 1)
-            print_no_end(' != ')
+        elif i.id in INST_SCAS:
+            # print_no_end('while (')
+            # self.print_operand(i, 1)
+            # print_no_end(' != ')
+            # self.print_operand(i, 0)
+            # print_no_end(') { ')
+            # self.print_operand(i, 1, show_deref=False)
+            # print_no_end('++; cx--; } ')
+            # self.print_operand(i, 1, show_deref=False)
+            # print_no_end('++; cx--;')
+            # modified = True
+
             self.print_operand(i, 0)
-            print_no_end(') { ')
+            print_no_end(" cmp ")
+            self.print_operand(i, 1)
+            print()
+            print_tabbed_no_end(color_addr(i.address), tab)
             self.print_operand(i, 1, show_deref=False)
-            print_no_end('++; cx--; } ')
+            print_no_end(" += D")
+            modified = True
+
+        elif i.id in INST_STOS:
+            self.print_operand(i, 0)
+            print_no_end(" = ")
+            self.print_operand(i, 1)
+            print()
+            print_tabbed_no_end(color_addr(i.address), tab)
+            self.print_operand(i, 0, show_deref=False)
+            print_no_end(" += D")
+            modified = True
+
+        elif i.id in INST_LODS:
+            self.print_operand(i, 0)
+            print_no_end(" = ")
+            self.print_operand(i, 1)
+            print()
+            print_tabbed_no_end(color_addr(i.address), tab)
             self.print_operand(i, 1, show_deref=False)
-            print_no_end('++; cx--;')
+            print_no_end(" += D")
+            modified = True
+
+        elif i.id in INST_CMPS:
+            self.print_operand(i, 0)
+            print_no_end(" cmp ")
+            self.print_operand(i, 1)
+            print()
+            print_tabbed_no_end(color_addr(i.address), tab)
+            self.print_operand(i, 0, show_deref=False)
+            print(" += D")
+            print_tabbed_no_end(color_addr(i.address), tab)
+            self.print_operand(i, 1, show_deref=False)
+            print_no_end("' += D")
+            modified = True
+
+        elif i.id in INST_MOVS:
+            self.print_operand(i, 0)
+            print_no_end(" = ")
+            self.print_operand(i, 1)
+            print()
+            print_tabbed_no_end(color_addr(i.address), tab)
+            self.print_operand(i, 0, show_deref=False)
+            print(" += D")
+            print_tabbed_no_end(color_addr(i.address), tab)
+            self.print_operand(i, 1, show_deref=False)
+            print_no_end(" += D")
             modified = True
 
         else:
@@ -378,5 +477,7 @@ class Output(OutputAbs):
                     print_no_end(", ")
                     modified |= self.print_operand(i, k)
                     k += 1
+
+        print_rep_end()
 
         return modified
