@@ -122,7 +122,7 @@ class ReadLine():
 
 
     def print_prompt(self):
-        self.print("\x1b[" + str(self.cursor_i) + ";1H")
+        # self.print("\x1b[" + str(self.cursor_i) + ";1H")
         self.print(yellow(self.prompt))
 
 
@@ -139,9 +139,15 @@ class ReadLine():
                    str(1 + self.cursor_j + len(self.prompt)) + "H")
 
 
+    def set_cursor_real_j(self, j):
+        self.print("\x1b[" + str(self.cursor_i) + ";" +
+                   str(j) + "H")
+
+
     def get_position(self):
+        raw_set = self.tty_raw_set
         self.tty_set_raw()
-        pos = [0,0]
+        pos = [0, 0]
         try:
             os.write(self.tty_fd, b"\x1b[6n")
             # don't know the maximum of chars to read
@@ -150,7 +156,8 @@ class ReadLine():
             pos[0] = int(pos[0])
             pos[1] = int(pos[1])
         finally:
-            self.tty_restore()
+            if not raw_set:
+                self.tty_restore()
         return pos
 
 
@@ -170,13 +177,13 @@ class ReadLine():
 
 
     def new_prompt(self):
-        self.tty_restore()
-        self.print("\n")
-        self.cursor_i += 1
-        self.set_cursor()
+        # raw_set = self.tty_set_raw
+        self.cursor_i = self.get_position()[0]
+        self.set_cursor_real_j(0)
+        self.cursor_j = len(self.line)
         self.print_prompt()
         self.print(self.line)
-        self.tty_set_raw()
+        # self.tty_set_raw()
 
 
     #######################################
@@ -189,10 +196,9 @@ class ReadLine():
     def k_ctrl_c(self):
         self.tty_restore()
         self.print("^C\n")
-        self.cursor_i = self.get_position()[0]
-        self.set_cursor()
-        self.print_prompt()
-        self.print(self.line)
+        self.tty_set_raw()
+        self.new_prompt()
+        self.tty_restore()
         self.callback_ctrl_c()
         self.tty_set_raw()
 
@@ -225,7 +231,7 @@ class ReadLine():
         self.print("\x1b[2J")
         self.cursor_i = 1
         self.cursor_j = 0
-        self.set_cursor()
+        self.set_cursor_real_j(0)
         self.print_prompt()
         self.print(self.line)
         self.cursor_j = len(self.line)
@@ -300,7 +306,7 @@ class ReadLine():
         self.cursor_j = j
         self.set_cursor()
 
-    def k_enter(self):
+    def k_enter(self, call_enter=True):
         self.tty_restore()
 
         self.print("\n")
@@ -310,16 +316,11 @@ class ReadLine():
                 self.history = [self.line] + self.history
             self.callback_enter(self.line)
 
-        self.cursor_i = self.get_position()[0]
-        self.set_cursor()
+        self.tty_set_raw()
+
         self.line = ""
         self.idx_history = -1
-        self.print_prompt()
-
-        self.cursor_j = 0
-        self.set_cursor()
-
-        self.tty_set_raw()
+        self.new_prompt()
 
     def k_ctrl_u(self):
         self.line = self.line[self.cursor_j:]
@@ -389,9 +390,8 @@ class ReadLine():
         res, last_tok, common = self.callback_complete(begin)
 
         if res is None:
-            self.print_prompt()
-            self.print(self.line)
             self.tty_set_raw()
+            self.new_prompt()
             return
 
         if len(res) == 0:
@@ -408,23 +408,21 @@ class ReadLine():
                 self.print(i)
                 self.print("\n")
 
+        self.tty_set_raw()
+
         self.line = completed + self.line[self.cursor_j:]
-        self.cursor_j = 0
-        self.set_cursor()
-        self.delete_end_line()
 
         if len(res) > 1:
-            self.cursor_i = self.get_position()[0]
-            self.print_prompt()
-
-        self.print(self.line)
-        self.cursor_j = len(completed)
-        self.set_cursor()
-        self.tty_set_raw()
+            self.new_prompt()
+        else:
+            self.cursor_j = 0
+            self.set_cursor()
+            self.delete_end_line()
+            self.cursor_j = len(self.line)
+            self.print(self.line)
 
     def k_ctrl_a(self):
         self.k_home()
 
     def k_ctrl_e(self):
         self.k_end()
-
