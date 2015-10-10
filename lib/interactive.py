@@ -25,6 +25,7 @@ from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
 from lib.utils import error
 from lib.readline import ReadLine
+from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 
 
 class Command():
@@ -50,6 +51,7 @@ class Interactive():
             "dump",
             "exit",
             "help",
+            "info",
             "load",
             "lrawarm",
             "lrawmips",
@@ -213,6 +215,16 @@ class Interactive():
                 [
                 "",
                 "Print all sections",
+                ]
+            ),
+
+            "info": Command(
+                0,
+                self.__exec_info,
+                None,
+                [
+                "",
+                "Information about the current binary"
                 ]
             ),
         }
@@ -543,3 +555,18 @@ class Interactive():
 
         for (name, start, end) in self.ctx.dis.binary.iter_sections():
             self.ctx.dis.print_section_meta(name, start, end) 
+
+
+    def __exec_info(self, args):
+        if self.ctx.filename is None:
+            print("no file loaded")
+            return
+        print("File:", self.ctx.filename)
+
+        ty = self.ctx.dis.binary.type
+        if ty == T_BIN_PE:
+            print("Type: PE")
+        elif ty == T_BIN_ELF:
+            print("Type: ELF")
+        elif ty == T_BIN_RAW:
+            print("Type: RAW")
