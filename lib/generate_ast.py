@@ -124,6 +124,7 @@ def add_goto_after_alone_andif(ast):
 def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
     waiting = {}
     visited = set()
+    done = set()
 
     stack = []
     for n in ctx.gph.link_out[entry]:
@@ -148,18 +149,19 @@ def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
             # If endpoint == loop : maybe the endpoint is at the end of the loop
             # If we have multiple link in, and if it's not a new loop, wait
 
-            lkin = ctx.gph.link_in[ad]
+            if ad not in done:
+                lkin = ctx.gph.link_in[ad]
 
-            if ad == l_start or len(lkin) > 1:
-                unseen = get_unseen_links_in(ad, l_set, l_prev_loop, l_start)
-                if len(unseen) > 1:
-                    if ad in waiting:
-                        if prev in waiting[ad]:
-                            waiting[ad].remove(prev)
-                    else:
-                        unseen.remove(prev)
-                        waiting[ad] = unseen
-                    continue
+                if ad == l_start or len(lkin) > 1:
+                    unseen = get_unseen_links_in(ad, l_set, l_prev_loop, l_start)
+                    if len(unseen) > 1:
+                        if ad in waiting:
+                            if prev in waiting[ad]:
+                                waiting[ad].remove(prev)
+                        else:
+                            unseen.remove(prev)
+                            waiting[ad] = unseen
+                        continue
 
             if ad in visited:
                 continue
@@ -178,23 +180,18 @@ def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
             return ad
 
         stack = []
-        w = {}
 
         restart = True
         while restart:
             restart = False
 
-            for ad in waiting:
+            for ad in list(waiting):
                 if len(waiting[ad]) > 0:
-                    w[ad] = set(waiting[ad])
                     continue
-                visited.add(ad)
 
-                if ad in ctx.gph.link_out:
-                    for n in ctx.gph.link_out[ad]:
-                        stack.append((ad, n))
-
-            waiting = w
+                del waiting[ad]
+                done.add(ad)
+                stack.append((-1, ad))
 
             # If the stack is still empty but if we have still some waiting
             # nodes, search if paths are really possible. If not, delete

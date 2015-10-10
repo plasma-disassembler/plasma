@@ -334,22 +334,19 @@ class Graph:
         return detected_loops
 
 
-    def __manage_waiting(self, stack, visited, waiting, l_set):
+    def __manage_waiting(self, stack, visited, waiting, l_set, done):
         keys = set(waiting.keys())
         for ad in keys:
             if l_set is not None and ad not in l_set:
                 continue
             if len(waiting[ad]) == 0:
                 del waiting[ad]
-                visited.add(ad)
-                if ad in self.link_out:
-                    for n in self.link_out[ad]:
-                        if n not in visited:
-                            stack.append((ad, n))
+                done.add(ad)
+                stack.append((-1, ad))
 
 
     def __until_stack_empty(self, stack, waiting, visited,
-                            par_loops, l_set, is_sub_loop):
+                            par_loops, l_set, is_sub_loop, done):
         has_moved = False
 
         while stack:
@@ -358,7 +355,7 @@ class Graph:
             if ad in is_sub_loop:
                 continue
 
-            if ad in self.link_in:
+            if ad in self.link_in and ad not in done:
                 l_in = self.link_in[ad]
 
                 if len(l_in) > 1 or l_set is not None and ad not in l_set:
@@ -421,7 +418,7 @@ class Graph:
         return new_loops
 
 
-    def __explore(self, entry, par_loops, visited, waiting, l_set):
+    def __explore(self, entry, par_loops, visited, waiting, l_set, done):
         stack = []
 
         if entry in self.link_out:
@@ -434,8 +431,8 @@ class Graph:
 
         while 1:
             if self.__until_stack_empty(
-                    stack, waiting, visited, par_loops, l_set, is_sub_loop):
-                self.__manage_waiting(stack, visited, waiting, l_set)
+                    stack, waiting, visited, par_loops, l_set, is_sub_loop, done):
+                self.__manage_waiting(stack, visited, waiting, l_set, done)
                 continue
 
             detected_loops = self.__try_find_loops(
@@ -454,7 +451,7 @@ class Graph:
                     pl.add(ad)
 
                     l = self.loops_set[(entry, ad)]
-                    self.__explore(ad, pl, v, waiting, l)
+                    self.__explore(ad, pl, v, waiting, l, set(done))
 
                 detected_loops = self.__try_find_loops(
                         entry, waiting, par_loops, l_set, is_sub_loop)
@@ -463,7 +460,7 @@ class Graph:
                         waiting, detected_loops, l_set, is_sub_loop)
 
 
-            self.__manage_waiting(stack, visited, waiting, l_set)
+            self.__manage_waiting(stack, visited, waiting, l_set, done)
 
             if not stack:
                 break
@@ -631,7 +628,8 @@ class Graph:
     def __loop_detection(self, ctx, entry):
         start = time.clock()
 
-        self.__explore(entry, set(), set(), {}, None)
+        waiting = {}
+        self.__explore(entry, set(), set(), waiting, None, set())
 
         self.__search_equiv_loops()
         self.__search_false_loops()
