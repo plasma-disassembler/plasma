@@ -104,6 +104,40 @@ def remove_all_unnecessary_goto(ast):
         remove_all_unnecessary_goto(ast.branch)
 
 
+def add_goto_if_inst_not_consecutives(ctx, ast):
+    if isinstance(ast, Ast_Branch):
+        prev_blk = None
+        idx_to_add = {}
+        for i, n in enumerate(ast.nodes):
+            if isinstance(n, list):
+                if prev_blk is not None and \
+                        prev_blk[-1].address not in ctx.gph.uncond_jumps_set and \
+                        prev_blk[-1].address in ctx.gph.link_out:
+                    nxt = prev_blk[-1].address + prev_blk[-1].size
+                    if nxt != n[0].address:
+                        idx_to_add[i] = nxt
+                prev_blk = n
+            else:
+                prev_blk = None
+                add_goto_if_inst_not_consecutives(ctx, n)
+
+        if not idx_to_add:
+            return
+
+        # Add from the end of the nodes list
+        lst = list(idx_to_add.keys())
+        lst.sort()
+        for i in lst:
+            ast.nodes.insert(i, Ast_Goto(idx_to_add[i]))
+
+    elif isinstance(ast, Ast_Ifelse):
+        add_goto_if_inst_not_consecutives(ctx, ast.br_next)
+        add_goto_if_inst_not_consecutives(ctx, ast.br_next_jump)
+
+    elif isinstance(ast, Ast_Loop):
+        add_goto_if_inst_not_consecutives(ctx, ast.branch)
+
+
 def add_goto_after_alone_andif(ast):
     if isinstance(ast, Ast_Branch):
         if len(ast.nodes) > 0 and isinstance(ast.nodes[-1], Ast_AndIf):
@@ -575,6 +609,7 @@ def generate_ast(ctx__):
 
     remove_all_unnecessary_goto(ast)
     add_goto_after_alone_andif(ast)
+    add_goto_if_inst_not_consecutives(ctx, ast)
 
     elapsed = time.clock()
     elapsed = elapsed - start
