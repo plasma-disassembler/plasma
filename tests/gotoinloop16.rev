@@ -20,14 +20,15 @@ function main (.text) {
         0x400524: call 0x4003e0 <puts@plt>
         0x400529: jmp 0x400537
         0x400535: jmp 0x400545
+        0x400537: edi = 0x4005e6 "2" # mov edi, 0x4005e6
+        0x40053c: call 0x4003e0 <puts@plt>
+        0x400541: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     loop {
         # 0x400545: cmp dword ptr [rbp - 4], 0xe
         # 0x400549: jle 0x400537
         if (var1 > 14)  goto 0x40054b
-        0x400537: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-        0x40053c: call 0x4003e0 <puts@plt>
-        0x400541: var1 += 1 # add dword ptr [rbp - 4], 1
+        goto 0x400537
     }
     0x40054b: eax = 0 # mov eax, 0
     0x400550: leave 

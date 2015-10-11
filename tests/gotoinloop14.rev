@@ -20,6 +20,9 @@ function main (.text) {
         0x400524: call 0x4003e0 <puts@plt>
         0x400529: jmp 0x40053d
         0x400535: jmp 0x40054b
+        0x40053d: edi = 0x4005e6 "2" # mov edi, 0x4005e6
+        0x400542: call 0x4003e0 <puts@plt>
+        0x400547: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     loop {
         # 0x40054b: cmp dword ptr [rbp - 4], 0xe
@@ -28,10 +31,9 @@ function main (.text) {
         # 0x400537: cmp dword ptr [rbp - 4], 3
         # 0x40053b: jne 0x400547
         if (var1 == 3) {
-            0x40053d: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-            0x400542: call 0x4003e0 <puts@plt>
+            goto 0x40053d
         }
-        0x400547: var1 += 1 # add dword ptr [rbp - 4], 1
+        goto 0x400547
     }
     0x400551: eax = 0 # mov eax, 0
     0x400556: leave 

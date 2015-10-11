@@ -400,17 +400,13 @@ class Graph:
                     new_loops.add(ad)
                     del waiting[ad]
 
-                elif ad not in new_loops and len(waiting[ad]) > 0:
-                    # Case for gotoinloop12
-                    del waiting[ad]
-
         # Remove external jumps which are outside the current loop
-        for ad, prevs in waiting.items():
+        for ad, unseen in waiting.items():
             if l_set is not None and ad not in l_set:
                 continue
-            for i in set(prevs):
+            for i in set(unseen):
                 if l_set is not None and i not in l_set:
-                    prevs.remove(i)
+                    unseen.remove(i)
 
         return new_loops
 
