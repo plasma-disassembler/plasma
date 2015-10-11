@@ -352,9 +352,6 @@ class Graph:
         while stack:
             prev, ad = stack.pop(-1)
 
-            if ad in is_sub_loop:
-                continue
-
             if ad in self.link_in and ad not in done:
                 l_in = self.link_in[ad]
 
