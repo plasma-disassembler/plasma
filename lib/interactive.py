@@ -23,6 +23,7 @@ import shlex
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
+from lib.output import print_no_end
 from lib.utils import error
 from lib.readline import ReadLine
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
@@ -563,10 +564,41 @@ class Interactive():
             return
         print("File:", self.ctx.filename)
 
+        statinfo = os.stat(self.ctx.filename)
+        print("Size: %.2f ko" % (statinfo.st_size/1024.))
+
+        print_no_end("Type: ")
+
         ty = self.ctx.dis.binary.type
         if ty == T_BIN_PE:
-            print("Type: PE")
+            print("PE")
         elif ty == T_BIN_ELF:
-            print("Type: ELF")
+            print("ELF")
         elif ty == T_BIN_RAW:
-            print("Type: RAW")
+            print("RAW")
+
+        import capstone as CAPSTONE
+
+        arch, mode = self.ctx.dis.binary.get_arch()
+
+        print_no_end("Arch: ")
+
+        if arch == CAPSTONE.CS_ARCH_X86:
+            if mode & CAPSTONE.CS_MODE_32:
+                print("x86")
+            elif mode & CAPSTONE.CS_MODE_64:
+                print("x64")
+        elif arch == CAPSTONE.CS_ARCH_ARM:
+            print("arm")
+        elif arch == CAPSTONE.CS_ARCH_MIPS:
+            if mode & CAPSTONE.CS_MODE_32:
+                print("mips")
+            elif mode & CAPSTONE.CS_MODE_64:
+                print("mips64 (octeon)")
+        else:
+            print("not supported")
+
+        if mode & CAPSTONE.CS_MODE_BIG_ENDIAN:
+            print("Endianess: big endian")
+        else:
+            print("Endianess: little endian")
