@@ -10,6 +10,7 @@ function main (.text) {
     0x400540: var2 = 0 # mov dword ptr [rbp - 0x94], 0
     0x40054a: jmp 0x40055c
     loop {
+        loop_0x40055c:
         # 0x40055c: cmp dword ptr [rbp - 0x94], 0x63
         # 0x400563: jle 0x40054c
         if (var2 > 99)  goto 0x400565
@@ -24,6 +25,7 @@ function main (.text) {
     if ((rdx ^= *(fs + 40)) != 0) {
         0x400579: call 0x400400 <__stack_chk_fail@plt>
     }
+    ret_0x40057e:
     0x40057e: leave 
     0x40057f: ret 
 }

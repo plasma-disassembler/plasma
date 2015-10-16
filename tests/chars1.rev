@@ -38,6 +38,7 @@ function main (.text) {
         0x400560: edi = 0x40060c "5" # mov edi, 0x40060c
         0x400565: call 0x4003e0 <puts@plt>
     }
+    ret_0x40056a:
     0x40056a: eax = 0 # mov eax, 0
     0x40056f: leave 
     0x400570: ret 

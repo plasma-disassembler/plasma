@@ -11,6 +11,7 @@ function main (.text) {
     0x400511: var2 = rsi # mov qword ptr [rbp - 0x20], rsi
     0x400515: jmp 0x400533
     loop {
+        loop_0x400533:
         # 0x400533: cmp dword ptr [rbp - 4], 9
         # 0x400537: jg 0x40053f
         if (var3 <= 9) {
@@ -22,19 +23,21 @@ function main (.text) {
             0x40053f: eax = var3 # mov eax, dword ptr [rbp - 4]
             # 0x400542: cmp eax, dword ptr [rbp - 0xc]
             # 0x400545: je 0x400517
-            if (eax != var5)  goto 0x400547
+            if (eax != var5)  goto ret_0x400547
         }
         0x400517: edi = 0x4005d4 "1" # mov edi, 0x4005d4
         0x40051c: call 0x4003e0 <puts@plt>
         0x400521: jmp 0x40052d
         loop {
+            loop_0x40052d:
             # 0x40052d: cmp dword ptr [rbp - 0xc], 0x13
             # 0x400531: jle 0x400523
-            if (var5 > 19)  goto 0x400533
+            if (var5 > 19)  goto loop_0x400533
             0x400523: edi = 0x4005d6 "2" # mov edi, 0x4005d6
             0x400528: call 0x4003e0 <puts@plt>
         }
     }
+    ret_0x400547:
     0x400547: eax = 0 # mov eax, 0
     0x40054c: leave 
     0x40054d: ret 

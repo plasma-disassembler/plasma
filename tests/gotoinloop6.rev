@@ -16,17 +16,20 @@ function main (.text) {
     0x400525: call 0x4003e0 <puts@plt>
     0x40052a: jmp 0x400582
     loop {
+        loop_0x400582:
         # 0x400582: cmp dword ptr [rbp - 4], 0x7a
         # 0x400586: jle 0x400579
-        if (var1 > 122)  goto 0x400588
+        if (var1 > 122)  goto ret_0x400588
         loop {
+            loop_0x400579:
             # 0x400579: cmp dword ptr [rbp - 0xc], 0x1c7
             # 0x400580: jle 0x400570
-            if (var2 > 455)  goto 0x400582
+            if (var2 > 455)  goto loop_0x400582
             loop {
+                loop_0x400570:
                 # 0x400570: cmp dword ptr [rbp - 8], 0x314
                 # 0x400577: jle 0x40052c
-                if (var3 > 788)  goto 0x400579
+                if (var3 > 788)  goto loop_0x400579
                 0x40052c: eax = var1 # mov eax, dword ptr [rbp - 4]
                 # 0x40052f: cmp eax, dword ptr [rbp - 0xc]
                 # 0x400532: jne 0x400540
@@ -57,6 +60,7 @@ function main (.text) {
             }
         }
     }
+    ret_0x400588:
     0x400588: eax = 0 # mov eax, 0
     0x40058d: leave 
     0x40058e: ret 

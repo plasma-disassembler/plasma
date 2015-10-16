@@ -16,14 +16,17 @@ function main (.text) {
     0x400525: call 0x4003e0 <puts@plt>
     0x40052a: jmp 0x400596
     loop {
+        loop_0x400596:
         # 0x400596: cmp dword ptr [rbp - 4], 0x7a
         # 0x40059a: jle 0x400583
-        if (var1 > 122)  goto 0x40059c
+        if (var1 > 122)  goto ret_0x40059c
         loop {
+            loop_0x400583:
             # 0x400583: cmp dword ptr [rbp - 0xc], 0x1c7
             # 0x40058a: jle 0x400570
             if (var2 > 455)  goto 0x40058c
             loop {
+                loop_0x400570:
                 # 0x400570: cmp dword ptr [rbp - 8], 0x314
                 # 0x400577: jle 0x40052c
                 if (var3 > 788)  goto 0x400579
@@ -61,6 +64,7 @@ function main (.text) {
         0x40058c: edi = 0x400642 "8" # mov edi, 0x400642
         0x400591: call 0x4003e0 <puts@plt>
     }
+    ret_0x40059c:
     0x40059c: eax = 0 # mov eax, 0
     0x4005a1: leave 
     0x4005a2: ret 

@@ -1,4 +1,5 @@
 function main (.text) {
+    ret_0x4004b6:
     0x4004b6: push rbp
     0x4004b7: rbp = rsp # mov rbp, rsp
     0x4004ba: *(rdi) = al

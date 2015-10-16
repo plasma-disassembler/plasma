@@ -3,6 +3,7 @@ function main (.text) {
     0x4004b7: rbp = rsp # mov rbp, rsp
     for (;;) {
         <next>
+        loop_0x4004ba:
         0x4004ba: jmp 0x4004ba
     }
 }

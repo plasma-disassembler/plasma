@@ -8,9 +8,10 @@ function main (.text) {
     0x400555: var1 = 0 # mov dword ptr [rbp - 4], 0
     0x40055c: jmp 0x4005e9
     loop {
+        loop_0x4005e9:
         # 0x4005e9: cmp dword ptr [rbp - 4], 0x3e7
         # 0x4005f0: jle 0x400561
-        if (var1 > 999)  goto 0x4005f6
+        if (var1 > 999)  goto ret_0x4005f6
         0x400561: edi = 0x400694 "1" # mov edi, 0x400694
         0x400566: call 0x400410 <puts@plt>
         0x40056b: call 0x400440 <rand@plt>
@@ -46,7 +47,7 @@ function main (.text) {
                 } else {
                     # 0x4005bd: cmp dword ptr [rbp - 4], 0x2a
                     # 0x4005c1: jne 0x4005cf
-                    if (var1 == 42)  goto 0x4005c3
+                    if (var1 == 42)  goto loop_0x4005c3
                 }
             }
             0x4005cf: edi = 0x4006a4 "continue!" # mov edi, 0x4006a4
@@ -59,10 +60,12 @@ function main (.text) {
         0x4005e5: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     for (;;) {
+        loop_0x4005c3:
         0x4005c3: edi = 0x40069c "loooop!" # mov edi, 0x40069c
         0x4005c8: call 0x400410 <puts@plt>
         0x4005cd: jmp 0x4005c3
     }
+    ret_0x4005f6:
     0x4005f6: edi = 0x4006b0 "6" # mov edi, 0x4006b0
     0x4005fb: call 0x400410 <puts@plt>
     0x400600: eax = 0 # mov eax, 0

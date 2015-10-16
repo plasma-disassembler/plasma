@@ -7,9 +7,10 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: jmp 0x400569
     loop {
+        loop_0x400569:
         # 0x400569: cmp dword ptr [rbp - 4], 0
         # 0x40056d: jle 0x400510
-        if (var1 > 0)  goto 0x40056f
+        if (var1 > 0)  goto ret_0x40056f
         0x400510: edi = 0x400604 "loop" # mov edi, 0x400604
         0x400515: call 0x4003e0 <puts@plt>
         # 0x40051a: cmp dword ptr [rbp - 4], 1
@@ -23,15 +24,17 @@ function main (.text) {
         0x400531: call 0x4003e0 <puts@plt>
         0x400536: jmp 0x40055f
         loop {
+            loop_0x40055f:
             # 0x40055f: cmp dword ptr [rbp - 0xc], 0x18
             # 0x400563: jle 0x400538
             if (var2 > 24)  goto 0x400565
             0x400538: var3 = 0 # mov dword ptr [rbp - 8], 0
             0x40053f: jmp 0x400559
             loop {
+                loop_0x400559:
                 # 0x400559: cmp dword ptr [rbp - 8], 0x7a
                 # 0x40055d: jle 0x400541
-                if (var3 > 122)  goto 0x40055f
+                if (var3 > 122)  goto loop_0x40055f
                 0x400541: edi = 0x40060d "for" # mov edi, 0x40060d
                 0x400546: call 0x4003e0 <puts@plt>
                 0x40054b: edi = 0x400611 "3" # mov edi, 0x400611
@@ -41,6 +44,7 @@ function main (.text) {
         }
         0x400565: var1 += 1 # add dword ptr [rbp - 4], 1
     }
+    ret_0x40056f:
     0x40056f: eax = 0 # mov eax, 0
     0x400574: leave 
     0x400575: ret 

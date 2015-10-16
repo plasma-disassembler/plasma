@@ -15,9 +15,11 @@ function main (.text) {
         0x400566: jmp 0x4005f6
     }
     loop {
+        loop_0x40056b:
         0x40056b: var1 = 5 # mov dword ptr [rbp - 4], 5
         0x400572: jmp 0x4005d5
         loop {
+            loop_0x4005d5:
             # 0x4005d5: cmp dword ptr [rbp - 4], 0x63
             # 0x4005d9: jle 0x400574
             if (var1 > 99)  goto 0x4005db
@@ -28,6 +30,7 @@ function main (.text) {
             0x400588: var2 = 0 # mov dword ptr [rbp - 8], 0
             0x40058f: jmp 0x4005cb
             loop {
+                loop_0x4005cb:
                 # 0x4005cb: cmp dword ptr [rbp - 8], 0x31
                 # 0x4005cf: jle 0x400591
                 if (var2 > 49)  goto 0x4005d1
@@ -61,6 +64,7 @@ function main (.text) {
     0x4005f6: edi = 0x4006b1 "err exit" # mov edi, 0x4006b1
     0x4005fb: call 0x400410 <puts@plt>
     0x400600: eax = 1 # mov eax, 1
+    ret_0x400605:
     0x400605: leave 
     0x400606: ret 
 }

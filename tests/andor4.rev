@@ -31,6 +31,7 @@ function main (.text) {
             0x400626: call 0x400480 <puts@plt>
         }
     }
+    ret_0x40062b:
     0x40062b: eax = 0 # mov eax, 0
     0x400630: leave 
     0x400631: ret 

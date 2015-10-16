@@ -31,8 +31,9 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
 
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end)
-from lib.colors import (color, color_addr, color_retcall, color_string,
+        print_comment, print_comment_no_end, print_addr, print_label_and_addr,
+        print_label_or_addr, print_label)
+from lib.colors import (color, color_retcall, color_string,
         color_section, color_type)
 from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -126,6 +127,9 @@ class Output(OutputAbs):
                 if imm in self.binary.reverse_symbols:
                     print_no_end(" ")
                     self.print_symbol(imm)
+                if imm in self.ctx.labels:
+                    print_no_end(" ")
+                    print_label(imm, print_colon=False)
             elif hexa:
                 print_no_end(hex(imm))
             else:
@@ -256,8 +260,11 @@ class Output(OutputAbs):
 
         if prefix == "# ":
             if self.ctx.comments:
+                if i.address in self.ctx.labels:
+                    print_label(i.address, tab)
+                    print()
                 print_comment_no_end(prefix, tab)
-                print_no_end(color_addr(i.address))
+                print_addr(i.address)
                 self.print_bytes(i, True)
                 print_comment(get_inst_str())
             return
@@ -270,7 +277,7 @@ class Output(OutputAbs):
             self.print_symbol(i.address)
             print()
 
-        print_tabbed_no_end(color_addr(i.address), tab)
+        print_label_and_addr(i.address, tab)
 
         self.print_bytes(i)
 
@@ -286,19 +293,21 @@ class Output(OutputAbs):
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
+            print_no_end(i.mnemonic + " ")
             if i.operands[0].type != ARM_OP_IMM:
-                print_no_end(i.mnemonic + " ")
                 print_no_end(i.op_str)
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
                     print_comment_no_end(" # STOPPED")
                 print()
                 return
-            try:
-                addr = i.operands[0].value.imm
-                print(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
-            except KeyError:
-                print(i.mnemonic + " " + hex(addr))
+            addr = i.operands[0].value.imm
+            if addr in self.ctx.addr_color:
+                print_label_or_addr(addr, -1, False)
+            else:
+                print_no_end(hex(addr))
+            print()
             return
+
 
         modified = False
 

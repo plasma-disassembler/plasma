@@ -8,6 +8,7 @@ function main (.text) {
     # 0x400519: jle 0x400534
     if (var1 > 0) {
         for (;;) {
+            loop_0x40051b:
             # 0x40051b: cmp dword ptr [rbp - 4], 0x1c8
             # 0x400522: jne 0x40052e
             if (var1 == 456) {
@@ -19,6 +20,7 @@ function main (.text) {
         }
     }
     for (;;) {
+        loop_0x400534:
         # 0x400534: cmp dword ptr [rbp - 4], 0x7b
         # 0x400538: jne 0x400544
         if (var1 == 123) {

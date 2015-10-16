@@ -7,6 +7,7 @@ function main (.text) {
     0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
     0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
     for (;;) {
+        loop_0x40051c:
         # 0x40051c: cmp dword ptr [rbp - 4], 0
         # 0x400520: je 0x40053a
         if (var1 != 0) {

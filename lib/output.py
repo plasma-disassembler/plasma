@@ -19,8 +19,9 @@
 
 import binascii
 
-from lib.colors import (color_addr, color_comment, color_keyword, color_type,
-        color_var, color_symbol, color_section)
+from lib.colors import (color_comment, color_keyword, color_type,
+        color_var, color_symbol, color_section, color_label, color_addr,
+        color_addr_normal)
 
 
 # It contains any new comments added by the program.
@@ -57,6 +58,41 @@ def print_comment_no_end(txt, tab=-1):
         print_tabbed_no_end(color_comment(txt), tab)
 
 
+def print_addr(addr, tab=-1, print_colon=True):
+    if tab == -1:
+        print_no_end(color_addr(addr, print_colon))
+    else:
+        print_tabbed_no_end(color_addr(addr, print_colon), tab)
+
+
+def print_label(addr, tab=-1, print_colon=True):
+    l = color_label(addr, print_colon)
+    if l is None:
+        return False
+    if tab == -1:
+        print_no_end(l)
+    else:
+        print_tabbed_no_end(l, tab)
+    return True
+
+
+def print_label_or_addr(addr, tab=-1, print_colon=True):
+    if print_label(addr, tab, print_colon):
+        return
+    print_addr(addr, tab, print_colon)
+
+
+def print_label_and_addr(addr, tab=-1, print_colon=True):
+    if print_label(addr, tab, print_colon):
+        print()
+        s = color_addr_normal(addr, print_colon)
+        if tab == -1:
+            print_no_end(s)
+        else:
+            print_tabbed_no_end(s, tab)
+    else:
+        print_addr(addr, tab, print_colon)
+
 
 class OutputAbs():
     def __init__(self, ctx=None):
@@ -91,7 +127,7 @@ class OutputAbs():
     # Only used when --nocomment is enabled and a jump point to this instruction
     def print_addr_if_needed(self, i, tab):
         if i.address in self.ctx.addr_color:
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_addr(i.address, tab)
 
 
     def is_symbol(self, ad):
@@ -140,7 +176,7 @@ class OutputAbs():
 
 
     def print_bad(self, addr, tab=0):
-        print_tabbed_no_end(color_addr(addr), tab)
+        print_addr(addr, tab)
         print("(bad)")
 
 

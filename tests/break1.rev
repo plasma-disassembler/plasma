@@ -8,14 +8,15 @@ function main (.text) {
     0x400515: var2 = 2 # mov dword ptr [rbp - 8], 2
     0x40051c: jmp 0x400560
     loop {
+        loop_0x400560:
         # 0x400560: cmp dword ptr [rbp - 4], 9
         # 0x400564: jg 0x400570
-        if (var1 > 9)  goto 0x400570
+        if (var1 > 9)  goto ret_0x400570
         0x400566: eax = var1 # mov eax, dword ptr [rbp - 4]
         0x400569: eax += eax # add eax, eax
         # 0x40056b: cmp eax, dword ptr [rbp - 8]
         # 0x40056e: jne 0x40051e
-        if (eax == var2)  goto 0x400570
+        if (eax == var2)  goto ret_0x400570
         0x40051e: edi = 0x400614 "1" # mov edi, 0x400614
         0x400523: call 0x4003e0 <puts@plt>
         # 0x400528: cmp dword ptr [rbp - 4], 8
@@ -26,6 +27,7 @@ function main (.text) {
     }
     0x40052e: jmp 0x400543
     loop {
+        loop_0x400543:
         # 0x400543: cmp dword ptr [rbp - 8], 3
         # 0x400547: jle 0x400530
         if (var2 > 3)  goto 0x400549
@@ -41,6 +43,7 @@ function main (.text) {
     0x400551: eax += edx # add eax, edx
     0x400553: var2 += eax # add dword ptr [rbp - 8], eax
     0x400556: jmp 0x400570
+    ret_0x400570:
     0x400570: edi = 0x400618 "3" # mov edi, 0x400618
     0x400575: call 0x4003e0 <puts@plt>
     0x40057a: eax = 0 # mov eax, 0

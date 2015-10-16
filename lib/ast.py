@@ -18,9 +18,9 @@
 #
 
 
-from lib.colors import color_addr, color_keyword
+from lib.colors import color_keyword
 from lib.output import (print_comment, print_no_end, print_tabbed,
-        print_tabbed_no_end)
+        print_tabbed_no_end, print_label_or_addr)
 
 
 class Ast_Branch:
@@ -61,7 +61,8 @@ class Ast_IfGoto:
         print_tabbed_no_end(color_keyword("if "), tab)
         o.print_if_cond(self.cond_id, self.fused_inst)
         print_no_end(color_keyword("  goto "))
-        print(color_addr(self.addr_jump, False))
+        print_label_or_addr(self.addr_jump, -1, False)
+        print()
 
 
 class Ast_AndIf:
@@ -224,7 +225,8 @@ class Ast_Goto:
 
     def print(self, o, tab=0):
         print_tabbed_no_end(color_keyword("goto "), tab)
-        print(color_addr(self.addr_jump, False))
+        print_label_or_addr(self.addr_jump, -1, False)
+        print()
 
 
 class Ast_Loop:

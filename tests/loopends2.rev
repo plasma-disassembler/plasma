@@ -7,6 +7,7 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: jmp 0x4005eb
     loop {
+        loop_0x4005eb:
         # 0x4005eb: cmp dword ptr [rbp - 4], 0x6e
         # 0x4005ef: jle 0x400513
         if (var1 > 110)  goto 0x4005f5
@@ -27,9 +28,10 @@ function main (.text) {
         if (var1 == 30)  goto 0x4005a3
         # 0x4005c7: cmp dword ptr [rbp - 4], 0x28
         # 0x4005cb: jne 0x4005eb
-        if (var1 == 40)  goto 0x4005cd
+        if (var1 == 40)  goto loop_0x4005cd
     }
     for (;;) {
+        loop_0x4005cd:
         # 0x4005cd: cmp dword ptr [rbp - 0xc], 1
         # 0x4005d1: jne 0x4005df
         if (var2 == 1) {
@@ -62,11 +64,12 @@ function main (.text) {
     } else {
         0x400591: edi = 0x400732 "2 2" # mov edi, 0x400732
         0x400596: call 0x4003e0 <puts@plt>
-        goto 0x40059b
+        goto ret_0x40059b
     }
     0x40056d: edi = 0x400724 "goto exit" # mov edi, 0x400724
     0x400572: call 0x4003e0 <puts@plt>
     0x400577: jmp 0x40059b
+    ret_0x40059b:
     0x40059b: leave 
     0x40059c: ret 
     # 0x400543: cmp dword ptr [rbp - 8], 1
@@ -97,6 +100,7 @@ function main (.text) {
     # 0x400606: jne 0x400614
     if (var1 == 1337) {
         for (;;) {
+            loop_0x400608:
             0x400608: edi = 0x400752 "loop2" # mov edi, 0x400752
             0x40060d: call 0x4003e0 <puts@plt>
             0x400612: jmp 0x400608
@@ -115,6 +119,7 @@ function main (.text) {
     0x400630: var1 = 0 # mov dword ptr [rbp - 4], 0
     0x400637: jmp 0x400659
     loop {
+        loop_0x400659:
         # 0x400659: cmp dword ptr [rbp - 4], 0x63
         # 0x40065d: jle 0x400639
         if (var1 > 99)  goto 0x40065f
@@ -140,6 +145,7 @@ function main (.text) {
         0x400671: edi = 0x40077f "label2 2" # mov edi, 0x40077f
         0x400676: call 0x4003e0 <puts@plt>
     }
+    ret_0x40067b:
     0x40067b: eax = 0 # mov eax, 0
     0x400680: leave 
     0x400681: ret 

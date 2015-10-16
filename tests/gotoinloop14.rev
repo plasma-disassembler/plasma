@@ -8,6 +8,7 @@ function main (.text) {
     if (var1 == 1337) {
         0x400517: jmp 0x40052f
         loop {
+            loop_0x40052f:
             # 0x40052f: cmp dword ptr [rbp - 4], 0xe
             # 0x400533: jle 0x400519
             if (var1 > 14)  goto 0x400535
@@ -25,9 +26,10 @@ function main (.text) {
         0x400547: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     loop {
+        loop_0x40054b:
         # 0x40054b: cmp dword ptr [rbp - 4], 0xe
         # 0x40054f: jle 0x400537
-        if (var1 > 14)  goto 0x400551
+        if (var1 > 14)  goto ret_0x400551
         # 0x400537: cmp dword ptr [rbp - 4], 3
         # 0x40053b: jne 0x400547
         if (var1 == 3) {
@@ -35,6 +37,7 @@ function main (.text) {
         }
         goto 0x400547
     }
+    ret_0x400551:
     0x400551: eax = 0 # mov eax, 0
     0x400556: leave 
     0x400557: ret 

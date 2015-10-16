@@ -60,6 +60,7 @@ function main (.text) {
             0x400a7c: var7 = 16 # mov dword ptr [rbp - 0x14], 0x10
             0x400a83: jmp 0x400ae2
             loop {
+                loop_0x400ae2:
                 0x400ae2: rdx = &(var7) # lea rdx, qword ptr [rbp - 0x14]
                 0x400ae6: rcx = &(var8) # lea rcx, qword ptr [rbp - 0x40]
                 0x400aea: eax = var3 # mov eax, dword ptr [rbp - 4]
@@ -107,6 +108,7 @@ function main (.text) {
             }
         }
     }
+    ret_0x400b1c:
     0x400b1c: leave 
     0x400b1d: ret 
 }

@@ -10,6 +10,7 @@ function main (.text) {
     if (var1 != 0) {
         0x400514: jmp 0x40053c
         loop {
+            loop_0x40053c:
             # 0x40053c: cmp dword ptr [rbp - 8], 0x1d
             # 0x400540: jle 0x400516
             if (var2 > 29)  goto 0x400542
@@ -38,6 +39,7 @@ function main (.text) {
         0x400559: call 0x4003e0 <puts@plt>
         goto 0x40055e
     }
+    ret_0x400568:
     0x400568: edi = 0x400612 "finish" # mov edi, 0x400612
     0x40056d: call 0x4003e0 <puts@plt>
     0x400572: eax = 0 # mov eax, 0

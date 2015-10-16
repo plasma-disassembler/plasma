@@ -8,6 +8,7 @@ function main (.text) {
     0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
     0x40051c: jmp 0x400550
     loop {
+        loop_0x400550:
         # 0x400550: cmp dword ptr [rbp - 4], 0x63
         # 0x400554: jle 0x40051e
         if (var1 > 99)  goto 0x400556
@@ -30,6 +31,7 @@ function main (.text) {
     0x400556: edi = 0x4005f8 "3" # mov edi, 0x4005f8
     0x40055b: call 0x4003e0 <puts@plt>
     0x400560: eax = 0 # mov eax, 0
+    ret_0x400565:
     0x400565: leave 
     0x400566: ret 
 }

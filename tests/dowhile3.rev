@@ -8,10 +8,13 @@ function main (.text) {
     0x4004c1: var2 = 5 # mov dword ptr [rbp - 8], 5
     0x4004c8: var3 = 1 # mov dword ptr [rbp - 0xc], 1
     loop {
+        loop_0x4004cf:
         0x4004cf: var1 += 1 # add dword ptr [rbp - 4], 1
         loop {
+            loop_0x4004d3:
             0x4004d3: var2 += 1 # add dword ptr [rbp - 8], 1
             loop {
+                loop_0x4004d7:
                 0x4004d7: var3 += 1 # add dword ptr [rbp - 0xc], 1
                 # 0x4004db: cmp dword ptr [rbp - 0xc], 3
                 # 0x4004df: jle 0x4004d7
@@ -23,8 +26,9 @@ function main (.text) {
         }
         # 0x4004e7: cmp dword ptr [rbp - 4], 4
         # 0x4004eb: jle 0x4004cf
-        if (var1 > 4)  goto 0x4004ed
+        if (var1 > 4)  goto ret_0x4004ed
     }
+    ret_0x4004ed:
     0x4004ed: eax = 0 # mov eax, 0
     0x4004f2: pop rbp
     0x4004f3: ret 

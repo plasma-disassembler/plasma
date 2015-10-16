@@ -1,4 +1,5 @@
 function 0x0 {
+    ret_0x0:
     0x0: eax = 0 # xor eax, eax
     0x2: al = '\x0b' # mov al, 0xb
     0x4: cdq 

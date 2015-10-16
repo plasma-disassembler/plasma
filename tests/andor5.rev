@@ -29,6 +29,7 @@ function main (.text) {
             0x40052e: jmp 0x40050c
         }
     }
+    ret_0x40050c:
     0x40050c: rsp += 8 # add rsp, 8
     0x400510: eax = 0 # xor eax, eax
     0x400512: pop rbx

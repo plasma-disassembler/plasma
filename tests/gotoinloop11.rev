@@ -8,9 +8,10 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: jmp 0x4005ab
     loop {
+        loop_0x4005ab:
         # 0x4005ab: cmp dword ptr [rbp - 4], 0x538
         # 0x4005b2: jle 0x400513
-        if (var1 > 1336)  goto 0x4005b8
+        if (var1 > 1336)  goto ret_0x4005b8
         # 0x400513: cmp dword ptr [rbp - 8], 1
         # 0x400517: jne 0x400525
         if (var2 == 1) {
@@ -22,14 +23,17 @@ function main (.text) {
         0x40052a: call 0x4003e0 <puts@plt>
         0x40052f: jmp 0x40059b
         loop {
+            loop_0x40059b:
             # 0x40059b: cmp dword ptr [rbp - 8], 0x7a
             # 0x40059f: jle 0x400588
             if (var2 > 122)  goto 0x4005a1
             loop {
+                loop_0x400588:
                 # 0x400588: cmp dword ptr [rbp - 0x10], 0x1c7
                 # 0x40058f: jle 0x400575
                 if (var3 > 455)  goto 0x400591
                 loop {
+                    loop_0x400575:
                     # 0x400575: cmp dword ptr [rbp - 0xc], 0x314
                     # 0x40057c: jle 0x400531
                     if (var4 > 788)  goto 0x40057e
@@ -70,6 +74,7 @@ function main (.text) {
         0x4005a1: edi = 0x400654 "9" # mov edi, 0x400654
         0x4005a6: call 0x4003e0 <puts@plt>
     }
+    ret_0x4005b8:
     0x4005b8: eax = 0 # mov eax, 0
     0x4005bd: leave 
     0x4005be: ret 

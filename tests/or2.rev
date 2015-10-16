@@ -9,6 +9,7 @@ function main (.text) {
     0x40055d: var1 = eax # mov dword ptr [rbp - 4], eax
     0x400560: jmp 0x400570
     loop {
+        loop_0x400570:
         # 0x400570: cmp dword ptr [rbp - 4], 0x63
         # 0x400574: jle 0x400562
         if (var1 > 99) {
@@ -20,12 +21,13 @@ function main (.text) {
             and if (var1 > 9)
             # 0x400582: cmp dword ptr [rbp - 4], 4
             # 0x400586: jle 0x400562
-            if (var1 > 4)  goto 0x400588
+            if (var1 > 4)  goto ret_0x400588
         }
         0x400562: edi = 0x400624 "1" # mov edi, 0x400624
         0x400567: call 0x400410 <puts@plt>
         0x40056c: var1 += 1 # add dword ptr [rbp - 4], 1
     }
+    ret_0x400588:
     0x400588: edi = 0x400626 "2" # mov edi, 0x400626
     0x40058d: call 0x400410 <puts@plt>
     0x400592: eax = 0 # mov eax, 0

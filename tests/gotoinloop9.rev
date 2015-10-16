@@ -8,9 +8,10 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: jmp 0x40058a
     loop {
+        loop_0x40058a:
         # 0x40058a: cmp dword ptr [rbp - 4], 0x538
         # 0x400591: jle 0x400510
-        if (var1 > 1336)  goto 0x400597
+        if (var1 > 1336)  goto ret_0x400597
         # 0x400510: cmp dword ptr [rbp - 8], 1
         # 0x400514: jne 0x400522
         if (var2 == 1) {
@@ -22,17 +23,20 @@ function main (.text) {
         0x400527: call 0x4003e0 <puts@plt>
         0x40052c: jmp 0x400584
         loop {
+            loop_0x400584:
             # 0x400584: cmp dword ptr [rbp - 8], 0x7a
             # 0x400588: jle 0x40057b
-            if (var2 > 122)  goto 0x40058a
+            if (var2 > 122)  goto loop_0x40058a
             loop {
+                loop_0x40057b:
                 # 0x40057b: cmp dword ptr [rbp - 0x10], 0x1c7
                 # 0x400582: jle 0x400572
-                if (var3 > 455)  goto 0x400584
+                if (var3 > 455)  goto loop_0x400584
                 loop {
+                    loop_0x400572:
                     # 0x400572: cmp dword ptr [rbp - 0xc], 0x314
                     # 0x400579: jle 0x40052e
-                    if (var4 > 788)  goto 0x40057b
+                    if (var4 > 788)  goto loop_0x40057b
                     0x40052e: eax = var2 # mov eax, dword ptr [rbp - 8]
                     # 0x400531: cmp eax, dword ptr [rbp - 0x10]
                     # 0x400534: jne 0x400542
@@ -64,6 +68,7 @@ function main (.text) {
             }
         }
     }
+    ret_0x400597:
     0x400597: eax = 0 # mov eax, 0
     0x40059c: leave 
     0x40059d: ret 

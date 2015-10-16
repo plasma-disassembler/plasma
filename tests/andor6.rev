@@ -26,6 +26,7 @@ function main (.text) {
             0x400521: jmp 0x40050f
         }
     }
+    ret_0x40050f:
     0x40050f: eax = 0 # xor eax, eax
     0x400511: pop rbx
     0x400512: ret 

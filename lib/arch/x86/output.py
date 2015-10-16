@@ -20,8 +20,10 @@
 import struct
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end, INTERN_COMMENTS)
-from lib.colors import (color, color_addr, color_retcall, color_string,
+        print_comment, print_comment_no_end, INTERN_COMMENTS,
+        print_tabbed, print_addr, print_label, print_label_or_addr,
+        print_label_and_addr)
+from lib.colors import (color, color_retcall, color_string,
         color_var, color_section, color_intern_comment, color_keyword)
 from lib.utils import get_char, BYTES_PRINTABLE_SET
 from lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -98,6 +100,9 @@ class Output(OutputAbs):
                 if imm in self.binary.reverse_symbols:
                     print_no_end(" ")
                     self.print_symbol(imm)
+                if imm in self.ctx.labels:
+                    print_no_end(" ")
+                    print_label(imm, print_colon=False)
             elif op.size == 1:
                 print_no_end(color_string("'%s'" % get_char(imm)))
             elif hexa:
@@ -229,8 +234,13 @@ class Output(OutputAbs):
 
         if prefix == "# ":
             if self.ctx.comments:
-                print_comment_no_end(prefix, tab)
-                print_no_end(color_addr(i.address))
+                if i.address in self.ctx.labels:
+                    print_label(i.address, tab)
+                    print()
+                    print_comment_no_end(prefix + hex(i.address) + ": ", tab)
+                else:
+                    print_comment_no_end(prefix, tab)
+                    print_addr(i.address)
                 self.print_bytes(i, True)
                 print_comment(get_inst_str())
             return
@@ -273,7 +283,7 @@ class Output(OutputAbs):
             nonlocal tab
             if i.prefix[0] in REP_PREFIX:
                 print()
-                print_tabbed_no_end(color_addr(i.address), tab)
+                print_label_or_addr(i.address, tab)
                 print("rcx--")
                 if i.prefix[0] == X86_PREFIX_REPNE:
                     print_tabbed_no_end(color_keyword("if"), tab)
@@ -284,7 +294,7 @@ class Output(OutputAbs):
 
         print_rep_begin()
 
-        print_tabbed_no_end(color_addr(i.address), tab)
+        print_label_and_addr(i.address, tab)
 
         self.print_bytes(i)
 
@@ -299,17 +309,17 @@ class Output(OutputAbs):
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
+            print_no_end(i.mnemonic + " ")
             if i.operands[0].type != X86_OP_IMM:
-                print_no_end(i.mnemonic + " ")
                 self.print_operand(i, 0)
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
                     print_comment_no_end(" # STOPPED")
                 return
-            try:
-                addr = i.operands[0].value.imm
-                print_no_end(i.mnemonic + " " + color(hex(addr), self.ctx.addr_color[addr]))
-            except KeyError:
-                print_no_end(i.mnemonic + " " + hex(addr))
+            addr = i.operands[0].value.imm
+            if addr in self.ctx.addr_color:
+                print_label_or_addr(addr, -1, False)
+            else:
+                print_no_end(hex(addr))
             return
 
 
@@ -406,7 +416,7 @@ class Output(OutputAbs):
             print_no_end(" cmp ")
             self.print_operand(i, 1)
             print()
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 1, show_deref=False)
             print_no_end(" += D")
             modified = True
@@ -416,7 +426,7 @@ class Output(OutputAbs):
             print_no_end(" = ")
             self.print_operand(i, 1)
             print()
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 0, show_deref=False)
             print_no_end(" += D")
             modified = True
@@ -426,7 +436,7 @@ class Output(OutputAbs):
             print_no_end(" = ")
             self.print_operand(i, 1)
             print()
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 1, show_deref=False)
             print_no_end(" += D")
             modified = True
@@ -436,10 +446,10 @@ class Output(OutputAbs):
             print_no_end(" cmp ")
             self.print_operand(i, 1)
             print()
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 0, show_deref=False)
             print(" += D")
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 1, show_deref=False)
             print_no_end("' += D")
             modified = True
@@ -449,10 +459,10 @@ class Output(OutputAbs):
             print_no_end(" = ")
             self.print_operand(i, 1)
             print()
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 0, show_deref=False)
             print(" += D")
-            print_tabbed_no_end(color_addr(i.address), tab)
+            print_label_or_addr(i.address, tab)
             self.print_operand(i, 1, show_deref=False)
             print_no_end(" += D")
             modified = True

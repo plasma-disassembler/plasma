@@ -33,6 +33,7 @@ function _main (.text) {
     0x4012d8: var5 = 0 # mov dword ptr [ebp - 0x30], 0
     0x4012df: var6 = 0 # mov dword ptr [ebp - 0x2c], 0
     loop {
+        loop_0x4012e6:
         0x4012e6: *(esp) = 0x403000 "\n\n              ----------PEND..." # mov dword ptr [esp], 0x403000
         0x4012ed: call 0x401d50 <jmp_printf>
         0x4012f2: *(esp) = 0x403030 "\t\t1 : Jouer\n\t\t2 : Nombre de ch..." # mov dword ptr [esp], 0x403030
@@ -70,6 +71,7 @@ function _main (.text) {
                 0x401376: var4 = eax # mov dword ptr [ebp - 0x18], eax
                 0x401379: var12 = 0 # mov dword ptr [ebp - 0x20], 0
                 loop {
+                    loop_0x401380:
                     0x401380: eax = var12 # mov eax, dword ptr [ebp - 0x20]
                     # 0x401383: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x401386: jge 0x4013a3
@@ -85,6 +87,7 @@ function _main (.text) {
                 0x4013a3: eax = var3 # mov eax, dword ptr [ebp - 0x10]
                 0x4013a6: var2 = eax # mov dword ptr [ebp - 0xc], eax
                 loop {
+                    loop_0x4013a9:
                     0x4013a9: eax = var8 # mov eax, dword ptr [ebp - 0x24]
                     # 0x4013ac: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x4013af: jge 0x4014ba
@@ -96,6 +99,7 @@ function _main (.text) {
                     0x4013c6: call 0x401d50 <jmp_printf>
                     0x4013cb: var12 = 0 # mov dword ptr [ebp - 0x20], 0
                     loop {
+                        loop_0x4013d2:
                         0x4013d2: eax = var12 # mov eax, dword ptr [ebp - 0x20]
                         # 0x4013d5: cmp eax, dword ptr [ebp - 0x1c]
                         # 0x4013d8: jge 0x401420
@@ -129,6 +133,7 @@ function _main (.text) {
                     0x401433: *(esp) = 0x403093 "\nLettre : " # mov dword ptr [esp], 0x403093
                     0x40143a: call 0x401d50 <jmp_printf>
                     loop {
+                        loop_0x40143f:
                         0x40143f: call 0x401d10 <jmp_getchar>
                         0x401444: var14 = al # mov byte ptr [ebp - 0xa9], al
                         0x40144a: eax = var14 # movsx eax, byte ptr [ebp - 0xa9]
@@ -191,6 +196,7 @@ function _main (.text) {
             # 0x40150c: jne 0x40153b
             if (var7 == 2) {
                 loop {
+                    loop_0x40150e:
                     0x40150e: *(esp) = 0x403100 "\nNombre de chance (defaut : 10..." # mov dword ptr [esp], 0x403100
                     0x401515: call 0x401d50 <jmp_printf>
                     0x40151a: eax = &(var2) # lea eax, dword ptr [ebp - 0xc]
@@ -207,10 +213,11 @@ function _main (.text) {
             }
             # 0x40153b: cmp dword ptr [ebp - 0x14], 3
             # 0x40153f: je 0x401546
-            if (var7 == 3)  goto 0x401546
+            if (var7 == 3)  goto ret_0x401546
             0x401541: jmp 0x4012e6
         }
     }
+    ret_0x401546:
     0x401546: eax = 0 # mov eax, 0
     0x40154b: leave 
     0x40154c: ret 

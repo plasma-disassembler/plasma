@@ -15,6 +15,7 @@ function main (.text) {
     0x400525: call 0x4003e0 <puts@plt>
     0x40052a: jmp 0x400552
     for (;;) {
+        loop_0x400552:
         # 0x400552: cmp dword ptr [rbp - 8], 5
         # 0x400556: jne 0x400564
         if (var2 == 5) {

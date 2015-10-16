@@ -29,8 +29,9 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_BLEZ, MIPS_INS_BLTZ, MIPS_REG_ZERO)
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end, print_tabbed)
-from lib.colors import (color, color_addr, color_retcall, color_string,
+        print_comment, print_comment_no_end, print_tabbed, print_addr,
+        print_label_or_addr, print_label_and_addr, print_label)
+from lib.colors import (color, color_retcall, color_string,
         color_section, color_type)
 from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -88,6 +89,9 @@ class Output(OutputAbs):
                 if imm in self.binary.reverse_symbols:
                     print_no_end(" ")
                     self.print_symbol(imm)
+                if imm in self.ctx.labels:
+                    print_no_end(" ")
+                    print_label(imm, print_colon=False)
             elif hexa:
                 print_no_end(hex(imm))
             else:
@@ -182,14 +186,17 @@ class Output(OutputAbs):
         if isinstance(i, PseudoInst):
             for i2 in i.real_inst_list:
                 self.print_inst(i2, tab, "# ")
-            print_tabbed_no_end(color_addr(i.real_inst_list[0].address), tab)
+            print_label_and_addr(i.real_inst_list[0].address, tab)
             print(i.pseudo)
             return
 
         if prefix == "# ":
             if self.ctx.comments:
+                if i.address in self.ctx.labels:
+                    print_label(i.address, tab)
+                    print()
                 print_comment_no_end(prefix, tab)
-                print_no_end(color_addr(i.address))
+                print_addr(i.address)
                 self.print_bytes(i, True)
                 print_comment(get_inst_str())
             return
@@ -202,7 +209,7 @@ class Output(OutputAbs):
             self.print_symbol(i.address)
             print()
 
-        print_tabbed_no_end(color_addr(i.address), tab)
+        print_label_and_addr(i.address, tab)
 
         self.print_bytes(i)
 
@@ -230,12 +237,14 @@ class Output(OutputAbs):
                 self.print_operand(i, num)
                 print_no_end(", ")
 
-            addr = i.operands[-1].value.imm
+            addr = i.operands[0].value.imm
             if addr in self.ctx.addr_color:
-                print(color(hex(addr), self.ctx.addr_color[addr]))
+                print_label_or_addr(addr, -1, False)
             else:
-                print(hex(addr))
+                print_no_end(hex(addr))
+            print()
             return
+
 
         modified = False
 

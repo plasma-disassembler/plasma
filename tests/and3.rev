@@ -36,6 +36,7 @@ function main (.text) {
         0x400558: edi = 0x400608 "3" # mov edi, 0x400608
         0x40055d: call 0x4003e0 <puts@plt>
     }
+    ret_0x400562:
     0x400562: edi = 0x40060a "4" # mov edi, 0x40060a
     0x400567: call 0x4003e0 <puts@plt>
     0x40056c: eax = 0 # mov eax, 0

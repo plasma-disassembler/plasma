@@ -6,9 +6,10 @@ function main (.text) {
     0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
     0x400515: jmp 0x400946
     loop {
+        loop_0x400946:
         # 0x400946: cmp dword ptr [rbp - 4], 9
         # 0x40094a: jle 0x40051a
-        if (var1 > 9)  goto 0x400950
+        if (var1 > 9)  goto ret_0x400950
         # 0x40051a: cmp dword ptr [rbp - 4], 0
         # 0x40051e: jne 0x40052c
         if (var1 == 0) {
@@ -391,6 +392,7 @@ function main (.text) {
         }
         0x400942: var1 += 1 # add dword ptr [rbp - 4], 1
     }
+    ret_0x400950:
     0x400950: eax = 0 # mov eax, 0
     0x400955: leave 
     0x400956: ret 

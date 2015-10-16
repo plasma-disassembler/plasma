@@ -14,6 +14,7 @@ function main (.text) {
     0x400520: edi = 0x400606 "2" # mov edi, 0x400606
     0x400525: call 0x4003e0 <puts@plt>
     for (;;) {
+        loop_0x40052a:
         0x40052a: edi = 0x400608 "loop" # mov edi, 0x400608
         0x40052f: call 0x4003e0 <puts@plt>
         # 0x400534: cmp dword ptr [rbp - 8], 6

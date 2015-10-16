@@ -14,6 +14,7 @@ function main (.text) {
     if (var3 == 1) {
         0x40051b: jmp 0x400527
         loop {
+            loop_0x400527:
             # 0x400527: cmp dword ptr [rbp - 8], 9
             # 0x40052b: jle 0x40051d
             if (var4 > 9)  goto 0x40052d
@@ -27,13 +28,15 @@ function main (.text) {
     # 0x40053b: jne 0x40054d
     if (var3 == 2) {
         loop {
+            loop_0x40053d:
             0x40053d: edi = 0x4005e8 "3" # mov edi, 0x4005e8
             0x400542: call 0x4003e0 <puts@plt>
             # 0x400547: cmp dword ptr [rbp - 0xc], 0xe
             # 0x40054b: jle 0x40053d
-            if (var5 > 14)  goto 0x40054d
+            if (var5 > 14)  goto ret_0x40054d
         }
     }
+    ret_0x40054d:
     0x40054d: eax = 0 # mov eax, 0
     0x400552: leave 
     0x400553: ret 

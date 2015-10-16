@@ -10,12 +10,14 @@ function main (.text) {
     0x40050e: var1 = edi # mov dword ptr [rbp - 0x14], edi
     0x400511: var2 = rsi # mov qword ptr [rbp - 0x20], rsi
     loop {
+        loop_0x400515:
         # 0x400515: cmp dword ptr [rbp - 8], 1
         # 0x400519: jne 0x40053a
         if (var3 == 1) {
             0x40051b: var4 = 0 # mov dword ptr [rbp - 0xc], 0
             0x400522: jmp 0x400532
             loop {
+                loop_0x400532:
                 0x400532: eax = var4 # mov eax, dword ptr [rbp - 0xc]
                 # 0x400535: cmp eax, dword ptr [rbp - 4]
                 # 0x400538: jl 0x400524
@@ -33,8 +35,9 @@ function main (.text) {
         }
         # 0x40054a: cmp dword ptr [rbp - 8], 3
         # 0x40054e: jne 0x400515
-        if (var3 == 3)  goto 0x400550
+        if (var3 == 3)  goto ret_0x400550
     }
+    ret_0x400550:
     0x400550: eax = 0 # mov eax, 0
     0x400555: leave 
     0x400556: ret 

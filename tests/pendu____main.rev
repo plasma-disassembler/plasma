@@ -18,6 +18,7 @@ function ___main (.text) {
             0x401912: test ecx, ecx
             0x401914: jmp 0x401920
             loop {
+                loop_0x401920:
                 # 0x401920: jne 0x401916
                 if ==  goto 0x401922
                 0x401916: eax++ # inc eax
@@ -33,6 +34,7 @@ function ___main (.text) {
             0x4018eb: nop 
             0x4018ec: esi = &(*(esi)) # lea esi, dword ptr [esi]
             loop {
+                loop_0x4018f0:
                 0x4018f0: call *((ebx*4) + 4202128)
                 0x4018f7: ebx-- # dec ebx
                 # 0x4018f8: jne 0x4018f0
@@ -42,6 +44,7 @@ function ___main (.text) {
         0x4018fa: *(esp) = 0x401820 <___do_global_dtors> # mov dword ptr [esp], 0x401820
         0x401901: call 0x401260 <_atexit>
     }
+    ret_0x401906:
     0x401906: pop ebx
     0x401907: pop ebx
     0x401908: pop ebp
