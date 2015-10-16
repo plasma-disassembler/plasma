@@ -25,13 +25,13 @@ function main (.text) {
         # 0x400522: jne 0x40052e
         if (var1 == 5) {
             0x400524: edi = 0x4005e4 "1" # mov edi, 0x4005e4
-            0x400529: call 0x4003e0 <puts@plt>
+            0x400529: call <puts@plt>  # call 0x4003e0
         }
         0x40052e: var1 += 1 # add dword ptr [rbp - 4], 1
     }
     ret_0x40054a:
     0x40054a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-    0x40054f: call 0x4003e0 <puts@plt>
+    0x40054f: call <puts@plt>  # call 0x4003e0
     0x400554: eax = 0 # mov eax, 0
     0x400559: leave 
     0x40055a: ret 

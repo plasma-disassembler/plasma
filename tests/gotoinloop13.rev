@@ -8,7 +8,7 @@ function main (.text) {
     # 0x400515: jne 0x40054e
     if (var1 == 1337) {
         0x400517: edi = 0x4005e4 "1" # mov edi, 0x4005e4
-        0x40051c: call 0x4003e0 <puts@plt>
+        0x40051c: call <puts@plt>  # call 0x4003e0
         0x400521: jmp 0x40052d
     }
     loop {
@@ -17,7 +17,7 @@ function main (.text) {
         # 0x400552: jle 0x400523
         if (var1 > 14)  goto ret_0x400554
         0x400523: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-        0x400528: call 0x4003e0 <puts@plt>
+        0x400528: call <puts@plt>  # call 0x4003e0
         0x40052d: var2 = 0 # mov dword ptr [rbp - 8], 0
         0x400534: jmp 0x400544
         loop {
@@ -26,7 +26,7 @@ function main (.text) {
             # 0x400548: jle 0x400536
             if (var2 > 19)  goto 0x40054a
             0x400536: edi = 0x4005e8 "3" # mov edi, 0x4005e8
-            0x40053b: call 0x4003e0 <puts@plt>
+            0x40053b: call <puts@plt>  # call 0x4003e0
             0x400540: var2 += 1 # add dword ptr [rbp - 8], 1
         }
         0x40054a: var1 += 1 # add dword ptr [rbp - 4], 1

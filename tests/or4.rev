@@ -8,7 +8,7 @@ function main (.text) {
     # 0x40051c: jg 0x400544
     if (var1 <= 199) {
         0x40051e: edi = 0x4005e4 "1" # mov edi, 0x4005e4
-        0x400523: call 0x4003e0 <puts@plt>
+        0x400523: call <puts@plt>  # call 0x4003e0
         # 0x400528: cmp dword ptr [rbp - 4], 1
         # 0x40052c: je 0x40053a
         if (var1 != 1) {
@@ -21,12 +21,12 @@ function main (.text) {
             goto ret_0x400544
         } else {
             0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-            0x40053f: call 0x4003e0 <puts@plt>
+            0x40053f: call <puts@plt>  # call 0x4003e0
         }
     }
     ret_0x400544:
     0x400544: edi = 0x4005e8 "3" # mov edi, 0x4005e8
-    0x400549: call 0x4003e0 <puts@plt>
+    0x400549: call <puts@plt>  # call 0x4003e0
     0x40054e: eax = 0 # mov eax, 0
     0x400553: leave 
     0x400554: ret 

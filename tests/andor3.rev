@@ -7,7 +7,7 @@ function main (.text) {
     # 0x400512: jne 0x400526
     if (var1 == 1) {
         0x400514: edi = 0x4005d4 "2" # mov edi, 0x4005d4
-        0x400519: call 0x4003e0 <puts@plt>
+        0x400519: call <puts@plt>  # call 0x4003e0
         # 0x40051e: cmp dword ptr [rbp - 4], 2
         # 0x400522: jne 0x40053a
         if (var1 == 2) {
@@ -19,7 +19,7 @@ function main (.text) {
         # 0x40052e: jne 0x40053a
         if (var1 == 0) {
             0x400530: edi = 0x4005d6 "1" # mov edi, 0x4005d6
-            0x400535: call 0x4003e0 <puts@plt>
+            0x400535: call <puts@plt>  # call 0x4003e0
         }
     }
     ret_0x40053a:

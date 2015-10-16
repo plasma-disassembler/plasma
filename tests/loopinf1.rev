@@ -13,7 +13,7 @@ function main (.text) {
             # 0x400522: jne 0x40052e
             if (var1 == 456) {
                 0x400524: edi = 0x4005d4 "1" # mov edi, 0x4005d4
-                0x400529: call 0x4003e0 <puts@plt>
+                0x400529: call <puts@plt>  # call 0x4003e0
             }
             0x40052e: var1 += 1 # add dword ptr [rbp - 4], 1
             0x400532: jmp 0x40051b
@@ -21,7 +21,7 @@ function main (.text) {
     }
     ret_0x400534:
     0x400534: edi = 0x4005d6 "2" # mov edi, 0x4005d6
-    0x400539: call 0x4003e0 <puts@plt>
+    0x400539: call <puts@plt>  # call 0x4003e0
     0x40053e: eax = 0 # mov eax, 0
     0x400543: leave 
     0x400544: ret 

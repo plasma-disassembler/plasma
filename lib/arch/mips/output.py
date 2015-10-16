@@ -80,18 +80,30 @@ class Output(OutputAbs):
             sec_name, is_data = self.binary.is_address(imm)
 
             if sec_name is not None:
-                print_no_end(hex(imm))
+                modified = False
+
                 if self.ctx.sectionsname:
-                    print_no_end(" (" + color_section(sec_name) + ")")
+                    print_no_end("(" + color_section(sec_name) + ") ")
+
+                if imm in self.binary.reverse_symbols:
+                    self.print_symbol(imm)
+                    print_no_end(" ")
+                    modified = True
+
+                if imm in self.ctx.labels:
+                    print_label(imm, print_colon=False)
+                    print_no_end(" ")
+                    modified = True
+
+                if not modified:
+                    print_no_end(hex(imm))
+
                 if is_data:
                     s = self.binary.get_string(imm, self.ctx.max_data_size)
                     print_no_end(" " + color_string(s))
-                if imm in self.binary.reverse_symbols:
-                    print_no_end(" ")
-                    self.print_symbol(imm)
-                if imm in self.ctx.labels:
-                    print_no_end(" ")
-                    print_label(imm, print_colon=False)
+
+                return modified
+
             elif hexa:
                 print_no_end(hex(imm))
             else:
@@ -106,7 +118,7 @@ class Output(OutputAbs):
                         return False
 
                 # returns True because capstone print immediate in hexa
-                # it will be printed in a comment, sometimes it better
+                # it will be printed in a comment, sometimes it's better
                 # to have the value in hexa
                 return True
 
@@ -219,7 +231,9 @@ class Output(OutputAbs):
 
         if is_call(i):
             print_no_end(color_retcall(i.mnemonic) + " ")
-            self.print_operand(i, 0, hexa=True)
+            modified = self.print_operand(i, 0, hexa=True)
+            if modified and self.ctx.comments:
+                print_comment_no_end(" # " + get_inst_str())
             print()
             return
 

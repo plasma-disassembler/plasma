@@ -19,16 +19,16 @@ function main (.text) {
             # 0x40052e: je 0x40053a
             and if (eax != var2)
             0x400530: edi = 0x4005e4 "1" # mov edi, 0x4005e4
-            0x400535: call 0x4003e0 <puts@plt>
+            0x400535: call <puts@plt>  # call 0x4003e0
         }
         0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-        0x40053f: call 0x4003e0 <puts@plt>
+        0x40053f: call <puts@plt>  # call 0x4003e0
         0x400544: var1 += 1 # add dword ptr [rbp - 4], 1
         # 0x400548: cmp dword ptr [rbp - 4], 0
         # 0x40054c: jne 0x400558
         if (var1 == 0) {
             0x40054e: edi = 0x4005e8 "3" # mov edi, 0x4005e8
-            0x400553: call 0x4003e0 <puts@plt>
+            0x400553: call <puts@plt>  # call 0x4003e0
         }
         0x400558: var2 += 1 # add dword ptr [rbp - 8], 1
         0x40055c: jmp 0x40051c

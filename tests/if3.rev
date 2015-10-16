@@ -15,7 +15,7 @@ function main (.text) {
         # 0x400554: jle 0x400525
         if (var1 > 7)  goto ret_0x400556
         0x400525: edi = 0x4005e4 "1" # mov edi, 0x4005e4
-        0x40052a: call 0x4003e0 <puts@plt>
+        0x40052a: call <puts@plt>  # call 0x4003e0
         # 0x40052f: cmp dword ptr [rbp - 0xc], 0xa
         # 0x400533: jle 0x40053e
         if (var2 > 10) {
@@ -26,7 +26,7 @@ function main (.text) {
         }
         0x400542: var1 += 1 # add dword ptr [rbp - 4], 1
         0x400546: edi = 0x4005e6 "2" # mov edi, 0x4005e6
-        0x40054b: call 0x4003e0 <puts@plt>
+        0x40054b: call <puts@plt>  # call 0x4003e0
     }
     ret_0x400556:
     0x400556: eax = 0 # mov eax, 0
