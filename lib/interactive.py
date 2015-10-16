@@ -62,6 +62,8 @@ class Interactive():
             "sections",
             "sym",
             "x",
+            "display.print_section",
+            "display.print_comments",
         ]
 
         self.COMMANDS = {
@@ -156,7 +158,6 @@ class Interactive():
                 ]
             ),
 
-
             # by default it will be ctx.lines
             "dump": Command(
                 2,
@@ -226,6 +227,26 @@ class Interactive():
                 [
                 "",
                 "Information about the current binary"
+                ]
+            ),
+
+            "display.print_section": Command(
+                0,
+                self.__exec_display_print_section,
+                None,
+                [
+                "",
+                "Print or not section when an address is found"
+                ]
+            ),
+
+            "display.print_comments": Command(
+                0,
+                self.__exec_display_print_comments,
+                None,
+                [
+                "",
+                "Print or not comments"
                 ]
             ),
         }
@@ -619,3 +640,21 @@ class Interactive():
             print("Endianess: big endian")
         else:
             print("Endianess: little endian")
+
+
+    def __exec_display_print_section(self, args):
+        if self.ctx.sectionsname:
+            print("now it's off")
+            self.ctx.sectionsname = False
+        else:
+            print("now it's on")
+            self.ctx.sectionsname = True
+
+
+    def __exec_display_print_comments(self, args):
+        if self.ctx.comments:
+            print("now it's off")
+            self.ctx.comments = False
+        else:
+            print("now it's on")
+            self.ctx.comments = True
