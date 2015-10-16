@@ -110,7 +110,7 @@ class OutputAbs():
 
 
     def print_symbol(self, addr):
-        print_no_end(color_symbol("<" + self.binary.reverse_symbols[addr] + ">"))
+        print_no_end(color_symbol(self.binary.reverse_symbols[addr]))
 
 
     def print_bytes(self, i, comment_this=False):

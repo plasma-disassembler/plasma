@@ -1,17 +1,17 @@
 function main (.text) {
     0x4004e0: push rbx
     0x4004e1: edi = 0 # xor edi, edi
-    0x4004e3: call <time@plt>  # call 0x4004c0
+    0x4004e3: call time@plt  # call 0x4004c0
     0x4004e8: edi = eax # mov edi, eax
-    0x4004ea: call <srand@plt>  # call 0x4004a0
-    0x4004ef: call <rand@plt>  # call 0x4004d0
+    0x4004ea: call srand@plt  # call 0x4004a0
+    0x4004ef: call rand@plt  # call 0x4004d0
     0x4004f4: ebx = eax # mov ebx, eax
-    0x4004f6: call <rand@plt>  # call 0x4004d0
+    0x4004f6: call rand@plt  # call 0x4004d0
     # 0x4004fb: cmp ebx, 1
     # 0x4004fe: je 0x400513
     if (ebx != '\x01') {
         0x400500: edi = 0x4006b6 "2" # mov edi, 0x4006b6
-        0x400505: call <puts@plt>  # call 0x400480
+        0x400505: call puts@plt  # call 0x400480
         # 0x40050a: cmp ebx, 2
         # 0x40050d: je 0x400517
         if (ebx == '\x02') {
@@ -22,7 +22,7 @@ function main (.text) {
         # 0x400515: jne 0x40050f
         if (eax == 0) {
             0x400517: edi = 0x4006b4 "1" # mov edi, 0x4006b4
-            0x40051c: call <puts@plt>  # call 0x400480
+            0x40051c: call puts@plt  # call 0x400480
             0x400521: jmp 0x40050f
         }
     }

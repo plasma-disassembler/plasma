@@ -36,11 +36,11 @@ function main (.text) {
         # 0x4005d1: jne 0x4005df
         if (var2 == 1) {
             0x4005d3: edi = 0x40073e "loop1 1" # mov edi, 0x40073e
-            0x4005d8: call <puts@plt>  # call 0x4003e0
+            0x4005d8: call puts@plt  # call 0x4003e0
             0x4005dd: jmp 0x4005e9
         } else {
             0x4005df: edi = 0x400746 "loop1 2" # mov edi, 0x400746
-            0x4005e4: call <puts@plt>  # call 0x4003e0
+            0x4005e4: call puts@plt  # call 0x4003e0
         }
         0x4005e9: jmp 0x4005cd
     }
@@ -48,26 +48,26 @@ function main (.text) {
     # 0x4005a7: jne 0x4005b8
     if (var3 == 1) {
         0x4005a9: edi = 0x400736 "3 1" # mov edi, 0x400736
-        0x4005ae: call <puts@plt>  # call 0x4003e0
+        0x4005ae: call puts@plt  # call 0x4003e0
         0x4005b3: jmp 0x40065f
     } else {
         0x4005b8: edi = 0x40073a "3 2" # mov edi, 0x40073a
-        0x4005bd: call <puts@plt>  # call 0x4003e0
+        0x4005bd: call puts@plt  # call 0x4003e0
         0x4005c2: jmp 0x40065f
     }
     # 0x40057f: cmp dword ptr [rbp - 8], 1
     # 0x400583: jne 0x400591
     if (var3 == 1) {
         0x400585: edi = 0x40072e "2 1" # mov edi, 0x40072e
-        0x40058a: call <puts@plt>  # call 0x4003e0
+        0x40058a: call puts@plt  # call 0x4003e0
         0x40058f: jmp 0x40059b
     } else {
         0x400591: edi = 0x400732 "2 2" # mov edi, 0x400732
-        0x400596: call <puts@plt>  # call 0x4003e0
+        0x400596: call puts@plt  # call 0x4003e0
         goto ret_0x40059b
     }
     0x40056d: edi = 0x400724 "goto exit" # mov edi, 0x400724
-    0x400572: call <puts@plt>  # call 0x4003e0
+    0x400572: call puts@plt  # call 0x4003e0
     0x400577: jmp 0x40059b
     ret_0x40059b:
     0x40059b: leave 
@@ -76,33 +76,33 @@ function main (.text) {
     # 0x400547: jne 0x400558
     if (var3 == 1) {
         0x400549: edi = 0x40071c "1 1" # mov edi, 0x40071c
-        0x40054e: call <puts@plt>  # call 0x4003e0
+        0x40054e: call puts@plt  # call 0x4003e0
         0x400553: jmp 0x4005f5
     } else {
         0x400558: edi = 0x400720 "1 2" # mov edi, 0x400720
-        0x40055d: call <puts@plt>  # call 0x4003e0
+        0x40055d: call puts@plt  # call 0x4003e0
         0x400562: jmp 0x4005f5
     }
     # 0x400519: cmp dword ptr [rbp - 8], 1
     # 0x40051d: jne 0x40052e
     if (var3 == 1) {
         0x40051f: edi = 0x400714 "0 1" # mov edi, 0x400714
-        0x400524: call <puts@plt>  # call 0x4003e0
+        0x400524: call puts@plt  # call 0x4003e0
         0x400529: jmp 0x400614
     } else {
         0x40052e: edi = 0x400718 "0 2" # mov edi, 0x400718
-        0x400533: call <puts@plt>  # call 0x4003e0
+        0x400533: call puts@plt  # call 0x4003e0
         0x400538: jmp 0x400614
     }
     0x4005f5: edi = 0x40074e "end" # mov edi, 0x40074e
-    0x4005fa: call <puts@plt>  # call 0x4003e0
+    0x4005fa: call puts@plt  # call 0x4003e0
     # 0x4005ff: cmp dword ptr [rbp - 4], 0x539
     # 0x400606: jne 0x400614
     if (var1 == 1337) {
         for (;;) {
             loop_0x400608:
             0x400608: edi = 0x400752 "loop2" # mov edi, 0x400752
-            0x40060d: call <puts@plt>  # call 0x4003e0
+            0x40060d: call puts@plt  # call 0x4003e0
             0x400612: jmp 0x400608
         }
     }
@@ -110,11 +110,11 @@ function main (.text) {
     # 0x400618: jne 0x400626
     if (var3 == 1) {
         0x40061a: edi = 0x400758 "label1 1" # mov edi, 0x400758
-        0x40061f: call <puts@plt>  # call 0x4003e0
+        0x40061f: call puts@plt  # call 0x4003e0
         0x400624: jmp 0x400630
     } else {
         0x400626: edi = 0x400761 "label1 2" # mov edi, 0x400761
-        0x40062b: call <puts@plt>  # call 0x4003e0
+        0x40062b: call puts@plt  # call 0x4003e0
     }
     0x400630: var1 = 0 # mov dword ptr [rbp - 4], 0
     0x400637: jmp 0x400659
@@ -127,11 +127,11 @@ function main (.text) {
         # 0x40063d: jne 0x40064b
         if (var1 == 50) {
             0x40063f: edi = 0x40076a "for 1" # mov edi, 0x40076a
-            0x400644: call <puts@plt>  # call 0x4003e0
+            0x400644: call puts@plt  # call 0x4003e0
             0x400649: jmp 0x400655
         } else {
             0x40064b: edi = 0x400770 "for 2" # mov edi, 0x400770
-            0x400650: call <puts@plt>  # call 0x4003e0
+            0x400650: call puts@plt  # call 0x4003e0
         }
         0x400655: var1 += 1 # add dword ptr [rbp - 4], 1
     }
@@ -139,11 +139,11 @@ function main (.text) {
     # 0x400663: jne 0x400671
     if (var3 == 1) {
         0x400665: edi = 0x400776 "label2 1" # mov edi, 0x400776
-        0x40066a: call <puts@plt>  # call 0x4003e0
+        0x40066a: call puts@plt  # call 0x4003e0
         0x40066f: jmp 0x40067b
     } else {
         0x400671: edi = 0x40077f "label2 2" # mov edi, 0x40077f
-        0x400676: call <puts@plt>  # call 0x4003e0
+        0x400676: call puts@plt  # call 0x4003e0
     }
     ret_0x40067b:
     0x40067b: eax = 0 # mov eax, 0

@@ -151,7 +151,6 @@ class Output(OutputAbs):
                         print_no_end(mm.disp)
                     else:
                         if mm.disp in self.binary.reverse_symbols:
-                            print_no_end(hex(mm.disp) + " ")
                             self.print_symbol(mm.disp)
                         else:
                             print_no_end(hex(mm.disp))

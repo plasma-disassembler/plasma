@@ -9,11 +9,11 @@ function main (.text) {
     # 0x400512: jne 0x400520
     if (var1 == 1) {
         0x400514: edi = 0x400614 "1" # mov edi, 0x400614
-        0x400519: call <puts@plt>  # call 0x4003e0
+        0x400519: call puts@plt  # call 0x4003e0
         0x40051e: jmp 0x400536
     }
     0x400520: edi = 0x400616 "2" # mov edi, 0x400616
-    0x400525: call <puts@plt>  # call 0x4003e0
+    0x400525: call puts@plt  # call 0x4003e0
     0x40052a: jmp 0x40057b
     for (;;) {
         loop_0x40057b:
@@ -33,7 +33,7 @@ function main (.text) {
             # 0x400534: jne 0x400542
             if (eax == var2) {
                 0x400536: edi = 0x400618 "3" # mov edi, 0x400618
-                0x40053b: call <puts@plt>  # call 0x4003e0
+                0x40053b: call puts@plt  # call 0x4003e0
                 0x400540: jmp 0x400568
             } else {
                 0x400542: eax = var2 # mov eax, dword ptr [rbp - 8]
@@ -41,7 +41,7 @@ function main (.text) {
                 # 0x400548: jne 0x400556
                 if (eax == var3) {
                     0x40054a: edi = 0x40061a "4" # mov edi, 0x40061a
-                    0x40054f: call <puts@plt>  # call 0x4003e0
+                    0x40054f: call puts@plt  # call 0x4003e0
                     0x400554: jmp 0x400568
                 } else {
                     0x400556: eax = var1 # mov eax, dword ptr [rbp - 4]
@@ -49,12 +49,12 @@ function main (.text) {
                     # 0x40055c: jne 0x400568
                     if (eax == var3) {
                         0x40055e: edi = 0x40061c "5" # mov edi, 0x40061c
-                        0x400563: call <puts@plt>  # call 0x4003e0
+                        0x400563: call puts@plt  # call 0x4003e0
                     }
                 }
             }
             0x400568: edi = 0x40061e "6" # mov edi, 0x40061e
-            0x40056d: call <puts@plt>  # call 0x4003e0
+            0x40056d: call puts@plt  # call 0x4003e0
         }
     }
 }

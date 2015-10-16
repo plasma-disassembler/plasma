@@ -26,7 +26,7 @@ def default_custom_file():
     filename = str(Path(__file__).parent.parent / "custom_colors.py")
     with open(filename, "w+") as fd:
         fd.write(dedent("""\
-            VERSION = 1
+            VERSION = 1.1
 
             class COLOR:
                 def __init__(self, val, bold):
@@ -40,7 +40,7 @@ def default_custom_file():
             COLOR_COMMENT        = COLOR(242, False)
             COLOR_ADDR           = COLOR(242, False)
             COLOR_STRING         = COLOR(144, False)
-            COLOR_SYMBOL         = COLOR(144, False)
+            COLOR_SYMBOL         = COLOR(3, False)
             COLOR_RETCALL        = COLOR(161, False)
             COLOR_INTERN_COMMENT = COLOR(38, False)
             """))

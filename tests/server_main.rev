@@ -18,45 +18,45 @@ function main (.text) {
     0x4009d5: edx = 0 # mov edx, 0
     0x4009da: esi = 1 # mov esi, 1
     0x4009df: edi = 2 # mov edi, 2
-    0x4009e4: call <socket@plt>  # call 0x4008c0
+    0x4009e4: call socket@plt  # call 0x4008c0
     0x4009e9: var3 = eax # mov dword ptr [rbp - 4], eax
     # 0x4009ec: cmp dword ptr [rbp - 4], -1
     # 0x4009f0: jne 0x400a06
     if (var3 == -1) {
         0x4009f2: edi = 0x400ca8 "Could not create socket" # mov edi, 0x400ca8
-        0x4009f7: call <perror@plt>  # call 0x4008a0
+        0x4009f7: call perror@plt  # call 0x4008a0
         0x4009fc: eax = 1 # mov eax, 1
         0x400a01: jmp 0x400b1c
     } else {
         0x400a06: edi = 0x400cc0 "Socket created" # mov edi, 0x400cc0
-        0x400a0b: call <puts@plt>  # call 0x400800
+        0x400a0b: call puts@plt  # call 0x400800
         0x400a10: var4 = 2 # mov word ptr [rbp - 0x30], 2
         0x400a16: var5 = 0 # mov dword ptr [rbp - 0x2c], 0
         0x400a1d: edi = 8888 # mov edi, 0x22b8
-        0x400a22: call <htons@plt>  # call 0x400830
+        0x400a22: call htons@plt  # call 0x400830
         0x400a27: var6 = ax # mov word ptr [rbp - 0x2e], ax
         0x400a2b: rcx = &(var4) # lea rcx, qword ptr [rbp - 0x30]
         0x400a2f: eax = var3 # mov eax, dword ptr [rbp - 4]
         0x400a32: edx = 16 # mov edx, 0x10
         0x400a37: rsi = rcx # mov rsi, rcx
         0x400a3a: edi = eax # mov edi, eax
-        0x400a3c: call <bind@plt>  # call 0x400890
+        0x400a3c: call bind@plt  # call 0x400890
         # 0x400a41: test eax, eax
         # 0x400a43: jns 0x400a59
         if (eax < 0) {
             0x400a45: edi = 0x400ccf "bind failed. Error" # mov edi, 0x400ccf
-            0x400a4a: call <perror@plt>  # call 0x4008a0
+            0x400a4a: call perror@plt  # call 0x4008a0
             0x400a4f: eax = 1 # mov eax, 1
             0x400a54: jmp 0x400b1c
         } else {
             0x400a59: edi = 0x400ce2 "bind done" # mov edi, 0x400ce2
-            0x400a5e: call <puts@plt>  # call 0x400800
+            0x400a5e: call puts@plt  # call 0x400800
             0x400a63: eax = var3 # mov eax, dword ptr [rbp - 4]
             0x400a66: esi = 3 # mov esi, 3
             0x400a6b: edi = eax # mov edi, eax
-            0x400a6d: call <listen@plt>  # call 0x400880
+            0x400a6d: call listen@plt  # call 0x400880
             0x400a72: edi = 0x400cf0 "Waiting for incoming connectio..." # mov edi, 0x400cf0
-            0x400a77: call <puts@plt>  # call 0x400800
+            0x400a77: call puts@plt  # call 0x400800
             0x400a7c: var7 = 16 # mov dword ptr [rbp - 0x14], 0x10
             0x400a83: jmp 0x400ae2
             loop {
@@ -66,15 +66,15 @@ function main (.text) {
                 0x400aea: eax = var3 # mov eax, dword ptr [rbp - 4]
                 0x400aed: rsi = rcx # mov rsi, rcx
                 0x400af0: edi = eax # mov edi, eax
-                0x400af2: call <accept@plt>  # call 0x4008b0
+                0x400af2: call accept@plt  # call 0x4008b0
                 0x400af7: var9 = eax # mov dword ptr [rbp - 8], eax
                 # 0x400afa: cmp dword ptr [rbp - 8], 0
                 # 0x400afe: jne 0x400a85
                 if (var9 == 0)  goto 0x400b00
                 0x400a85: edi = 0x400d14 "Connection accepted" # mov edi, 0x400d14
-                0x400a8a: call <puts@plt>  # call 0x400800
+                0x400a8a: call puts@plt  # call 0x400800
                 0x400a8f: edi = 1 # mov edi, 1
-                0x400a94: call <malloc@plt>  # call 0x400860
+                0x400a94: call malloc@plt  # call 0x400860
                 0x400a99: var10 = rax # mov qword ptr [rbp - 0x10], rax
                 0x400a9d: rax = var10 # mov rax, qword ptr [rbp - 0x10]
                 0x400aa1: edx = var9 # mov edx, dword ptr [rbp - 8]
@@ -82,25 +82,25 @@ function main (.text) {
                 0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
                 0x400aaa: rax = &(var11) # lea rax, qword ptr [rbp - 0x48]
                 0x400aae: rcx = rdx # mov rcx, rdx
-                0x400ab1: edx = <connection_handler>  # mov edx, 0x400b1e
+                0x400ab1: edx = connection_handler  # mov edx, 0x400b1e
                 0x400ab6: esi = 0 # mov esi, 0
                 0x400abb: rdi = rax # mov rdi, rax
-                0x400abe: call <pthread_create@plt>  # call 0x4007f0
+                0x400abe: call pthread_create@plt  # call 0x4007f0
                 # 0x400ac3: test eax, eax
                 # 0x400ac5: jns 0x400ad8
                 if (eax < 0)  goto 0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned" # mov edi, 0x400d40
-                0x400add: call <puts@plt>  # call 0x400800
+                0x400add: call puts@plt  # call 0x400800
             }
             0x400ac7: edi = 0x400d28 "could not create thread" # mov edi, 0x400d28
-            0x400acc: call <perror@plt>  # call 0x4008a0
+            0x400acc: call perror@plt  # call 0x4008a0
             0x400ad1: eax = 1 # mov eax, 1
             0x400ad6: jmp 0x400b1c
             # 0x400b00: cmp dword ptr [rbp - 8], 0
             # 0x400b04: jns 0x400b17
             if (var9 < 0) {
                 0x400b06: edi = 0x400d51 "accept failed" # mov edi, 0x400d51
-                0x400b0b: call <perror@plt>  # call 0x4008a0
+                0x400b0b: call perror@plt  # call 0x4008a0
                 0x400b10: eax = 1 # mov eax, 1
                 0x400b15: jmp 0x400b1c
             } else {
