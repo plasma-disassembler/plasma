@@ -508,14 +508,31 @@ class Interactive():
             self.ctx.dis.print_symbols(self.ctx.sectionsname, args[2])
             return
 
+        if len(args) > 3:
+            error("bad arguments")
+            return
+
         if len(args) == 2:
-            error("an address is required")
+            error("an address is required to save the symbol")
+            return
+
+        if not args[2].startswith("0x"):
+            error("the address should starts with 0x")
             return
 
         # Save new symbol
-        addr = int(args[2], 16)
-        self.ctx.dis.binary.symbols[args[1]] = addr
-        self.ctx.dis.binary.reverse_symbols[addr] = args[1]
+        try:
+            addr = int(args[2], 16)
+
+            if args[1] in self.ctx.dis.binary.symbols:
+                last = self.ctx.dis.binary.symbols[args[1]]
+                del self.ctx.dis.binary.reverse_symbols[last]
+
+            self.ctx.dis.binary.symbols[args[1]] = addr
+            self.ctx.dis.binary.reverse_symbols[addr] = args[1]
+
+        except:
+            error("there was an error when creating a symbol")
 
 
     def __exec_x(self, args):
