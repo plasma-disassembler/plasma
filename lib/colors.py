@@ -40,7 +40,7 @@ def default_custom_file():
             COLOR_COMMENT        = COLOR(242, False)
             COLOR_ADDR           = COLOR(242, False)
             COLOR_STRING         = COLOR(144, False)
-            COLOR_SYMBOL         = COLOR(3, False)
+            COLOR_SYMBOL         = COLOR(144, False)
             COLOR_RETCALL        = COLOR(161, False)
             COLOR_INTERN_COMMENT = COLOR(38, False)
             """))

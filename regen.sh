@@ -14,6 +14,7 @@ if [ "$1" == "force" ]; then
 
   mv tests/pendu.rev tests/pendu__main.rev
   ./reverse.py tests/pendu.bin -x=___main -ns -nc >tests/pendu____main.rev
+  ./reverse.py tests/pendu.bin -x=__imp___cexit -ns -nc >tests/pendu___imp___cexit.rev
 
 else
     echo "Are you sure ?"

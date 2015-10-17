@@ -11,7 +11,7 @@ FLAGS[tests/andor5.c] = "-O3"
 FLAGS[tests/andor6.c] = "-O3"
 
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
-SYMBOLS[tests/pendu.rev] = "_main" "___main"
+SYMBOLS[tests/pendu.rev] = "_main" "___main" "__imp___cexit"
 SYMBOLS[tests/shellcode.rev] = "0x0"
 
 OPTIONS[tests/shellcode.rev] = "--raw x86"

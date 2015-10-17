@@ -156,6 +156,27 @@ def add_goto_after_alone_andif(ast):
 
 
 def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
+    endp = __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start)
+
+    if endp == -1:
+        return -1
+
+    # Check if we found an endpoint in a subloop : for a "if" it's not possible
+    # that the end goes in a loop, so we return -1 if this is the case.
+
+    if l_prev_loop == -1:
+        l = ctx.gph.not_in_loop
+    else:
+        # l_set contains also subloops, here we just want the current loop
+        l = ctx.gph.loops_set[(l_prev_loop, l_start)]
+
+    if endp not in l:
+        return -1
+
+    return endp
+
+
+def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
     waiting = {}
     visited = set()
     done = set()
@@ -249,7 +270,7 @@ def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
             return -1
 
 
-def get_unseen_links_in(ad, l_set, l_prev_loop, l_start, check_sub_loop=True):
+def get_unseen_links_in(ad, l_set, l_prev_loop, l_start):
     unseen = set(ctx.gph.link_in[ad])
 
     # Remove external jumps to the current node if it's an "equivalent loop"
@@ -261,12 +282,11 @@ def get_unseen_links_in(ad, l_set, l_prev_loop, l_start, check_sub_loop=True):
 
     # Is it the beginning of a loop ?
     # Remove internal links to the beginning of the loop
-    if check_sub_loop:
-        if (l_start, ad) in ctx.gph.loops_all:
-            sub_loop = ctx.gph.loops_all[(l_start, ad)]
-            for prev in ctx.gph.link_in[ad]:
-                if prev in sub_loop and prev in unseen:
-                    unseen.remove(prev)
+    if (l_start, ad) in ctx.gph.loops_all:
+        sub_loop = ctx.gph.loops_all[(l_start, ad)]
+        for prev in ctx.gph.link_in[ad]:
+            if prev in sub_loop and prev in unseen:
+                unseen.remove(prev)
 
     if l_set is None:
         return unseen
@@ -469,6 +489,8 @@ def generate_ast(ctx__):
                     prev_inst = ast.nodes[-1][0]
                     if not ctx.libarch.utils.is_uncond_jump(prev_inst):
                         ast.add(Ast_Goto(curr))
+            else:
+                ast.add(Ast_Goto(curr))
             continue
 
         visited.add(curr)

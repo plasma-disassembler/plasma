@@ -46,6 +46,9 @@ class Graph:
         # For one loop : contains all address of the loop and sub-loops
         self.loops_all = {}
 
+        # Rest of all address which are not in a loop
+        self.not_in_loop = set()
+
         self.loops_start = set()
 
         # Optimization
@@ -515,8 +518,9 @@ class Graph:
                     # [statement_2, statement_1]
                     #
                     # This is what I call an equivalent or shifted loop.
-                    # We can't say which one is the original, one these
-                    # loops is removed arbitrary.
+                    # We can't say which one is the original, during the
+                    # generation of the ast, we will keep the loop where
+                    # we entered first.
                     #
 
                     if (prev1, start1) not in self.equiv:
@@ -621,14 +625,21 @@ class Graph:
     def __loop_detection(self, ctx, entry):
         start = time.clock()
 
-        waiting = {}
-        self.__explore(entry, set(), set(), waiting, None, set())
+        self.__explore(entry, set(), set(), {}, None, set())
 
         self.__search_equiv_loops()
         self.__search_false_loops()
 
         for k in self.false_loops:
             del self.loops_all[k]
+            del self.loops_set[k]
+
+        # Compute all address which are not in a loop
+        in_loop = set()
+        for l in self.loops_set.items():
+            in_loop.update(l[1])
+
+        self.not_in_loop = self.nodes.keys() - in_loop
 
         # Search inifinite loops
         self.infinite_loop = set()
@@ -647,5 +658,7 @@ class Graph:
 
         elapsed = time.clock()
         elapsed = elapsed - start
-        debug__("Exploration: found %d loop in %fs" %
+        if elapsed < 0.:
+            elapsed = 0.
+        debug__("Exploration: found %d loop(s) in %fs" %
                 (len(self.loops_all), elapsed))
