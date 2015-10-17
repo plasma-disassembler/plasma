@@ -138,7 +138,8 @@ class Output(OutputAbs):
 
                 if is_data:
                     s = self.binary.get_string(imm, self.ctx.max_data_size)
-                    print_no_end(" " + color_string(s))
+                    if s != "\"\"":
+                        print_no_end(" " + color_string(s))
 
                 return modified
 
