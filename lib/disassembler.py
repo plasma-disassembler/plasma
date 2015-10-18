@@ -18,6 +18,7 @@
 #
 
 import time
+import struct
 
 from lib.graph import Graph
 from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char
@@ -42,6 +43,7 @@ class Disassembler():
 
         self.binary.load_extra()
 
+        self.capstone = CAPSTONE
         self.md = CAPSTONE.Cs(arch, mode)
         self.md.detail = True
         self.arch = arch
@@ -57,12 +59,11 @@ class Disassembler():
 
 
     def load_arch_module(self):
-        import capstone as CAPSTONE
-        if self.arch == CAPSTONE.CS_ARCH_X86:
+        if self.arch == self.capstone.CS_ARCH_X86:
             import lib.arch.x86 as ARCH
-        elif self.arch == CAPSTONE.CS_ARCH_ARM:
+        elif self.arch == self.capstone.CS_ARCH_ARM:
             import lib.arch.arm as ARCH
-        elif self.arch == CAPSTONE.CS_ARCH_MIPS:
+        elif self.arch == self.capstone.CS_ARCH_MIPS:
             import lib.arch.mips as ARCH
         else:
             raise NotImplementedError
@@ -91,11 +92,12 @@ class Disassembler():
 
     def print_section_meta(self, name, start, end):
         print_no_end(color_section(name.ljust(20)))
-        print_no_end(" [")
+        print_no_end(" [ ")
         print_no_end(hex(start))
         print_no_end(" - ")
         print_no_end(hex(end))
-        print("]")
+        print_no_end(" - %d" % (end - start))
+        print(" ]")
 
 
     def dump_asm(self, ctx, lines):
@@ -143,87 +145,125 @@ class Disassembler():
             l += 1
 
 
-    def dump_data(self, ctx, lines):
-        N = 128
+    def dump_data_ascii(self, ctx, lines):
+        N = 128 # read by block of 128 bytes
         addr = ctx.entry_addr
 
         s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
         self.print_section_meta(s_name, s_start, s_end)
 
-        addr_ascii_str = -1
-        ascii_str = []
         l = 0
-        is_new_line = True
+        ascii_str = []
+        addr_str = -1
 
         while l < lines:
             buf = self.binary.section_stream_read(addr, N)
             if not buf:
                 break
+
             i = 0
-
             while i < len(buf):
-                c = buf[i]
 
-                if c in BYTES_PRINTABLE_SET:
-                    if addr_ascii_str == -1:
-                        addr_ascii_str = addr
+                j = i
+                while j < len(buf):
+                    c = buf[j]
+                    if c not in BYTES_PRINTABLE_SET:
+                        break
+                    if addr_str == -1:
+                        addr_str = addr
                     ascii_str.append(c)
+                    j += 1
+
+                if c != 0 and j == len(buf):
+                    addr += j - i
+                    break
+
+                if c == 0 and len(ascii_str) >= 2:
+                    print_no_end(color_addr(addr_str))
+                    print_no_end(color_string(
+                            "\"" + "".join(map(get_char, ascii_str)) + "\""))
+                    print(", 0")
+                    addr += j - i
+                    i = j
+                else:
+                    print_no_end(color_addr(addr))
+                    print("0x%.2x " % buf[i])
                     addr += 1
                     i += 1
-                    continue
 
-                stack_char = []
-
-                if addr_ascii_str != -1:
-                    if c == 0 and len(ascii_str) >= 2:
-                        if not is_new_line:
-                            print()
-                            l += 1
-                            if l >= lines:
-                                return
-
-                        print_no_end(color_addr(addr_ascii_str))
-                        print_no_end(color_string("\"" + "".join(map(get_char, ascii_str)) + "\""))
-                        print(", 0")
-                        is_new_line = True
-                        l += 1
-                        if l >= lines:
-                            return
-                        ascii_str = []
-                        addr_ascii_str = -1
-                        addr += 1
-                        i += 1
-                        continue
-
-                    stack_char = ascii_str
-                    i -= len(ascii_str)
-                    addr -= len(ascii_str)
-
-                stack_char.append(c)
-
-                for c in stack_char:
-                    if is_new_line:
-                        print_no_end(color_addr(addr))
-
-                    elif addr % 4 == 0 and addr != ctx.entry_addr:
-                        print()
-                        is_new_line = True
-                        l += 1
-                        if l >= lines:
-                            return
-                        print_no_end(color_addr(addr))
-
-                    print_no_end("%.2x " % c)
-
-                    addr += 1
-                    i += 1
-                    is_new_line = False
-
+                addr_str = -1
                 ascii_str = []
-                addr_ascii_str = -1
+                l += 1
+                if l >= lines:
+                    return
 
-        if not is_new_line:
-            print()
+
+    def dump_data(self, ctx, lines, size_word):
+        _, mode = self.binary.get_arch()
+
+        if mode & self.capstone.CS_MODE_BIG_ENDIAN:
+            endian = ">"
+        else:
+            endian = "<"
+
+        if size_word == 1:
+            unpack_str = endian + "B"
+        elif size_word == 2:
+            unpack_str = endian + "H"
+        elif size_word == 4:
+            unpack_str = endian + "L"
+        elif size_word == 8:
+            unpack_str = endian + "Q"
+
+        N = size_word * 64
+        addr = ctx.entry_addr
+
+        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
+        self.print_section_meta(s_name, s_start, s_end)
+
+        l = 0
+
+        while l < lines:
+            buf = self.binary.section_stream_read(addr, N)
+            if not buf:
+                break
+
+            i = 0
+            while i < len(buf):
+                b = buf[i:i + size_word]
+
+                if addr >= s_end:
+                    return
+
+                if len(b) != size_word:
+                    for c in buf:
+                        print_no_end(color_addr(addr))
+                        print("0x%.2x" % c)
+                    return
+
+                if addr in self.binary.reverse_symbols:
+                    print(color_symbol(self.binary.reverse_symbols[addr]))
+
+                print_no_end(color_addr(addr))
+
+                w = struct.unpack(unpack_str, b)[0]
+                print_no_end("0x%.2x" % w)
+
+                s_name, _, _ = self.binary.get_section_meta(addr)
+                if s_name is not None:
+                    print_no_end(" (")
+                    print_no_end(color_section(s_name))
+                    print_no_end(")")
+                    if size_word >= 4 and w in self.binary.reverse_symbols:
+                        print_no_end(" ")
+                        print_no_end(color_symbol(self.binary.reverse_symbols[w]))
+
+                print()
+                addr += size_word
+                i += size_word
+                l += 1
+                if l >= lines:
+                    return
 
 
     def print_calls(self, ctx):

@@ -48,7 +48,11 @@ class Interactive():
 
         self.COMMANDS_ALPHA = [
             "calls",
-            "data",
+            "da",
+            "db",
+            "dd",
+            "dw",
+            "dq",
             "dump",
             "exit",
             "help",
@@ -147,14 +151,53 @@ class Interactive():
                 ]
             ),
 
-            # by default it will be ctx.lines
-            "data": Command(
+            "da": Command(
                 2,
                 self.__exec_data,
                 self.__complete_x,
                 [
                 "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data and detect ascii strings.",
+                "Print data in ascii, it stops when the end of the section is found",
+                ]
+            ),
+
+            "db": Command(
+                2,
+                self.__exec_data,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Print data in bytes, it stops when the end of the section is found",
+                ]
+            ),
+
+            "dd": Command(
+                2,
+                self.__exec_data,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Print data in dwords, it stops when the end of the section is found",
+                ]
+            ),
+
+            "dw": Command(
+                2,
+                self.__exec_data,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Print data in words, it stops when the end of the section is found",
+                ]
+            ),
+
+            "dq": Command(
+                2,
+                self.__exec_data,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP [NB_LINES]",
+                "Print data in qwords, it stops when the end of the section is found",
                 ]
             ),
 
@@ -433,7 +476,16 @@ class Interactive():
             self.ctx.entry = args[1]
         self.ctx.print_data = True
         if init_entry_addr(self.ctx):
-            self.ctx.dis.dump_data(self.ctx, lines)
+            if args[0] == "da":
+                self.ctx.dis.dump_data_ascii(self.ctx, lines)
+            elif args[0] == "db":
+                self.ctx.dis.dump_data(self.ctx, lines, 1)
+            elif args[0] == "dw":
+                self.ctx.dis.dump_data(self.ctx, lines, 2)
+            elif args[0] == "dd":
+                self.ctx.dis.dump_data(self.ctx, lines, 4)
+            elif args[0] == "dq":
+                self.ctx.dis.dump_data(self.ctx, lines, 8)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
             self.ctx.print_data = False
@@ -454,6 +506,7 @@ class Interactive():
             return
         self.ctx.reset_all()
         self.ctx.raw_type = "x86"
+        self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
         load_file(self.ctx)
 
@@ -464,6 +517,7 @@ class Interactive():
             return
         self.ctx.reset_all()
         self.ctx.raw_type = "x64"
+        self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
         load_file(self.ctx)
 
@@ -590,10 +644,10 @@ class Interactive():
             return
 
         self.rl.print("NAME".ljust(20))
-        self.rl.print(" [START - END]\n")
+        self.rl.print(" [ START - END - SIZE ]\n")
 
         for (name, start, end) in self.ctx.dis.binary.iter_sections():
-            self.ctx.dis.print_section_meta(name, start, end) 
+            self.ctx.dis.print_section_meta(name, start, end)
 
 
     def __exec_info(self, args):

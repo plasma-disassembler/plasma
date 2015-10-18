@@ -34,7 +34,8 @@ def parse_args():
     # Parse arguments
     parser = ArgumentParser(description=
         'Reverse engineering for x86/ARM/MIPS binaries. Generation of pseudo-C. '
-        'Supported formats : ELF, PE. https://github.com/joelpx/reverse')
+        'Supported formats : ELF, PE. More commands available in the interactive'
+        ' mode.    https://github.com/joelpx/reverse')
     parser.add_argument('filename', nargs='?', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')
     parser.add_argument('-g', '--graph', action='store_true',
@@ -57,10 +58,8 @@ def parse_args():
             help='Print all sections')
     parser.add_argument('--dump', action='store_true',
             help='Dump asm without decompilation')
-    parser.add_argument('--data', action='store_true',
-            help='Don\'t disassemble, print only bytes and detect ascii strings')
     parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
-            help='Max lines used with --dump or --data')
+            help='Max lines used with --dump')
     parser.add_argument('--bytes', action='store_true',
             help='Print instruction bytes')
     parser.add_argument('-i', '--interactive', action='store_true',
@@ -101,7 +100,6 @@ def parse_args():
     ctx.raw_big_endian  = args.rawbe
     ctx.list_sections   = args.sections
     ctx.print_bytes     = args.bytes
-    ctx.print_data      = args.data
 
     if ctx.raw_base is not None:
         if ctx.raw_base.startswith("0x"):
@@ -256,7 +254,7 @@ def reverse(ctx):
         ctx.dis.print_calls(ctx)
         return
 
-    if ctx.dump or ctx.print_data:
+    if ctx.dump:
         if ctx.vim:
             base = os.path.basename(ctx.filename) + "_" + ctx.entry
             ctx.color = False
@@ -264,8 +262,6 @@ def reverse(ctx):
 
         if ctx.dump:
             ctx.dis.dump_asm(ctx, ctx.lines)
-        else:
-            ctx.dis.dump_data(ctx, ctx.lines)
 
         if ctx.vim:
             generate_vim_syntax(ctx, base + ".vim")

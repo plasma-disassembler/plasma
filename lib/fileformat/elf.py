@@ -207,6 +207,8 @@ class ELF:
 
 
     def __section_is_exec(self, s):
+        if s is None:
+            return 0
         return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
 

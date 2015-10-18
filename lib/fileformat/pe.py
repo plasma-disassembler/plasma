@@ -242,6 +242,8 @@ class PE:
 
 
     def __section_is_exec(self, s):
+        if s is None:
+            return 0
         return s.Characteristics & 0x20000000
 
 
