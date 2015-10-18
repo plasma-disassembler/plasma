@@ -164,6 +164,9 @@ class Disassembler():
             i = 0
             while i < len(buf):
 
+                if addr >= s_end:
+                    return
+
                 j = i
                 while j < len(buf):
                     c = buf[j]
