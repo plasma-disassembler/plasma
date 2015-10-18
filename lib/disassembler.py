@@ -252,17 +252,15 @@ class Disassembler():
                 w = struct.unpack(unpack_str, b)[0]
                 print_no_end("0x%.2x" % w)
 
-                ret = self.binary.get_section_meta(w)
-                if ret is not None:
-                    sect_name, _, _ = ret
-                    if sect_name is not None and \
-                            sect_name not in [".comment", ".shstrtab"]:
-                        print_no_end(" (")
-                        print_no_end(color_section(sect_name))
-                        print_no_end(")")
-                        if size_word >= 4 and w in self.binary.reverse_symbols:
-                            print_no_end(" ")
-                            print_no_end(color_symbol(self.binary.reverse_symbols[w]))
+                sec_name, is_data = self.binary.is_address(w)
+                if sec_name is not None and \
+                        sec_name not in [".comment", ".shstrtab"]:
+                    print_no_end(" (")
+                    print_no_end(color_section(sec_name))
+                    print_no_end(")")
+                    if size_word >= 4 and w in self.binary.reverse_symbols:
+                        print_no_end(" ")
+                        print_no_end(color_symbol(self.binary.reverse_symbols[w]))
 
                 print()
                 addr += size_word
