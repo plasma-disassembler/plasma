@@ -222,9 +222,10 @@ class ELF:
         off = addr - s.header.sh_addr
         txt = ['"']
 
+        c = 0
         i = 0
         while i < max_data_size and \
-              off < s.header.sh_size:
+              off < len(data):
             c = data[off]
             if c == 0:
                 break
@@ -232,7 +233,7 @@ class ELF:
             off += 1
             i += 1
 
-        if c != 0 and off != s.header.sh_size:
+        if c != 0 and off != len(data):
             txt.append("...")
 
         return ''.join(txt) + '"'
