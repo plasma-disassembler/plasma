@@ -184,19 +184,18 @@ class Output(OutputAbs):
                 printed = True
 
             if mm.disp != 0:
-                if mm.disp < 0:
-                    if printed:
+                if printed:
+                    if mm.disp < 0:
                         print_no_end(" - ")
-                    print_no_end(-mm.disp)
-                else:
-                    if printed:
-                        print_no_end(" + ")
-                        print_no_end(mm.disp)
                     else:
-                        if mm.disp in self.binary.reverse_symbols:
-                            self.print_symbol(mm.disp)
-                        else:
-                            print_no_end(hex(mm.disp))
+                        print_no_end(" + ")
+                if mm.disp in self.binary.reverse_symbols:
+                    self.print_symbol(mm.disp)
+                else:
+                    if mm.disp < 0:
+                        print_no_end(-mm.disp)
+                    else:
+                        print_no_end(mm.disp)
 
             if show_deref:
                 print_no_end(")")
