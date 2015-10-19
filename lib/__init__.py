@@ -47,7 +47,7 @@ def parse_args():
     parser.add_argument('--datasize', type=int, default=30, metavar='N',
             help='default 30, maximum of chars to display for strings or bytes array.')
     parser.add_argument('-x', '--entry', metavar='SYMBOLNAME|0xXXXXX|EP',
-            help='default main. EP stands for entry point.')
+            help='Pseudo-decompilation, default is main. EP stands for entry point.')
     parser.add_argument('--vim', action='store_true',
             help='Generate syntax colors for vim')
     parser.add_argument('-s', '--symbols', action='store_true',

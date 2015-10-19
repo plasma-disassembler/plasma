@@ -147,7 +147,7 @@ class Interactive():
                 self.__complete_x,
                 [
                 "[SYMBOL|0xXXXX|EP]",
-                "Disassemble. By default it will be main.",
+                "Decompile. By default it will be main.",
                 ]
             ),
 
@@ -208,7 +208,7 @@ class Interactive():
                 self.__complete_x,
                 [
                 "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Dump asm.",
+                "Disassemble only.",
                 ]
             ),
 
