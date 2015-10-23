@@ -311,6 +311,6 @@ class PE:
         base = self.pe.OPTIONAL_HEADER.ImageBase
         for s in self.pe.sections:
             start = base + s.VirtualAddress
-            end = start + s.SizeOfRawData
+            end = start + s.SizeOfRawData - 1
             if s.Name != b"":
                 yield (s.Name.decode().rstrip(' \0'), start, end)

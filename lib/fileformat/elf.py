@@ -334,6 +334,6 @@ class ELF:
     def iter_sections(self):
         for s in self.elf.iter_sections():
             start = s.header.sh_addr
-            end = start + s.header.sh_size
+            end = start + s.header.sh_size - 1
             if s.name != b"":
                 yield (s.name.decode(), start, end)
