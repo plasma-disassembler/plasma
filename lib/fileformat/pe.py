@@ -92,7 +92,6 @@ class PE:
             i += 1
 
 
-
     def load_dyn_sym(self):
         try:
             self.pe.parse_data_directories(
@@ -151,7 +150,7 @@ class PE:
 
             if inv(mm.base) and mm.disp in self.__imported_syms \
                     and inv(mm.segment) and inv(mm.index):
-                name = "jmp_" + self.__imported_syms[mm.disp]
+                name = "_" + self.__imported_syms[mm.disp]
                 self.classbinary.reverse_symbols[goto] = name
                 self.classbinary.symbols[name] = goto
                 count += 1
