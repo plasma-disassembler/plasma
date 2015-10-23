@@ -52,6 +52,12 @@ class PE:
 
 
     def load_static_sym(self):
+        # Add section names in known symbols
+        for s in self.pe.sections:
+            name = s.Name.decode().rstrip(' \0')
+            ad = self.pe.OPTIONAL_HEADER.ImageBase + s.VirtualAddress
+            self.classbinary.symbols[name] = ad
+
         # http://wiki.osdev.org/COFF
         # http://www.delorie.com/djgpp/doc/coff/symtab.html
 

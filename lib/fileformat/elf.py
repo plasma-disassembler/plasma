@@ -70,6 +70,12 @@ class ELF:
 
 
     def load_static_sym(self):
+        # Add section names in known symbols
+        for s in self.elf.iter_sections():
+            ad = s.header.sh_addr
+            name = s.name.decode()
+            self.classbinary.symbols[name] = ad
+
         symtab = self.elf.get_section_by_name(b".symtab")
         if symtab is None:
             return
