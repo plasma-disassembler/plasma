@@ -96,7 +96,7 @@ class Disassembler():
         print_no_end(hex(start))
         print_no_end(" - ")
         print_no_end(hex(end))
-        print_no_end(" - %d" % (end - start))
+        print_no_end(" - %d" % (end - start + 1))
         print(" ]")
 
 
@@ -164,7 +164,7 @@ class Disassembler():
             i = 0
             while i < len(buf):
 
-                if addr >= s_end:
+                if addr > s_end:
                     return
 
                 j = i
@@ -235,7 +235,7 @@ class Disassembler():
             while i < len(buf):
                 b = buf[i:i + size_word]
 
-                if addr >= s_end:
+                if addr > s_end:
                     return
 
                 if len(b) != size_word:

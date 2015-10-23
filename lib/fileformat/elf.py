@@ -17,6 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import struct
+
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
@@ -78,48 +80,97 @@ class ELF:
             # print("%x\t%s" % (sy.entry.st_value, sy.name.decode()))
 
 
+    def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
+        # Save all got offsets with the corresponding symbol
+        got_off = {}
+        for r in rel.iter_relocations():
+            sym = symtab.get_symbol(r.entry.r_info_sym)
+            got_off[r.entry.r_offset] = sym.name.decode() + "@plt"
+
+        data = got_plt.data()
+
+        unpack_str = "<" if self.elf.little_endian else ">"
+        unpack_str += str(int(len(data) / addr_size))
+        unpack_str += "Q" if addr_size == 8 else "I"
+
+        got_values = struct.unpack(unpack_str, data)
+        plt_data = plt.data()
+        wrong_jump_opcode = False
+        off = got_plt.header.sh_addr
+
+        # Read the .got.plt and for each address in the plt, substract 6
+        # to go at the begining of the plt entry.
+        for jump_in_plt in got_values:
+            if off in got_off:
+                plt_start = jump_in_plt - 6
+                plt_off = plt_start - plt.header.sh_addr
+
+                # Check "jmp *(ADDR)" opcode.
+                if plt_data[plt_off:plt_off+2] != b"\xff\x25":
+                    wrong_jump_opcode = True
+                    continue
+
+                name = got_off[off]
+                self.classbinary.reverse_symbols[plt_start] = name
+                self.classbinary.symbols[name] = plt_start
+
+            off += addr_size
+
+        if wrong_jump_opcode:
+            print("warning: I'm expecting to see a jmp *(ADDR) on each plt entry")
+            print("warning: opcode \\xff\\x25 was not found, please report")
+
+
+    def __arm_resolve_reloc(self, rel, symtab):
+        # TODO: don't know why st_value is 0 in x86
+        # for arm st_value is the address of the plt entry
+        for r in rel.iter_relocations():
+            sym = symtab.get_symbol(r.entry.r_info_sym)
+            plt_start = sym.entry.st_value
+            if plt_start != 0:
+                name = sym.name.decode() + "@plt"
+                self.classbinary.reverse_symbols[plt_start] = name
+                self.classbinary.symbols[name] = plt_start
+
+
+    def __iter_reloc(self):
+        for rel in self.elf.iter_sections():
+            if rel.header.sh_type in ["SHT_RELA", "SHT_REL"]:
+                symtab = self.elf.get_section(rel.header.sh_link)
+                if symtab is None:
+                    continue
+                yield (rel, symtab)
+
+
     def load_dyn_sym(self):
-        rel = (self.elf.get_section_by_name(b".rela.plt") or
-                self.elf.get_section_by_name(b".rel.plt"))
-        dyn = self.elf.get_section_by_name(b".dynsym")
-
-        if rel is None or dyn is None:
-            return
-
-        # TODO : are constants ?
-        PLT_SIZE = {
-            "x86": 16,
-            "x64": 16,
-            "ARM": 12,
-        }
-
-        PLT_FIRST_ENTRY_OFF = {
-            "x86": 16,
-            "x64": 16,
-            "ARM": 20,
-        }
-
         arch = self.elf.get_machine_arch()
 
         if arch == "MIPS":
             return
 
-        relitems = list(rel.iter_relocations())
-        dynsym = list(dyn.iter_symbols())
+        # TODO: .plt can be renamed ?
+        plt = self.elf.get_section_by_name(b".plt")
 
-        plt = self.elf.get_section_by_name(b".plt") 
-        plt_entry_size = PLT_SIZE[arch]
+        if plt is None:
+            print("warning: .plt section not found")
+            return
 
-        off = plt.header.sh_addr + PLT_FIRST_ENTRY_OFF[arch]
-        k = 0
+        if arch == "ARM":
+            for (rel, symtab) in self.__iter_reloc():
+                self.__arm_resolve_reloc(rel, symtab)
+            return
 
-        while off < plt.header.sh_addr + plt.header.sh_size :
-            idx = relitems[k].entry.r_info_sym
-            name = dynsym[idx].name.decode()
-            self.classbinary.reverse_symbols[off] = name + "@plt"
-            self.classbinary.symbols[name + "@plt"] = off
-            off += plt_entry_size
-            k += 1
+        # x86/x64
+        # TODO: .got.plt can be renamed or may be removed ?
+        got_plt = self.elf.get_section_by_name(b".got.plt")
+        addr_size = 8 if arch == "x64" else 4
+
+        if got_plt is None:
+            print("warning: .got.plt section not found")
+            return
+
+        for (rel, symtab) in self.__iter_reloc():
+            self.__x86_resolve_reloc(rel, symtab, plt, got_plt, addr_size)
 
 
     def load_data_sections(self):
