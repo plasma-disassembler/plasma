@@ -28,6 +28,8 @@ def yellow(text):
 
 
 class ReadLine():
+    HISTORY_MAX_ENTRIES = 100
+
     def __init__(self, callback_enter, callback_complete, callback_ctrl_c):
         self.tty_fd = sys.stdin.fileno()
         self.tty_old_settings = termios.tcgetattr(self.tty_fd)
@@ -313,7 +315,9 @@ class ReadLine():
 
         if self.line != "":
             if self.idx_history != 0:
-                self.history = [self.line] + self.history
+                self.history.insert(0, self.line)
+            if len(self.history) > self.HISTORY_MAX_ENTRIES:
+                self.history.pop(-1)
             self.callback_enter(self.line)
 
         self.tty_set_raw()

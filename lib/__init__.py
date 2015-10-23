@@ -19,10 +19,11 @@
 
 import sys
 import os
+import json
 from argparse import ArgumentParser, FileType
 
 from lib.disassembler import Disassembler
-from lib.utils import die, error, warning
+from lib.utils import die, error, warning, info
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
@@ -126,9 +127,16 @@ def load_file(ctx):
            return False
         die()
 
+    dirname = os.path.dirname(ctx.filename)
+    db_path = dirname + "/" if dirname != "" else ""
+    db_path +=  "." + os.path.basename(ctx.filename) + ".db"
+    db_exists = os.path.exists(db_path)
+    ctx.db_path = db_path
+
     try:
         dis = Disassembler(ctx.filename, ctx.raw_type,
-                           ctx.raw_base, ctx.raw_big_endian)
+                           ctx.raw_base, ctx.raw_big_endian,
+                           load_symbols=not db_exists)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:
@@ -146,6 +154,19 @@ def load_file(ctx):
         if ctx.interactive:
             return False
         die()
+
+    # Load symbols in the database
+    if db_exists:
+        info("open database %s" % db_path)
+        fd = open(db_path, "r")
+        db = json.loads(fd.read())
+        ctx.db = db
+        sym = dis.binary.symbols
+        rev_sym = dis.binary.reverse_symbols
+        for name, addr in db["symbols"].items():
+            sym[name] = addr
+            rev_sym[addr] = name
+        fd.close()
 
     ctx.dis = dis
     ctx.libarch = dis.load_arch_module()

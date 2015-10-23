@@ -30,7 +30,8 @@ from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
 class Disassembler():
-    def __init__(self, filename, raw_type, raw_base, raw_big_endian):
+    def __init__(self, filename, raw_type, raw_base,
+                 raw_big_endian, load_symbols=True):
         import capstone as CAPSTONE
 
         self.code = {}
@@ -41,7 +42,10 @@ class Disassembler():
         if arch is None or mode is None:
             raise ExcArch(self.binary.get_arch_string())
 
-        self.binary.load_extra()
+        if load_symbols:
+            self.binary.load_symbols()
+
+        self.binary.load_data_sections()
 
         self.capstone = CAPSTONE
         self.md = CAPSTONE.Cs(arch, mode)

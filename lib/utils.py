@@ -75,6 +75,10 @@ def warning(txt):
     print("warning: " + txt, file=sys.stderr)
 
 
+def info(txt):
+    print("info: " + txt, file=sys.stderr)
+
+
 def die(txt=None):
     if txt is not None:
         print("error: " + txt, file=sys.stderr)

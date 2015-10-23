@@ -20,6 +20,7 @@
 import os
 import sys
 import shlex
+import json
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
@@ -63,6 +64,7 @@ class Interactive():
             "lrawmips64",
             "lrawx86",
             "lrawx64",
+            "save",
             "sections",
             "sym",
             "x",
@@ -78,6 +80,16 @@ class Interactive():
                 [
                 "",
                 "Display this help"
+                ]
+            ),
+
+            "save": Command(
+                0,
+                self.__exec_save,
+                None,
+                [
+                "",
+                "Save the database (only symbols and history currently).",
                 ]
             ),
 
@@ -294,6 +306,8 @@ class Interactive():
             ),
         }
 
+        self.database_modified = False
+
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
 
@@ -303,9 +317,11 @@ class Interactive():
         if ctx.entry is not None:
             self.__exec_x(["", ctx.entry])
 
-        rl.restore_history()
-        rl.loop()
-        rl.save_history()
+        while 1:
+            rl.loop()
+            if not self.database_modified:
+                break
+            print("the database was modified, run save or exit to force")
 
 
     def send_control_c(self):
@@ -498,6 +514,8 @@ class Interactive():
         self.ctx.reset_all()
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        if self.ctx.db is not None:
+            self.rl.history = self.ctx.db["history"]
 
 
     def __exec_lrawx86(self, args):
@@ -598,6 +616,7 @@ class Interactive():
         # Save new symbol
         try:
             addr = int(args[2], 16)
+            self.database_modified = True
 
             if args[1] in self.ctx.dis.binary.symbols:
                 last = self.ctx.dis.binary.symbols[args[1]]
@@ -712,3 +731,15 @@ class Interactive():
         else:
             print("now it's on")
             self.ctx.comments = True
+
+
+    def __exec_save(self, args):
+        fd = open(self.ctx.db_path, "w+")
+        db = {
+            "symbols": self.ctx.dis.binary.symbols,
+            "history": self.rl.history,
+        }
+        fd.write(json.dumps(db))
+        fd.close()
+        print("database saved to", self.ctx.db_path)
+        self.database_modified = False

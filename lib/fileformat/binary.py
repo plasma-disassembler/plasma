@@ -58,16 +58,19 @@ class Binary(object):
         debug__("Binary loaded in %fs" % elapsed)
 
 
-    def load_extra(self):
+    def load_symbols(self):
         start = time.clock()
 
         self.__binary.load_static_sym()
         self.__binary.load_dyn_sym()
-        self.__binary.load_data_sections()
 
         elapsed = time.clock()
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+
+
+    def load_data_sections(self):
+        self.__binary.load_data_sections()
 
 
     def load_magic(self, filename):
