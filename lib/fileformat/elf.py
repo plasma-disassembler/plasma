@@ -72,9 +72,10 @@ class ELF:
     def load_static_sym(self):
         # Add section names in known symbols
         for s in self.elf.iter_sections():
-            ad = s.header.sh_addr
-            name = s.name.decode()
-            self.classbinary.symbols[name] = ad
+            if s.header.sh_flags & 0xf != 0:
+                ad = s.header.sh_addr
+                name = s.name.decode()
+                self.classbinary.symbols[name] = ad
 
         symtab = self.elf.get_section_by_name(b".symtab")
         if symtab is None:
@@ -202,9 +203,9 @@ class ELF:
 
     def is_address(self, imm):
         for s in self.elf.iter_sections():
-            start = s.header.sh_addr
-            if start == 0:
+            if s.header.sh_flags & 0xf == 0:
                 continue
+            start = s.header.sh_addr
             end = start + s.header.sh_size
             if  start <= imm < end:
                 return s.name.decode(), self.__section_is_data(s)

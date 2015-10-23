@@ -253,8 +253,7 @@ class Disassembler():
                 print_no_end("0x%.2x" % w)
 
                 sec_name, is_data = self.binary.is_address(w)
-                if sec_name is not None and \
-                        sec_name not in [".comment", ".shstrtab"]:
+                if sec_name is not None:
                     print_no_end(" (")
                     print_no_end(color_section(sec_name))
                     print_no_end(")")
