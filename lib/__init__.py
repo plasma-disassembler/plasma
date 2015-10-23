@@ -22,7 +22,7 @@ import os
 from argparse import ArgumentParser, FileType
 
 from lib.disassembler import Disassembler
-from lib.utils import die, error
+from lib.utils import die, error, warning
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
@@ -187,10 +187,7 @@ def init_entry_addr(ctx):
     try:
         ctx.dis.check_addr(ctx, entry_addr)
     except ExcNotExec as e:
-        error("the address 0x%x is not in an executable section" % e.addr)
-        if ctx.interactive:
-            return False
-        die()
+        warning("the address 0x%x is not in an executable section" % e.addr)
     except ExcNotAddr as e:
         error("the address 0x%x cannot be found" % e.addr)
         if ctx.interactive:

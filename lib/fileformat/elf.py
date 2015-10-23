@@ -124,8 +124,8 @@ class ELF:
             off += addr_size
 
         if wrong_jump_opcode:
-            print("warning: I'm expecting to see a jmp *(ADDR) on each plt entry")
-            print("warning: opcode \\xff\\x25 was not found, please report")
+            warning("I'm expecting to see a jmp *(ADDR) on each plt entry")
+            warning("opcode \\xff\\x25 was not found, please report")
 
 
     def __arm_resolve_reloc(self, rel, symtab):
@@ -159,7 +159,7 @@ class ELF:
         plt = self.elf.get_section_by_name(b".plt")
 
         if plt is None:
-            print("warning: .plt section not found")
+            warning(".plt section not found")
             return
 
         if arch == "ARM":
@@ -173,7 +173,7 @@ class ELF:
         addr_size = 8 if arch == "x64" else 4
 
         if got_plt is None:
-            print("warning: .got.plt section not found")
+            warning(".got.plt section not found")
             return
 
         for (rel, symtab) in self.__iter_reloc():
