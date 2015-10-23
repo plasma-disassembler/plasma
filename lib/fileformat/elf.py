@@ -22,7 +22,7 @@ import struct
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
-import lib.utils
+from lib.utils import get_char, warning
 
 
 # SHF_WRITE=0x1
@@ -287,7 +287,7 @@ class ELF:
             c = data[off]
             if c == 0:
                 break
-            txt.append(lib.utils.get_char(c))
+            txt.append(get_char(c))
             off += 1
             i += 1
 
