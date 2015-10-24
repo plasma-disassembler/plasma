@@ -363,7 +363,7 @@ class Disassembler():
         ARCH_UTILS = self.load_arch_module().utils
 
         curr = self.lazy_disasm(entry_addr)
-        if curr == None:
+        if curr is None:
             return None
 
         gph = Graph(self, entry_addr)
@@ -383,8 +383,11 @@ class Disassembler():
                     if curr.operands[-1].type == CS_OP_IMM:
                         addr = curr.operands[-1].value.imm
                         nxt = self.lazy_disasm(addr)
-                        gph.set_next(curr, nxt, prefetch)
-                        rest.append(nxt.address)
+                        if nxt is None:
+                            gph.add_node(curr, prefetch)
+                        else:
+                            gph.set_next(curr, nxt, prefetch)
+                            rest.append(nxt.address)
                     else:
                         # Can't interpret jmp ADDR|reg
                         gph.add_node(curr, prefetch)
@@ -401,9 +404,19 @@ class Disassembler():
                             direct_nxt = \
                                 self.lazy_disasm(curr.address + curr.size)
 
-                        gph.set_cond_next(curr, nxt_jump, direct_nxt, prefetch)
-                        rest.append(nxt_jump.address)
-                        rest.append(direct_nxt.address)
+                        if nxt_jump is not None:
+                            rest.append(nxt_jump.address)
+                            if direct_nxt is not None:
+                                rest.append(direct_nxt.address)
+                                gph.set_cond_next(curr, nxt_jump, direct_nxt, prefetch)
+                            else:
+                                gph.set_next(curr, nxt_jump, prefetch)
+                        else:
+                            if direct_nxt is not None:
+                                rest.append(direct_nxt.address)
+                                gph.set_next(curr, direct_nxt, prefetch)
+                            else:
+                                gph.add_node(curr, prefetch)
                     else:
                         # Can't interpret jmp ADDR|reg
                         gph.add_node(curr, prefetch)
