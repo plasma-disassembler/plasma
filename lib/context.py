@@ -33,7 +33,6 @@ class Context():
         self.color = True
         self.max_data_size = 30
         self.filename = None
-        self.symfile = None
         self.syms = False
         self.calls_in_section = None
         self.entry = None # string : symbol | EP | 0xNNNN

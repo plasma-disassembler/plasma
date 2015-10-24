@@ -65,9 +65,6 @@ def parse_args():
             help='Print instruction bytes')
     parser.add_argument('-i', '--interactive', action='store_true',
             help='Interactive mode')
-    parser.add_argument('--symfile', metavar='FILENAME', type=FileType('r'),
-            help=('Add user symbols for better readability of the analysis. '
-            'Line format: ADDRESS_HEXA    SYMBOL_NAME'))
     parser.add_argument('-d', '--opt_debug', action='store_true')
     parser.add_argument('-ns', '--nosectionsname', action='store_true')
     parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
@@ -89,7 +86,6 @@ def parse_args():
     ctx.filename        = args.filename
     ctx.raw_type        = args.raw
     ctx.raw_base        = args.rawbase
-    ctx.symfile         = args.symfile
     ctx.syms            = args.symbols
     ctx.calls_in_section = args.calls
     ctx.entry           = args.entry
@@ -116,7 +112,7 @@ def parse_args():
 
 def load_file(ctx):
     if not os.path.exists(ctx.filename):
-        error("file {ctx.filename} doesn't exists".format(ctx=ctx))
+        error("file {ctx.filename} doesn't exist".format(ctx=ctx))
         if ctx.interactive:
            return False
         die()
@@ -170,9 +166,6 @@ def load_file(ctx):
 
     ctx.dis = dis
     ctx.libarch = dis.load_arch_module()
-
-    if ctx.symfile:
-        dis.load_user_sym_file(ctx.symfile)
 
     return True
 

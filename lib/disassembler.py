@@ -308,14 +308,6 @@ class Disassembler():
                     print()
 
 
-    def load_user_sym_file(self, fd):
-        for l in fd:
-            arg = l.split()
-            addr = int(arg[0], 16)
-            self.binary.reverse_symbols[addr] = arg[1]
-            self.binary.symbols[arg[1]] = addr
-
-
     def lazy_disasm(self, addr, stay_in_section=-1):
         meta  = self.binary.get_section_meta(addr)
         if meta is None:
