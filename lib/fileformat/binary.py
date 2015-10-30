@@ -33,6 +33,7 @@ class Binary(object):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
+        self.sections_name = []
         self.type = None
 
         if raw_type != None:
@@ -67,6 +68,10 @@ class Binary(object):
         elapsed = time.clock()
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+
+
+    def load_section_names(self):
+        self.__binary.load_section_names()
 
 
     def load_data_sections(self):

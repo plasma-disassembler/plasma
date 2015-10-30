@@ -45,6 +45,8 @@ class Disassembler():
         if load_symbols:
             self.binary.load_symbols()
 
+        self.binary.load_section_names()
+
         self.binary.load_data_sections()
 
         self.capstone = CAPSTONE

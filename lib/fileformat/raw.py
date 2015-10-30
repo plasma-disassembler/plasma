@@ -44,6 +44,10 @@ class Raw:
         }
 
 
+    def load_section_names(self):
+        return
+
+
     def load_static_sym(self):
         return
 

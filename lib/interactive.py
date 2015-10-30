@@ -735,8 +735,13 @@ class Interactive():
 
     def __exec_save(self, args):
         fd = open(self.ctx.db_path, "w+")
+        # We invert reverse_symbols to get only "real" symbols (section
+        # names are only in the dict symbols, they will be reloaded at
+        # each startup).
+        sym = self.ctx.dis.binary.reverse_symbols
+        inv = inv_map = {sym[k] : k for k in sym}
         db = {
-            "symbols": self.ctx.dis.binary.symbols,
+            "symbols": inv,
             "history": self.rl.history,
         }
         fd.write(json.dumps(db))
