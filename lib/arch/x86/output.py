@@ -124,7 +124,12 @@ class Output(OutputAbs):
                 print_no_end(str(imm))
 
                 if imm > 0:
-                    packed = struct.pack("<L", imm)
+                    if op.size == 4:
+                        packed = struct.pack("<L", imm)
+                    elif op.size == 8:
+                        packed = struct.pack("<Q", imm)
+                    else:
+                        return False
                     if set(packed).issubset(BYTES_PRINTABLE_SET):
                         print_no_end(color_string(" \""))
                         print_no_end(color_string("".join(map(chr, packed))))
