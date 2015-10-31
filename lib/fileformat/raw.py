@@ -79,8 +79,10 @@ class Raw:
         ad = addr - self.raw_base
         if ad >= len(self.raw) or ad < 0:
             return b""
-        end = self.raw_base + len(self.raw)
-        return self.raw[ad:ad + min(size, end - ad)]
+        end = min(self.raw_base - ad + len(self.raw), size)
+        if ad == 0 and end == len(self.raw):
+            return self.raw
+        return self.raw[ad:ad + end]
 
 
     def get_string(self, addr):
