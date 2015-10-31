@@ -434,6 +434,12 @@ class Interactive():
     def __find_symbol(self, tmp_line, nth_arg, last_tok):
         comp = []
         i = 0
+        for sect in self.ctx.dis.binary.section_names:
+            if sect.startswith(last_tok):
+                comp.append((sect + " ")[len(last_tok):])
+                i += 1
+                if i == self.MAX_PRINT_COMPLETE:
+                    return None
         for sym in self.ctx.dis.binary.symbols:
             if sym.startswith(last_tok):
                 comp.append((sym + " ")[len(last_tok):])
@@ -735,13 +741,8 @@ class Interactive():
 
     def __exec_save(self, args):
         fd = open(self.ctx.db_path, "w+")
-        # We invert reverse_symbols to get only "real" symbols (section
-        # names are only in the dict symbols, they will be reloaded at
-        # each startup).
-        sym = self.ctx.dis.binary.reverse_symbols
-        inv = inv_map = {sym[k] : k for k in sym}
         db = {
-            "symbols": inv,
+            "symbols": self.ctx.dis.binary.symbols,
             "history": self.rl.history,
         }
         fd.write(json.dumps(db))

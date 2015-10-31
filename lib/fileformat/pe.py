@@ -52,13 +52,11 @@ class PE:
 
 
     def load_section_names(self):
-        # Add section names in known symbols. There are used only for
-        # the auto-completion, not for replacing a symbol (example
-        # _start and .text have the same address)
+        # Used for the auto-completion
         for s in self.pe.sections:
             name = s.Name.decode().rstrip(' \0')
             ad = self.pe.OPTIONAL_HEADER.ImageBase + s.VirtualAddress
-            self.classbinary.symbols[name] = ad
+            self.classbinary.section_names[name] = ad
 
 
     def load_static_sym(self):

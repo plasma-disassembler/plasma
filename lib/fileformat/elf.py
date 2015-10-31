@@ -70,14 +70,12 @@ class ELF:
 
 
     def load_section_names(self):
-        # Add section names in known symbols. There are used only for
-        # the auto-completion, not for replacing a symbol (example
-        # _start and .text have the same address)
+        # Used for the auto-completion
         for s in self.elf.iter_sections():
             if s.header.sh_flags & 0xf != 0:
                 ad = s.header.sh_addr
                 name = s.name.decode()
-                self.classbinary.symbols[name] = ad
+                self.classbinary.section_names[name] = ad
 
 
     def load_static_sym(self):

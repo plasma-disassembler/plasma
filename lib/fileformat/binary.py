@@ -33,7 +33,7 @@ class Binary(object):
         self.__binary = None
         self.reverse_symbols = {}
         self.symbols = {}
-        self.sections_name = []
+        self.section_names = {}
         self.type = None
 
         if raw_type != None:

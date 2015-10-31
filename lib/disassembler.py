@@ -89,6 +89,8 @@ class Disassembler():
                 a = int(opt_addr, 16)
             else:
                 a = self.binary.symbols.get(s, -1)
+                if a == -1:
+                    a = self.binary.section_names.get(s, -1)
 
             if a != -1:
                 return a
@@ -299,8 +301,8 @@ class Disassembler():
         if sym_filter is not None:
             sym_filter = sym_filter.lower()
 
-        for addr in self.binary.reverse_symbols:
-            sy = self.binary.reverse_symbols[addr]
+        for sy in self.binary.symbols:
+            addr = self.binary.symbols[sy]
             if sym_filter is None or sym_filter in sy.lower():
                 sec_name, _ = self.binary.is_address(addr)
                 if sy:
