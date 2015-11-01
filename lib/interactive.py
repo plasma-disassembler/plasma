@@ -504,12 +504,13 @@ class Interactive():
             error("load a file before")
             return
         lines = self.ctx.lines
-        if len(args) == 1:
+        if len(args) <= 1:
             self.ctx.entry = None
-        else:
-            if len(args) == 3:
-                lines = int(args[2])
-            self.ctx.entry = args[1]
+            error("no address in parameter")
+            return
+        self.ctx.entry = args[1]
+        if len(args) == 3:
+            lines = int(args[2])
         self.ctx.print_data = True
         if init_entry_addr(self.ctx):
             if args[0] == "da":
