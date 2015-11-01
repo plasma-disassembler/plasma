@@ -188,7 +188,7 @@ class Output(OutputAbs):
                     # print_no_end(color_var(self.get_var_name(i, num_op)))
                     # return True
                 if mm.base == ARM_REG_PC:
-                    addr = i.address + i.size + mm.disp
+                    addr = i.address + i.size * 2 + mm.disp
                     print_no_end("*(")
                     if mm.disp in self.binary.reverse_symbols:
                         self.print_symbol(addr)
