@@ -329,6 +329,8 @@ class Interactive():
         if ctx.entry is not None:
             self.__exec_x(["", ctx.entry])
 
+        rl.reload_cursor_line()
+
         while 1:
             rl.loop()
             if not self.database_modified:

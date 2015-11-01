@@ -163,6 +163,10 @@ class ReadLine():
         return pos
 
 
+    def reload_cursor_line(self):
+        self.cursor_i = self.get_position()[0]
+
+
     def insert_char(self, ch):
         beginline = self.line[:self.cursor_j]
         endline = self.line[self.cursor_j:]
