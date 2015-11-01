@@ -164,11 +164,11 @@ class Output(OutputAbs):
                 elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                     addr = i.address + i.size + mm.disp
                     print_no_end("*(")
-                    if mm.disp in self.binary.reverse_symbols:
+                    if addr in self.binary.reverse_symbols:
                         self.print_symbol(addr)
                     else:
                         print_no_end(hex(addr))
-                        print_no_end(")")
+                    print_no_end(")")
                     return True
 
             printed = False
