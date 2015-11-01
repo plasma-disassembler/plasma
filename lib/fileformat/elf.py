@@ -82,11 +82,15 @@ class ELF:
         symtab = self.elf.get_section_by_name(b".symtab")
         if symtab is None:
             return
+        dont_save = [b"$a", b"$t", b"$d"]
+        arch = self.elf.get_machine_arch()
+        is_arm = arch == "ARM"
         for sy in symtab.iter_symbols():
+            if is_arm and sy.name in dont_save:
+                continue
             if sy.entry.st_value != 0 and sy.name != b"":
                 self.classbinary.reverse_symbols[sy.entry.st_value] = sy.name.decode()
                 self.classbinary.symbols[sy.name.decode()] = sy.entry.st_value
-            # print("%x\t%s" % (sy.entry.st_value, sy.name.decode()))
 
 
     def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
