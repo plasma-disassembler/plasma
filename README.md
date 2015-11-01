@@ -44,7 +44,7 @@ for a full list.
 ## Switch jump-tables
 
 The program can't detect automatically switch statements which require a
-jump-table. So we need to tell him which jump-table to used and the size.
+jump-table. So we need to tell him which jump-table to use.
 
     $ ./reverse.py -i tests/others/switch.bin
     >> x
