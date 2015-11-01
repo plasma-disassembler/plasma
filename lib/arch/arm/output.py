@@ -189,8 +189,12 @@ class Output(OutputAbs):
                     # return True
                 if mm.base == ARM_REG_PC:
                     addr = i.address + i.size + mm.disp
-                    print_no_end("*({0})".format(
-                        self.binary.reverse_symbols.get(addr, hex(addr))))
+                    print_no_end("*(")
+                    if mm.disp in self.binary.reverse_symbols:
+                        self.print_symbol(addr)
+                    else:
+                        print_no_end(hex(addr))
+                        print_no_end(")")
                     return True
 
             printed = False
