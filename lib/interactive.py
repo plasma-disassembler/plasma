@@ -21,6 +21,7 @@ import os
 import sys
 import shlex
 import json
+import code
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
@@ -65,6 +66,7 @@ class Interactive():
             "lrawmips64",
             "lrawx86",
             "lrawx64",
+            "py",
             "save",
             "sections",
             "sym",
@@ -314,6 +316,16 @@ class Interactive():
                 "INST_ADDR TABLE_ADDR NB_ENTRIES SIZE_ENTRY",
                 "Create a jump table referenced at TABLE_ADDR and called",
                 "from INST_ADDR."
+                ]
+            ),
+
+            "py": Command(
+                0,
+                self.__exec_py,
+                None,
+                [
+                "",
+                "Run an interactive python shell."
                 ]
             ),
         }
@@ -786,3 +798,7 @@ class Interactive():
 
         self.database_modified = True
         self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
+
+
+    def __exec_py(self, args):
+        code.interact(local=locals())
