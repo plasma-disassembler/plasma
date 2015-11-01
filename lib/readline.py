@@ -426,8 +426,9 @@ class ReadLine():
             self.cursor_j = 0
             self.set_cursor()
             self.delete_end_line()
-            self.cursor_j = len(self.line)
             self.print(self.line)
+            self.cursor_j = len(completed)
+            self.set_cursor()
 
     def k_ctrl_a(self):
         self.k_home()
