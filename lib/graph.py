@@ -79,30 +79,44 @@ class Graph:
             self.nodes[inst.address].append(prefetch)
 
 
-    def set_next(self, curr, inst, prefetch=None):
+    def set_jmptable_next(self, curr, jmptable, prefetch=None):
         self.nodes[curr.address] = [curr]
-        self.link_out[curr.address] = [inst.address]
+        self.link_out[curr.address] = jmptable
 
-        if inst.address not in self.link_in:
-            self.link_in[inst.address] = []
-        self.link_in[inst.address].append(curr.address)
+        for ad in jmptable:
+            if ad not in self.link_in:
+                self.link_in[ad] = [curr.address]
+            else:
+                self.link_in[ad].append(curr.address)
 
         if prefetch is not None:
             self.nodes[curr.address].append(prefetch)
 
 
-    def set_cond_next(self, curr, next_jump, direct_next, prefetch=None):
+    def set_next(self, curr, nxt_jmp, prefetch=None):
         self.nodes[curr.address] = [curr]
-        self.link_out[curr.address] = [direct_next.address, next_jump.address]
+        self.link_out[curr.address] = [nxt_jmp]
 
-        if next_jump.address not in self.link_in:
-            self.link_in[next_jump.address] = []
+        if nxt_jmp not in self.link_in:
+            self.link_in[nxt_jmp] = []
+        self.link_in[nxt_jmp].append(curr.address)
 
-        if direct_next.address not in self.link_in:
-            self.link_in[direct_next.address] = []
+        if prefetch is not None:
+            self.nodes[curr.address].append(prefetch)
 
-        self.link_in[next_jump.address].append(curr.address)
-        self.link_in[direct_next.address].append(curr.address)
+
+    def set_cond_next(self, curr, nxt_jmp, direct_nxt, prefetch=None):
+        self.nodes[curr.address] = [curr]
+        self.link_out[curr.address] = [direct_nxt, nxt_jmp]
+
+        if nxt_jmp not in self.link_in:
+            self.link_in[nxt_jmp] = []
+
+        if direct_nxt not in self.link_in:
+            self.link_in[direct_nxt] = []
+
+        self.link_in[nxt_jmp].append(curr.address)
+        self.link_in[direct_nxt].append(curr.address)
 
         if prefetch is not None:
             self.nodes[curr.address].append(prefetch)
@@ -168,7 +182,7 @@ class Graph:
 
 
     # Check d3/index.html !
-    def html_graph(self):
+    def html_graph(self, jmptables):
         revpath = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
         output = open(revpath + "/../d3/graph.js", "w+")
         output.write("mygraph = \"digraph {\\\n")
@@ -196,7 +210,10 @@ class Graph:
             output.write("];\\\n")
         
         for k, i in self.link_out.items():
-            if len(i) == 2:
+            if k in jmptables:
+                for ad in jmptables[k].table:
+                    output.write("node_%x -> node_%x;\\\n" % (k, ad))
+            elif len(i) == 2:
                 # true green branch (jump is taken)
                 output.write("node_%x -> node_%x [" % (k, i[BRANCH_NEXT_JUMP]))
                 output.write("style=\\\"stroke: #58DA9C; stroke-width: 3px;\\\" ")

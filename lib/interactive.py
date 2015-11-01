@@ -58,6 +58,7 @@ class Interactive():
             "exit",
             "help",
             "info",
+            "jmptable",
             "load",
             "lrawarm",
             "lrawmips",
@@ -302,6 +303,17 @@ class Interactive():
                 [
                 "",
                 "Print or not comments"
+                ]
+            ),
+
+            "jmptable": Command(
+                4,
+                self.__exec_jmptable,
+                None,
+                [
+                "INST_ADDR TABLE_ADDR NB_ENTRIES SIZE_ENTRY",
+                "Create a jump table referenced at TABLE_ADDR and called",
+                "from INST_ADDR."
                 ]
             ),
         }
@@ -623,14 +635,7 @@ class Interactive():
         try:
             addr = int(args[2], 16)
             self.database_modified = True
-
-            if args[1] in self.ctx.dis.binary.symbols:
-                last = self.ctx.dis.binary.symbols[args[1]]
-                del self.ctx.dis.binary.reverse_symbols[last]
-
-            self.ctx.dis.binary.symbols[args[1]] = addr
-            self.ctx.dis.binary.reverse_symbols[addr] = args[1]
-
+            self.ctx.dis.add_symbol(addr, args[1])
         except:
             error("there was an error when creating a symbol")
 
@@ -744,8 +749,37 @@ class Interactive():
         db = {
             "symbols": self.ctx.dis.binary.symbols,
             "history": self.rl.history,
+            "inline_comments": self.ctx.dis.inline_comments,
+            "previous_comments": self.ctx.dis.previous_comments,
+            "jmptables": [],
         }
+        for j in self.ctx.dis.jmptables.values():
+            o = {
+                "inst_addr": j.inst_addr,
+                "table_addr": j.table_addr,
+                "table": j.table,
+                "name": j.name,
+            }
+            db["jmptables"].append(o)
         fd.write(json.dumps(db))
         fd.close()
         print("database saved to", self.ctx.db_path)
         self.database_modified = False
+
+
+    def __exec_jmptable(self, args):
+        try:
+            inst_addr = int(args[1], 16)
+            table_addr = int(args[2], 16)
+            nb_entries = int(args[3])
+            entry_size = int(args[4])
+        except:
+            error("one parameter is invalid, be sure that addresses start with 0x")
+            return
+
+        if entry_size not in [2, 4, 8]:
+            error("error the entry size should be in [2, 4, 8]")
+            return
+
+        self.database_modified = True
+        self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)

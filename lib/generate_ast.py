@@ -503,7 +503,12 @@ def generate_ast(ctx__):
 
         nxt = ctx.gph.link_out[curr]
 
-        if len(nxt) == 2:
+        if curr in ctx.dis.jmptables:
+            ast.add(blk)
+            for n in nxt:
+                stack.append((ast, loops_stack, curr, n, else_addr))
+
+        elif len(nxt) == 2:
             # We are on a conditional jump
 
             prefetch = blk[1] if len(blk) == 2 else None

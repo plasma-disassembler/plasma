@@ -273,6 +273,10 @@ class Output(OutputAbs):
             nonlocal i
             return "%s %s" % (i.mnemonic, i.op_str)
 
+        if i.address in self.ctx.dis.previous_comments:
+            for comm in self.ctx.dis.previous_comments[i.address]:
+                print_tabbed(color_intern_comment("; %s" % comm), tab)
+
         if prefix == "# ":
             if self.ctx.comments:
                 if i.address in self.ctx.labels:
@@ -313,7 +317,8 @@ class Output(OutputAbs):
             print_no_end(i.mnemonic + " ")
             if i.operands[0].type != ARM_OP_IMM:
                 print_no_end(i.op_str)
-                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
+                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
+                        and not i.address in self.ctx.dis.jmptables:
                     print_comment_no_end(" # STOPPED")
                 print()
                 return
@@ -372,6 +377,10 @@ class Output(OutputAbs):
 
         if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
             print_no_end(color_type(" (FLAGS)"))
+
+        if i.address in self.ctx.dis.inline_comments:
+            print_no_end(color_intern_comment(" ; "))
+            print_no_end(color_intern_comment(self.ctx.dis.inline_comments[i.address]))
 
         if modified and self.ctx.comments:
             print_comment_no_end(" # " + get_inst_str())

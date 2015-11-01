@@ -20,7 +20,7 @@
 import struct
 
 from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end, INTERN_COMMENTS,
+        print_comment, print_comment_no_end,
         print_tabbed, print_addr, print_label, print_label_or_addr,
         print_label_and_addr)
 from lib.colors import (color, color_retcall, color_string,
@@ -252,6 +252,10 @@ class Output(OutputAbs):
             nonlocal i
             return "%s %s" % (i.mnemonic, i.op_str)
 
+        if i.address in self.ctx.dis.previous_comments:
+            for comm in self.ctx.dis.previous_comments[i.address]:
+                print_tabbed(color_intern_comment("; %s" % comm), tab)
+
         if prefix == "# ":
             if self.ctx.comments:
                 if i.address in self.ctx.labels:
@@ -275,9 +279,9 @@ class Output(OutputAbs):
 
         modified = self.__print_inst(i, tab, prefix)
 
-        if i.address in INTERN_COMMENTS:
+        if i.address in self.ctx.dis.inline_comments:
             print_no_end(color_intern_comment(" ; "))
-            print_no_end(color_intern_comment(INTERN_COMMENTS[i.address]))
+            print_no_end(color_intern_comment(self.ctx.dis.inline_comments[i.address]))
 
         if modified and self.ctx.comments:
             print_comment_no_end(" # " + get_inst_str())
@@ -331,7 +335,8 @@ class Output(OutputAbs):
             print_no_end(i.mnemonic + " ")
             if i.operands[0].type != X86_OP_IMM:
                 self.print_operand(i, 0)
-                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump:
+                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
+                        and not i.address in self.ctx.dis.jmptables:
                     print_comment_no_end(" # STOPPED")
                 return
             addr = i.operands[0].value.imm

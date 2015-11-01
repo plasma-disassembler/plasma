@@ -24,7 +24,6 @@ from capstone.x86 import (X86_REG_EBX, X86_REG_ECX, X86_REG_EDX, X86_REG_ESI,
         X86_INS_MOV, X86_INS_XOR, X86_OP_REG, X86_REG_RSI, X86_REG_RDI,
         X86_REG_EDI)
 
-from lib.output import INTERN_COMMENTS
 from lib.ast import Ast_Branch, Ast_Loop, Ast_Ifelse
 
 
@@ -273,6 +272,7 @@ def get_value_written(inst):
 
 
 def read_block(ctx, blk):
+    inline_comm = ctx.dis.inline_comments
     for i, inst in enumerate(blk):
         if inst.id != X86_INS_INT:
             continue
@@ -289,10 +289,10 @@ def read_block(ctx, blk):
         sysnum = get_value_written(inst_wr_al)
 
         if sysnum is None:
-            INTERN_COMMENTS[inst.address] = "?"
+            inline_comm[inst.address] = "?"
             continue
 
-        INTERN_COMMENTS[inst.address] = SYSCALL[sysnum]["name"] + "("
+        inline_comm[inst.address] = SYSCALL[sysnum]["name"] + "("
 
         # Search values for each args, otherwise print the register
 
@@ -303,23 +303,21 @@ def read_block(ctx, blk):
             if idx_wr_reg == -1:
                 # TODO: we take the first register which is in 32 bits
                 # we need to check the architecture before
-                INTERN_COMMENTS[inst.address] += inst.reg_name(ARGS_ORDER[j][0])
+                inline_comm[inst.address] += inst.reg_name(ARGS_ORDER[j][0])
             else:
                 inst_wr_reg = blk[idx_wr_reg]
                 val = get_value_written(inst_wr_reg)
                 if val is None:
                     # TODO: we take the first register which is in 32 bits
                     # we need to check the architecture before
-                    INTERN_COMMENTS[inst.address] += inst.reg_name(ARGS_ORDER[j][0])
+                    inline_comm[inst.address] += inst.reg_name(ARGS_ORDER[j][0])
                 else:
-                    INTERN_COMMENTS[inst.address] += hex(val)
+                    inline_comm[inst.address] += hex(val)
 
             if j != len(args_type)-1:
-                INTERN_COMMENTS[inst.address] += ", "
+                inline_comm[inst.address] += ", "
             
-
-
-        INTERN_COMMENTS[inst.address] += ")"
+        inline_comm[inst.address] += ")"
 
 
 def int80(ctx, ast):

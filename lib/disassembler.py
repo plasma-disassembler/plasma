@@ -29,9 +29,19 @@ from lib.colors import (pick_color, color_addr, color_symbol,
 from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
+class Jmptable():
+    def __init__(self, inst_addr, table_addr, table, name):
+        self.inst_addr = inst_addr
+        self.table_addr = table_addr
+        self.table = table
+        self.name = name
+
+
 class Disassembler():
     def __init__(self, filename, raw_type, raw_base,
-                 raw_big_endian, load_symbols=True):
+                 raw_big_endian, sym, rev_sym,
+                 jmptables, inline_comments,
+                 previous_comments, load_symbols=True):
         import capstone as CAPSTONE
 
         self.code = {}
@@ -44,6 +54,9 @@ class Disassembler():
 
         if load_symbols:
             self.binary.load_symbols()
+        else:
+            self.binary.symbols = sym
+            self.binary.reverse_symbols = rev_sym
 
         self.binary.load_section_names()
 
@@ -54,6 +67,66 @@ class Disassembler():
         self.md.detail = True
         self.arch = arch
         self.mode = mode
+        self.jmptables = jmptables
+        self.inline_comments = inline_comments
+        self.previous_comments = previous_comments
+
+
+    def get_unpack_str(self, size_word):
+        if self.mode & self.capstone.CS_MODE_BIG_ENDIAN:
+            endian = ">"
+        else:
+            endian = "<"
+        if size_word == 1:
+            unpack_str = endian + "B"
+        elif size_word == 2:
+            unpack_str = endian + "H"
+        elif size_word == 4:
+            unpack_str = endian + "L"
+        elif size_word == 8:
+            unpack_str = endian + "Q"
+        return unpack_str
+
+
+    def add_symbol(self, addr, name):
+        if name in self.binary.symbols:
+            last = self.binary.symbols[name]
+            del self.binary.reverse_symbols[last]
+
+        self.binary.symbols[name] = addr
+        self.binary.reverse_symbols[addr] = name
+
+        return name
+
+
+    def read_array(self, ad, array_max_size, size_word):
+        unpack_str = self.get_unpack_str(size_word)
+        N = size_word * array_max_size
+        s_name, s_start, s_end = self.binary.get_section_meta(ad)
+        array = []
+        l = 0
+
+        while l < array_max_size:
+            buf = self.binary.section_stream_read(ad, N)
+            if not buf:
+                break
+
+            i = 0
+            while i < len(buf):
+                b = buf[i:i + size_word]
+
+                if ad > s_end or len(b) != size_word:
+                    return array
+
+                w = struct.unpack(unpack_str, b)[0]
+                array.append(w)
+
+                ad += size_word
+                i += size_word
+                l += 1
+                if l >= array_max_size:
+                    return array
+        return array
 
 
     def check_addr(self, ctx, addr):
@@ -210,71 +283,26 @@ class Disassembler():
 
 
     def dump_data(self, ctx, lines, size_word):
-        _, mode = self.binary.get_arch()
-
-        if mode & self.capstone.CS_MODE_BIG_ENDIAN:
-            endian = ">"
-        else:
-            endian = "<"
-
-        if size_word == 1:
-            unpack_str = endian + "B"
-        elif size_word == 2:
-            unpack_str = endian + "H"
-        elif size_word == 4:
-            unpack_str = endian + "L"
-        elif size_word == 8:
-            unpack_str = endian + "Q"
-
-        N = size_word * 64
-        addr = ctx.entry_addr
-
         s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
         self.print_section_meta(s_name, s_start, s_end)
 
-        l = 0
+        ad = ctx.entry_addr
 
-        while l < lines:
-            buf = self.binary.section_stream_read(addr, N)
-            if not buf:
-                break
-
-            i = 0
-            while i < len(buf):
-                b = buf[i:i + size_word]
-
-                if addr > s_end:
-                    return
-
-                if len(b) != size_word:
-                    for c in buf:
-                        print_no_end(color_addr(addr))
-                        print("0x%.2x" % c)
-                    return
-
-                if addr in self.binary.reverse_symbols:
-                    print(color_symbol(self.binary.reverse_symbols[addr]))
-
-                print_no_end(color_addr(addr))
-
-                w = struct.unpack(unpack_str, b)[0]
-                print_no_end("0x%.2x" % w)
-
-                sec_name, is_data = self.binary.is_address(w)
-                if sec_name is not None:
-                    print_no_end(" (")
-                    print_no_end(color_section(sec_name))
-                    print_no_end(")")
-                    if size_word >= 4 and w in self.binary.reverse_symbols:
-                        print_no_end(" ")
-                        print_no_end(color_symbol(self.binary.reverse_symbols[w]))
-
-                print()
-                addr += size_word
-                i += size_word
-                l += 1
-                if l >= lines:
-                    return
+        for w in self.read_array(ctx.entry_addr, lines, size_word):
+            if ad in self.binary.reverse_symbols:
+                print(color_symbol(self.binary.reverse_symbols[ad]))
+            print_no_end(color_addr(ad))
+            print_no_end("0x%.2x" % w)
+            sec_name, is_data = self.binary.is_address(w)
+            if sec_name is not None:
+                print_no_end(" (")
+                print_no_end(color_section(sec_name))
+                print_no_end(")")
+                if size_word >= 4 and w in self.binary.reverse_symbols:
+                    print_no_end(" ")
+                    print_no_end(color_symbol(self.binary.reverse_symbols[w]))
+            ad += size_word
+            print()
 
 
     def print_calls(self, ctx):
@@ -327,23 +355,18 @@ class Disassembler():
         
         # Disassemble by block of N bytes
         N = 1024
-
         d = self.binary.section_stream_read(addr, N)
         gen = self.md.disasm(d, addr)
 
-        first = None
         try:
             first = next(gen)
-            self.code[first.address] = first
-
-            # Max N instructions (N is in bytes)
-            for n in range(N):
-                i = next(gen)
-                if i.address in self.code:
-                    return first
-                self.code[i.address] = i
         except StopIteration:
-            pass
+            return None
+
+        for i in gen:
+            if i.address in self.code:
+                break
+            self.code[i.address] = i
 
         return first
 
@@ -354,86 +377,88 @@ class Disassembler():
 
     # Generate a flow graph of the given function (addr)
     def get_graph(self, entry_addr):
-        from capstone import CS_OP_IMM, CS_ARCH_MIPS
+        from capstone import CS_OP_IMM, CS_ARCH_MIPS, CS_OP_REG
 
         ARCH_UTILS = self.load_arch_module().utils
 
-        curr = self.lazy_disasm(entry_addr)
-        if curr is None:
-            return None
-
         gph = Graph(self, entry_addr)
-        rest = []
+        stack = [entry_addr]
         start = time.clock()
         prefetch = None
 
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
 
-        while 1:
-            if not gph.exists(curr):
+        while stack:
+            ad = stack.pop()
+            inst = self.lazy_disasm(ad)
+
+            if inst is None:
+                # Remove all previous instructions which have a link
+                # to this instruction.
+                if ad in gph.link_in:
+                    for i in gph.link_in[ad]:
+                        gph.link_out[i].remove(ad)
+                    for i in gph.link_in[ad]:
+                        if not gph.link_out[i]:
+                            del gph.link_out[i]
+                    del gph.link_in[ad]
+                continue
+
+            if gph.exists(inst):
+                continue
+
+            if ARCH_UTILS.is_ret(inst):
                 if self.arch == CS_ARCH_MIPS:
-                    prefetch = self.__prefetch_inst(curr)
+                    prefetch = self.__prefetch_inst(inst)
+                gph.add_node(inst, prefetch)
 
-                if ARCH_UTILS.is_uncond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[-1].type == CS_OP_IMM:
-                        addr = curr.operands[-1].value.imm
-                        nxt = self.lazy_disasm(addr)
-                        if nxt is None:
-                            gph.add_node(curr, prefetch)
-                        else:
-                            gph.set_next(curr, nxt, prefetch)
-                            rest.append(nxt.address)
-                    else:
-                        # Can't interpret jmp ADDR|reg
-                        gph.add_node(curr, prefetch)
-                    gph.uncond_jumps_set.add(curr.address)
-
-                elif ARCH_UTILS.is_cond_jump(curr) and len(curr.operands) > 0:
-                    if curr.operands[-1].type == CS_OP_IMM:
-                        nxt_jump = self.lazy_disasm(curr.operands[-1].value.imm)
-
-                        if self.arch == CS_ARCH_MIPS:
-                            direct_nxt = \
-                                self.lazy_disasm(prefetch.address + prefetch.size)
-                        else:
-                            direct_nxt = \
-                                self.lazy_disasm(curr.address + curr.size)
-
-                        if nxt_jump is not None:
-                            rest.append(nxt_jump.address)
-                            if direct_nxt is not None:
-                                rest.append(direct_nxt.address)
-                                gph.set_cond_next(curr, nxt_jump, direct_nxt, prefetch)
-                            else:
-                                gph.set_next(curr, nxt_jump, prefetch)
-                        else:
-                            if direct_nxt is not None:
-                                rest.append(direct_nxt.address)
-                                gph.set_next(curr, direct_nxt, prefetch)
-                            else:
-                                gph.add_node(curr, prefetch)
-                    else:
-                        # Can't interpret jmp ADDR|reg
-                        gph.add_node(curr, prefetch)
-                    gph.cond_jumps_set.add(curr.address)
-
-                elif ARCH_UTILS.is_ret(curr):
-                    gph.add_node(curr, prefetch)
-
+            elif ARCH_UTILS.is_uncond_jump(inst):
+                if self.arch == CS_ARCH_MIPS:
+                    prefetch = self.__prefetch_inst(inst)
+                gph.uncond_jumps_set.add(ad)
+                op = inst.operands[-1]
+                if op.type == CS_OP_IMM:
+                    nxt = op.value.imm
+                    stack.append(nxt)
+                    gph.set_next(inst, nxt, prefetch)
                 else:
-                    try:
-                        nxt = self.lazy_disasm(curr.address + curr.size)
-                        gph.set_next(curr, nxt)
-                        rest.append(nxt.address)
-                    except:
-                        gph.add_node(curr)
-                        pass
+                    if inst.address in self.jmptables:
+                        table = self.jmptables[inst.address].table
+                        gph.set_jmptable_next(inst, table, prefetch)
+                        for ad in table:
+                            stack.append(ad)
+                    else:
+                        # Can't interpret jmp ADDR|reg
+                        gph.add_node(inst, prefetch)
 
-            try:
-                curr = self.lazy_disasm(rest.pop())
-            except IndexError:
-                break
+            elif ARCH_UTILS.is_cond_jump(inst):
+                if self.arch == CS_ARCH_MIPS:
+                    prefetch = self.__prefetch_inst(inst)
+                gph.cond_jumps_set.add(ad)
+                op = inst.operands[-1]
+                if op.type == CS_OP_IMM:
+                    if self.arch == CS_ARCH_MIPS:
+                        direct_nxt = prefetch.address + prefetch.size
+                    else:
+                        direct_nxt = inst.address + inst.size
+
+                    nxt_jmp = op.value.imm
+
+                    stack.append(direct_nxt)
+                    stack.append(nxt_jmp)
+                    gph.set_cond_next(inst, nxt_jmp, direct_nxt, prefetch)
+                else:
+                    # Can't interpret jmp ADDR|reg
+                    gph.add_node(inst, prefetch)
+
+            else:
+                nxt = inst.address + inst.size
+                stack.append(nxt)
+                gph.set_next(inst, nxt)
+
+        if len(gph.nodes) == 0:
+            return None
 
         if self.binary.type == T_BIN_PE:
             self.binary.pe_reverse_stripped_symbols(self)
@@ -443,3 +468,28 @@ class Disassembler():
         debug__("Graph built in %fs" % elapsed)
 
         return gph
+
+
+    def add_jmptable(self, inst_addr, table_addr, entry_size, nb_entries):
+        name = self.add_symbol(table_addr, "jmptable_0x%x" % table_addr)
+
+        table = self.read_array(table_addr, nb_entries, entry_size)
+        self.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
+
+        self.inline_comments[inst_addr] = "switch statement %s" % name
+
+        all_cases = {}
+        for ad in table:
+            all_cases[ad] = []
+
+        case = 0
+        for ad in table:
+            all_cases[ad].append(case)
+            case += 1
+
+        for ad in all_cases:
+            self.previous_comments[ad] = \
+                ["case %s  %s" % (
+                    ", ".join(map(str, all_cases[ad])),
+                    name
+                )]

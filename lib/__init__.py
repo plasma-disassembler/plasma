@@ -22,7 +22,7 @@ import os
 import json
 from argparse import ArgumentParser, FileType
 
-from lib.disassembler import Disassembler
+from lib.disassembler import Disassembler, Jmptable
 from lib.utils import die, error, warning, info
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
@@ -129,9 +129,48 @@ def load_file(ctx):
     db_exists = os.path.exists(db_path)
     ctx.db_path = db_path
 
+    jmptables = {}
+    inline_comments = {}
+    previous_comments = {}
+    sym = {}
+    rev_sym = {}
+
+    # Open the database
+    if db_exists:
+        info("open database %s" % db_path)
+        fd = open(db_path, "r")
+        db = json.loads(fd.read())
+        ctx.db = db
+
+        # Save symbols
+        sym = db["symbols"]
+        for name, addr in db["symbols"].items():
+            rev_sym[addr] = name
+
+        try:
+            # Save comments
+            for ad, comm in db["inline_comments"].items():
+                inline_comments[int(ad)] = comm
+            for ad, comm in db["previous_comments"].items():
+                previous_comments[int(ad)] = comm
+
+            # Save jmptables
+            for j in db["jmptables"]:
+                jmptables[j["inst_addr"]] = \
+                    Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
+        except:
+            # Not available in previous versions, ths try will be
+            # removed in the future
+            pass
+
+        fd.close()
+
     try:
         dis = Disassembler(ctx.filename, ctx.raw_type,
                            ctx.raw_base, ctx.raw_big_endian,
+                           sym, rev_sym,
+                           jmptables, inline_comments,
+                           previous_comments,
                            load_symbols=not db_exists)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
@@ -150,19 +189,6 @@ def load_file(ctx):
         if ctx.interactive:
             return False
         die()
-
-    # Load symbols in the database
-    if db_exists:
-        info("open database %s" % db_path)
-        fd = open(db_path, "r")
-        db = json.loads(fd.read())
-        ctx.db = db
-        sym = dis.binary.symbols
-        rev_sym = dis.binary.reverse_symbols
-        for name, addr in db["symbols"].items():
-            sym[name] = addr
-            rev_sym[addr] = name
-        fd.close()
 
     ctx.dis = dis
     ctx.libarch = dis.load_arch_module()
@@ -221,7 +247,7 @@ def disasm(ctx):
     ctx.gph.graph_init(ctx)
     
     if ctx.graph:
-        ctx.gph.html_graph()
+        ctx.gph.html_graph(ctx.dis.jmptables)
 
     try:
         ast = generate_ast(ctx)
