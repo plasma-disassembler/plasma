@@ -41,6 +41,19 @@ More commands are available in this mode (`da`, `db`, ...). See `help`
 for a full list.
 
 
+## Visual mode (NEW)
+
+New command `v` in the interactive mode. For the moment we can only scroll.
+This mode requires `ncurses`.
+
+More features will come :
+
+* user comments
+* follow calls/addresses
+* renaming
+* ...
+
+
 ## Switch jump-tables
 
 The program can't detect automatically switch statements which require a

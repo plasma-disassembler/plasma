@@ -29,12 +29,7 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_INS_STRH, ARM_INS_STRD, ARM_INS_STR, ARM_REG_PC, ARM_INS_ASR,
         ARM_INS_LSL, ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX)
 
-
-from lib.output import (OutputAbs, print_no_end, print_tabbed_no_end,
-        print_comment, print_comment_no_end, print_addr, print_label_and_addr,
-        print_label_or_addr, print_label)
-from lib.colors import (color, color_retcall, color_string,
-        color_section, color_type)
+from lib.output import OutputAbs
 from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
@@ -78,40 +73,40 @@ STR_CHECK = {ARM_INS_STR, ARM_INS_STRB, ARM_INS_STRH, ARM_INS_STRD}
 
 
 class Output(OutputAbs):
-    def print_shift(self, i, shift):
+    def _shift(self, i, shift):
         if shift.type == ARM_SFT_LSL:
-            print_no_end(" << %d)" % shift.value)
+            self._add(" << %d)" % shift.value)
         elif shift.type == ARM_SFT_LSR:
-            print_no_end(" >> %d)" % shift.value)
+            self._add(" >> %d)" % shift.value)
         elif shift.type == ARM_SFT_ROR:
-            print_no_end(" rot>> %d)" % shift.value)
+            self._add(" rot>> %d)" % shift.value)
         elif shift.type == ARM_SFT_ASR:
-            print_no_end(" arith>> %d)" % shift.value)
+            self._add(" arith>> %d)" % shift.value)
         elif shift.type == ARM_SFT_RRX:
-            print_no_end(" rrx>> %s)" % shift.value)
+            self._add(" rrx>> %s)" % shift.value)
 
         elif shift.type == ARM_SFT_LSL_REG:
-            print_no_end(" << %s)" % i.reg_name(shift.value))
+            self._add(" << %s)" % i.reg_name(shift.value))
         elif shift.type == ARM_SFT_LSR_REG:
-            print_no_end(" >> %s)" % i.reg_name(shift.value))
+            self._add(" >> %s)" % i.reg_name(shift.value))
         elif shift.type == ARM_SFT_ROR_REG:
-            print_no_end(" rot>> %s)" % i.reg_name(shift.value))
+            self._add(" rot>> %s)" % i.reg_name(shift.value))
         elif shift.type == ARM_SFT_ASR_REG:
-            print_no_end(" arith>> %s)" % i.reg_name(shift.value))
+            self._add(" arith>> %s)" % i.reg_name(shift.value))
         elif shift.type == ARM_SFT_RRX_REG:
-            print_no_end(" rrx>> %s)" % i.reg_name(shift.value))
+            self._add(" rrx>> %s)" % i.reg_name(shift.value))
 
 
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
-    def print_operand(self, i, num_op, hexa=False, show_deref=True):
+    def _operand(self, i, num_op, hexa=False, show_deref=True):
         def inv(n):
             return n == ARM_OP_INVALID
 
         op = i.operands[num_op]
 
         if op.shift.type:
-            print_no_end("(")
+            self._add("(")
 
         if op.type == ARM_OP_IMM:
             imm = op.value.imm
@@ -121,39 +116,40 @@ class Output(OutputAbs):
                 modified = False
 
                 if self.ctx.sectionsname:
-                    print_no_end("(" + color_section(sec_name) + ") ")
+                    self._add("(")
+                    self._section(sec_name)
+                    self._add(") ")
 
                 if imm in self.binary.reverse_symbols:
-                    self.print_symbol(imm)
-                    print_no_end(" ")
+                    self._symbol(imm)
+                    self._add(" ")
                     modified = True
 
                 if imm in self.ctx.labels:
-                    print_label(imm, print_colon=False)
-                    print_no_end(" ")
+                    self._label(imm, print_label=False)
+                    self._add(" ")
                     modified = True
 
                 if not modified:
-                    print_no_end(hex(imm))
+                    self._add(hex(imm))
 
                 if is_data:
                     s = self.binary.get_string(imm, self.ctx.max_data_size)
                     if s != "\"\"":
-                        print_no_end(" " + color_string(s))
+                        self._add(" ")
+                        self._string(s)
 
                 return modified
 
             elif hexa:
-                print_no_end(hex(imm))
+                self._add(hex(imm))
             else:
-                print_no_end(str(imm))
+                self._add(str(imm))
 
                 if imm > 0:
                     packed = struct.pack("<L", imm)
                     if set(packed).issubset(BYTES_PRINTABLE_SET):
-                        print_no_end(color_string(" \""))
-                        print_no_end(color_string("".join(map(chr, packed))))
-                        print_no_end(color_string("\""))
+                        self._string(" \"" + "".join(map(chr, packed)) + "\"")
                         return False
 
                 # returns True because capstone print immediate in hexa
@@ -165,17 +161,17 @@ class Output(OutputAbs):
 
         elif op.type == ARM_OP_REG:
             if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
-                print_no_end(hex(i.address))
+                self._add(hex(i.address))
             else:
-                print_no_end(i.reg_name(op.value.reg))
+                self._add(i.reg_name(op.value.reg))
             if op.shift.type:
-                self.print_shift(i, op.shift)
+                self._shift(i, op.shift)
             return False
 
         elif op.type == ARM_OP_FP:
-            print_no_end("%f" % op.value.fp)
+            self._add("%f" % op.value.fp)
             if op.shift.type:
-                self.print_shift(i, op.shift)
+                self._shift(i, op.shift)
             return False
 
         elif op.type == ARM_OP_MEM:
@@ -189,37 +185,37 @@ class Output(OutputAbs):
                     # return True
                 if mm.base == ARM_REG_PC:
                     addr = i.address + i.size * 2 + mm.disp
-                    print_no_end("*(")
+                    self._add("*(")
                     if addr in self.binary.reverse_symbols:
-                        self.print_symbol(addr)
+                        self._symbol(addr)
                     else:
-                        print_no_end(hex(addr))
-                    print_no_end(")")
+                        self._add(hex(addr))
+                    self._add(")")
                     return True
 
             printed = False
             if show_deref:
-                print_no_end("*(")
+                self._add("*(")
 
             if not inv(mm.base):
-                print_no_end("%s" % i.reg_name(mm.base))
+                self._add("%s" % i.reg_name(mm.base))
                 printed = True
 
             elif not inv(mm.segment):
-                print_no_end("%s" % i.reg_name(mm.segment))
+                self._add("%s" % i.reg_name(mm.segment))
                 printed = True
 
             if not inv(mm.index):
                 if printed:
-                    print_no_end(" + ")
+                    self._add(" + ")
 
                 if mm.scale == 1:
-                    print_no_end("%s" % i.reg_name(mm.index))
+                    self._add("%s" % i.reg_name(mm.index))
                 else:
-                    print_no_end("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
+                    self._add("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
 
                 if op.shift.type:
-                    self.print_shift(i, op.shift)
+                    self._shift(i, op.shift)
 
                 printed = True
 
@@ -227,166 +223,171 @@ class Output(OutputAbs):
                 sec_name, is_data = self.binary.is_address(mm.disp)
                 if sec_name is not None:
                     if printed:
-                        print_no_end(" + ")
+                        self._add(" + ")
                     if mm.disp in self.binary.reverse_symbols:
-                        self.print_symbol(mm.disp)
+                        self._symbol(mm.disp)
                     else:
-                        print_no_end(hex(mm.disp))
+                        self._add(hex(mm.disp))
                 else:
                     if printed:
                         if mm.disp < 0:
-                            print_no_end(" - ")
-                            print_no_end(-mm.disp)
+                            self._add(" - %d" % (-mm.disp))
                         else:
-                            print_no_end(" + ")
-                            print_no_end(mm.disp)
+                            self._add(" + %d" % mm.disp)
 
             if show_deref:
-                print_no_end(")")
+                self._add(")")
             return True
 
 
-    def print_if_cond(self, cond, fused_inst):
+    def _if_cond(self, cond, fused_inst):
         if fused_inst is None:
-            print_no_end(cond_symbol(cond))
+            self._add(cond_symbol(cond))
             if cond in COND_ADD_ZERO:
-                print_no_end(" 0")
+                self._add(" 0")
             return
 
         assignment = fused_inst.id in ASSIGNMENT_OPS
 
         if assignment:
-            print_no_end("(")
-        print_no_end("(")
-        self.print_operand(fused_inst, 0)
-        print_no_end(" ")
+            self._add("(")
+        self._add("(")
+        self._operand(fused_inst, 0)
+        self._add(" ")
 
-        print_no_end(cond_symbol(cond))
-        print_no_end(" ")
-        self.print_operand(fused_inst, 1)
+        self._add(cond_symbol(cond))
+        self._add(" ")
+        self._operand(fused_inst, 1)
 
         if (fused_inst.id != ARM_INS_CMP and \
                 (cond in COND_ADD_ZERO or assignment)):
-            print_no_end(" 0")
+            self._add(" 0")
 
-        print_no_end(")")
+        self._add(")")
 
 
-    def print_inst(self, i, tab=0, prefix=""):
+    def _asm_inst(self, i, tab=0, prefix=""):
         def get_inst_str():
             nonlocal i
             return "%s %s" % (i.mnemonic, i.op_str)
 
         if i.address in self.ctx.dis.previous_comments:
             for comm in self.ctx.dis.previous_comments[i.address]:
-                print_tabbed(color_intern_comment("; %s" % comm), tab)
+                self._tabs(tab)
+                self._internal_comment("; %s" % comm)
 
         if prefix == "# ":
             if self.ctx.comments:
                 if i.address in self.ctx.labels:
-                    print_label(i.address, tab)
-                    print()
-                print_comment_no_end(prefix, tab)
-                print_addr(i.address)
-                self.print_bytes(i, True)
-                print_comment(get_inst_str())
+                    self._label(i.address, tab)
+                    self._new_line()
+                self._tabs(tab)
+                self._comment(prefix)
+                self._address(i.address)
+                self._bytes(i, True)
+                self._comment(get_inst_str())
+                self._new_line()
             return
 
         if i.address in self.ctx.all_fused_inst:
             return
 
         if self.is_symbol(i.address):
-            print_tabbed_no_end("", tab)
-            self.print_symbol(i.address)
-            print()
+            self._tabs(tab)
+            self._symbol(i.address)
+            self._new_line()
 
-        print_label_and_addr(i.address, tab)
+        modified = self.__sub_asm_inst(i, tab, prefix)
 
-        self.print_bytes(i)
+        if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
+            self._type(" (FLAGS)")
+
+        if i.address in self.ctx.dis.inline_comments:
+            self._internal_comment(" ; %s" %
+                    self.ctx.dis.inline_comments[i.address])
+
+        if modified and self.ctx.comments:
+            self._comment(" # %s" % get_inst_str())
+
+        self._new_line()
+
+
+    def __sub_asm_inst(self, i, tab=0, prefix=""):
+        def get_inst_str():
+            nonlocal i
+            return "%s %s" % (i.mnemonic, i.op_str)
+
+        self._label_and_address(i.address, tab)
+        self._bytes(i)
 
         if is_ret(i):
-            print(color_retcall(get_inst_str()))
-            return
+            self._retcall(get_inst_str())
+            return False
 
         if is_call(i):
-            print_no_end(color_retcall(i.mnemonic) + " ")
-            modified = self.print_operand(i, 0, hexa=True)
-            if modified and self.ctx.comments:
-                print_comment_no_end(" # " + get_inst_str())
-            print()
-            return
+            self._retcall(i.mnemonic)
+            self._add(" ")
+            return self._operand(i, 0, hexa=True)
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
-            print_no_end(i.mnemonic + " ")
+            self._add(i.mnemonic + " ")
             if i.operands[0].type != ARM_OP_IMM:
-                print_no_end(i.op_str)
+                self._add(i.op_str)
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
                         and not i.address in self.ctx.dis.jmptables:
-                    print_comment_no_end(" # STOPPED")
-                print()
-                return
+                    self._comment(" # STOPPED")
+                return False
             addr = i.operands[0].value.imm
             if addr in self.ctx.addr_color:
-                print_label_or_addr(addr, -1, False)
+                self._label_or_address(addr, -1, False)
             else:
-                print_no_end(hex(addr))
-            print()
-            return
+                self._add(hex(addr))
+            return False
 
 
         modified = False
 
         if i.id in LDR_CHECK:
-            self.print_operand(i, 0)
-            print_no_end(" = (")
-            print_no_end(color_type(LDR_TYPE[i.id]))
-            print_no_end(") ")
-            self.print_operand(i, 1)
+            self._operand(i, 0)
+            self._add(" = (")
+            self._type(LDR_TYPE[i.id])
+            self._add(") ")
+            self._operand(i, 1)
             modified = True
 
         elif i.id in STR_CHECK:
-            self.print_operand(i, 1)
-            print_no_end(" = (")
-            print_no_end(color_type(STR_TYPE[i.id]))
-            print_no_end(") ")
-            self.print_operand(i, 0)
+            self._operand(i, 1)
+            self._add(" = (")
+            self._type(STR_TYPE[i.id])
+            self._add(") ")
+            self._operand(i, 0)
             modified = True
 
         elif i.id in INST_CHECK:
-            self.print_operand(i, 0)
+            self._operand(i, 0)
 
             if i.id == ARM_INS_CMP:
-                print_no_end(" " + inst_symbol(i) + " ")
-                self.print_operand(i, 1)
+                self._add(" " + inst_symbol(i) + " ")
+                self._operand(i, 1)
 
             else:
-                print_no_end(" = ")
-                self.print_operand(i, 1)
+                self._add(" = ")
+                self._operand(i, 1)
                 if len(i.operands) == 3:
-                    print_no_end(" " + inst_symbol(i) + " ")
-                    self.print_operand(i, 2)
+                    self._add(" " + inst_symbol(i) + " ")
+                    self._operand(i, 2)
 
             modified = True
 
         else:
-            print_no_end("%s " % i.mnemonic)
+            self._add("%s " % i.mnemonic)
             if len(i.operands) > 0:
-                modified = self.print_operand(i, 0)
+                modified = self._operand(i, 0)
                 k = 1
                 while k < len(i.operands):
-                    print_no_end(", ")
-                    modified |= self.print_operand(i, k)
+                    self._add(", ")
+                    modified |= self._operand(i, k)
                     k += 1
 
-        if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
-            print_no_end(color_type(" (FLAGS)"))
-
-        if i.address in self.ctx.dis.inline_comments:
-            print_no_end(color_intern_comment(" ; "))
-            print_no_end(color_intern_comment(self.ctx.dis.inline_comments[i.address]))
-
-        if modified and self.ctx.comments:
-            print_comment_no_end(" # " + get_inst_str())
-
-        print()
+        return modified

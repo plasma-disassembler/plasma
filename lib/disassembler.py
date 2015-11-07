@@ -21,11 +21,10 @@ import time
 import struct
 
 from lib.graph import Graph
-from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char
+from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
 from lib.fileformat.binary import Binary, T_BIN_PE
-from lib.output import print_no_end
 from lib.colors import (pick_color, color_addr, color_symbol,
-        color_section, color_string, color_comment)
+        color_section, color_string)
 from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
 
 
@@ -211,6 +210,7 @@ class Disassembler():
             self.binary.pe_reverse_stripped_symbols(self)
 
         o = ARCH_OUTPUT.Output(ctx)
+        o._new_line()
 
         # dump
         ad = ctx.entry_addr
@@ -219,11 +219,15 @@ class Disassembler():
             i = self.lazy_disasm(ad, s_start)
             if i is None:
                 ad += 1
-                o.print_bad(ad)
+                o._bad(ad)
             else:
-                o.print_inst(i)
+                o._asm_inst(i)
                 ad += i.size
             l += 1
+
+        o.lines.pop(-1) # empty line
+
+        return o
 
 
     def dump_data_ascii(self, ctx, lines):
@@ -322,7 +326,7 @@ class Disassembler():
             else:
                 ad += i.size
                 if ARCH_UTILS.is_call(i):
-                    o.print_inst(i)
+                    o._asm_inst(i)
 
 
     def print_symbols(self, print_sections, sym_filter=None):
@@ -377,7 +381,7 @@ class Disassembler():
 
     # Generate a flow graph of the given function (addr)
     def get_graph(self, entry_addr):
-        from capstone import CS_OP_IMM, CS_ARCH_MIPS, CS_OP_REG
+        from capstone import CS_OP_IMM, CS_ARCH_MIPS
 
         ARCH_UTILS = self.load_arch_module().utils
 

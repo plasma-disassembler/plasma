@@ -25,10 +25,10 @@ import code
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
-from lib.output import print_no_end
-from lib.utils import error
+from lib.utils import error, print_no_end
 from lib.readline import ReadLine
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
+from lib.visual import Visual
 
 
 class Command():
@@ -71,6 +71,7 @@ class Interactive():
             "sections",
             "sym",
             "x",
+            "v",
             "display.print_section",
             "display.print_comments",
         ]
@@ -163,6 +164,21 @@ class Interactive():
                 [
                 "[SYMBOL|0xXXXX|EP]",
                 "Decompile. By default it will be main.",
+                ]
+            ),
+
+            "v": Command(
+                1,
+                self.__exec_v,
+                self.__complete_x,
+                [
+                "[SYMBOL|0xXXXX|EP]",
+                "Same as x, but in visual mode.",
+                "Shortcuts:",
+                "g: top",
+                "G: bottom",
+                "z: set current line on the middle",
+                "q: quit",
                 ]
             ),
 
@@ -506,7 +522,7 @@ class Interactive():
                 lines = int(args[2])
             self.ctx.entry = args[1]
         if init_entry_addr(self.ctx):
-            self.ctx.dis.dump_asm(self.ctx, lines)
+            self.ctx.dis.dump_asm(self.ctx, lines).print()
             self.ctx.entry = None
             self.ctx.entry_addr = 0
 
@@ -665,7 +681,26 @@ class Interactive():
             self.ctx.entry = args[1]
         self.ctx.reset_vars()
         if init_entry_addr(self.ctx):
-            disasm(self.ctx)
+            o = disasm(self.ctx)
+            if o is not None:
+                o.print()
+            self.ctx.entry = None
+            self.ctx.entry_addr = 0
+
+
+    def __exec_v(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        if len(args) == 1:
+            self.ctx.entry = None
+        else:
+            self.ctx.entry = args[1]
+        self.ctx.reset_vars()
+        if init_entry_addr(self.ctx):
+            o = disasm(self.ctx)
+            if o is not None:
+                Visual(o)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
 

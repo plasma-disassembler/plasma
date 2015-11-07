@@ -19,6 +19,9 @@
 
 from lib import reverse, parse_args
 
+# Generates the file custom_colors.py at the beginning
+import lib.colors
+
 if __name__ == '__main__':
     ctx = parse_args()
 

@@ -22,6 +22,10 @@ import sys
 ctx = None
 
 
+def print_no_end(text):
+    print(text, end="")
+
+
 def debug__(obj="", end="\n"):
     if ctx.debug:
         if isinstance(obj, str) or isinstance(obj, int):

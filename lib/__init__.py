@@ -20,7 +20,7 @@
 import sys
 import os
 import json
-from argparse import ArgumentParser, FileType
+from argparse import ArgumentParser
 
 from lib.disassembler import Disassembler, Jmptable
 from lib.utils import die, error, warning, info
@@ -142,24 +142,24 @@ def load_file(ctx):
         db = json.loads(fd.read())
         ctx.db = db
 
-        # Save symbols
+        # Saved symbols
         sym = db["symbols"]
         for name, addr in db["symbols"].items():
             rev_sym[addr] = name
 
         try:
-            # Save comments
+            # Saved comments
             for ad, comm in db["inline_comments"].items():
                 inline_comments[int(ad)] = comm
             for ad, comm in db["previous_comments"].items():
                 previous_comments[int(ad)] = comm
 
-            # Save jmptables
+            # Saved jmptables
             for j in db["jmptables"]:
                 jmptables[j["inst_addr"]] = \
                     Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
         except:
-            # Not available in previous versions, ths try will be
+            # Not available in previous versions, this try will be
             # removed in the future
             pass
 
@@ -243,7 +243,7 @@ def disasm(ctx):
     ctx.gph = ctx.dis.get_graph(ctx.entry_addr)
     if ctx.gph == None:
         error("capstone can't disassemble here")
-        return
+        return None
     ctx.gph.graph_init(ctx)
     
     if ctx.graph:
@@ -254,7 +254,7 @@ def disasm(ctx):
     except ExcIfelse as e:
         error("can't have a ifelse here     %x" % e.addr)
         if ctx.interactive:
-            return
+            return None
         die()
 
     if ctx.vim:
@@ -266,10 +266,12 @@ def disasm(ctx):
         sys.stdout = open(base + ".rev", "w+")
 
     o = ctx.libarch.output.Output(ctx)
-    o.print_ast(ctx.entry_addr, ast)
+    o._ast(ctx.entry_addr, ast)
 
     if ctx.vim:
         print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
+
+    return o
 
 
 def reverse(ctx):
@@ -292,17 +294,10 @@ def reverse(ctx):
         return
 
     if ctx.dump:
-        if ctx.vim:
-            base = os.path.basename(ctx.filename) + "_" + ctx.entry
-            ctx.color = False
-            sys.stdout = open(base + ".rev", "w+")
-
         if ctx.dump:
-            ctx.dis.dump_asm(ctx, ctx.lines)
-
-        if ctx.vim:
-            generate_vim_syntax(ctx, base + ".vim")
-            print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
+            ctx.dis.dump_asm(ctx, ctx.lines).print()
         return
 
-    disasm(ctx)
+    o = disasm(ctx)
+    if o is not None:
+        o.print()

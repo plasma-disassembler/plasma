@@ -17,20 +17,20 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 from textwrap import dedent
 from pathlib import Path
+from lib.utils import die, error, info
 
 
 def default_custom_file():
     filename = str(Path(__file__).parent.parent / "custom_colors.py")
     with open(filename, "w+") as fd:
         fd.write(dedent("""\
-            VERSION = 1.1
+            VERSION = 1.2
 
             class COLOR:
                 def __init__(self, val, bold):
-                    self.val  = str(val)
+                    self.val  = val
                     self.bold = bold
 
             COLOR_SECTION        = COLOR(81, False)
@@ -51,6 +51,7 @@ try:
 except:
     default_custom_file()
     from custom_colors import *
+    info("the file custom_colors.py has been created")
 
 
 # Old versions of custom_colors.py
@@ -58,14 +59,14 @@ try:
     COLOR_INTERN_COMMENT
     VERSION
 except:
-    filename = str(Path(__file__).parent.parent / "custom_colors.py")
-    with open(filename, "a") as fd:
-        fd.write((dedent("""\n\
-        COLOR_INTERN_COMMENT = COLOR(38, False)
-        VERSION = 1""")))
-    print("Your file custom_colors.py has been updated.")
-    print("You can run again your command")
-    sys.exit(0)
+    VERSION = 0
+
+if VERSION < 1.2:
+    error("there is a new version of custom_colors.py")
+    error("if you have not modified it, you can delete it")
+    error("otherwise you can copy it somewhere, run again")
+    error("then merge the file at hand.")
+    die()
 
 
 ctx = None
@@ -93,8 +94,8 @@ def color_class(text, c):
     if not ctx.color:
         return text
     if c.bold:
-        return "\x1b[38;5;" + c.val + "m" + bold(text) + "\x1b[0m"
-    return "\x1b[38;5;" + c.val + "m" + text + "\x1b[0m"
+        return "\x1b[38;5;" + str(c.val) + "m" + bold(text) + "\x1b[0m"
+    return "\x1b[38;5;" + str(c.val) + "m" + text + "\x1b[0m"
 
 
 def bold(text):
