@@ -155,16 +155,43 @@ class Output(OutputAbs):
 
                 if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
                        self.var_name_exists(i, num_op):
+                    if i.id == X86_INS_LEA:
+                        self._add("&(")
                     self._variable(self.get_var_name(i, num_op))
+                    if i.id == X86_INS_LEA:
+                        self._add(")")
                     return True
+
                 elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                     addr = i.address + i.size + mm.disp
-                    self._add("*(")
-                    if addr in self.binary.reverse_symbols:
-                        self._symbol(addr)
+
+                    if show_deref:
+                        self._add("*(")
+
+                    sec_name, is_data = self.binary.is_address(addr)
+
+                    if sec_name is not None :
+                        if self.ctx.sectionsname:
+                            self._add("(")
+                            self._section(sec_name)
+                            self._add(") ")
+
+                        if addr in self.binary.reverse_symbols:
+                            self._symbol(addr)
+                        elif is_data:
+                            self._add(hex(addr))
+                            s = self.binary.get_string(addr, self.ctx.max_data_size)
+                            if s != "\"\"":
+                                self._add(" ")
+                                self._string(s)
+                        else:
+                            self._add(hex(addr))
                     else:
                         self._add(hex(addr))
-                    self._add(")")
+
+                    if show_deref:
+                        self._add(")")
+
                     return True
 
             printed = False
@@ -381,9 +408,8 @@ class Output(OutputAbs):
 
             elif i.id == X86_INS_LEA:
                 self._operand(i, 0)
-                self._add(" = &(")
-                self._operand(i, 1)
-                self._add(")")
+                self._add(" = ")
+                self._operand(i, 1, show_deref=False)
 
             elif i.id == X86_INS_MOVZX:
                 self._operand(i, 0)
