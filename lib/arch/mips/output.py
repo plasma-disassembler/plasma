@@ -211,9 +211,13 @@ class Output(OutputAbs):
                 if i.address in self.ctx.labels:
                     self._label(i.address, tab)
                     self._new_line()
-                self._tabs(tab)
-                self._comment(prefix)
-                self._address(i.address)
+                    self._tabs(tab)
+                    self._comment(prefix)
+                    self._address(i.address, normal_color=True)
+                else:
+                    self._tabs(tab)
+                    self._comment(prefix)
+                    self._address(i.address)
                 self._bytes(i, True)
                 self._comment(get_inst_str())
                 self._new_line()
