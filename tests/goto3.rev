@@ -20,21 +20,21 @@ function main (.text) {
             # 0x40052b: cmp dword ptr [rbp - 0xc], 5
             # 0x40052f: jne 0x400555
             if (var3 == 5) {
-                0x400531: edi = 0x4005f4 "1" # mov edi, 0x4005f4
-                0x400536: call puts@plt  # call 0x4003e0
+                0x400531: edi =  0x4005f4 "1" # mov edi, 0x4005f4
+                0x400536: call  puts@plt
                 0x40053b: jmp 0x400547
             }
         } else {
-            0x40053d: edi = 0x4005f6 "2" # mov edi, 0x4005f6
-            0x400542: call puts@plt  # call 0x4003e0
-            0x400547: edi = 0x4005f8 "3" # mov edi, 0x4005f8
-            0x40054c: call puts@plt  # call 0x4003e0
+            0x40053d: edi =  0x4005f6 "2" # mov edi, 0x4005f6
+            0x400542: call  puts@plt
+            0x400547: edi =  0x4005f8 "3" # mov edi, 0x4005f8
+            0x40054c: call  puts@plt
             0x400551: var2 += 1 # add dword ptr [rbp - 4], 1
         }
         0x400555: var2 += 5 # add dword ptr [rbp - 4], 5
     }
     ret_0x40055f:
     0x40055f: eax = 0 # mov eax, 0
-    0x400564: leave 
-    0x400565: ret 
+    0x400564: leave
+    0x400565: ret
 }

@@ -63,5 +63,5 @@ function main (.text) {
     } # rep stosb byte ptr [rdi], al
     0x4004dc: eax = 0 # mov eax, 0
     0x4004e1: pop rbp
-    0x4004e2: ret 
+    0x4004e2: ret
 }

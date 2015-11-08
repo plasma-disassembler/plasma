@@ -10,5 +10,5 @@ function main (.text) {
         0x4004bc: rax++ # inc rax
     }
     ret_0x4004c1:
-    0x4004c1: ret 
+    0x4004c1: ret
 }

@@ -25,33 +25,33 @@ function main (.text) {
             # 0x40056b: je 0x400517
             if (eax != var5)  goto ret_0x40056d
         }
-        0x400517: edi = 0x400604 "1" # mov edi, 0x400604
-        0x40051c: call puts@plt  # call 0x4003e0
+        0x400517: edi =  0x400604 "1" # mov edi, 0x400604
+        0x40051c: call  puts@plt
         0x400521: jmp 0x400549
         loop {
             loop_0x400549:
             # 0x400549: cmp dword ptr [rbp - 0xc], 0x13
             # 0x40054d: jle 0x400523
             if (var5 > 19)  goto 0x40054f
-            0x400523: edi = 0x400606 "2" # mov edi, 0x400606
-            0x400528: call puts@plt  # call 0x4003e0
+            0x400523: edi =  0x400606 "2" # mov edi, 0x400606
+            0x400528: call  puts@plt
             0x40052d: jmp 0x400539
             loop {
                 loop_0x400539:
                 # 0x400539: cmp dword ptr [rbp - 8], 0x13
                 # 0x40053d: jle 0x40052f
                 if (var4 > 19)  goto 0x40053f
-                0x40052f: edi = 0x400608 "3" # mov edi, 0x400608
-                0x400534: call puts@plt  # call 0x4003e0
+                0x40052f: edi =  0x400608 "3" # mov edi, 0x400608
+                0x400534: call  puts@plt
             }
-            0x40053f: edi = 0x40060a "4" # mov edi, 0x40060a
-            0x400544: call puts@plt  # call 0x4003e0
+            0x40053f: edi =  0x40060a "4" # mov edi, 0x40060a
+            0x400544: call  puts@plt
         }
-        0x40054f: edi = 0x40060c "5" # mov edi, 0x40060c
-        0x400554: call puts@plt  # call 0x4003e0
+        0x40054f: edi =  0x40060c "5" # mov edi, 0x40060c
+        0x400554: call  puts@plt
     }
     ret_0x40056d:
     0x40056d: eax = 0 # mov eax, 0
-    0x400572: leave 
-    0x400573: ret 
+    0x400572: leave
+    0x400573: ret
 }

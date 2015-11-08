@@ -25,8 +25,8 @@ function _main (.text) {
     0x4012aa: eax <<= 4 # shl eax, 4
     0x4012ad: var1 = eax # mov dword ptr [ebp - 0xbc], eax
     0x4012b3: eax = var1 # mov eax, dword ptr [ebp - 0xbc]
-    0x4012b9: call __alloca  # call 0x401c20
-    0x4012be: call ___main  # call 0x4018c0
+    0x4012b9: call  __alloca
+    0x4012be: call  ___main
     0x4012c3: var2 = 10 # mov dword ptr [ebp - 0xc], 0xa
     0x4012ca: var3 = 10 # mov dword ptr [ebp - 0x10], 0xa
     0x4012d1: var4 = 0 # mov dword ptr [ebp - 0x18], 0
@@ -34,18 +34,18 @@ function _main (.text) {
     0x4012df: var6 = 0 # mov dword ptr [ebp - 0x2c], 0
     loop {
         loop_0x4012e6:
-        0x4012e6: *(esp) = 0x403000 "\n\n              ----------PEND..." # mov dword ptr [esp], 0x403000
-        0x4012ed: call _printf  # call 0x401d50
-        0x4012f2: *(esp) = 0x403030 "\t\t1 : Jouer\n\t\t2 : Nombre de ch..." # mov dword ptr [esp], 0x403030
-        0x4012f9: call _printf  # call 0x401d50
-        0x4012fe: *(esp) = 0x403062 "\n\t\t? " # mov dword ptr [esp], 0x403062
-        0x401305: call _printf  # call 0x401d50
+        0x4012e6: *(esp) =  0x403000 "\n\n              ----------PEND..." # mov dword ptr [esp], 0x403000
+        0x4012ed: call  _printf
+        0x4012f2: *(esp) =  0x403030 "\t\t1 : Jouer\n\t\t2 : Nombre de ch..." # mov dword ptr [esp], 0x403030
+        0x4012f9: call  _printf
+        0x4012fe: *(esp) =  0x403062 "\n\t\t? " # mov dword ptr [esp], 0x403062
+        0x401305: call  _printf
         0x40130a: eax = &(var7) # lea eax, dword ptr [ebp - 0x14]
         0x40130d: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-        0x401311: *(esp) = 0x403068 "%ld" # mov dword ptr [esp], 0x403068
-        0x401318: call _scanf  # call 0x401d40
-        0x40131d: *(esp) = 0x40306c "\n\n" # mov dword ptr [esp], 0x40306c
-        0x401324: call _printf  # call 0x401d50
+        0x401311: *(esp) =  0x403068 "%ld" # mov dword ptr [esp], 0x403068
+        0x401318: call  _scanf
+        0x40131d: *(esp) =  0x40306c "\n\n" # mov dword ptr [esp], 0x40306c
+        0x401324: call  _printf
         # 0x401329: cmp dword ptr [ebp - 0x14], 0
         # 0x40132d: jle 0x4012e6
         if (var7 > 0) {
@@ -58,16 +58,16 @@ function _main (.text) {
                 0x40133f: var8 = 0 # mov dword ptr [ebp - 0x24], 0
                 0x401346: eax = &(var9) # lea eax, dword ptr [ebp - 0xa8]
                 0x40134c: *(esp) = eax # mov dword ptr [esp], eax
-                0x40134f: call _motAleatoire  # call 0x4016c0
+                0x40134f: call  _motAleatoire
                 0x401354: var10 = al # mov byte ptr [ebp - 0x44], al
                 0x401357: eax = &(var9) # lea eax, dword ptr [ebp - 0xa8]
                 0x40135d: *(esp) = eax # mov dword ptr [esp], eax
-                0x401360: call _strlen  # call 0x401d30
+                0x401360: call  _strlen
                 0x401365: var11 = eax # mov dword ptr [ebp - 0x1c], eax
                 0x401368: eax = var11 # mov eax, dword ptr [ebp - 0x1c]
                 0x40136b: eax <<= 2 # shl eax, 2
                 0x40136e: *(esp) = eax # mov dword ptr [esp], eax
-                0x401371: call _malloc  # call 0x401d20
+                0x401371: call  _malloc
                 0x401376: var4 = eax # mov dword ptr [ebp - 0x18], eax
                 0x401379: var12 = 0 # mov dword ptr [ebp - 0x20], 0
                 loop {
@@ -95,8 +95,8 @@ function _main (.text) {
                     # 0x4013b5: cmp dword ptr [ebp - 0xc], 0
                     # 0x4013b9: jle 0x4014ba
                     if (var2 <= 0)  goto 0x4014ba
-                    0x4013bf: *(esp) = 0x40306f "Mot secret : " # mov dword ptr [esp], 0x40306f
-                    0x4013c6: call _printf  # call 0x401d50
+                    0x4013bf: *(esp) =  0x40306f "Mot secret : " # mov dword ptr [esp], 0x40306f
+                    0x4013c6: call  _printf
                     0x4013cb: var12 = 0 # mov dword ptr [ebp - 0x20], 0
                     loop {
                         loop_0x4013d2:
@@ -115,12 +115,12 @@ function _main (.text) {
                             0x4013f3: eax -= 160 # sub eax, 0xa0
                             0x4013f8: eax = *(eax) # movsx eax, byte ptr [eax]
                             0x4013fb: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                            0x4013ff: *(esp) = 0x40307d "%c" # mov dword ptr [esp], 0x40307d
-                            0x401406: call _printf  # call 0x401d50
+                            0x4013ff: *(esp) =  0x40307d "%c" # mov dword ptr [esp], 0x40307d
+                            0x401406: call  _printf
                             0x40140b: jmp 0x401419
                         } else {
-                            0x40140d: *(esp) = 0x403080 "=" # mov dword ptr [esp], 0x403080
-                            0x401414: call _printf  # call 0x401d50
+                            0x40140d: *(esp) =  0x403080 "=" # mov dword ptr [esp], 0x403080
+                            0x401414: call  _printf
                         }
                         0x401419: eax = &(var12) # lea eax, dword ptr [ebp - 0x20]
                         0x40141c: *(eax)++ # inc dword ptr [eax]
@@ -128,25 +128,25 @@ function _main (.text) {
                     }
                     0x401420: eax = var2 # mov eax, dword ptr [ebp - 0xc]
                     0x401423: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                    0x401427: *(esp) = 0x403082 "\nChance(s) : %ld" # mov dword ptr [esp], 0x403082
-                    0x40142e: call _printf  # call 0x401d50
-                    0x401433: *(esp) = 0x403093 "\nLettre : " # mov dword ptr [esp], 0x403093
-                    0x40143a: call _printf  # call 0x401d50
+                    0x401427: *(esp) =  0x403082 "\nChance(s) : %ld" # mov dword ptr [esp], 0x403082
+                    0x40142e: call  _printf
+                    0x401433: *(esp) =  0x403093 "\nLettre : " # mov dword ptr [esp], 0x403093
+                    0x40143a: call  _printf
                     loop {
                         loop_0x40143f:
-                        0x40143f: call _getchar  # call 0x401d10
+                        0x40143f: call  _getchar
                         0x401444: var14 = al # mov byte ptr [ebp - 0xa9], al
                         0x40144a: eax = var14 # movsx eax, byte ptr [ebp - 0xa9]
                         0x401451: *(esp) = eax # mov dword ptr [esp], eax
-                        0x401454: call _maj  # call 0x40154d
+                        0x401454: call  _maj
                         0x401459: var14 = al # mov byte ptr [ebp - 0xa9], al
                         # 0x40145f: cmp byte ptr [ebp - 0xa9], 0xa
                         # 0x401466: jne 0x40146a
                         if (var14 != '\n')  goto 0x40146a
                         0x401468: jmp 0x40143f
                     }
-                    0x40146a: *(esp) = 0x40309e "\n" # mov dword ptr [esp], 0x40309e
-                    0x401471: call _printf  # call 0x401d50
+                    0x40146a: *(esp) =  0x40309e "\n" # mov dword ptr [esp], 0x40309e
+                    0x401471: call  _printf
                     0x401476: eax = var8 # mov eax, dword ptr [ebp - 0x24]
                     0x401479: var6 = eax # mov dword ptr [ebp - 0x2c], eax
                     0x40147c: eax = var2 # mov eax, dword ptr [ebp - 0xc]
@@ -159,7 +159,7 @@ function _main (.text) {
                     0x401496: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
                     0x40149a: eax = var14 # movsx eax, byte ptr [ebp - 0xa9]
                     0x4014a1: *(esp) = eax # mov dword ptr [esp], eax
-                    0x4014a4: call _verification  # call 0x40161d
+                    0x4014a4: call  _verification
                     0x4014a9: eax = var6 # mov eax, dword ptr [ebp - 0x2c]
                     0x4014ac: var8 = eax # mov dword ptr [ebp - 0x24], eax
                     0x4014af: eax = var15 # mov eax, dword ptr [ebp - 0x28]
@@ -172,8 +172,8 @@ function _main (.text) {
                 if (eax == var11) {
                     0x4014c2: eax = &(var9) # lea eax, dword ptr [ebp - 0xa8]
                     0x4014c8: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                    0x4014cc: *(esp) = 0x4030a0 "\nVous avez GAGNE :D !!!!!\nLe m..." # mov dword ptr [esp], 0x4030a0
-                    0x4014d3: call _printf  # call 0x401d50
+                    0x4014cc: *(esp) =  0x4030a0 "\nVous avez GAGNE :D !!!!!\nLe m..." # mov dword ptr [esp], 0x4030a0
+                    0x4014d3: call  _printf
                     0x4014d8: eax = var3 # mov eax, dword ptr [ebp - 0x10]
                     0x4014db: var2 = eax # mov dword ptr [ebp - 0xc], eax
                 }
@@ -186,8 +186,8 @@ function _main (.text) {
                     and if (eax != var11)
                     0x4014ec: eax = &(var9) # lea eax, dword ptr [ebp - 0xa8]
                     0x4014f2: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                    0x4014f6: *(esp) = 0x4030d4 "\nVous avez PERDU  :(\nLe mot et..." # mov dword ptr [esp], 0x4030d4
-                    0x4014fd: call _printf  # call 0x401d50
+                    0x4014f6: *(esp) =  0x4030d4 "\nVous avez PERDU  :(\nLe mot et..." # mov dword ptr [esp], 0x4030d4
+                    0x4014fd: call  _printf
                     0x401502: eax = var3 # mov eax, dword ptr [ebp - 0x10]
                     0x401505: var2 = eax # mov dword ptr [ebp - 0xc], eax
                 }
@@ -197,12 +197,12 @@ function _main (.text) {
             if (var7 == 2) {
                 loop {
                     loop_0x40150e:
-                    0x40150e: *(esp) = 0x403100 "\nNombre de chance (defaut : 10..." # mov dword ptr [esp], 0x403100
-                    0x401515: call _printf  # call 0x401d50
+                    0x40150e: *(esp) =  0x403100 "\nNombre de chance (defaut : 10..." # mov dword ptr [esp], 0x403100
+                    0x401515: call  _printf
                     0x40151a: eax = &(var2) # lea eax, dword ptr [ebp - 0xc]
                     0x40151d: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
-                    0x401521: *(esp) = 0x403068 "%ld" # mov dword ptr [esp], 0x403068
-                    0x401528: call _scanf  # call 0x401d40
+                    0x401521: *(esp) =  0x403068 "%ld" # mov dword ptr [esp], 0x403068
+                    0x401528: call  _scanf
                     # 0x40152d: cmp dword ptr [ebp - 0xc], 0
                     # 0x401531: jg 0x401535
                     if (var2 > 0)  goto 0x401535
@@ -219,6 +219,6 @@ function _main (.text) {
     }
     ret_0x401546:
     0x401546: eax = 0 # mov eax, 0
-    0x40154b: leave 
-    0x40154c: ret 
+    0x40154b: leave
+    0x40154c: ret
 }

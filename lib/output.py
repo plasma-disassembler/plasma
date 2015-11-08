@@ -26,28 +26,57 @@ class OutputAbs():
     def __init__(self, ctx=None):
         self.ctx = ctx
         self.binary = ctx.dis.binary
-        self.lines = []
+        self.token_lines = [] # each line is separated in tokens (string, color, is_bold)
+        self.lines = [] # each line contains the entire string
+        self.line_addr = {} # line -> address
+        self.addr_line = {} # address -> line
+        self.index_end_inst = {}
+        self.curr_index = 0
 
 
     # All functions which start with a '_' add a new token/string on
     # the current line.
 
+    def get_inst_str(self, i):
+        if len(i.operands) == 0:
+            return i.mnemonic
+        return "%s %s" % (i.mnemonic, i.op_str)
+
+
+    def inst_end_here(self):
+        # save a tuple (a, b)
+        # a: index (in self.lines[i]) of the last character of an instruction.
+        # b: index (in self.token_lines[i]) of the last token.
+        line = len(self.token_lines)-1
+        self.index_end_inst[line] = \
+            (self.curr_index, len(self.token_lines[line]))
 
     def _new_line(self):
+        self.curr_index = 0
+        self.token_lines.append([])
         self.lines.append([])
 
     def _add(self, string):
-        self.lines[-1].append((string, 0, False))
+        self.token_lines[-1].append((string, 0, False))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _tabs(self, tab):
-        self.lines[-1].append((tab * "    ", 0, False))
+        t = tab * "    "
+        self.token_lines[-1].append((t, 0, False))
+        self.lines[-1].append(t)
+        self.curr_index += len(t)
 
     def _symbol(self, addr):
         s = self.binary.reverse_symbols[addr]
-        self.lines[-1].append((s, COLOR_SYMBOL.val, COLOR_SYMBOL.bold))
+        self.token_lines[-1].append((s, COLOR_SYMBOL.val, COLOR_SYMBOL.bold))
+        self.lines[-1].append(s)
+        self.curr_index += len(s)
 
     def _comment(self, string):
-        self.lines[-1].append((string, COLOR_COMMENT.val, COLOR_COMMENT.bold))
+        self.token_lines[-1].append((string, COLOR_COMMENT.val, COLOR_COMMENT.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _address(self, addr, print_colon=True, normal_color=False):
         s = hex(addr)
@@ -57,28 +86,46 @@ class OutputAbs():
             col = self.ctx.addr_color[addr]
         else:
             col = COLOR_ADDR.val
-        self.lines[-1].append((s, col, False))
+        self.line_addr[len(self.token_lines)-1] = addr
+        self.addr_line[addr] = len(self.token_lines)-1
+        self.token_lines[-1].append((s, col, False))
+        self.lines[-1].append(s)
+        self.curr_index += len(s)
 
     def _type(self, string):
-        self.lines[-1].append((string, COLOR_TYPE.val, COLOR_TYPE.bold))
+        self.token_lines[-1].append((string, COLOR_TYPE.val, COLOR_TYPE.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _variable(self, string):
-        self.lines[-1].append((string, COLOR_VAR.val, COLOR_VAR.bold))
+        self.token_lines[-1].append((string, COLOR_VAR.val, COLOR_VAR.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _keyword(self, string):
-        self.lines[-1].append((string, COLOR_KEYWORD.val, COLOR_KEYWORD.bold))
+        self.token_lines[-1].append((string, COLOR_KEYWORD.val, COLOR_KEYWORD.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _string(self, string):
-        self.lines[-1].append((string, COLOR_STRING.val, COLOR_STRING.bold))
+        self.token_lines[-1].append((string, COLOR_STRING.val, COLOR_STRING.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _section(self, string):
-        self.lines[-1].append((string, COLOR_SECTION.val, COLOR_SECTION.bold))
+        self.token_lines[-1].append((string, COLOR_SECTION.val, COLOR_SECTION.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _internal_comment(self, string):
-        self.lines[-1].append((string, COLOR_INTERN_COMMENT.val, COLOR_INTERN_COMMENT.bold))
+        self.token_lines[-1].append((string, COLOR_INTERN_COMMENT.val, COLOR_INTERN_COMMENT.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
     def _retcall(self, string):
-        self.lines[-1].append((string, COLOR_RETCALL.val, COLOR_RETCALL.bold))
+        self.token_lines[-1].append((string, COLOR_RETCALL.val, COLOR_RETCALL.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
 
 
     def _label(self, addr, tab=-1, print_colon=True):
@@ -95,10 +142,14 @@ class OutputAbs():
             col = COLOR_ADDR.val
 
         if tab == -1:
-            self.lines[-1].append((l, col, False))
+            self.token_lines[-1].append((l, col, False))
+            self.lines[-1].append(l)
+            self.curr_index += len(l)
         else:
             self._tabs(tab)
-            self.lines[-1].append((l, col, False))
+            self.token_lines[-1].append((l, col, False))
+            self.lines[-1].append(l)
+            self.curr_index += len(l)
         return True
 
 
@@ -118,6 +169,46 @@ class OutputAbs():
         else:
             self._tabs(tab)
             self._address(addr, print_colon)
+
+
+    def _previous_comment(self, i, tab):
+        if i.address in self.ctx.dis.previous_comments:
+            for comm in self.ctx.dis.previous_comments[i.address]:
+                self._tabs(tab)
+                self.inst_end_here()
+                self._internal_comment("; %s" % comm)
+                self._new_line()
+
+
+    def _commented_inst(self, i, tab):
+        if i.address in self.ctx.labels:
+            self._label(i.address, tab)
+            self._new_line()
+            self._tabs(tab)
+            self._comment("# ")
+            self._address(i.address, normal_color=True)
+        else:
+            self._tabs(tab)
+            self._comment("# ")
+            self._address(i.address)
+        self._bytes(i, True)
+        self._comment(self.get_inst_str(i))
+        self._inline_comment(i)
+        self._new_line()
+
+
+    def _inline_comment(self, i):
+        self.inst_end_here()
+        if i.address in self.ctx.dis.inline_comments:
+            self._add(" ")
+            self._internal_comment("; %s" %
+                    self.ctx.dis.inline_comments[i.address])
+
+
+    def _comment_orig_inst(self, i, modified):
+        if modified and self.ctx.comments:
+            self._add(" ")
+            self._comment("# %s" % self.get_inst_str(i))
 
 
     # Only used when --nocomment is enabled and a jump point to this instruction
@@ -205,9 +296,38 @@ class OutputAbs():
         ast.dump(self, 1)
         self._add("}")
 
+        # Join all lines
+        for i, l in enumerate(self.lines):
+            self.lines[i] = "".join(self.lines[i])
+            sz = len(self.lines[i])
+            if i not in self.index_end_inst:
+                self.index_end_inst[i] = (sz + 1, len(l))
+
+
+    def _asm_inst(self, i, tab=0, prefix=""):
+        self._previous_comment(i, tab)
+
+        if prefix == "# ":
+            self._commented_inst(i, tab)
+            return
+
+        if i.address in self.ctx.all_fused_inst:
+            return
+
+        if self.is_symbol(i.address):
+            self._tabs(tab)
+            self._symbol(i.address)
+            self._new_line()
+
+        modified = self._sub_asm_inst(i, tab, prefix)
+
+        self._inline_comment(i)
+        self._comment_orig_inst(i, modified)
+        self._new_line()
+
 
     def print(self):
-        for l in self.lines:
+        for l in self.token_lines:
             for (string, col, is_bold) in l:
                 if self.ctx.color:
                     if col != 0:
@@ -228,5 +348,6 @@ class OutputAbs():
         raise NotImplementedError
 
 
-    def _asm_inst(self, i, tab=0, prefix=""):
+    # Architecture specific output
+    def _sub_asm_inst(self, i, tab=0, prefix=""):
         raise NotImplementedError

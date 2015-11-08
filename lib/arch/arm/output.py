@@ -118,19 +118,20 @@ class Output(OutputAbs):
                 if self.ctx.sectionsname:
                     self._add("(")
                     self._section(sec_name)
-                    self._add(") ")
+                    self._add(")")
 
                 if imm in self.binary.reverse_symbols:
-                    self._symbol(imm)
                     self._add(" ")
+                    self._symbol(imm)
                     modified = True
 
                 if imm in self.ctx.labels:
-                    self._label(imm, print_label=False)
                     self._add(" ")
+                    self._label(imm, print_label=False)
                     modified = True
 
                 if not modified:
+                    self._add(" ")
                     self._add(hex(imm))
 
                 if is_data:
@@ -138,6 +139,9 @@ class Output(OutputAbs):
                     if s != "\"\"":
                         self._add(" ")
                         self._string(s)
+
+                if modified and not is_call(i):
+                    self._add(" ")
 
                 return modified
 
@@ -266,81 +270,34 @@ class Output(OutputAbs):
         self._add(")")
 
 
-    def _asm_inst(self, i, tab=0, prefix=""):
-        def get_inst_str():
-            nonlocal i
-            return "%s %s" % (i.mnemonic, i.op_str)
-
-        if i.address in self.ctx.dis.previous_comments:
-            for comm in self.ctx.dis.previous_comments[i.address]:
-                self._tabs(tab)
-                self._internal_comment("; %s" % comm)
-
-        if prefix == "# ":
-            if self.ctx.comments:
-                if i.address in self.ctx.labels:
-                    self._label(i.address, tab)
-                    self._new_line()
-                    self._tabs(tab)
-                    self._comment(prefix)
-                    self._address(i.address, normal_color=True)
-                else:
-                    self._tabs(tab)
-                    self._comment(prefix)
-                    self._address(i.address)
-                self._bytes(i, True)
-                self._comment(get_inst_str())
-                self._new_line()
-            return
-
-        if i.address in self.ctx.all_fused_inst:
-            return
-
-        if self.is_symbol(i.address):
-            self._tabs(tab)
-            self._symbol(i.address)
-            self._new_line()
-
-        modified = self.__sub_asm_inst(i, tab, prefix)
-
-        if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
-            self._type(" (FLAGS)")
-
-        if i.address in self.ctx.dis.inline_comments:
-            self._internal_comment(" ; %s" %
-                    self.ctx.dis.inline_comments[i.address])
-
-        if modified and self.ctx.comments:
-            self._comment(" # %s" % get_inst_str())
-
-        self._new_line()
-
-
-    def __sub_asm_inst(self, i, tab=0, prefix=""):
-        def get_inst_str():
-            nonlocal i
-            return "%s %s" % (i.mnemonic, i.op_str)
-
+    def _sub_asm_inst(self, i, tab=0, prefix=""):
         self._label_and_address(i.address, tab)
         self._bytes(i)
 
         if is_ret(i):
-            self._retcall(get_inst_str())
+            self._retcall(self.get_inst_str(i))
             return False
 
         if is_call(i):
             self._retcall(i.mnemonic)
             self._add(" ")
-            return self._operand(i, 0, hexa=True)
+            self._operand(i, 0, hexa=True)
+            return False
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
-            self._add(i.mnemonic + " ")
+            if len(i.operands) == 0:
+                self._add(i.mnemonic)
+                return False
+
             if i.operands[0].type != ARM_OP_IMM:
+                self._add(i.mnemonic + " ")
                 self._add(i.op_str)
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
                         and not i.address in self.ctx.dis.jmptables:
-                    self._comment(" # STOPPED")
+                    self.inst_end_here()
+                    self._add(" ")
+                    self._comment("# STOPPED")
                 return False
             addr = i.operands[0].value.imm
             if addr in self.ctx.addr_color:
@@ -393,5 +350,9 @@ class Output(OutputAbs):
                     self._add(", ")
                     modified |= self._operand(i, k)
                     k += 1
+
+        if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
+            self._add(" ")
+            self._type("(FLAGS)")
 
         return modified

@@ -2,7 +2,7 @@ function 0x0 {
     ret_0x0:
     0x0: eax = 0 # xor eax, eax
     0x2: al = '\x0b' # mov al, 0xb
-    0x4: cdq 
+    0x4: cdq
     0x5: push edx
     0x6: push 1752379246 "n/sh"
     0xb: push 1768042287 "//bi"

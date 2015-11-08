@@ -8,9 +8,9 @@ function main (.text) {
         loop_0x400515:
         0x400515: eax = var1 # mov eax, dword ptr [rbp - 4]
         0x400518: esi = eax # mov esi, eax
-        0x40051a: edi = 0x4005c4 "%x\n" # mov edi, 0x4005c4
+        0x40051a: edi =  0x4005c4 "%x\n" # mov edi, 0x4005c4
         0x40051f: eax = 0 # mov eax, 0
-        0x400524: call printf@plt  # call 0x4003e0
+        0x400524: call  printf@plt
         0x400529: var1 += 1 # add dword ptr [rbp - 4], 1
         # 0x40052d: cmp dword ptr [rbp - 4], 9
         # 0x400531: jle 0x400515
@@ -18,6 +18,6 @@ function main (.text) {
     }
     ret_0x400533:
     0x400533: eax = 0 # mov eax, 0
-    0x400538: leave 
-    0x400539: ret 
+    0x400538: leave
+    0x400539: ret
 }

@@ -31,22 +31,22 @@ function ___main (.text) {
         0x4018e7: ebx = eax # mov ebx, eax
         # 0x4018e9: je 0x4018fa
         if != {
-            0x4018eb: nop 
+            0x4018eb: nop
             0x4018ec: esi = esi # lea esi, dword ptr [esi]
             loop {
                 loop_0x4018f0:
-                0x4018f0: call *((ebx*4) + ___CTOR_LIST__) # call dword ptr [ebx*4 + 0x401e90]
+                0x4018f0: call *((ebx*4) + ___CTOR_LIST__)
                 0x4018f7: ebx-- # dec ebx
                 # 0x4018f8: jne 0x4018f0
                 if ==  goto 0x4018fa
             }
         }
-        0x4018fa: *(esp) = ___do_global_dtors  # mov dword ptr [esp], 0x401820
-        0x401901: call _atexit  # call 0x401260
+        0x4018fa: *(esp) =  ___do_global_dtors  # mov dword ptr [esp], 0x401820
+        0x401901: call  _atexit
     }
     ret_0x401906:
     0x401906: pop ebx
     0x401907: pop ebx
     0x401908: pop ebp
-    0x401909: ret 
+    0x401909: ret
 }

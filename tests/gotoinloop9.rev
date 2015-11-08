@@ -15,12 +15,12 @@ function main (.text) {
         # 0x400510: cmp dword ptr [rbp - 8], 1
         # 0x400514: jne 0x400522
         if (var2 == 1) {
-            0x400516: edi = 0x400624 "1" # mov edi, 0x400624
-            0x40051b: call puts@plt  # call 0x4003e0
+            0x400516: edi =  0x400624 "1" # mov edi, 0x400624
+            0x40051b: call  puts@plt
             0x400520: jmp 0x400536
         }
-        0x400522: edi = 0x400626 "2" # mov edi, 0x400626
-        0x400527: call puts@plt  # call 0x4003e0
+        0x400522: edi =  0x400626 "2" # mov edi, 0x400626
+        0x400527: call  puts@plt
         0x40052c: jmp 0x400584
         loop {
             loop_0x400584:
@@ -41,35 +41,35 @@ function main (.text) {
                     # 0x400531: cmp eax, dword ptr [rbp - 0x10]
                     # 0x400534: jne 0x400542
                     if (eax == var3) {
-                        0x400536: edi = 0x400628 "3" # mov edi, 0x400628
-                        0x40053b: call puts@plt  # call 0x4003e0
+                        0x400536: edi =  0x400628 "3" # mov edi, 0x400628
+                        0x40053b: call  puts@plt
                         0x400540: jmp 0x400568
                     } else {
                         0x400542: eax = var3 # mov eax, dword ptr [rbp - 0x10]
                         # 0x400545: cmp eax, dword ptr [rbp - 0xc]
                         # 0x400548: jne 0x400556
                         if (eax == var4) {
-                            0x40054a: edi = 0x40062a "4" # mov edi, 0x40062a
-                            0x40054f: call puts@plt  # call 0x4003e0
+                            0x40054a: edi =  0x40062a "4" # mov edi, 0x40062a
+                            0x40054f: call  puts@plt
                             0x400554: jmp 0x400568
                         } else {
                             0x400556: eax = var2 # mov eax, dword ptr [rbp - 8]
                             # 0x400559: cmp eax, dword ptr [rbp - 0xc]
                             # 0x40055c: jne 0x400568
                             if (eax == var4) {
-                                0x40055e: edi = 0x40062c "5" # mov edi, 0x40062c
-                                0x400563: call puts@plt  # call 0x4003e0
+                                0x40055e: edi =  0x40062c "5" # mov edi, 0x40062c
+                                0x400563: call  puts@plt
                             }
                         }
                     }
-                    0x400568: edi = 0x40062e "6" # mov edi, 0x40062e
-                    0x40056d: call puts@plt  # call 0x4003e0
+                    0x400568: edi =  0x40062e "6" # mov edi, 0x40062e
+                    0x40056d: call  puts@plt
                 }
             }
         }
     }
     ret_0x400597:
     0x400597: eax = 0 # mov eax, 0
-    0x40059c: leave 
-    0x40059d: ret 
+    0x40059c: leave
+    0x40059d: ret
 }

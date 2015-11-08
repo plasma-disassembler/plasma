@@ -31,5 +31,5 @@ function main (.text) {
     ret_0x4004ed:
     0x4004ed: eax = 0 # mov eax, 0
     0x4004f2: pop rbp
-    0x4004f3: ret 
+    0x4004f3: ret
 }

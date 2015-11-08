@@ -58,5 +58,5 @@ function main (.text) {
     ret_0x400502:
     0x400502: eax = 0 # mov eax, 0
     0x400507: pop rbp
-    0x400508: ret 
+    0x400508: ret
 }

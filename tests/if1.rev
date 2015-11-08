@@ -7,17 +7,17 @@ function main (.text) {
     # 0x400515: cmp dword ptr [rbp - 4], 0
     # 0x400519: jle 0x400527
     if (var1 > 0) {
-        0x40051b: edi = 0x4005d4 "1" # mov edi, 0x4005d4
-        0x400520: call puts@plt  # call 0x4003e0
+        0x40051b: edi =  0x4005d4 "1" # mov edi, 0x4005d4
+        0x400520: call  puts@plt
         0x400525: jmp 0x400531
     } else {
-        0x400527: edi = 0x4005d6 "2" # mov edi, 0x4005d6
-        0x40052c: call puts@plt  # call 0x4003e0
+        0x400527: edi =  0x4005d6 "2" # mov edi, 0x4005d6
+        0x40052c: call  puts@plt
     }
     ret_0x400531:
-    0x400531: edi = 0x4005d8 "3" # mov edi, 0x4005d8
-    0x400536: call puts@plt  # call 0x4003e0
+    0x400531: edi =  0x4005d8 "3" # mov edi, 0x4005d8
+    0x400536: call  puts@plt
     0x40053b: eax = 0 # mov eax, 0
-    0x400540: leave 
-    0x400541: ret 
+    0x400540: leave
+    0x400541: ret
 }
