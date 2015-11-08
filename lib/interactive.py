@@ -175,10 +175,11 @@ class Interactive():
                 "[SYMBOL|0xXXXX|EP]",
                 "Same as x, but in visual mode.",
                 "Shortcuts:",
-                "g: top",
-                "G: bottom",
-                "z: set current line on the middle",
-                "q: quit",
+                "g top",
+                "G bottom",
+                "z set current line on the middle",
+                "q quit",
+                "; edit inline comment (enter/escape to validate/cancel)",
                 ]
             ),
 
@@ -700,7 +701,7 @@ class Interactive():
         if init_entry_addr(self.ctx):
             o = disasm(self.ctx)
             if o is not None:
-                Visual(o)
+                Visual(self, self.ctx.dis, o)
             self.ctx.entry = None
             self.ctx.entry_addr = 0
 

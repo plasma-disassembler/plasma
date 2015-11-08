@@ -43,12 +43,12 @@ for a full list.
 
 ## Visual mode (NEW)
 
-New command `v` in the interactive mode. For the moment we can only scroll.
-This mode requires `ncurses`.
+New command `v` in the interactive mode. For the moment we can only scroll
+and add inline comments. This mode requires `ncurses`.
 
 More features will come :
 
-* user comments
+* multi-line comments
 * follow calls/addresses
 * renaming
 * ...
