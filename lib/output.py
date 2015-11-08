@@ -86,8 +86,6 @@ class OutputAbs():
             col = self.ctx.addr_color[addr]
         else:
             col = COLOR_ADDR.val
-        self.line_addr[len(self.token_lines)-1] = addr
-        self.addr_line[addr] = len(self.token_lines)-1
         self.token_lines[-1].append((s, col, False))
         self.lines[-1].append(s)
         self.curr_index += len(s)
@@ -191,6 +189,7 @@ class OutputAbs():
             self._tabs(tab)
             self._comment("# ")
             self._address(i.address)
+        self.set_line(i.address)
         self._bytes(i, True)
         self._comment(self.get_inst_str(i))
         self._inline_comment(i)
@@ -266,6 +265,13 @@ class OutputAbs():
         self._new_line()
 
 
+    def set_line(self, addr):
+        l = len(self.token_lines) - 1
+        self.line_addr[l] = addr
+        if addr not in self.addr_line or l < self.addr_line[addr]:
+            self.addr_line[addr] = l
+
+
     def is_symbol(self, ad):
         return (self.ctx.dump or ad != self.ctx.entry_addr) and \
             ad in self.ctx.dis.binary.reverse_symbols
@@ -319,6 +325,7 @@ class OutputAbs():
             self._symbol(i.address)
             self._new_line()
 
+        self.set_line(i.address)
         modified = self._sub_asm_inst(i, tab, prefix)
 
         self._inline_comment(i)

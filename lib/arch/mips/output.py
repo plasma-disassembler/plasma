@@ -196,6 +196,7 @@ class Output(OutputAbs):
         if isinstance(i, PseudoInst):
             for i2 in i.real_inst_list:
                 OutputAbs._asm_inst(self, i2, tab, "# ")
+            self.set_line(i.real_inst_list[0].address)
             self._label_and_address(i.real_inst_list[0].address, tab)
             self._add(i.pseudo)
             self._new_line()
