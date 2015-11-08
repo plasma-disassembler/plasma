@@ -522,6 +522,7 @@ class Interactive():
             if len(args) == 3:
                 lines = int(args[2])
             self.ctx.entry = args[1]
+        self.ctx.reset_vars()
         if init_entry_addr(self.ctx):
             self.ctx.dis.dump_asm(self.ctx, lines).print()
             self.ctx.entry = None

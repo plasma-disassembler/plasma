@@ -225,7 +225,9 @@ class Disassembler():
                 ad += i.size
             l += 1
 
-        o.lines.pop(-1) # empty line
+        # empty line
+        o.lines.pop(-1)
+        o.token_lines.pop(-1)
 
         return o
 
