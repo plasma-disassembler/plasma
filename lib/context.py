@@ -26,6 +26,9 @@ class Context():
         self.update()
         self.reset_all()
 
+        # For info() messages
+        self.quiet = False
+
         # Parameter options
         self.comments = True
         self.sectionsname = False

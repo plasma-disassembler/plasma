@@ -7,7 +7,8 @@ Reverse engineering for x86/ARM/MIPS binaries. Generate a more readable code
 Supported formats : `ELF`, `PE`, `RAW`.
 
 
-The `Makefile` is used only for checking tests.
+The `Makefile` is used only for checking tests (or you can use the
+command `nosetest3` which is faster).
 
 
 ## Requirements

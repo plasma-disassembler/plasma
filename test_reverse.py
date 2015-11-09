@@ -14,10 +14,12 @@ SYMBOLS = {
         TESTS / 'server.bin': ["main", "connection_handler"],
         TESTS / 'pendu.bin': ["_main", "___main", "__imp___cexit"],
         TESTS / 'shellcode.bin': ["0x0"],
+        TESTS / 'malloc.bin': ["malloc"],
         }
 
 OPTIONS = {
-    TESTS / 'shellcode.bin': ["--raw x86"]
+    TESTS / 'shellcode.bin': ["--raw x86"],
+    TESTS / 'malloc.bin': ["--raw x64", "--rawbase 0x77110"],
     }
 
 
@@ -32,12 +34,15 @@ def reverse_file(filename, symbol, options):
     ctx.color = False
     ctx.filename = filename
     ctx.entry = symbol
+    ctx.quiet = True
 
     for o in options:
         if o == "--raw x86":
             ctx.raw_type = "x86"
         elif o == "--raw x64":
             ctx.raw_type = "x64"
+        elif o.startswith("--rawbase"):
+            ctx.raw_base = int(o.split(" ")[1], 16)
 
     sio = StringIO()
     with redirect_stdout(sio):

@@ -80,7 +80,8 @@ def warning(txt):
 
 
 def info(txt):
-    print("info: " + txt, file=sys.stderr)
+    if not ctx.quiet:
+        print("info: " + txt, file=sys.stderr)
 
 
 def die(txt=None):

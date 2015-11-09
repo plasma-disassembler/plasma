@@ -13,8 +13,10 @@ FLAGS[tests/andor6.c] = "-O3"
 SYMBOLS[tests/server.rev] = "main" "connection_handler"
 SYMBOLS[tests/pendu.rev] = "_main" "___main" "__imp___cexit"
 SYMBOLS[tests/shellcode.rev] = "0x0"
+SYMBOLS[tests/malloc.rev] = "malloc"
 
 OPTIONS[tests/shellcode.rev] = "--raw x86"
+OPTIONS[tests/malloc.rev] = "--raw x64 --rawbase 0x77110"
 
 all: check
 
