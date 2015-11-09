@@ -55,6 +55,7 @@ function main (.text) {
         0x4005bd: call  puts@plt
         0x4005c2: jmp 0x40065f
     }
+    goto 0x40065f
     # 0x40057f: cmp dword ptr [rbp - 8], 1
     # 0x400583: jne 0x400591
     if (var3 == 1) {
@@ -64,8 +65,8 @@ function main (.text) {
     } else {
         0x400591: edi =  0x400732 "2 2" # mov edi, 0x400732
         0x400596: call  puts@plt
-        goto ret_0x40059b
     }
+    goto ret_0x40059b
     0x40056d: edi =  0x400724 "goto exit" # mov edi, 0x400724
     0x400572: call  puts@plt
     0x400577: jmp 0x40059b
@@ -83,6 +84,7 @@ function main (.text) {
         0x40055d: call  puts@plt
         0x400562: jmp 0x4005f5
     }
+    goto 0x4005f5
     # 0x400519: cmp dword ptr [rbp - 8], 1
     # 0x40051d: jne 0x40052e
     if (var3 == 1) {
@@ -94,6 +96,7 @@ function main (.text) {
         0x400533: call  puts@plt
         0x400538: jmp 0x400614
     }
+    goto 0x400614
     0x4005f5: edi =  0x40074e "end" # mov edi, 0x40074e
     0x4005fa: call  puts@plt
     # 0x4005ff: cmp dword ptr [rbp - 4], 0x539

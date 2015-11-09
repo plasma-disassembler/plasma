@@ -40,57 +40,58 @@ class Endpoint():
 
 
 def get_first_addr(ast):
+    # Assume that there are no Ast_Comment
+
     if isinstance(ast, list):
         return ast[0].address
 
     if isinstance(ast, Ast_Branch):
         if len(ast.nodes) > 0:
-            get_first_addr(ast.nodes[0])
+            return get_first_addr(ast.nodes[0])
 
-    elif isinstance(ast, Ast_Ifelse):
+    if isinstance(ast, Ast_Ifelse):
         # Any instructions at the moment so we can use the jump inst
         return ast.jump_inst.address
 
-    elif isinstance(ast, Ast_Loop):
-        if len(ast.branch.nodes[0]) > 0:
-            get_first_addr(ast.branch.nodes[0])
+    if isinstance(ast, Ast_Loop):
+        if len(ast.branch.nodes) > 0:
+            return get_first_addr(ast.branch.nodes[0])
 
-    elif isinstance(ast, Ast_Goto):
+    if isinstance(ast, Ast_Goto):
         return ast.addr_jump
 
-    elif isinstance(ast, Ast_AndIf):
+    if isinstance(ast, Ast_AndIf):
         return ast.orig_jump.address
 
-    elif isinstance(ast, Ast_If_cond):
+    if isinstance(ast, Ast_If_cond):
         if len(ast.br.nodes) > 0:
-            get_first_addr(ast.br.nodes[0])
+            return get_first_addr(ast.br.nodes[0])
 
     return -1
 
 
-# For one ast: search the next address. This is used for a gotos
-# if they are at the end of a branch, we have to go up parents ast
-# and get the next address.
 def get_next_addr(ast):
     par = ast.parent
     if par is None:
         return -1
     i = ast.idx_in_parent + 1
-    while i < len(par.nodes):
-        if not isinstance(
-                par.nodes[i], (Ast_Comment, Ast_IfGoto, Ast_AndIf, Ast_If_cond)):
-            return get_first_addr(par.nodes[i])
-        i += 1
-    return get_next_addr(par)
+
+    # Get the next address of the parent ast
+    if i == len(par.nodes):
+        return get_next_addr(par)
+
+    return get_first_addr(par.nodes[i])
 
 
 def remove_all_unnecessary_goto(ast):
     if isinstance(ast, Ast_Branch):
+        # Remove all last Ast_Goto, only if the previous is not an andif
         if len(ast.nodes) > 0 and isinstance(ast.nodes[-1], Ast_Goto):
-            if not ast.nodes[-1].dont_remove:
-                nxt = get_next_addr(ast)
-                if ast.nodes[-1].addr_jump == nxt:
-                    del ast.nodes[-1]
+            if len(ast.nodes) <= 1 or not isinstance(ast.nodes[-2], Ast_AndIf):
+                if not ast.nodes[-1].dont_remove:
+                    nxt = get_next_addr(ast)
+                    if ast.nodes[-1].addr_jump == nxt:
+                        del ast.nodes[-1]
 
         for n in ast.nodes:
             if not isinstance(n, list):
@@ -101,25 +102,30 @@ def remove_all_unnecessary_goto(ast):
         remove_all_unnecessary_goto(ast.br_next_jump)
 
     elif isinstance(ast, Ast_Loop):
+        if isinstance(ast.branch.nodes[-1], Ast_Goto):
+            if get_first_addr(ast) == ast.branch.nodes[-1].addr_jump:
+                del ast.branch.nodes[-1]
         remove_all_unnecessary_goto(ast.branch)
 
 
-def add_goto_if_inst_not_consecutives(ctx, ast):
+def fix_non_consecutives(ctx, ast):
     if isinstance(ast, Ast_Branch):
         prev_blk = None
         idx_to_add = {}
+
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
-                if prev_blk is not None and \
-                        prev_blk[-1].address not in ctx.gph.uncond_jumps_set and \
-                        prev_blk[-1].address in ctx.gph.link_out:
-                    nxt = prev_blk[-1].address + prev_blk[-1].size
-                    if nxt != n[0].address:
-                        idx_to_add[i] = nxt
+                if prev_blk is not None:
+                    prev = prev_blk[0].address
+                    if prev not in ctx.gph.uncond_jumps_set and \
+                            prev in ctx.gph.link_out:
+                        nxt = ctx.gph.link_out[prev][BRANCH_NEXT]
+                        if nxt != n[0].address:
+                            idx_to_add[i] = nxt
                 prev_blk = n
             else:
                 prev_blk = None
-                add_goto_if_inst_not_consecutives(ctx, n)
+                fix_non_consecutives(ctx, n)
 
         if not idx_to_add:
             return
@@ -127,32 +133,15 @@ def add_goto_if_inst_not_consecutives(ctx, ast):
         # Add from the end of the nodes list
         lst = list(idx_to_add.keys())
         lst.sort()
-        for i in lst:
+        for i in reversed(lst):
             ast.nodes.insert(i, Ast_Goto(idx_to_add[i]))
 
     elif isinstance(ast, Ast_Ifelse):
-        add_goto_if_inst_not_consecutives(ctx, ast.br_next)
-        add_goto_if_inst_not_consecutives(ctx, ast.br_next_jump)
+        fix_non_consecutives(ctx, ast.br_next)
+        fix_non_consecutives(ctx, ast.br_next_jump)
 
     elif isinstance(ast, Ast_Loop):
-        add_goto_if_inst_not_consecutives(ctx, ast.branch)
-
-
-def add_goto_after_alone_andif(ast):
-    if isinstance(ast, Ast_Branch):
-        if len(ast.nodes) > 0 and isinstance(ast.nodes[-1], Ast_AndIf):
-            ast.add(Ast_Goto(ast.nodes[-1].expected_next_addr))
-
-        for n in ast.nodes:
-            if not isinstance(n, list):
-                add_goto_after_alone_andif(n)
-
-    elif isinstance(ast, Ast_Ifelse):
-        add_goto_after_alone_andif(ast.br_next)
-        add_goto_after_alone_andif(ast.br_next_jump)
-
-    elif isinstance(ast, Ast_Loop):
-        add_goto_after_alone_andif(ast.branch)
+        fix_non_consecutives(ctx, ast.branch)
 
 
 def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
@@ -353,12 +342,18 @@ def manage_endpoint(ctx, waiting, ast, prev, ad, l_set, l_prev_loop,
             if len(a.nodes) == 0:
                 a.add(Ast_Goto(ad))
                 continue
-            # If the previous ast is the same goto, or if it's a jump
-            # it's not necessary to add a new goto.
-            if isinstance(a.nodes[-1], Ast_Goto) and \
-                    a.nodes[-1].addr_jump == ad or \
-                    isinstance(a.nodes[-1], list) and \
-                    a.nodes[-1][-1].address in ctx.gph.uncond_jumps_set:
+            # The previous instruction has not `ad` as the next instruction
+            if isinstance(a.nodes[-1], list):
+                prev = a.nodes[-1][0].address
+                if prev in ctx.gph.uncond_jumps_set:
+                    continue
+                if prev in ctx.gph.link_out:
+                    n = ctx.gph.link_out[prev][BRANCH_NEXT]
+                    if n != ad:
+                        a.add(Ast_Goto(n))
+                        continue
+            # The previous is a goto, skip it
+            if isinstance(a.nodes[-1], Ast_Goto):
                 continue
             a.add(Ast_Goto(ad))
 
@@ -464,6 +459,7 @@ def generate_ast(ctx__):
                 a = Ast_Loop()
                 a.level = level
                 a.parent = ast
+                a.idx_in_parent = len(ast.nodes)
                 a.branch.parent = ast
                 a.branch.level = level
                 a.branch.idx_in_parent = len(ast.nodes)
@@ -483,12 +479,9 @@ def generate_ast(ctx__):
             if curr == l_start:
                 continue
             if len(ast.nodes) > 0:
-                if not isinstance(ast.nodes[-1], list):
+                prev = ast.nodes[-1][0].address
+                if prev not in ctx.gph.uncond_jumps_set:
                     ast.add(Ast_Goto(curr))
-                else:
-                    prev_inst = ast.nodes[-1][0]
-                    if not ctx.libarch.utils.is_uncond_jump(prev_inst):
-                        ast.add(Ast_Goto(curr))
             else:
                 ast.add(Ast_Goto(curr))
             continue
@@ -543,6 +536,7 @@ def generate_ast(ctx__):
                     a = Ast_IfGoto(blk[0], cond_id, exit_loop, prefetch)
                     a.parent = ast
                     a.level = level
+                    a.idx_in_parent = len(ast.nodes)
                     ast.add(a)
                     continue
 
@@ -552,7 +546,9 @@ def generate_ast(ctx__):
                     cond_id = ctx.libarch.utils.invert_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT], prefetch)
                     a.parent = ast
+                    a.idx_in_parent = len(ast.nodes)
                     ast.add(a)
+                    ast.add(Ast_Goto(nxt[BRANCH_NEXT]))
 
                     # Add a fake branch, with this in the manage function
                     # all gotos to the else_addr will be invisible.
@@ -571,7 +567,9 @@ def generate_ast(ctx__):
                     cond_id = ctx.libarch.utils.get_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT_JUMP], prefetch)
                     a.parent = ast
+                    a.idx_in_parent = len(ast.nodes)
                     ast.add(a)
+                    ast.add(Ast_Goto(nxt[BRANCH_NEXT_JUMP]))
 
                     fake_br = Ast_Branch()
                     fake_br.level = sys.maxsize
@@ -611,22 +609,40 @@ def generate_ast(ctx__):
                           nxt[BRANCH_NEXT], else_addr))
 
             if endpoint == -1:
+                # No endpoint, so it's not useful to have an else-branch
+                # -> the stack will continue on `ast`
                 a = Ast_Ifelse(blk[0], ast_else, ast_if, else_addr, prefetch)
                 stack.append((ast, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
+
+                a.parent = ast
+                a.level = level + 1
+                a.idx_in_parent = len(ast.nodes)
+                ast.add(a)
+                ast.add(Ast_Goto(else_addr))
+
             elif endpoint == else_addr:
                 # Branch ast_else will be empty
                 a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch)
                 stack.append((ast, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
+
+                a.parent = ast
+                a.level = level + 1
+                a.idx_in_parent = len(ast.nodes)
+                ast.add(a)
+                ast.add(Ast_Goto(else_addr))
+
             else:
                 a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch)
                 stack.append((ast_else, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
 
-            a.parent = ast
-            a.level = level + 1
-            ast.add(a)
+                a.parent = ast
+                a.level = level + 1
+                a.idx_in_parent = len(ast.nodes)
+                ast.add(a)
+                ast.add(Ast_Goto(endpoint))
 
         else:
             ast.add(blk)
@@ -637,8 +653,7 @@ def generate_ast(ctx__):
     ast = ast_head
 
     remove_all_unnecessary_goto(ast)
-    add_goto_after_alone_andif(ast)
-    add_goto_if_inst_not_consecutives(ctx, ast)
+    fix_non_consecutives(ctx, ast)
 
     elapsed = time.clock()
     elapsed = elapsed - start

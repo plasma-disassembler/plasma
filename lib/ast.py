@@ -269,13 +269,16 @@ class Ast_Loop:
         o._new_line()
 
 
+# ONLY FOR DEBUG !!
 class Ast_Comment:
     def __init__(self, text):
         self.text = text
         self.parent = None
         self.level = 0
+        self.nodes = []
 
     def dump(self, o, tab=0):
         if o.ctx.comments:
             o._tabs(tab)
             o._comment("# " + self.text)
+            o._new_line()

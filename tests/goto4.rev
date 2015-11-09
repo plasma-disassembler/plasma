@@ -30,7 +30,9 @@ function main (.text) {
     } else {
         0x40054e: edi =  0x40060c "5" # mov edi, 0x40060c
         0x400553: call  puts@plt
+        goto 0x400558
     }
+    goto ret_0x400562
     0x400558: edi =  0x40060e "end" # mov edi, 0x40060e
     0x40055d: call  puts@plt
     ret_0x400562:

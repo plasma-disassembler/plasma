@@ -62,6 +62,9 @@ class OutputAbs():
         self.curr_index += len(string)
 
     def _tabs(self, tab):
+        # debug
+        # if not self.token_lines[-1]:
+            # self.token_lines[-1].append(("       ", 0, False))
         t = tab * "    "
         self.token_lines[-1].append((t, 0, False))
         self.lines[-1].append(t)
@@ -314,6 +317,10 @@ class OutputAbs():
         self._previous_comment(i, tab)
 
         if prefix == "# ":
+            # debug
+            # from lib.utils import BRANCH_NEXT
+            # if i.address in self.ctx.gph.link_out:
+                # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
             self._commented_inst(i, tab)
             return
 
@@ -326,6 +333,12 @@ class OutputAbs():
             self._new_line()
 
         self.set_line(i.address)
+
+        # debug
+        # from lib.utils import BRANCH_NEXT
+        # if i.address in self.ctx.gph.link_out:
+            # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
+
         modified = self._sub_asm_inst(i, tab, prefix)
 
         self._inline_comment(i)
