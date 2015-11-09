@@ -479,9 +479,10 @@ def generate_ast(ctx__):
             if curr == l_start:
                 continue
             if len(ast.nodes) > 0:
-                prev = ast.nodes[-1][0].address
-                if prev not in ctx.gph.uncond_jumps_set:
-                    ast.add(Ast_Goto(curr))
+                if isinstance(ast.nodes[-1], list):
+                    prev = ast.nodes[-1][0].address
+                    if prev not in ctx.gph.uncond_jumps_set:
+                        ast.add(Ast_Goto(curr))
             else:
                 ast.add(Ast_Goto(curr))
             continue

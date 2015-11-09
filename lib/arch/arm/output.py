@@ -17,8 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import struct
-
 from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_OP_MEM, ARM_OP_REG, ARM_OP_INVALID, ARM_INS_SUB, ARM_INS_ADD,
         ARM_INS_MOV, ARM_OP_FP, ARM_INS_CMP, ARM_INS_LDR, ARM_CC_PL,
@@ -30,7 +28,6 @@ from capstone.arm import (ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR, ARM_OP_IMM,
         ARM_INS_LSL, ARM_INS_LSR, ARM_INS_ROR, ARM_INS_RRX)
 
 from lib.output import OutputAbs
-from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.arm.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
 
@@ -109,59 +106,8 @@ class Output(OutputAbs):
             self._add("(")
 
         if op.type == ARM_OP_IMM:
-            imm = op.value.imm
-            sec_name, is_data = self.binary.is_address(imm)
-
-            if sec_name is not None:
-                modified = False
-
-                if self.ctx.sectionsname:
-                    self._add("(")
-                    self._section(sec_name)
-                    self._add(")")
-
-                if imm in self.binary.reverse_symbols:
-                    self._add(" ")
-                    self._symbol(imm)
-                    modified = True
-
-                if imm in self.ctx.labels:
-                    self._add(" ")
-                    self._label(imm, print_label=False)
-                    modified = True
-
-                if not modified:
-                    self._add(" ")
-                    self._add(hex(imm))
-
-                if is_data:
-                    s = self.binary.get_string(imm, self.ctx.max_data_size)
-                    if s != "\"\"":
-                        self._add(" ")
-                        self._string(s)
-
-                if modified and not is_call(i):
-                    self._add(" ")
-
-                return modified
-
-            elif hexa:
-                self._add(hex(imm))
-            else:
-                self._add(str(imm))
-
-                if imm > 0:
-                    packed = struct.pack("<L", imm)
-                    if set(packed).issubset(BYTES_PRINTABLE_SET):
-                        self._string(" \"" + "".join(map(chr, packed)) + "\"")
-                        return False
-
-                # returns True because capstone print immediate in hexa
-                # it will be printed in a comment, sometimes it's better
-                # to have the value in hexa
-                return True
-
-            return False
+            add_space = not is_call(i)
+            return self._imm(i, op.value.imm, 4, hexa, add_space)
 
         elif op.type == ARM_OP_REG:
             if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
@@ -190,10 +136,7 @@ class Output(OutputAbs):
                 if mm.base == ARM_REG_PC:
                     addr = i.address + i.size * 2 + mm.disp
                     self._add("*(")
-                    if addr in self.binary.reverse_symbols:
-                        self._symbol(addr)
-                    else:
-                        self._add(hex(addr))
+                    self._imm(i, addr, 4, True, False, is_data=False)
                     self._add(")")
                     return True
 
@@ -225,13 +168,14 @@ class Output(OutputAbs):
 
             if mm.disp != 0:
                 sec_name, is_data = self.binary.is_address(mm.disp)
-                if sec_name is not None:
+                is_sym = mm.disp in self.binary.reverse_symbols
+
+                if is_sym or sec_name is not None:
                     if printed:
                         self._add(" + ")
-                    if mm.disp in self.binary.reverse_symbols:
-                        self._symbol(mm.disp)
-                    else:
-                        self._add(hex(mm.disp))
+                    # is_data=False : don't print string next to the symbol
+                    self._imm(i, mm.disp, 0, True, False,
+                              sec_name=sec_name, is_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

@@ -11,7 +11,7 @@ function main (.text) {
     if (var1 != 0) {
         0x400562: edi = 0 # mov edi, 0
         0x400567: eax = 0 # mov eax, 0
-        0x40056c: call  time@plt
+        0x40056c: call time@plt
         # 0x400571: cmp eax, dword ptr [rbp - 4]
         # 0x400574: jge 0x400596
         and if (eax < var1)
@@ -25,16 +25,16 @@ function main (.text) {
         # 0x400584: cmp dword ptr [rbp - 8], 9
         # 0x400588: jg 0x400596
         and if (var2 <= 9)
-        0x40058a: edi =  0x400644 "1" # mov edi, 0x400644
-        0x40058f: call  puts@plt
+        0x40058a: edi = 0x400644 "1" # mov edi, 0x400644
+        0x40058f: call puts@plt
         0x400594: jmp 0x4005a0
     } else {
-        0x400596: edi =  0x400646 "2" # mov edi, 0x400646
-        0x40059b: call  puts@plt
+        0x400596: edi = 0x400646 "2" # mov edi, 0x400646
+        0x40059b: call puts@plt
     }
     ret_0x4005a0:
-    0x4005a0: edi =  0x400648 "3" # mov edi, 0x400648
-    0x4005a5: call  puts@plt
+    0x4005a0: edi = 0x400648 "3" # mov edi, 0x400648
+    0x4005a5: call puts@plt
     0x4005aa: eax = 0 # mov eax, 0
     0x4005af: leave
     0x4005b0: ret

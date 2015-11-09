@@ -25,16 +25,16 @@ function main (.text) {
             # 0x400545: je 0x400517
             if (eax != var5)  goto ret_0x400547
         }
-        0x400517: edi =  0x4005d4 "1" # mov edi, 0x4005d4
-        0x40051c: call  puts@plt
+        0x400517: edi = 0x4005d4 "1" # mov edi, 0x4005d4
+        0x40051c: call puts@plt
         0x400521: jmp 0x40052d
         loop {
             loop_0x40052d:
             # 0x40052d: cmp dword ptr [rbp - 0xc], 0x13
             # 0x400531: jle 0x400523
             if (var5 > 19)  goto loop_0x400533
-            0x400523: edi =  0x4005d6 "2" # mov edi, 0x4005d6
-            0x400528: call  puts@plt
+            0x400523: edi = 0x4005d6 "2" # mov edi, 0x4005d6
+            0x400528: call puts@plt
         }
     }
     ret_0x400547:

@@ -7,20 +7,20 @@ function __imp___cexit (.text) {
     __imp___iob
     0x401104: esp -= 36 # sub esp, 0x24
     0x401107: ebx = &(var1) # lea ebx, dword ptr [ebp - 8]
-    0x40110a: *(esp) =  ___crt_xt_end__  # mov dword ptr [esp], 0x401000
-    0x401111: call  _SetUnhandledExceptionFilter
+    0x40110a: *(esp) = ___crt_xt_end__  # mov dword ptr [esp], 0x401000
+    0x401111: call _SetUnhandledExceptionFilter
     0x401116: esp -= 4 # sub esp, 4
-    0x401119: call  __fpreset
+    0x401119: call __fpreset
     0x40111e: var1 = 0 # mov dword ptr [ebp - 8], 0
-    0x401125: eax =  0x404000  # mov eax, 0x404000
+    0x401125: eax = 0x404000  # mov eax, 0x404000
     0x40112a: edx = &(var2) # lea edx, dword ptr [ebp - 0xc]
     0x40112d: *(esp + 16) = ebx # mov dword ptr [esp + 0x10], ebx
     0x401131: ecx = *(__section_alignment__) # mov ecx, dword ptr [0x402000]
     0x401137: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
     0x40113b: *(esp + 8) = edx # mov dword ptr [esp + 8], edx
     0x40113f: *(esp + 12) = ecx # mov dword ptr [esp + 0xc], ecx
-    0x401143: *(esp) =  0x404004  # mov dword ptr [esp], 0x404004
-    0x40114a: call  ___getmainargs
+    0x401143: *(esp) = 0x404004  # mov dword ptr [esp], 0x404004
+    0x40114a: call ___getmainargs
     0x40114f: eax = *(0x404010) # mov eax, dword ptr [0x404010]
     # 0x401154: test eax, eax
     # 0x401156: je 0x4011b0
@@ -37,29 +37,29 @@ function __imp___cexit (.text) {
     }
     for (;;) {
         loop_0x4011b0:
-        0x4011b0: call  ___p__fmode
+        0x4011b0: call ___p__fmode
         0x4011b5: ebx = *(0x402010) # mov ebx, dword ptr [0x402010]
         0x4011bb: *(eax) = ebx # mov dword ptr [eax], ebx
-        0x4011bd: call  __pei386_runtime_relocator
+        0x4011bd: call __pei386_runtime_relocator
         0x4011c2: esp &= 4294967280 # and esp, 0xfffffff0
-        0x4011c5: call  ___p__environ
+        0x4011c5: call ___p__environ
         0x4011ca: ecx = *(eax) # mov ecx, dword ptr [eax]
         0x4011cc: *(esp + 8) = ecx # mov dword ptr [esp + 8], ecx
         0x4011d0: edx = *(0x404000) # mov edx, dword ptr [0x404000]
         0x4011d6: *(esp + 4) = edx # mov dword ptr [esp + 4], edx
         0x4011da: eax = *(0x404004) # mov eax, dword ptr [0x404004]
         0x4011df: *(esp) = eax # mov dword ptr [esp], eax
-        0x4011e2: call  _main
+        0x4011e2: call _main
         0x4011e7: ebx = eax # mov ebx, eax
-        0x4011e9: call  __cexit
+        0x4011e9: call __cexit
         0x4011ee: *(esp) = ebx # mov dword ptr [esp], ebx
-        0x4011f1: call  _ExitProcess
+        0x4011f1: call _ExitProcess
         0x4011f6: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
         0x4011fa: edx = *(_iob) # mov edx, dword ptr [0x405104]
         __file_alignment__
         0x401200: eax = *(edx + 16) # mov eax, dword ptr [edx + 0x10]
         0x401203: *(esp) = eax # mov dword ptr [esp], eax
-        0x401206: call  __setmode
+        0x401206: call __setmode
         0x40120b: edx = *(_iob) # mov edx, dword ptr [0x405104]
         0x401211: jmp 0x40116b
         # 0x40116b: cmp edx, 0xe0
@@ -70,7 +70,7 @@ function __imp___cexit (.text) {
             0x401179: ebx = *(_iob) # mov ebx, dword ptr [0x405104]
             0x40117f: ecx = *(ebx + 48) # mov ecx, dword ptr [ebx + 0x30]
             0x401182: *(esp) = ecx # mov dword ptr [esp], ecx
-            0x401185: call  __setmode
+            0x401185: call __setmode
             0x40118a: edx = *(_iob) # mov edx, dword ptr [0x405104]
         }
         # 0x401190: cmp edx, 0xc0
@@ -81,7 +81,7 @@ function __imp___cexit (.text) {
             0x40119f: ecx = *(_iob) # mov ecx, dword ptr [0x405104]
             0x4011a5: edx = *(ecx + 80) # mov edx, dword ptr [ecx + 0x50]
             0x4011a8: *(esp) = edx # mov dword ptr [esp], edx
-            0x4011ab: call  __setmode
+            0x4011ab: call __setmode
         }
     }
 }

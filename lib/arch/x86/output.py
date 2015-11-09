@@ -17,8 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import struct
-
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
@@ -35,7 +33,6 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ)
 
 from lib.output import OutputAbs
-from lib.utils import get_char, BYTES_PRINTABLE_SET
 from lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol)
 
@@ -82,66 +79,8 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == X86_OP_IMM:
-            imm = op.value.imm
-            sec_name, is_data = self.binary.is_address(imm)
-
-            if sec_name is not None:
-                modified = False
-
-                if self.ctx.sectionsname:
-                    self._add("(")
-                    self._section(sec_name)
-                    self._add(")")
-
-                if imm in self.binary.reverse_symbols:
-                    self._add(" ")
-                    self._symbol(imm)
-                    modified = True
-
-                if imm in self.ctx.labels:
-                    self._add(" ")
-                    self._label(imm, print_colon=False)
-                    modified = True
-
-                if not modified:
-                    self._add(" ")
-                    self._add(hex(imm))
-
-                if is_data:
-                    s = self.binary.get_string(imm, self.ctx.max_data_size)
-                    if s != "\"\"":
-                        self._add(" ")
-                        self._string(s)
-
-                if modified and not is_call(i):
-                    self._add(" ")
-
-                return modified
-
-            elif op.size == 1:
-                self._string("'%s'" % get_char(imm))
-            elif hexa:
-                self._add(hex(imm))
-            else:
-                self._add(str(imm))
-
-                if imm > 0:
-                    if op.size == 4:
-                        packed = struct.pack("<L", imm)
-                    elif op.size == 8:
-                        packed = struct.pack("<Q", imm)
-                    else:
-                        return False
-                    if set(packed).issubset(BYTES_PRINTABLE_SET):
-                        self._string(" \"" + "".join(map(chr, packed)) + "\"")
-                        return False
-
-                # returns True because capstone print immediate in hexa
-                # it will be printed in a comment, sometimes it's better
-                # to have the value in hexa
-                return True
-
-            return False
+            add_space = not is_call(i)
+            return self._imm(i, op.value.imm, op.size, hexa, add_space)
 
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
@@ -172,26 +111,7 @@ class Output(OutputAbs):
                     if show_deref:
                         self._add("*(")
 
-                    sec_name, is_data = self.binary.is_address(addr)
-
-                    if sec_name is not None :
-                        if self.ctx.sectionsname:
-                            self._add("(")
-                            self._section(sec_name)
-                            self._add(") ")
-
-                        if addr in self.binary.reverse_symbols:
-                            self._symbol(addr)
-                        elif is_data:
-                            self._add(hex(addr))
-                            s = self.binary.get_string(addr, self.ctx.max_data_size)
-                            if s != "\"\"":
-                                self._add(" ")
-                                self._string(s)
-                        else:
-                            self._add(hex(addr))
-                    else:
-                        self._add(hex(addr))
+                    self._imm(i, addr, op.size, True, False, is_data=False)
 
                     if show_deref:
                         self._add(")")
@@ -221,13 +141,13 @@ class Output(OutputAbs):
 
             if mm.disp != 0:
                 sec_name, is_data = self.binary.is_address(mm.disp)
-                if sec_name is not None:
+                is_sym = mm.disp in self.binary.reverse_symbols
+
+                if is_sym or sec_name is not None:
                     if printed:
                         self._add(" + ")
-                    if mm.disp in self.binary.reverse_symbols:
-                        self._symbol(mm.disp)
-                    else:
-                        self._add(hex(mm.disp))
+                    self._imm(i, mm.disp, True, 0, False,
+                              sec_name=sec_name, is_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

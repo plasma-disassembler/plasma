@@ -17,8 +17,8 @@ function main (.text) {
         # 0x40056b: cmp eax, dword ptr [rbp - 8]
         # 0x40056e: jne 0x40051e
         if (eax == var2)  goto ret_0x400570
-        0x40051e: edi =  0x400614 "1" # mov edi, 0x400614
-        0x400523: call  puts@plt
+        0x40051e: edi = 0x400614 "1" # mov edi, 0x400614
+        0x400523: call puts@plt
         # 0x400528: cmp dword ptr [rbp - 4], 8
         # 0x40052c: jne 0x400558
         if (var1 == 8) {
@@ -31,8 +31,8 @@ function main (.text) {
                 0x400530: eax = var1 # mov eax, dword ptr [rbp - 4]
                 0x400533: eax += 10 # add eax, 0xa
                 0x400536: var2 += eax # add dword ptr [rbp - 8], eax
-                0x400539: edi =  0x400616 "2" # mov edi, 0x400616
-                0x40053e: call  puts@plt
+                0x400539: edi = 0x400616 "2" # mov edi, 0x400616
+                0x40053e: call puts@plt
             }
             0x400549: edx = var1 # mov edx, dword ptr [rbp - 4]
             0x40054c: eax = edx # mov eax, edx
@@ -46,8 +46,8 @@ function main (.text) {
         }
     }
     ret_0x400570:
-    0x400570: edi =  0x400618 "3" # mov edi, 0x400618
-    0x400575: call  puts@plt
+    0x400570: edi = 0x400618 "3" # mov edi, 0x400618
+    0x400575: call puts@plt
     0x40057a: eax = 0 # mov eax, 0
     0x40057f: leave
     0x400580: ret

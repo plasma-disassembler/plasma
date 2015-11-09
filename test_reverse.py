@@ -12,7 +12,7 @@ TESTS = Path('tests')
 
 SYMBOLS = {
         TESTS / 'server.bin': ["main", "connection_handler"],
-        TESTS / 'pendu.bin': ["_main", "___main"],
+        TESTS / 'pendu.bin': ["_main", "___main", "__imp___cexit"],
         TESTS / 'shellcode.bin': ["0x0"],
         }
 

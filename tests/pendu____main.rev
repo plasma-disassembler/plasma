@@ -41,8 +41,8 @@ function ___main (.text) {
                 if ==  goto 0x4018fa
             }
         }
-        0x4018fa: *(esp) =  ___do_global_dtors  # mov dword ptr [esp], 0x401820
-        0x401901: call  _atexit
+        0x4018fa: *(esp) = ___do_global_dtors  # mov dword ptr [esp], 0x401820
+        0x401901: call _atexit
     }
     ret_0x401906:
     0x401906: pop ebx

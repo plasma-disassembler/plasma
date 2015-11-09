@@ -17,8 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import struct
-
 from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_OP_INVALID, MIPS_INS_LW, MIPS_INS_SW, MIPS_INS_AND,
         MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
@@ -29,7 +27,6 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_BLTZ, MIPS_REG_ZERO)
 
 from lib.output import OutputAbs
-from lib.utils import BYTES_PRINTABLE_SET
 from lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
     is_uncond_jump, cond_symbol, PseudoInst, NopInst)
 
@@ -72,59 +69,8 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == MIPS_OP_IMM:
-            imm = op.value.imm
-            sec_name, is_data = self.binary.is_address(imm)
-
-            if sec_name is not None:
-                modified = False
-
-                if self.ctx.sectionsname:
-                    self._add("(")
-                    self._section(sec_name)
-                    self._add(")")
-
-                if imm in self.binary.reverse_symbols:
-                    self._add(" ")
-                    self._symbol(imm)
-                    modified = True
-
-                if imm in self.ctx.labels:
-                    self._add(" ")
-                    self._label(imm, print_label=False)
-                    modified = True
-
-                if not modified:
-                    self._add(" ")
-                    self._add(hex(imm))
-
-                if is_data:
-                    s = self.binary.get_string(imm, self.ctx.max_data_size)
-                    if s != "\"\"":
-                        self._add(" ")
-                        self._string(s)
-
-                if modified and not is_call(i):
-                    self._add(" ")
-
-                return modified
-
-            elif hexa:
-                self._add(hex(imm))
-            else:
-                self._add(str(imm))
-
-                if imm > 0:
-                    packed = struct.pack("<L", imm)
-                    if set(packed).issubset(BYTES_PRINTABLE_SET):
-                        self._string(" \"" + "".join(map(chr, packed)) + "\"")
-                        return False
-
-                # returns True because capstone print immediate in hexa
-                # it will be printed in a comment, sometimes it's better
-                # to have the value in hexa
-                return True
-
-            return False
+            add_space = not is_call(i)
+            return self._imm(i, op.value.imm, op.size, hexa, add_space)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")
@@ -144,13 +90,13 @@ class Output(OutputAbs):
 
             if mm.disp != 0:
                 sec_name, is_data = self.binary.is_address(mm.disp)
-                if sec_name is not None:
+                is_sym = mm.disp in self.binary.reverse_symbols
+
+                if is_sym or sec_name is not None:
                     if printed:
                         self._add(" + ")
-                    if mm.disp in self.binary.reverse_symbols:
-                        self._symbol(mm.disp)
-                    else:
-                        self._add(hex(mm.disp))
+                    self._imm(i, mm.disp, True, 0, False,
+                              sec_name=sec_name, is_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

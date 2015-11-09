@@ -17,7 +17,9 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib.utils import print_no_end
+import struct
+
+from lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from lib.colors import color, bold
 from custom_colors import *
 
@@ -266,6 +268,89 @@ class OutputAbs():
         self._address(addr)
         self._add("(bad)")
         self._new_line()
+
+
+    #
+    # Print an immediate value
+    # i          capstone instruction
+    # imm        the immediate to print
+    # op_size    op.size is not available in arm, so it's in arguments
+    # hexa       print in hexa if no symbol or something else was found
+    # sec_name   section name, don't search if given in parameters
+    # is_data    same thing as sec_name but if forced to False, get_string
+    #            will not be called
+    # add_space  add a final space if modified
+    #
+    def _imm(self, i, imm, op_size, hexa, add_final_space,
+             sec_name=None, is_data=None):
+
+        if imm in self.ctx.labels:
+            self._label(imm, print_colon=False)
+            return True
+
+        if sec_name is None:
+            sec_name, d = self.binary.is_address(imm)
+            if is_data is None:
+                is_data = d
+
+        print_sec = sec_name is not None and self.ctx.sectionsname
+        is_sym = imm in self.binary.reverse_symbols
+
+        if sec_name is not None or is_sym:
+            modified = False
+
+            if print_sec:
+                self._add("(")
+                self._section(sec_name)
+                self._add(")")
+
+            if is_sym:
+                if print_sec:
+                    self._add(" ")
+                self._symbol(imm)
+                modified = True
+
+            if not modified:
+                if print_sec:
+                    self._add(" ")
+                self._add(hex(imm))
+
+            if is_data:
+                s = self.binary.get_string(imm, self.ctx.max_data_size)
+                if s != "\"\"":
+                    self._add(" ")
+                    self._string(s)
+
+            if modified and add_final_space:
+                self._add(" ")
+
+            return modified
+
+        elif op_size == 1:
+            self._string("'%s'" % get_char(imm))
+        elif hexa:
+            self._add(hex(imm))
+        else:
+            self._add(str(imm))
+
+            if imm > 0:
+                if op_size == 4:
+                    packed = struct.pack("<L", imm)
+                elif op_size == 8:
+                    packed = struct.pack("<Q", imm)
+                else:
+                    return False
+                packed = struct.pack("<L", imm)
+                if set(packed).issubset(BYTES_PRINTABLE_SET):
+                    self._string(" \"" + "".join(map(chr, packed)) + "\"")
+                    return False
+
+            # returns True because capstone print immediate in hexa and
+            # it will be printed in a comment, sometimes it's better
+            # to have the value in hexa
+            return True
+
+        return False
 
 
     def set_line(self, addr):

@@ -14,19 +14,19 @@ function main (.text) {
         # 0x400529: cmp dword ptr [rbp - 0xc], 5
         # 0x40052d: jne 0x40053b
         if (var3 == 5) {
-            0x40052f: edi =  0x4005f4 "1" # mov edi, 0x4005f4
-            0x400534: call  puts@plt
+            0x40052f: edi = 0x4005f4 "1" # mov edi, 0x4005f4
+            0x400534: call puts@plt
             0x400539: jmp 0x400551
         } else {
             0x40053b: jmp 0x40055b
         }
     } else {
-        0x40053d: edi =  0x4005f6 "2" # mov edi, 0x4005f6
-        0x400542: call  puts@plt
-        0x400547: edi =  0x4005f8 "3" # mov edi, 0x4005f8
-        0x40054c: call  puts@plt
-        0x400551: edi =  0x4005fa "4" # mov edi, 0x4005fa
-        0x400556: call  puts@plt
+        0x40053d: edi = 0x4005f6 "2" # mov edi, 0x4005f6
+        0x400542: call puts@plt
+        0x400547: edi = 0x4005f8 "3" # mov edi, 0x4005f8
+        0x40054c: call puts@plt
+        0x400551: edi = 0x4005fa "4" # mov edi, 0x4005fa
+        0x400556: call puts@plt
     }
     ret_0x40055b:
     0x40055b: eax = 0 # mov eax, 0
