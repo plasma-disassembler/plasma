@@ -319,6 +319,7 @@ class Disassembler():
         s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
         self.print_section_meta(s_name, s_start, s_end)
         o = ARCH_OUTPUT.Output(ctx)
+        o._new_line()
 
         ad = s_start
         while ad < s_end:
@@ -329,6 +330,8 @@ class Disassembler():
                 ad += i.size
                 if ARCH_UTILS.is_call(i):
                     o._asm_inst(i)
+
+        o.print()
 
 
     def print_symbols(self, print_sections, sym_filter=None):
