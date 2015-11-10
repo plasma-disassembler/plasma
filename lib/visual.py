@@ -119,11 +119,13 @@ class Visual():
         refr = True
 
         while 1:
+            (h, w) = screen.getmaxyx()
             if refr:
-                (h, w) = screen.getmaxyx()
                 self.view_main_redraw(h, w)
                 refr = False
 
+            if self.cursor_x >= w:
+                self.cursor_x = w - 1
             screen.move(self.cursor_y, self.cursor_x)
 
             k = self.read_escape_keys()
@@ -195,6 +197,8 @@ class Visual():
             n = w - xbegin - len(self.comm) - 4
             self.screen.addstr(" " * n, color_pair(0) | curses.A_UNDERLINE)
 
+            if self.cursor_x >= w:
+                self.cursor_x = w - 1
             screen.move(y, self.cursor_x)
             k = self.read_escape_keys()
 
