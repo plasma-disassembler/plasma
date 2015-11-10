@@ -87,7 +87,10 @@ class Visual():
     def read_escape_keys(self):
         self.screen.timeout(-1)
         k = self.screen.getch()
-        seq = [k]
+        seq = []
+        while k:
+            seq.append(k & 0xff)
+            k >>= 8
         self.screen.timeout(0)
         for i in range(8):
             k = self.screen.getch()
