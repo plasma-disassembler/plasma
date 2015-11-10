@@ -253,22 +253,22 @@ class Visual():
             else:
                 self.win_y = 0
         else:
-            if self.cursor_y == 0 and self.win_y == 0:
-                return
-            wy = self.win_y - n
-            y = self.cursor_y - n
-            if self.win_y == 0:
-                if y >= 0:
-                    self.cursor_y = y
+            if not(self.cursor_y == 0 and self.win_y == 0):
+                wy = self.win_y - n
+                y = self.cursor_y - n
+                if self.win_y == 0:
+                    if y >= 0:
+                        self.cursor_y = y
+                    else:
+                        self.cursor_y = 0
                 else:
-                    self.cursor_y = 0
-            else:
-                if y >= 3:
-                    self.cursor_y = y
-                else:
-                    self.cursor_y = 3
-                    if wy >= 0:
-                        self.win_y = wy
+                    if y >= 3:
+                        self.cursor_y = y
+                    else:
+                        self.cursor_y = 3
+                        if wy >= 0:
+                            self.win_y = wy
+        self.check_cursor_x()
 
 
     def scroll_down(self, h, n, page_scroll):
@@ -295,20 +295,28 @@ class Visual():
             y = self.cursor_y + n
             line = self.win_y + self.cursor_y
             if line >= len(self.token_lines) - n:
-                self.cursor_y += len(self.token_lines) - self.win_y - self.cursor_y - 1
-                return
-            if self.win_y >= len(self.token_lines) - h:
-                if y < h:
-                    self.cursor_y = y
-                else:
-                    self.cursor_y = h - 1
+                self.cursor_y += len(self.token_lines) - \
+                                  self.win_y - self.cursor_y - 1
             else:
-                if y < h - 3:
-                    self.cursor_y = y
+                if self.win_y >= len(self.token_lines) - h:
+                    if y < h:
+                        self.cursor_y = y
+                    else:
+                        self.cursor_y = h - 1
                 else:
-                    self.cursor_y = h - 3 - 1
-                    if wy <= len(self.token_lines) - h:
-                        self.win_y = wy
+                    if y < h - 3:
+                        self.cursor_y = y
+                    else:
+                        self.cursor_y = h - 3 - 1
+                        if wy <= len(self.token_lines) - h:
+                            self.win_y = wy
+        self.check_cursor_x()
+
+
+    def check_cursor_x(self):
+        line = self.output.lines[self.win_y + self.cursor_y]
+        if self.cursor_x >= len(line):
+            self.cursor_x = len(line) - 1
 
 
     # Main view : Keys mapping
@@ -319,7 +327,8 @@ class Visual():
         return False
 
     def main_k_right(self, h, w):
-        if self.cursor_x < w - 1:
+        line = self.output.lines[self.win_y + self.cursor_y]
+        if self.cursor_x < len(line) - 1:
             self.cursor_x += 1
         return False
 
@@ -348,6 +357,8 @@ class Visual():
                 self.scroll_down(h, diff, False)
             elif diff < 0:
                 self.scroll_up(h, -diff, False)
+            else:
+                self.check_cursor_x()
         elif button == 0x60: # scroll up
             self.scroll_up(h, 3, True)
         elif button == 0x61: # scroll down
@@ -368,7 +379,8 @@ class Visual():
 
     def main_cmd_bottom(self, h, w):
         if self.win_y >= len(self.token_lines) - h:
-            self.cursor_y += len(self.token_lines) - self.win_y - self.cursor_y - 1
+            self.cursor_y += len(self.token_lines) - \
+                             self.win_y - self.cursor_y - 1
         else:
             self.cursor_y = h - 1
             self.win_y = len(self.token_lines) - h
