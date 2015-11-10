@@ -51,7 +51,7 @@ try:
 except:
     default_custom_file()
     from custom_colors import *
-    info("the file custom_colors.py has been created")
+    print("the file custom_colors.py has been created")
 
 
 # Old versions of custom_colors.py
