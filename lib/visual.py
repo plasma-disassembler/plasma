@@ -32,6 +32,7 @@ class Visual():
         self.token_lines = output.token_lines
         self.dis = disassembler
         self.interact = interactive
+        self.search = None
 
         self.main_mapping = {
             b"\x1b\x5b\x44": self.main_k_left,
@@ -49,6 +50,8 @@ class Visual():
             b"\x05": self.main_k_end, # ctrl-e
             b"\x1b\x5b\x37\x7e": self.main_k_home,
             b"\x1b\x5b\x38\x7e": self.main_k_end,
+            b"*": self.main_cmd_highlight_current_word,
+            b"\x0b": self.main_cmd_highlight_clear,
         }
 
         self.inline_mapping = {
@@ -76,6 +79,8 @@ class Visual():
 
         for i in range(0, curses.COLORS):
             curses.init_pair(i, i, -1)
+
+        curses.init_pair(1, 253, 66) # for the highlight search
 
         curses.wrapper(self.view_main)
 
@@ -230,7 +235,7 @@ class Visual():
             if x + len(string) >= w:
                 string = string[:w-x-1]
                 force_exit = True
-
+            
             c = color_pair(col)
 
             if is_current_line:
@@ -248,6 +253,23 @@ class Visual():
         if is_current_line:
             n = w - x - 1
             self.screen.addstr(i, x, " " * n, color_pair(0) | A_UNDERLINE)
+            x += n
+
+        self.highlight_search(i, w)
+        self.screen.move(i, x)
+            
+
+    def highlight_search(self, i, w):
+        if self.search is None:
+            return
+        num_line = self.win_y + i
+        start = 0
+        while 1:
+            idx = self.output.lines[num_line].find(self.search, start)
+            if idx == -1 or idx >= w:
+                break
+            self.screen.chgat(i, idx, len(self.search), curses.color_pair(1))
+            start = idx + 1
 
 
     def scroll_up(self, h, n, page_scroll):
@@ -363,6 +385,28 @@ class Visual():
             self.scroll_down(h, 3, True)
         return True
 
+    def main_k_home(self, h, w):
+        # TODO: fix self.cursor_x >= w
+        if self.cursor_x == 0:
+            line = self.output.lines[self.win_y + self.cursor_y]
+            while self.cursor_x < len(line):
+                if line[self.cursor_x] != " ":
+                    break
+                self.cursor_x += 1
+        else:
+            self.cursor_x = 0
+        return False
+
+    def main_k_end(self, h, w):
+        # TODO: fix self.cursor_x >= w
+        line = self.output.lines[self.win_y + self.cursor_y]
+        if len(line) >= w:
+            self.cursor_x = w - 1
+        else:
+            self.cursor_x = len(line) - 1
+        return False
+
+
     def main_cmd_line_middle(self, h, w):
         mid = int(h/2)
         if self.cursor_y + self.win_y > mid:
@@ -370,10 +414,12 @@ class Visual():
             self.cursor_y = mid
         return True
 
+
     def main_cmd_top(self, h, w):
         self.cursor_y = 0
         self.win_y = 0
         return True
+
 
     def main_cmd_bottom(self, h, w):
         if self.win_y >= len(self.token_lines) - h:
@@ -430,27 +476,34 @@ class Visual():
         return True
 
 
-    def main_k_home(self, h, w):
-        # TODO: fix self.cursor_x >= w
-        if self.cursor_x == 0:
-            line = self.output.lines[self.win_y + self.cursor_y]
-            while self.cursor_x < len(line):
-                if line[self.cursor_x] != " ":
-                    break
-                self.cursor_x += 1
-        else:
-            self.cursor_x = 0
-        return False
+    def main_cmd_highlight_current_word(self, h, w):
+        num_line = self.win_y + self.cursor_y
+        line = self.output.lines[num_line]
+        x = self.cursor_x
+
+        if not line[x].isalnum():
+            return
+
+        curr = []
+
+        while x >= 0 and line[x].isalnum():
+            x -= 1
+
+        x += 1
+
+        while x < len(line) and line[x].isalnum():
+            curr.append(line[x])
+            x += 1
+
+        if curr:
+            self.search = "".join(curr)
+
+        return True
 
 
-    def main_k_end(self, h, w):
-        # TODO: fix self.cursor_x >= w
-        line = self.output.lines[self.win_y + self.cursor_y]
-        if len(line) >= w:
-            self.cursor_x = w - 1
-        else:
-            self.cursor_x = len(line) - 1
-        return False
+    def main_cmd_highlight_clear(self, h, w):
+        self.search = None
+        return True
 
 
     # Inline comment editor : keys mapping

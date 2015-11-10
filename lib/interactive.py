@@ -181,6 +181,7 @@ class Interactive():
                 "q quit",
                 "; edit inline comment (enter/escape to validate/cancel)",
                 "% goto next bracket",
+                "* highlight current word (ctrl-k to clear)",
                 ]
             ),
 
