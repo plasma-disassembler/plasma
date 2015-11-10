@@ -45,6 +45,10 @@ class Visual():
             b"G": self.main_cmd_bottom,
             b";": self.view_inline_comment_editor,
             b"%": self.main_cmd_next_bracket,
+            b"\x01": self.main_k_home, # ctrl-a
+            b"\x05": self.main_k_end, # ctrl-e
+            b"\x1b\x5b\x37\x7e": self.main_k_home,
+            b"\x1b\x5b\x38\x7e": self.main_k_end,
         }
 
         self.inline_mapping = {
@@ -375,6 +379,7 @@ class Visual():
 
 
     def main_cmd_next_bracket(self, h, w):
+        # TODO: fix self.cursor_x >= w
         line = self.win_y + self.cursor_y
         x = self.cursor_x
         char = self.output.lines[line][x]
@@ -416,6 +421,29 @@ class Visual():
             self.scroll_down(h, diff, False)
 
         return True
+
+
+    def main_k_home(self, h, w):
+        # TODO: fix self.cursor_x >= w
+        if self.cursor_x == 0:
+            line = self.output.lines[self.win_y + self.cursor_y]
+            while self.cursor_x < len(line):
+                if line[self.cursor_x] != " ":
+                    break
+                self.cursor_x += 1
+        else:
+            self.cursor_x = 0
+        return False
+
+
+    def main_k_end(self, h, w):
+        # TODO: fix self.cursor_x >= w
+        line = self.output.lines[self.win_y + self.cursor_y]
+        if len(line) >= w:
+            self.cursor_x = w - 1
+        else:
+            self.cursor_x = len(line) - 1
+        return False
 
 
     # Inline comment editor : keys mapping
