@@ -44,6 +44,7 @@ class Visual():
             b"g": self.main_cmd_top,
             b"G": self.main_cmd_bottom,
             b";": self.view_inline_comment_editor,
+            b"%": self.main_cmd_next_bracket,
         }
 
         self.inline_mapping = {
@@ -253,21 +254,16 @@ class Visual():
             else:
                 self.win_y = 0
         else:
-            if not(self.cursor_y == 0 and self.win_y == 0):
-                wy = self.win_y - n
-                y = self.cursor_y - n
+            for i in range(n):
                 if self.win_y == 0:
-                    if y >= 0:
-                        self.cursor_y = y
-                    else:
-                        self.cursor_y = 0
+                    if self.cursor_y == 0:
+                        break
+                    self.cursor_y -= 1
                 else:
-                    if y >= 3:
-                        self.cursor_y = y
+                    if self.cursor_y == 3:
+                        self.win_y -= 1
                     else:
-                        self.cursor_y = 3
-                        if wy >= 0:
-                            self.win_y = wy
+                        self.cursor_y -= 1
         self.check_cursor_x()
 
 
@@ -291,25 +287,16 @@ class Visual():
                 else:
                     self.cursor_y = 3
         else:
-            wy = self.win_y + n
-            y = self.cursor_y + n
-            line = self.win_y + self.cursor_y
-            if line >= len(self.token_lines) - n:
-                self.cursor_y += len(self.token_lines) - \
-                                  self.win_y - self.cursor_y - 1
-            else:
+            for i in range(n):
                 if self.win_y >= len(self.token_lines) - h:
-                    if y < h:
-                        self.cursor_y = y
-                    else:
-                        self.cursor_y = h - 1
+                    if self.win_y + self.cursor_y == len(self.token_lines) - 1:
+                        break
+                    self.cursor_y += 1
                 else:
-                    if y < h - 3:
-                        self.cursor_y = y
+                    if self.cursor_y == h - 4:
+                        self.win_y += 1
                     else:
-                        self.cursor_y = h - 3 - 1
-                        if wy <= len(self.token_lines) - h:
-                            self.win_y = wy
+                        self.cursor_y += 1
         self.check_cursor_x()
 
 
@@ -384,6 +371,50 @@ class Visual():
         else:
             self.cursor_y = h - 1
             self.win_y = len(self.token_lines) - h
+        return True
+
+
+    def main_cmd_next_bracket(self, h, w):
+        line = self.win_y + self.cursor_y
+        x = self.cursor_x
+        char = self.output.lines[line][x]
+        diff = 0
+
+        if char == "}":
+            l = line - 1
+            while l >= 0:
+                if self.output.lines[l][x] != " ":
+                    diff = line - l
+                    break
+                l -= 1
+
+            if l != -1:
+                x = 0
+                while x < len(self.output.lines[l]):
+                    if self.output.lines[l][x] == "{":
+                        break
+                    x += 1
+
+            self.cursor_x = x
+            self.scroll_up(h, diff, False)
+
+        elif char == "{":
+            x = 0
+            while 1:
+                if self.output.lines[line][x] != " ":
+                    break
+                x += 1
+
+            l = line + 1
+            while l < len(self.output.lines):
+                if self.output.lines[l][x] != " ":
+                    diff = l - line
+                    break
+                l += 1
+
+            self.cursor_x = x
+            self.scroll_down(h, diff, False)
+
         return True
 
 

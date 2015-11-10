@@ -180,6 +180,7 @@ class Interactive():
                 "z set current line on the middle",
                 "q quit",
                 "; edit inline comment (enter/escape to validate/cancel)",
+                "% goto next bracket",
                 ]
             ),
 
