@@ -24,7 +24,7 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_XOR,
         MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU, MIPS_INS_BGTZ,
         MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
-        MIPS_INS_BLTZ, MIPS_REG_ZERO)
+        MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP)
 
 from lib.output import OutputAbs
 from lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -81,6 +81,20 @@ class Output(OutputAbs):
             mm = op.mem
 
             printed = False
+
+            if mm.base == MIPS_REG_GP and self.ctx.dis.mips_gp != -1 and \
+                    mm.disp != 0:
+                ad = self.ctx.dis.mips_gp + mm.disp
+                sec_name, is_data = self.binary.is_address(ad)
+                is_sym = mm.disp in self.binary.reverse_symbols
+                if sec_name is not None:
+                    val = self.ctx.dis.read_word(ad, 4)
+                    sec_name, is_data = self.binary.is_address(val)
+                    is_sym = mm.disp in self.binary.reverse_symbols
+                    self._imm(i, val, 0, True, False,
+                              sec_name=sec_name, is_data=False)
+                    return True 
+
             if show_deref:
                 self._add("*(")
 
@@ -95,7 +109,7 @@ class Output(OutputAbs):
                 if is_sym or sec_name is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, True, 0, False,
+                    self._imm(i, mm.disp, 0, True, False,
                               sec_name=sec_name, is_data=False)
                 else:
                     if printed:

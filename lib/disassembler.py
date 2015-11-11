@@ -40,11 +40,15 @@ class Disassembler():
     def __init__(self, filename, raw_type, raw_base,
                  raw_big_endian, sym, rev_sym,
                  jmptables, inline_comments,
-                 previous_comments, load_symbols=True):
+                 previous_comments, load_symbols=True,
+                 mips_gp=-1):
         import capstone as CAPSTONE
 
         self.code = {}
         self.binary = Binary(filename, raw_type, raw_base, raw_big_endian)
+
+        # TODO: is it a global constant or $gp can change during the execution ?
+        self.mips_gp = mips_gp
 
         arch, mode = self.binary.get_arch()
 
@@ -96,6 +100,12 @@ class Disassembler():
         self.binary.reverse_symbols[addr] = name
 
         return name
+
+
+    def read_word(self, ad, size_word):
+        unpack_str = self.get_unpack_str(size_word)
+        b = self.binary.section_stream_read(ad, size_word)
+        return struct.unpack(unpack_str, b)[0]
 
 
     def read_array(self, ad, array_max_size, size_word):

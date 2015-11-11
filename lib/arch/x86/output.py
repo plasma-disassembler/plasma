@@ -146,7 +146,7 @@ class Output(OutputAbs):
                 if is_sym or sec_name is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, True, 0, False,
+                    self._imm(i, mm.disp, 0, True, False,
                               sec_name=sec_name, is_data=False)
                 else:
                     if printed:

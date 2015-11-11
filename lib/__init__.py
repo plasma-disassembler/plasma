@@ -134,6 +134,7 @@ def load_file(ctx):
     previous_comments = {}
     sym = {}
     rev_sym = {}
+    mips_gp = -1
 
     # Open the database
     if db_exists:
@@ -163,6 +164,13 @@ def load_file(ctx):
             # removed in the future
             pass
 
+        try:
+            mips_gp = db["mips_gp"]
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
+
         fd.close()
 
     try:
@@ -171,7 +179,8 @@ def load_file(ctx):
                            sym, rev_sym,
                            jmptables, inline_comments,
                            previous_comments,
-                           load_symbols=not db_exists)
+                           load_symbols=not db_exists,
+                           mips_gp=mips_gp)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:

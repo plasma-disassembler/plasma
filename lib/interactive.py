@@ -66,6 +66,7 @@ class Interactive():
             "lrawmips64",
             "lrawx86",
             "lrawx64",
+            "mips_set_gp",
             "py",
             "save",
             "sections",
@@ -346,6 +347,16 @@ class Interactive():
                 [
                 "",
                 "Run an interactive python shell."
+                ]
+            ),
+
+            "mips_set_gp": Command(
+                1,
+                self.__exec_mips_set_gp,
+                None,
+                [
+                "ADDR",
+                "Set the register $gp to a fixed value."
                 ]
             ),
         }
@@ -800,6 +811,10 @@ class Interactive():
 
 
     def __exec_save(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+
         fd = open(self.ctx.db_path, "w+")
         db = {
             "symbols": self.ctx.dis.binary.symbols,
@@ -807,6 +822,7 @@ class Interactive():
             "inline_comments": self.ctx.dis.inline_comments,
             "previous_comments": self.ctx.dis.previous_comments,
             "jmptables": [],
+            "mips_gp": self.ctx.dis.mips_gp,
         }
         for j in self.ctx.dis.jmptables.values():
             o = {
@@ -823,6 +839,9 @@ class Interactive():
 
 
     def __exec_jmptable(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
         try:
             inst_addr = int(args[1], 16)
             table_addr = int(args[2], 16)
@@ -842,3 +861,16 @@ class Interactive():
 
     def __exec_py(self, args):
         code.interact(local=locals())
+
+
+    def __exec_mips_set_gp(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+
+        try:
+            self.ctx.dis.mips_gp = int(args[1], 16)
+        except:
+            error("bad address")
+
+        self.database_modified = True
