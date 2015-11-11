@@ -134,11 +134,17 @@ class ELF:
             warning("opcode \\xff\\x25 was not found, please report")
 
 
-    def __arm_resolve_reloc(self, rel, symtab):
-        # TODO: don't know why st_value is 0 in x86
-        # for arm st_value is the address of the plt entry
-        for r in rel.iter_relocations():
-            sym = symtab.get_symbol(r.entry.r_info_sym)
+    def __resolve_symtab(self, rel, symtab):
+        # TODO: don't know why st_value is not 0 like x86
+        # In some executables I've tested, it seems that st_value
+        # is the address of the plt entry
+
+        # TODO: really useful to iter on relocations and get the symbol
+        # from the symtab ?
+        # for r in rel.iter_relocations():
+            # sym = symtab.get_symbol(r.entry.r_info_sym)
+
+        for sym in symtab.iter_symbols():
             plt_start = sym.entry.st_value
             if plt_start != 0:
                 name = sym.name.decode() + "@plt"
@@ -158,8 +164,12 @@ class ELF:
     def load_dyn_sym(self):
         arch = self.elf.get_machine_arch()
 
-        if arch == "MIPS":
+        if arch == "ARM" or arch == "MIPS":
+            for (rel, symtab) in self.__iter_reloc():
+                self.__resolve_symtab(rel, symtab)
             return
+
+        # x86/x64
 
         # TODO: .plt can be renamed ?
         plt = self.elf.get_section_by_name(b".plt")
@@ -168,12 +178,6 @@ class ELF:
             warning(".plt section not found")
             return
 
-        if arch == "ARM":
-            for (rel, symtab) in self.__iter_reloc():
-                self.__arm_resolve_reloc(rel, symtab)
-            return
-
-        # x86/x64
         # TODO: .got.plt can be renamed or may be removed ?
         got_plt = self.elf.get_section_by_name(b".got.plt")
         addr_size = 8 if arch == "x64" else 4
