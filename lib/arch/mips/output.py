@@ -70,7 +70,7 @@ class Output(OutputAbs):
 
         if op.type == MIPS_OP_IMM:
             add_space = not is_call(i)
-            return self._imm(i, op.value.imm, op.size, hexa, add_space)
+            return self._imm(i, op.value.imm, 4, hexa, add_space)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")
