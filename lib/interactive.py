@@ -263,7 +263,8 @@ class Interactive():
                 [
                 "[SYMBOL 0xXXXX] [| FILTER]",
                 "Print all symbols or set a new symbol.",
-                "You can filter symbols by searching the word FILTER."
+                "You can filter symbols by searching the word FILTER.",
+                "If FILTER starts with -, the match is inversed."
                 ]
             ),
 

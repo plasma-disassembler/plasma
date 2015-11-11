@@ -334,13 +334,24 @@ class Disassembler():
         o.print()
 
 
+    #
+    # sym_filter : search a symbol, non case-sensitive
+    #    if it starts with '-', it prints non-matching symbols
+    #
     def print_symbols(self, print_sections, sym_filter=None):
         if sym_filter is not None:
             sym_filter = sym_filter.lower()
+            if sym_filter[0] == "-":
+                invert_match = True
+                sym_filter = sym_filter[1:]
+            else:
+                invert_match = False
 
         for sy in self.binary.symbols:
             addr = self.binary.symbols[sy]
-            if sym_filter is None or sym_filter in sy.lower():
+            if sym_filter is None or \
+                    (invert_match and sym_filter not in sy.lower()) or \
+                    (not invert_match and sym_filter in sy.lower()):
                 sec_name, _ = self.binary.is_address(addr)
                 if sy:
                     print_no_end(color_addr(addr) + " " + sy)
