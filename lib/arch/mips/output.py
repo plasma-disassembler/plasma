@@ -82,8 +82,7 @@ class Output(OutputAbs):
 
             printed = False
 
-            if mm.base == MIPS_REG_GP and self.ctx.dis.mips_gp != -1 and \
-                    mm.disp != 0:
+            if mm.base == MIPS_REG_GP and self.ctx.dis.mips_gp != -1:
                 ad = self.ctx.dis.mips_gp + mm.disp
                 sec_name, is_data = self.binary.is_address(ad)
                 is_sym = mm.disp in self.binary.reverse_symbols
@@ -93,7 +92,10 @@ class Output(OutputAbs):
                     is_sym = mm.disp in self.binary.reverse_symbols
                     self._imm(i, val, 0, True, False,
                               sec_name=sec_name, is_data=False)
-                    return True 
+                else:
+                    self._imm(i, ad, 0, True, False,
+                              sec_name=sec_name, is_data=False)
+                return True
 
             if show_deref:
                 self._add("*(")
