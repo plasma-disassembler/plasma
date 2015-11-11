@@ -34,6 +34,8 @@ class Visual():
         self.interact = interactive
         self.search = None
 
+        self.word_accepted_chars = ["_", "@", "."]
+
         self.main_mapping = {
             b"\x1b\x5b\x44": self.main_k_left,
             b"\x1b\x5b\x43": self.main_k_right,
@@ -481,17 +483,18 @@ class Visual():
         line = self.output.lines[num_line]
         x = self.cursor_x
 
-        if not line[x].isalnum():
+        if not line[x].isalnum() and not line[x] in self.word_accepted_chars:
             return
 
         curr = []
 
-        while x >= 0 and line[x].isalnum():
+        while x >= 0 and (line[x].isalnum() or line[x] in self.word_accepted_chars):
             x -= 1
 
         x += 1
 
-        while x < len(line) and line[x].isalnum():
+        while x < len(line) and (line[x].isalnum() or \
+                line[x] in self.word_accepted_chars):
             curr.append(line[x])
             x += 1
 
