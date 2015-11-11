@@ -2,29 +2,11 @@
 KNOWN BUGS
 
 
-
-Major bugs
-----------
-
-
-MIPS is not disassembled correctly: the prefetched instruction is not
-actually considered.
-
-
-
-
 Minor bugs
 ----------
 
 
 bug 1
-
-"jmp register" can't be interpreted. It can occurs sometimes with
-a switch. An error message is printed and propose an other alternative
-with the option --dump, which disassemble only.
-
-
-bug 2
 
 The pefile library seems to be bugged. Sometimes the function 
 pe.load_import_symbols fails because the internal function of pefile,
