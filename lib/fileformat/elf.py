@@ -147,7 +147,7 @@ class ELF:
         for sym in symtab.iter_symbols():
             plt_start = sym.entry.st_value
             if plt_start != 0:
-                name = sym.name.decode() + "@plt"
+                name = sym.name.decode()
                 self.classbinary.reverse_symbols[plt_start] = name
                 self.classbinary.symbols[name] = plt_start
 
