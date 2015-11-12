@@ -72,54 +72,22 @@ class Graph:
     # A jump is normally alone in a block, but for some architectures
     # we save the prefetched instruction after.
 
+    def new_node(self, curr, prefetch, nxt):
+        ad = curr.address
+        self.nodes[ad] = [curr]
 
-    def add_node(self, inst, prefetch=None):
-        self.nodes[inst.address] = [inst]
-        if prefetch is not None:
-            self.nodes[inst.address].append(prefetch)
+        if nxt is not None:
+            self.link_out[ad] = nxt
 
-
-    def set_jmptable_next(self, curr, jmptable, prefetch=None):
-        self.nodes[curr.address] = [curr]
-        self.link_out[curr.address] = jmptable
-
-        for ad in jmptable:
-            if ad not in self.link_in:
-                self.link_in[ad] = [curr.address]
-            else:
-                self.link_in[ad].append(curr.address)
+        if nxt is not None:
+            for n in nxt:
+                if n not in self.link_in:
+                    self.link_in[n] = [ad]
+                else:
+                    self.link_in[n].append(ad)
 
         if prefetch is not None:
-            self.nodes[curr.address].append(prefetch)
-
-
-    def set_next(self, curr, nxt_jmp, prefetch=None):
-        self.nodes[curr.address] = [curr]
-        self.link_out[curr.address] = [nxt_jmp]
-
-        if nxt_jmp not in self.link_in:
-            self.link_in[nxt_jmp] = []
-        self.link_in[nxt_jmp].append(curr.address)
-
-        if prefetch is not None:
-            self.nodes[curr.address].append(prefetch)
-
-
-    def set_cond_next(self, curr, nxt_jmp, direct_nxt, prefetch=None):
-        self.nodes[curr.address] = [curr]
-        self.link_out[curr.address] = [direct_nxt, nxt_jmp]
-
-        if nxt_jmp not in self.link_in:
-            self.link_in[nxt_jmp] = []
-
-        if direct_nxt not in self.link_in:
-            self.link_in[direct_nxt] = []
-
-        self.link_in[nxt_jmp].append(curr.address)
-        self.link_in[direct_nxt].append(curr.address)
-
-        if prefetch is not None:
-            self.nodes[curr.address].append(prefetch)
+            self.nodes[ad].append(prefetch)
 
 
     def exists(self, inst):
@@ -178,7 +146,7 @@ class Graph:
 
         elapsed = time.clock()
         elapsed = elapsed - start
-        debug__("Graph simplified in %fs" % elapsed)
+        debug__("Graph simplified in %fs (%d nodes)" % (elapsed, len(self.nodes)))
 
 
     # Check d3/index.html !
@@ -287,7 +255,6 @@ class Graph:
                 found = __rec_path_exists(n, local_visited)
                 if found:
                     return True
-
             return False
 
         if (from_addr, to_addr) in self.cache_path_exists:

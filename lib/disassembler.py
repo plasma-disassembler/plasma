@@ -419,6 +419,9 @@ class Disassembler():
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
 
+        # Here each instruction is a node. Blocks will be created in the
+        # function __simplify.
+
         while stack:
             ad = stack.pop()
             inst = self.lazy_disasm(ad)
@@ -441,7 +444,7 @@ class Disassembler():
             if ARCH_UTILS.is_ret(inst):
                 if self.arch == CS_ARCH_MIPS:
                     prefetch = self.__prefetch_inst(inst)
-                gph.add_node(inst, prefetch)
+                gph.new_node(inst, prefetch, None)
 
             elif ARCH_UTILS.is_uncond_jump(inst):
                 if self.arch == CS_ARCH_MIPS:
@@ -451,16 +454,15 @@ class Disassembler():
                 if op.type == CS_OP_IMM:
                     nxt = op.value.imm
                     stack.append(nxt)
-                    gph.set_next(inst, nxt, prefetch)
+                    gph.new_node(inst, prefetch, [nxt])
                 else:
                     if inst.address in self.jmptables:
                         table = self.jmptables[inst.address].table
-                        gph.set_jmptable_next(inst, table, prefetch)
-                        for ad in table:
-                            stack.append(ad)
+                        stack += table
+                        gph.new_node(inst, prefetch, table)
                     else:
                         # Can't interpret jmp ADDR|reg
-                        gph.add_node(inst, prefetch)
+                        gph.new_node(inst, prefetch, None)
 
             elif ARCH_UTILS.is_cond_jump(inst):
                 if self.arch == CS_ARCH_MIPS:
@@ -477,15 +479,15 @@ class Disassembler():
 
                     stack.append(direct_nxt)
                     stack.append(nxt_jmp)
-                    gph.set_cond_next(inst, nxt_jmp, direct_nxt, prefetch)
+                    gph.new_node(inst, prefetch, [direct_nxt, nxt_jmp])
                 else:
                     # Can't interpret jmp ADDR|reg
-                    gph.add_node(inst, prefetch)
+                    gph.new_node(inst, prefetch, None)
 
             else:
                 nxt = inst.address + inst.size
                 stack.append(nxt)
-                gph.set_next(inst, nxt)
+                gph.new_node(inst, None, [nxt])
 
         if len(gph.nodes) == 0:
             return None
@@ -495,7 +497,7 @@ class Disassembler():
 
         elapsed = time.clock()
         elapsed = elapsed - start
-        debug__("Graph built in %fs" % elapsed)
+        debug__("Graph built in %fs (%d instructions)" % (elapsed, len(gph.nodes)))
 
         return gph
 
