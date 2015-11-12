@@ -57,14 +57,14 @@ More features will come :
 
 ## Switch jump-tables
 
-The program can't detect automatically switch statements which require a
-jump-table. So we need to tell him which jump-table to use.
+Switch statements which require a jump-table are not detected automatically.
+So we need to tell it which jump-table to use.
 
     $ ./reverse.py -i tests/others/switch.bin
     >> x
     ...
-    >> jmptable 0x400526 0x400620 10 8 
-    # A jump-table at 0x400620 is set with 10 entries, an address is on 8 bytes.
+    >> jmptable 0x400526 0x400620 11 8 
+    # A jump-table at 0x400620 is set with 11 entries, an address is on 8 bytes.
 
 ![reverse](/images/switch.png?raw=true)
 
