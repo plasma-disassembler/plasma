@@ -102,14 +102,14 @@ class Graph:
     # Concat instructions in single block
     # jumps are in separated blocks
     def __simplify(self):
-        ARCH_UTILS = self.dis.load_arch_module().utils
         nodes = list(self.nodes.keys())
         start = time.clock()
 
         for ad in nodes:
-            inst = self.nodes[ad]
-            if ARCH_UTILS.is_jump(inst[0]):
+            if ad in self.uncond_jumps_set or ad in self.cond_jumps_set:
                 continue
+
+            inst = self.nodes[ad]
 
             if ad not in self.link_in or len(self.link_in[ad]) != 1 or \
                     ad == self.entry_point_addr:
@@ -118,7 +118,7 @@ class Graph:
             pred = self.link_in[ad][0]
 
             # don't fuse with jumps
-            if ARCH_UTILS.is_jump(self.nodes[pred][0]):
+            if pred in self.uncond_jumps_set or pred in self.cond_jumps_set:
                 continue
 
             if pred not in self.link_out or len(self.link_out[pred]) != 1:
@@ -139,10 +139,8 @@ class Graph:
 
             # replace all addr wich refers to ad
             for k, lst_i in self.link_in.items():
-                try:
+                if ad in lst_i:
                     lst_i[lst_i.index(ad)] = pred
-                except ValueError:
-                    pass
 
         elapsed = time.clock()
         elapsed = elapsed - start
