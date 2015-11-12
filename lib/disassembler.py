@@ -25,7 +25,7 @@ from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
 from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.colors import (pick_color, color_addr, color_symbol,
         color_section, color_string)
-from lib.exceptions import ExcSymNotFound, ExcArch, ExcNotAddr, ExcNotExec
+from lib.exceptions import ExcSymNotFound, ExcArch
 
 
 class Jmptable():
@@ -62,8 +62,6 @@ class Disassembler():
             self.binary.reverse_symbols = rev_sym
 
         self.binary.load_section_names()
-
-        self.binary.load_data_sections()
 
         self.capstone = CAPSTONE
         self.md = CAPSTONE.Cs(arch, mode)
@@ -111,7 +109,7 @@ class Disassembler():
     def read_array(self, ad, array_max_size, size_word):
         unpack_str = self.get_unpack_str(size_word)
         N = size_word * array_max_size
-        s_name, s_start, s_end = self.binary.get_section_meta(ad)
+        s = self.binary.get_section(ad)
         array = []
         l = 0
 
@@ -124,7 +122,7 @@ class Disassembler():
             while i < len(buf):
                 b = buf[i:i + size_word]
 
-                if ad > s_end or len(b) != size_word:
+                if ad > s.end or len(b) != size_word:
                     return array
 
                 w = struct.unpack(unpack_str, b)[0]
@@ -136,14 +134,6 @@ class Disassembler():
                 if l >= array_max_size:
                     return array
         return array
-
-
-    def check_addr(self, ctx, addr):
-        addr_exists, is_exec = self.binary.check_addr(addr)
-        if not ctx.print_data and not is_exec:
-            raise ExcNotExec(addr)
-        if not addr_exists:
-            raise ExcNotAddr(addr)
 
 
     def load_arch_module(self):
@@ -180,24 +170,14 @@ class Disassembler():
         raise ExcSymNotFound(search[0])
 
 
-    def print_section_meta(self, name, start, end):
-        print_no_end(color_section(name.ljust(20)))
-        print_no_end(" [ ")
-        print_no_end(hex(start))
-        print_no_end(" - ")
-        print_no_end(hex(end))
-        print_no_end(" - %d" % (end - start + 1))
-        print(" ]")
-
-
     def dump_asm(self, ctx, lines):
         from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
-        self.print_section_meta(s_name, s_start, s_end)
+        s = self.binary.get_section(ctx.entry_addr)
+        s.print_header()
 
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
@@ -205,8 +185,8 @@ class Disassembler():
         # set jumps color
         ad = ctx.entry_addr
         l = 0
-        while l < lines and ad < s_end:
-            i = self.lazy_disasm(ad, s_start)
+        while l < lines and ad <= s.end:
+            i = self.lazy_disasm(ad, s.start)
             if i is None:
                 ad += 1
             else:
@@ -225,8 +205,8 @@ class Disassembler():
         # dump
         ad = ctx.entry_addr
         l = 0
-        while l < lines and ad < s_end:
-            i = self.lazy_disasm(ad, s_start)
+        while l < lines and ad <= s.end:
+            i = self.lazy_disasm(ad, s.start)
             if i is None:
                 ad += 1
                 o._bad(ad)
@@ -246,8 +226,8 @@ class Disassembler():
         N = 128 # read by block of 128 bytes
         addr = ctx.entry_addr
 
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
-        self.print_section_meta(s_name, s_start, s_end)
+        s = self.binary.get_section(ctx.entry_addr)
+        s.print_header()
 
         l = 0
         ascii_str = []
@@ -261,7 +241,7 @@ class Disassembler():
             i = 0
             while i < len(buf):
 
-                if addr > s_end:
+                if addr > s.end:
                     return
 
                 j = i
@@ -299,8 +279,8 @@ class Disassembler():
 
 
     def dump_data(self, ctx, lines, size_word):
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
-        self.print_section_meta(s_name, s_start, s_end)
+        s = self.binary.get_section(ctx.entry_addr)
+        s.print_header()
 
         ad = ctx.entry_addr
 
@@ -309,14 +289,17 @@ class Disassembler():
                 print(color_symbol(self.binary.reverse_symbols[ad]))
             print_no_end(color_addr(ad))
             print_no_end("0x%.2x" % w)
-            sec_name, is_data = self.binary.is_address(w)
-            if sec_name is not None:
+
+            section = self.binary.get_section(w)
+
+            if section is not None:
                 print_no_end(" (")
-                print_no_end(color_section(sec_name))
+                print_no_end(color_section(section.name))
                 print_no_end(")")
                 if size_word >= 4 and w in self.binary.reverse_symbols:
                     print_no_end(" ")
                     print_no_end(color_symbol(self.binary.reverse_symbols[w]))
+
             ad += size_word
             print()
 
@@ -326,14 +309,15 @@ class Disassembler():
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s_name, s_start, s_end = self.binary.get_section_meta(ctx.entry_addr)
-        self.print_section_meta(s_name, s_start, s_end)
+        s = self.binary.get_section(ctx.entry_addr)
+        s.print_header()
+
         o = ARCH_OUTPUT.Output(ctx)
         o._new_line()
 
-        ad = s_start
-        while ad < s_end:
-            i = self.lazy_disasm(ad, s_start)
+        ad = s.start
+        while ad < s.end:
+            i = self.lazy_disasm(ad, s.start)
             if i is None:
                 ad += 1
             else:
@@ -362,22 +346,21 @@ class Disassembler():
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
                     (not invert_match and sym_filter in sy.lower()):
-                sec_name, _ = self.binary.is_address(addr)
+
                 if sy:
+                    section = self.binary.get_section(addr)
                     print_no_end(color_addr(addr) + " " + sy)
-                    if print_sections and sec_name is not None:
-                        print_no_end(" (" + color_section(sec_name) + ")")
+                    if print_sections and section is not None:
+                        print_no_end(" (" + color_section(section.name) + ")")
                     print()
 
 
     def lazy_disasm(self, addr, stay_in_section=-1):
-        meta  = self.binary.get_section_meta(addr)
-        if meta is None:
+        s = self.binary.get_section(addr)
+        if s is None:
             return None
 
-        _, start, _ = meta
-
-        if stay_in_section != -1 and start != stay_in_section:
+        if stay_in_section != -1 and s.start != stay_in_section:
             return None
 
         if addr in self.code:

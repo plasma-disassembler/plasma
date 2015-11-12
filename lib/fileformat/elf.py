@@ -18,11 +18,13 @@
 #
 
 import struct
+import bisect
 
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
-from lib.utils import get_char, warning
+from lib.utils import warning
+from lib.fileformat.binary import SectionAbs
 
 
 # SHF_WRITE=0x1
@@ -47,9 +49,6 @@ class ELF:
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
-        self.__data_sections = []
-        self.__data_sections_content = []
-        self.__exec_sections = []
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -67,6 +66,32 @@ class ELF:
                 64: CAPSTONE.CS_MODE_MIPS64,
             }
         }
+
+        self.__sections = {} # start address -> elf section
+
+        for s in self.elf.iter_sections():
+            start = s.header.sh_addr
+
+            if s.header.sh_flags & 0xf != 0:
+                bisect.insort_left(classbinary._sorted_sections, start)
+
+            self.__sections[start] = s
+            is_data = self.__section_is_data(s)
+            is_exec = self.__section_is_exec(s)
+
+            if is_data:
+                data = s.data()
+            else:
+                data = None
+
+            classbinary._abs_sections[start] = SectionAbs(
+                    s.name.decode(),
+                    start,
+                    s.header.sh_size,
+                    s.header.sh_size,
+                    is_exec,
+                    is_data,
+                    data)
 
 
     def load_section_names(self):
@@ -190,88 +215,9 @@ class ELF:
             self.__x86_resolve_reloc(rel, symtab, plt, got_plt, addr_size)
 
 
-    def load_data_sections(self):
-        for s in self.elf.iter_sections():
-            if self.__section_is_data(s):
-                self.__data_sections.append(s)
-                self.__data_sections_content.append(s.data())
-
-
-    def __get_data_section_idx(self, addr):
-        for i, s in enumerate(self.__data_sections):
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if start <= addr < end:
-                return i
-        return -1
-
-
     def __section_is_data(self, s):
         mask = SH_FLAGS.SHF_WRITE | SH_FLAGS.SHF_ALLOC
         return s.header.sh_flags & mask and not self.__section_is_exec(s)
-
-
-    def is_address(self, imm):
-        for s in self.elf.iter_sections():
-            if s.header.sh_flags & 0xf == 0:
-                continue
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if  start <= imm < end:
-                return s.name.decode(), self.__section_is_data(s)
-        return None, False
-
-
-    def __get_cached_exec_section(self, addr):
-        for s in self.__exec_sections:
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if start <= addr < end:
-                return s
-        return None
-
-
-    def __find_section(self, addr):
-        for s in self.elf.iter_sections():
-            start = s.header.sh_addr
-            end = start + s.header.sh_size
-            if  start <= addr < end:
-                return s
-        return None
-
-
-    def __get_section(self, addr):
-        s = self.__get_cached_exec_section(addr)
-        if s is not None:
-            return s
-        s = self.__find_section(addr)
-        if s is None:
-            return None
-        self.__exec_sections.append(s)
-        return s
-
-
-    def check_addr(self, addr):
-        s = self.__get_section(addr)
-        return (s is not None, self.__section_is_exec(s))
-
-
-    def get_section_meta(self, addr):
-        s = self.__get_section(addr)
-        if s is None:
-            return None
-        a = s.header.sh_addr
-        return s.name.decode(), a, a + s.header.sh_size - 1
-
-
-    def section_stream_read(self, addr, size):
-        s = self.__get_section(addr)
-        if s is None:
-            return b""
-        off = addr - s.header.sh_addr
-        end = s.header.sh_addr + s.header.sh_size
-        s.stream.seek(s.header.sh_offset + off)
-        return s.stream.read(min(size, end - addr))
 
 
     def __section_is_exec(self, s):
@@ -280,31 +226,15 @@ class ELF:
         return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
 
-    def get_string(self, addr, max_data_size):
-        i = self.__get_data_section_idx(addr)
-        if i == -1:
-            return ""
-
-        s = self.__data_sections[i]
-        data = self.__data_sections_content[i]
+    def section_stream_read(self, addr, size):
+        s = self.classbinary.get_section(addr)
+        if s is None:
+            return b""
+        s = self.__sections[s.start]
         off = addr - s.header.sh_addr
-        txt = ['"']
-
-        c = 0
-        i = 0
-        while i < max_data_size and \
-              off < len(data):
-            c = data[off]
-            if c == 0:
-                break
-            txt.append(get_char(c))
-            off += 1
-            i += 1
-
-        if c != 0 and off != len(data):
-            txt.append("...")
-
-        return ''.join(txt) + '"'
+        end = s.header.sh_addr + s.header.sh_size
+        s.stream.seek(s.header.sh_offset + off)
+        return s.stream.read(min(size, end - addr))
 
 
     def get_arch(self):
@@ -331,20 +261,5 @@ class ELF:
         return self.elf.get_machine_arch()
 
 
-    def section_start(self, section_name):
-        s = self.elf.get_section_by_name(section_name)
-        if s is None:
-            return -1
-        return s.header.sh_addr
-
-
     def get_entry_point(self):
         return self.elf.header['e_entry']
-
-
-    def iter_sections(self):
-        for s in self.elf.iter_sections():
-            start = s.header.sh_addr
-            end = start + s.header.sh_size - 1
-            if s.name != b"":
-                yield (s.name.decode(), start, end)

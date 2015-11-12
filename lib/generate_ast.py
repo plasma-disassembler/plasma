@@ -20,7 +20,7 @@
 import sys
 import time
 
-from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_Comment, Ast_If_cond,
+from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf)
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from lib.exceptions import ExcIfelse

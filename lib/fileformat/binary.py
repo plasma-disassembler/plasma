@@ -18,14 +18,38 @@
 #
 
 import time
+import bisect
 
-from lib.utils import debug__
-from lib.exceptions import ExcFileFormat, ExcSectionNotFound
+from lib.utils import debug__, print_no_end, get_char
+from lib.colors import color_section
+from lib.exceptions import ExcFileFormat
 
 T_BIN_ELF = 0
 T_BIN_PE  = 1
 T_BIN_RAW = 2
 T_BIN_UNK = 3
+
+
+class SectionAbs():
+    # virt_size: size of the mapped section in memory
+    def __init__(self, name, start, virt_size, real_size, is_exec, is_data, data):
+        self.name = name
+        self.start = start
+        self.virt_size = virt_size
+        self.real_size = real_size
+        self.end = start + virt_size - 1
+        self.is_exec = is_exec
+        self.is_data = is_data
+        self.data = data # only for data sections (not code)
+
+    def print_header(self):
+        print_no_end(color_section(self.name.ljust(20)))
+        print_no_end(" [ ")
+        print_no_end(hex(self.start))
+        print_no_end(" - ")
+        print_no_end(hex(self.end))
+        print_no_end(" - %d - %d" % (self.virt_size, self.real_size))
+        print(" ]")
 
 
 class Binary(object):
@@ -36,9 +60,13 @@ class Binary(object):
         self.section_names = {}
         self.type = None
 
+        self._abs_sections = {} # start section -> SectionAbs
+        self._sorted_sections = [] # bisect list, contains section start address
+
         if raw_type != None:
             import lib.fileformat.raw as LIB_RAW
-            self.__binary = LIB_RAW.Raw(filename, raw_type, raw_base, raw_big_endian)
+            self.__binary = LIB_RAW.Raw(self, filename, raw_type,
+                                        raw_base, raw_big_endian)
             self.type = T_BIN_RAW
             return
 
@@ -59,25 +87,6 @@ class Binary(object):
         debug__("Binary loaded in %fs" % elapsed)
 
 
-    def load_symbols(self):
-        start = time.clock()
-
-        self.__binary.load_static_sym()
-        self.__binary.load_dyn_sym()
-
-        elapsed = time.clock()
-        elapsed = elapsed - start
-        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
-
-
-    def load_section_names(self):
-        self.__binary.load_section_names()
-
-
-    def load_data_sections(self):
-        self.__binary.load_data_sections()
-
-
     def load_magic(self, filename):
         f = open(filename, "rb")
         magic = f.read(8)
@@ -88,24 +97,76 @@ class Binary(object):
         f.close()
 
 
-    def is_data(self, addr):
-        return self.__binary.is_data(addr)
+    def get_section(self, ad):
+        i = bisect.bisect_right(self._sorted_sections, ad)
+        if not i:
+            return None
+        start = self._sorted_sections[i-1]
+        s = self._abs_sections[start]
+        if ad <= s.end:
+            return s
+        return None
 
 
-    def get_section_meta(self, addr):
-        return self.__binary.get_section_meta(addr)
+    # not optimized
+    def get_section_by_name(self, name):
+        for s in self._abs_sections.values():
+            if s.name == name:
+                return s
+        return None
 
 
-    def check_addr(self, addr):
-        return self.__binary.check_addr(addr)
+    def iter_sections(self):
+        starts = list(self._abs_sections.keys())
+        starts.sort()
+        for ad in starts:
+            yield self._abs_sections[ad]
+
+
+    def get_string(self, addr, max_data_size):
+        s = self.get_section(addr)
+        if s is None:
+            return ""
+
+        data = s.data
+        off = addr - s.start
+        txt = ['"']
+
+        c = 0
+        i = 0
+        while i < max_data_size and \
+              off < len(data):
+            c = data[off]
+            if c == 0:
+                break
+            txt.append(get_char(c))
+            off += 1
+            i += 1
+
+        if c != 0 and off != len(data):
+            txt.append("...")
+
+        return ''.join(txt) + '"'
+
+
+    # Wrappers to the real class
+
+
+    def load_symbols(self):
+        start = time.clock()
+        self.__binary.load_static_sym()
+        self.__binary.load_dyn_sym()
+        elapsed = time.clock()
+        elapsed = elapsed - start
+        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+
+
+    def load_section_names(self):
+        self.__binary.load_section_names()
 
 
     def section_stream_read(self, addr, size):
         return self.__binary.section_stream_read(addr, size)
-
-
-    def get_string(self, addr, max_string_data):
-        return self.__binary.get_string(addr, max_string_data)
 
 
     def get_arch(self):
@@ -116,34 +177,14 @@ class Binary(object):
         return self.__binary.get_arch_string()
 
 
-    def section_start(self, section_name):
-        ad = self.__binary.section_start(str.encode(section_name))
-        if ad == -1:
-            raise(ExcSectionNotFound(section_name))
-        return ad
-
-
-    # Returns the name of the section if the value is an address
-    # and a bool if it's a data section.
-    # (name, is_data)
-    def is_address(self, imm):
-        return self.__binary.is_address(imm)
-
-
     def get_entry_point(self):
         return self.__binary.get_entry_point()
-
-
-    def iter_sections(self):
-        return self.__binary.iter_sections()
 
 
     # Only for PE !
     def pe_reverse_stripped_symbols(self, dis):
         start = time.clock()
-
         n = self.__binary.pe_reverse_stripped_symbols(dis)
-
         elapsed = time.clock()
         elapsed = elapsed - start
         debug__("Found %d imported symbols (PE) in %fs" % (n, elapsed))

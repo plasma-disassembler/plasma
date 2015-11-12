@@ -22,6 +22,7 @@ import struct
 from lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from lib.colors import color, bold
 from custom_colors import *
+from lib.fileformat.binary import T_BIN_RAW
 
 
 class OutputAbs():
@@ -272,36 +273,38 @@ class OutputAbs():
 
     #
     # Print an immediate value
-    # i          capstone instruction
-    # imm        the immediate to print
-    # op_size    op.size is not available in arm, so it's in arguments
-    # hexa       print in hexa if no symbol or something else was found
-    # sec_name   section name, don't search if given in parameters
-    # is_data    same thing as sec_name but if forced to False, get_string
-    #            will not be called
-    # add_space  add a final space if modified
+    # i           capstone instruction
+    # imm         the immediate to print
+    # op_size     op.size is not available in arm, so it's in arguments
+    # hexa        print in hexa if no symbol or something else was found
+    # add_space   add a final space if modified
+    # section     the section where `imm` is, if None a search will be done
+    # print_data  if `imm` is an address in a section data, try to get a string
     #
     def _imm(self, i, imm, op_size, hexa, add_final_space,
-             sec_name=None, is_data=None):
+             section=None, print_data=True):
 
         if imm in self.ctx.labels:
             self._label(imm, print_colon=False)
             return True
 
-        if sec_name is None:
-            sec_name, d = self.binary.is_address(imm)
-            if is_data is None:
-                is_data = d
+        if section is None:
+            section = self.binary.get_section(imm)
 
-        print_sec = sec_name is not None and self.ctx.sectionsname
+        print_sec = section is not None and self.ctx.sectionsname
+
+        # For a raw file, if the raw base is 0 the immediate is considered
+        # as an address only if it's in the symbols list.
+        raw_base_set = self.binary.type == T_BIN_RAW and self.ctx.raw_base == 0
+
         is_sym = imm in self.binary.reverse_symbols
 
-        if sec_name is not None or is_sym:
+        if section is not None and not raw_base_set or is_sym:
             modified = False
 
             if print_sec:
                 self._add("(")
-                self._section(sec_name)
+                self._section(section.name)
                 self._add(")")
 
             if is_sym:
@@ -315,7 +318,7 @@ class OutputAbs():
                     self._add(" ")
                 self._add(hex(imm))
 
-            if is_data:
+            if print_data and section is not None and section.is_data:
                 s = self.binary.get_string(imm, self.ctx.max_data_size)
                 if s != "\"\"":
                     self._add(" ")
@@ -378,10 +381,10 @@ class OutputAbs():
         self._new_line()
         self._keyword("function ")
         self._add(self.binary.reverse_symbols.get(entry, hex(entry)))
-        sec_name, _ = self.binary.is_address(entry)
-        if sec_name is not None:
+        section = self.binary.get_section(entry)
+        if section is not None:
             self._add(" (")
-            self._section(sec_name)
+            self._section(section.name)
             self._add(") {")
         else:
             self._add(" {")

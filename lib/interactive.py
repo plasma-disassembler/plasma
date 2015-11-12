@@ -740,10 +740,10 @@ class Interactive():
             return
 
         self.rl.print("NAME".ljust(20))
-        self.rl.print(" [ START - END - SIZE ]\n")
+        self.rl.print(" [ START - END - VIRTUAL_SIZE - RAW_SIZE ]\n")
 
-        for (name, start, end) in self.ctx.dis.binary.iter_sections():
-            self.ctx.dis.print_section_meta(name, start, end)
+        for s in self.ctx.dis.binary.iter_sections():
+            s.print_header()
 
 
     def __exec_info(self, args):

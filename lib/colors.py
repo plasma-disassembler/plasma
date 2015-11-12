@@ -19,7 +19,7 @@
 
 from textwrap import dedent
 from pathlib import Path
-from lib.utils import die, error, info
+from lib.utils import die, error
 
 
 def default_custom_file():

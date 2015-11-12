@@ -136,7 +136,7 @@ class Output(OutputAbs):
                 if mm.base == ARM_REG_PC:
                     addr = i.address + i.size * 2 + mm.disp
                     self._add("*(")
-                    self._imm(i, addr, 4, True, False, is_data=False)
+                    self._imm(i, addr, 4, True, False, print_data=False)
                     self._add(")")
                     return True
 
@@ -167,15 +167,15 @@ class Output(OutputAbs):
                 printed = True
 
             if mm.disp != 0:
-                sec_name, is_data = self.binary.is_address(mm.disp)
+                section = self.binary.get_section(mm.disp)
                 is_sym = mm.disp in self.binary.reverse_symbols
 
-                if is_sym or sec_name is not None:
+                if is_sym or section is not None:
                     if printed:
                         self._add(" + ")
                     # is_data=False : don't print string next to the symbol
                     self._imm(i, mm.disp, 0, True, False,
-                              sec_name=sec_name, is_data=False)
+                              section=section, print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:
@@ -186,6 +186,8 @@ class Output(OutputAbs):
             if show_deref:
                 self._add(")")
             return True
+
+        return False
 
 
     def _if_cond(self, cond, fused_inst):

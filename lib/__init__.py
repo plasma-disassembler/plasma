@@ -27,8 +27,8 @@ from lib.utils import die, error, warning, info
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
-from lib.exceptions import (ExcSymNotFound, ExcNotExec, ExcArch,
-     ExcFileFormat, ExcNotAddr, ExcIfelse, ExcPEFail, ExcSectionNotFound)
+from lib.exceptions import (ExcSymNotFound, ExcArch, ExcFileFormat,
+       ExcIfelse, ExcPEFail)
 
 
 def parse_args():
@@ -207,13 +207,13 @@ def load_file(ctx):
 
 def init_entry_addr(ctx):
     if ctx.calls_in_section is not None:
-        try:
-            entry_addr = ctx.dis.binary.section_start(ctx.calls_in_section)
-        except ExcSectionNotFound as e:
-            error("section %s not found" % e.section)
+        s = ctx.dis.binary.get_section_by_name(ctx.calls_in_section)
+        if s is None:
+            error("section %s not found" % ctx.calls_in_section)
             if ctx.interactive:
                 return False
             die()
+        entry_addr = s.start
 
     elif ctx.entry == "EP":
         entry_addr = ctx.dis.binary.get_entry_point()
@@ -233,15 +233,15 @@ def init_entry_addr(ctx):
             error("Note: --dump need the option -x.")
             die()
 
-    try:
-        ctx.dis.check_addr(ctx, entry_addr)
-    except ExcNotExec as e:
-        warning("the address 0x%x is not in an executable section" % e.addr)
-    except ExcNotAddr as e:
-        error("the address 0x%x cannot be found" % e.addr)
+    s = ctx.dis.binary.get_section(entry_addr)
+    if s is None:
+        error("the address 0x%x was not found" % entry_addr)
         if ctx.interactive:
             return False
         die()
+
+    if not s.is_exec:
+        warning("the address 0x%x is not in an executable section" % entry_addr)
 
     ctx.entry_addr = entry_addr
 
@@ -288,8 +288,8 @@ def reverse(ctx):
         die()
 
     if ctx.list_sections:
-        for name, start, end in ctx.dis.binary.iter_sections():
-           ctx.dis.print_section_meta(name, start, end) 
+        for s in ctx.dis.binary.iter_sections():
+            s.print_header()
         return
 
     if ctx.syms:

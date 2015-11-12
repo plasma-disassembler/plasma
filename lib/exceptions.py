@@ -23,16 +23,6 @@ class ExcSymNotFound(Exception):
         self.symname = symname
 
 
-class ExcSectionNotFound(Exception):
-    def __init__(self, section):
-        self.section = section
-
-
-class ExcNotExec(Exception):
-    def __init__(self, addr):
-        self.addr = addr
-
-
 class ExcArch(Exception):
     def __init__(self, arch):
         self.arch = arch
@@ -43,11 +33,6 @@ class ExcFileFormat(Exception):
 
 
 class ExcIfelse(Exception):
-    def __init__(self, addr):
-        self.addr = addr
-
-
-class ExcNotAddr(Exception):
     def __init__(self, addr):
         self.addr = addr
 

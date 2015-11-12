@@ -17,14 +17,15 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import bisect
 
 import pefile
 from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
 from ctypes import sizeof
 
-from lib.utils import get_char
 from lib.exceptions import ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry
+from lib.fileformat.binary import SectionAbs
 
 
 class PE:
@@ -49,6 +50,34 @@ class PE:
             pefile.OPTIONAL_HEADER_MAGIC_PE: CAPSTONE.CS_MODE_32,
             pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS: CAPSTONE.CS_MODE_64,
         }
+
+        self.__sections = {} # start address -> pe section
+
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+
+        for s in self.pe.sections:
+            start = base + s.VirtualAddress
+
+            self.__sections[start] = s
+            is_data = self.__section_is_data(s)
+            is_exec = self.__section_is_exec(s)
+
+            if is_data or is_exec:
+                bisect.insort_left(classbinary._sorted_sections, start)
+
+            if is_data:
+                data = s.get_data()
+            else:
+                data = None
+
+            classbinary._abs_sections[start] = SectionAbs(
+                    s.Name.decode().rstrip(' \0'),
+                    start,
+                    s.Misc_VirtualSize,
+                    s.SizeOfRawData,
+                    is_exec,
+                    is_data,
+                    data)
 
 
     def load_section_names(self):
@@ -160,17 +189,43 @@ class PE:
         return count
 
 
-    def load_data_sections(self):
-        for s in self.pe.sections:
-            if self.__section_is_data(s):
-                self.__data_sections.append(s)
-                self.__data_sections_content.append(s.get_data())
-
-
     def __section_is_data(self, s):
              # INITIALIZED_DATA | MEM_READ   | MEM_WRITE
         mask = 0x00000040       | 0x40000000 | 0x80000000
         return s.Characteristics & mask and not self.__section_is_exec(s)
+
+
+    def __section_is_exec(self, s):
+        if s is None:
+            return 0
+        return s.Characteristics & 0x20000000
+
+
+    def section_stream_read(self, addr, size):
+        s = self.classbinary.get_section(addr)
+        if s is None:
+            return b""
+        s = self.__sections[s.start]
+        base = self.pe.OPTIONAL_HEADER.ImageBase
+        off = addr - base
+        end = base + s.VirtualAddress + s.SizeOfRawData
+        return s.get_data(off, min(size, end - addr))
+
+
+    def get_arch(self):
+        return self.arch_lookup.get(self.pe.FILE_HEADER.Machine, None), \
+               self.arch_mode_lookup.get(self.pe.OPTIONAL_HEADER.Magic, None)
+
+
+    def get_arch_string(self):
+        return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
+
+
+    def get_entry_point(self):
+        return self.pe.OPTIONAL_HEADER.ImageBase + \
+               self.pe.OPTIONAL_HEADER.AddressOfEntryPoint
+
+
 
 
     def is_data(self, addr):
@@ -229,14 +284,6 @@ class PE:
         return n, a, a + s.SizeOfRawData - 1
 
 
-    def section_stream_read(self, addr, size):
-        s = self.__get_section(addr)
-        if s is None:
-            return b""
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        off = addr - base
-        end = base + s.VirtualAddress + s.SizeOfRawData
-        return s.get_data(off, min(size, end - addr))
 
 
     def is_address(self, imm):
@@ -248,71 +295,6 @@ class PE:
         return None, False
 
 
-    def __section_is_exec(self, s):
-        if s is None:
-            return 0
-        return s.Characteristics & 0x20000000
 
 
-    def get_string(self, addr, max_data_size, may_be_utf16le=True):
-        i = self.__get_data_section(addr)
-        if i == -1:
-            return ""
 
-        s = self.__data_sections[i]
-        data = self.__data_sections_content[i]
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        off = addr - s.VirtualAddress - base
-        txt = ['"']
-
-        i = 0
-        skipped = 0
-        while i - skipped < max_data_size and \
-              off < s.SizeOfRawData:
-            c = data[off]
-            if c == 0:
-                if may_be_utf16le and i % 2 == 1:
-                    skipped += 1
-                else:
-                    break
-            else:
-                if may_be_utf16le and i % 2 == 1:
-                    return self.get_string(addr, max_data_size, False)
-                txt.append(get_char(c))
-            off += 1
-            i += 1
-
-        if c != 0 and off != s.SizeOfRawData:
-            txt.append("...")
-
-        return ''.join(txt) + '"'
-
-
-    def get_arch(self):
-        return self.arch_lookup.get(self.pe.FILE_HEADER.Machine, None), \
-               self.arch_mode_lookup.get(self.pe.OPTIONAL_HEADER.Magic, None)
-
-
-    def get_arch_string(self):
-        return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
-
-
-    def section_start(self, section_name):
-        for s in self.pe.sections:
-            if s.Name.rstrip(b" \0") == section_name:
-                return self.pe.OPTIONAL_HEADER.ImageBase + s.VirtualAddress
-        return -1
-
-
-    def get_entry_point(self):
-        return self.pe.OPTIONAL_HEADER.ImageBase + \
-               self.pe.OPTIONAL_HEADER.AddressOfEntryPoint
-
-
-    def iter_sections(self):
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        for s in self.pe.sections:
-            start = base + s.VirtualAddress
-            end = start + s.SizeOfRawData - 1
-            if s.Name != b"":
-                yield (s.Name.decode().rstrip(' \0'), start, end)

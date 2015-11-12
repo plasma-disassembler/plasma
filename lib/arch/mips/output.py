@@ -84,17 +84,15 @@ class Output(OutputAbs):
 
             if mm.base == MIPS_REG_GP and self.ctx.dis.mips_gp != -1:
                 ad = self.ctx.dis.mips_gp + mm.disp
-                sec_name, is_data = self.binary.is_address(ad)
-                is_sym = mm.disp in self.binary.reverse_symbols
-                if sec_name is not None:
+                section = self.binary.get_section(ad)
+                if section is not None:
                     val = self.ctx.dis.read_word(ad, 4)
-                    sec_name, is_data = self.binary.is_address(val)
-                    is_sym = mm.disp in self.binary.reverse_symbols
+                    section = self.binary.get_section(val)
                     self._imm(i, val, 0, True, False,
-                              sec_name=sec_name, is_data=False)
+                              section=section, print_data=False)
                 else:
                     self._imm(i, ad, 0, True, False,
-                              sec_name=sec_name, is_data=False)
+                              section=section, print_data=False)
                 return True
 
             if show_deref:
@@ -105,14 +103,14 @@ class Output(OutputAbs):
                 printed = True
 
             if mm.disp != 0:
-                sec_name, is_data = self.binary.is_address(mm.disp)
+                section = self.binary.get_section(mm.disp)
                 is_sym = mm.disp in self.binary.reverse_symbols
 
-                if is_sym or sec_name is not None:
+                if is_sym or section is not None:
                     if printed:
                         self._add(" + ")
                     self._imm(i, mm.disp, 0, True, False,
-                              sec_name=sec_name, is_data=False)
+                              section=section, print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

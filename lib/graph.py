@@ -109,8 +109,6 @@ class Graph:
             if ad in self.uncond_jumps_set or ad in self.cond_jumps_set:
                 continue
 
-            inst = self.nodes[ad]
-
             if ad not in self.link_in or len(self.link_in[ad]) != 1 or \
                     ad == self.entry_point_addr:
                 continue

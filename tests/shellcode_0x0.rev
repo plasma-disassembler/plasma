@@ -1,4 +1,4 @@
-function 0x0 {
+function 0x0 (raw) {
     ret_0x0:
     0x0: eax = 0 # xor eax, eax
     0x2: al = '\x0b' # mov al, 0xb

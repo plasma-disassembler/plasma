@@ -12,14 +12,14 @@ function __imp___cexit (.text) {
     0x401116: esp -= 4 # sub esp, 4
     0x401119: call __fpreset
     0x40111e: var1 = 0 # mov dword ptr [ebp - 8], 0
-    0x401125: eax = 0x404000  # mov eax, 0x404000
+    0x401125: eax = 0x404000 # mov eax, 0x404000
     0x40112a: edx = &(var2) # lea edx, dword ptr [ebp - 0xc]
     0x40112d: *(esp + 16) = ebx # mov dword ptr [esp + 0x10], ebx
     0x401131: ecx = *(__section_alignment__) # mov ecx, dword ptr [0x402000]
     0x401137: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
     0x40113b: *(esp + 8) = edx # mov dword ptr [esp + 8], edx
     0x40113f: *(esp + 12) = ecx # mov dword ptr [esp + 0xc], ecx
-    0x401143: *(esp) = 0x404004  # mov dword ptr [esp], 0x404004
+    0x401143: *(esp) = 0x404004 # mov dword ptr [esp], 0x404004
     0x40114a: call ___getmainargs
     0x40114f: eax = *(0x404010) # mov eax, dword ptr [0x404010]
     # 0x401154: test eax, eax
