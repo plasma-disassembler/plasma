@@ -13,10 +13,13 @@ command `nosetest3` which is faster).
 
 ## Requirements
 
+WARNING: a more recent port of pefile for python3 is recommended instead
+of the repository `simonzack/pefile-py3k`.
+
     python >= 3.4
     capstone + python bindings (see requirements.sh)
     python-pyelftools
-    https://github.com/simonzack/pefile-py3k
+    https://github.com/mlaferrera/python3-pefile
     terminal with 256 colors (if not use the option `--nocolor`)
 
 For Python binding of [Capstone engine](http://www.capstone-engine.org), you 

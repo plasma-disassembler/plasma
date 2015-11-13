@@ -34,8 +34,10 @@ sudo make install3
 cd ../../..
 
 # PE
-git clone -b master --depth 1 https://github.com/simonzack/pefile-py3k
-cd pefile-py3k
+# TODO: pip3 install pefile
+# -> fails due to a syntax error
+git clone -b master --depth 1 https://github.com/mlaferrera/python3-pefile
+cd python3-pefile
 sudo -H python3 setup.py install
 cd ..
 

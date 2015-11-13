@@ -26,6 +26,15 @@ from ctypes import sizeof
 from lib.exceptions import ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry
 from lib.fileformat.binary import SectionAbs
+from lib.utils import warning
+
+try:
+    # This folder is not present in simonzack/pefile-py3k
+    import ordlookup
+except:
+    warning("you should use the most recent port of pefile")
+    warning("https://github.com/mlaferrera/python3-pefile")
+    pass
 
 
 class PE:

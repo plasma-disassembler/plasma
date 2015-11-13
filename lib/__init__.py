@@ -193,8 +193,8 @@ def load_file(ctx):
         die()
     except ExcPEFail as e:
         error(str(e.e))
-        error("It seems that pefile.parse_data_directories is bugged.")
-        error("Maybe you should Retry")
+        error("it seems that there is a random bug in pefile, you shoul retry.")
+        error("please report here https://github.com/joelpx/reverse/issues/16")
         if ctx.interactive:
             return False
         die()
