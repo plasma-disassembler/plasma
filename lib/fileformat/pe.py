@@ -141,6 +141,8 @@ class PE:
 
         for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
+                if imp.name is None:
+                    continue
                 self.__imported_syms[imp.address] = imp.name
                 self.classbinary.reverse_symbols[imp.address] = imp.name
                 self.classbinary.symbols[imp.name] = imp.address

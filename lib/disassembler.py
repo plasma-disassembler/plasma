@@ -342,8 +342,6 @@ class Disassembler():
                 invert_match = False
 
         for sy in self.binary.symbols:
-            if sy is None:
-                continue
             addr = self.binary.symbols[sy]
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
