@@ -72,11 +72,13 @@ def index(L, obj, k=0):
 
 
 def error(txt):
-    print("error: " + txt, file=sys.stderr)
+    if not ctx.quiet:
+        print("error: " + txt, file=sys.stderr)
 
 
 def warning(txt):
-    print("warning: " + txt, file=sys.stderr)
+    if not ctx.quiet:
+        print("warning: " + txt, file=sys.stderr)
 
 
 def info(txt):

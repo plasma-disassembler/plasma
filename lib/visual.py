@@ -20,6 +20,7 @@
 import curses
 from curses import A_UNDERLINE, color_pair
 
+from lib import init_entry_addr, disasm
 from custom_colors import *
 
 
@@ -33,6 +34,9 @@ class Visual():
         self.dis = disassembler
         self.interact = interactive
         self.search = None
+
+        self.stack = []
+        self.saved_stack = [] # when we enter, go back, then re-enter
 
         self.word_accepted_chars = ["_", "@", "."]
 
@@ -53,7 +57,12 @@ class Visual():
             b"\x1b\x5b\x37\x7e": self.main_k_home,
             b"\x1b\x5b\x38\x7e": self.main_k_end,
             b"*": self.main_cmd_highlight_current_word,
-            b"\x0b": self.main_cmd_highlight_clear,
+            b"\x0b": self.main_cmd_highlight_clear, # ctrl-k
+            b"\n": self.main_cmd_enter,
+            b"\x1b": self.main_cmd_escape,
+
+            # I wanted ctrl-enter but it cannot be mapped on my terminal
+            b"u": self.main_cmd_reenter, # u for undo
         }
 
         self.inline_mapping = {
@@ -69,6 +78,9 @@ class Visual():
             b"\x01": self.inline_k_home, # ctrl-a
             b"\x05": self.inline_k_end, # ctrl-e
         }
+
+        saved_quiet = self.interact.ctx.quiet
+        self.interact.ctx.quiet = True
 
         self.screen = curses.initscr()
 
@@ -90,6 +102,11 @@ class Visual():
         curses.echo()
         curses.endwin()
 
+        self.interact.ctx.quiet = saved_quiet
+
+        if self.stack:
+            print("last address seen 0x%x" % self.stack[-1][0])
+
 
     def read_escape_keys(self):
         self.screen.timeout(-1)
@@ -105,6 +122,41 @@ class Visual():
                 break
             seq.append(k)
         return bytes(seq)
+
+
+    def get_word_under_cursor(self):
+        num_line = self.win_y + self.cursor_y
+        line = self.output.lines[num_line]
+        x = self.cursor_x
+        if x >= len(line):
+            x = len(line) - 1
+
+        if not line[x].isalnum() and not line[x] in self.word_accepted_chars:
+            return None
+
+        curr = []
+        while x >= 0 and (line[x].isalnum() or line[x] in self.word_accepted_chars):
+            x -= 1
+        x += 1
+
+        while x < len(line) and (line[x].isalnum() or \
+                line[x] in self.word_accepted_chars):
+            curr.append(line[x])
+            x += 1
+        if curr:
+            return "".join(curr)
+        return None
+
+
+    def exec_disasm(self, addr):
+        self.interact.ctx.reset_vars()
+        self.interact.ctx.entry_addr = addr
+        o = disasm(self.interact.ctx)
+        if self.output is not None:
+            self.output = o
+            self.token_lines = o.token_lines
+            return True
+        return False
 
 
     def view_main_redraw(self, h, w):
@@ -131,9 +183,12 @@ class Visual():
                 self.view_main_redraw(h, w)
                 refr = False
 
-            if self.cursor_x >= w:
-                self.cursor_x = w - 1
-            screen.move(self.cursor_y, self.cursor_x)
+            size_line = len(self.output.lines[self.win_y + self.cursor_y])
+            if self.cursor_x >= size_line:
+                x = size_line - 1
+            else:
+                x = self.cursor_x
+            screen.move(self.cursor_y, x)
 
             k = self.read_escape_keys()
 
@@ -299,7 +354,6 @@ class Visual():
                         self.win_y -= 1
                     else:
                         self.cursor_y -= 1
-        self.check_cursor_x()
 
 
     def scroll_down(self, h, n, page_scroll):
@@ -332,7 +386,6 @@ class Visual():
                         self.win_y += 1
                     else:
                         self.cursor_y += 1
-        self.check_cursor_x()
 
 
     def check_cursor_x(self):
@@ -344,14 +397,14 @@ class Visual():
     # Main view : Keys mapping
 
     def main_k_left(self, h, w):
+        self.check_cursor_x()
         if self.cursor_x > 0:
             self.cursor_x -= 1
         return False
 
     def main_k_right(self, h, w):
-        line = self.output.lines[self.win_y + self.cursor_y]
-        if self.cursor_x < len(line) - 1:
-            self.cursor_x += 1
+        self.cursor_x += 1
+        self.check_cursor_x()
         return False
 
     def main_k_down(self, h, w):
@@ -379,8 +432,7 @@ class Visual():
                 self.scroll_down(h, diff, False)
             elif diff < 0:
                 self.scroll_up(h, -diff, False)
-            else:
-                self.check_cursor_x()
+            self.check_cursor_x()
         elif button == 0x60: # scroll up
             self.scroll_up(h, 3, True)
         elif button == 0x61: # scroll down
@@ -436,8 +488,11 @@ class Visual():
     def main_cmd_next_bracket(self, h, w):
         # TODO: fix self.cursor_x >= w
         line = self.win_y + self.cursor_y
+        line_str = self.output.lines[line]
         x = self.cursor_x
-        char = self.output.lines[line][x]
+        if x >= len(line_str):
+            x = len(line_str) - 1
+        char = line_str[x]
         diff = 0
 
         if char == "}":
@@ -479,29 +534,58 @@ class Visual():
 
 
     def main_cmd_highlight_current_word(self, h, w):
-        num_line = self.win_y + self.cursor_y
-        line = self.output.lines[num_line]
-        x = self.cursor_x
-
-        if not line[x].isalnum() and not line[x] in self.word_accepted_chars:
-            return
-
-        curr = []
-
-        while x >= 0 and (line[x].isalnum() or line[x] in self.word_accepted_chars):
-            x -= 1
-
-        x += 1
-
-        while x < len(line) and (line[x].isalnum() or \
-                line[x] in self.word_accepted_chars):
-            curr.append(line[x])
-            x += 1
-
-        if curr:
-            self.search = "".join(curr)
-
+        w = self.get_word_under_cursor()
+        if w is None:
+            return False
+        self.search = w
         return True
+
+
+    def main_cmd_enter(self, h, w):
+        w = self.get_word_under_cursor()
+        if w is None:
+            return False
+        self.interact.ctx.entry = w
+        last = self.interact.ctx.entry_addr
+        if not init_entry_addr(self.interact.ctx):
+            return False
+        ret = self.exec_disasm(self.interact.ctx.entry_addr)
+        if ret:
+            self.saved_stack = []
+            self.stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+            self.win_y = 0
+            self.cursor_y = 0
+            self.cursor_x = 0
+        return ret
+
+
+    def main_cmd_escape(self, h, w):
+        if not self.stack:
+            return False
+        addr, wy, y, x = self.stack.pop(-1)
+        last = self.interact.ctx.entry_addr
+        self.saved_stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+        ret = self.exec_disasm(addr)
+        if ret:
+            self.win_y = wy
+            self.cursor_y = y
+            self.cursor_x = x
+        return ret
+
+
+    def main_cmd_reenter(self, h, w):
+        if not self.saved_stack:
+            return False
+        addr, wy, y, x = self.saved_stack.pop(-1)
+        last = self.interact.ctx.entry_addr
+        self.stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+        ret = self.exec_disasm(addr)
+        if ret:
+            self.win_y = wy
+            self.cursor_y = y
+            self.cursor_x = x
+        return ret
+
 
 
     def main_cmd_highlight_clear(self, h, w):
