@@ -364,7 +364,7 @@ class Interactive():
             ),
         }
 
-        self.database_modified = False
+        self.ctx.db_modified = False
 
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
@@ -379,7 +379,7 @@ class Interactive():
 
         while 1:
             rl.loop()
-            if not self.database_modified:
+            if not self.ctx.db_modified:
                 break
             print("the database was modified, run save or exit to force")
 
@@ -684,7 +684,7 @@ class Interactive():
         # Save new symbol
         try:
             addr = int(args[2], 16)
-            self.database_modified = True
+            self.ctx.db_modified = True
             self.ctx.dis.add_symbol(addr, args[1])
         except:
             error("there was an error when creating a symbol")
@@ -838,7 +838,7 @@ class Interactive():
         fd.write(json.dumps(db))
         fd.close()
         print("database saved to", self.ctx.db_path)
-        self.database_modified = False
+        self.ctx.db_modified = False
 
 
     def __exec_jmptable(self, args):
@@ -858,7 +858,7 @@ class Interactive():
             error("error the entry size should be in [2, 4, 8]")
             return
 
-        self.database_modified = True
+        self.ctx.db_modified = True
         self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
 
 
@@ -876,4 +876,4 @@ class Interactive():
         except:
             error("bad address")
 
-        self.database_modified = True
+        self.ctx.db_modified = True

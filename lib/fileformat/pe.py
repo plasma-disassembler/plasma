@@ -20,7 +20,8 @@
 import bisect
 
 import pefile
-from capstone.x86 import X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM
+from capstone.x86 import (X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM, X86_REG_RIP,
+        X86_REG_EIP)
 from ctypes import sizeof
 
 from lib.exceptions import ExcPEFail
@@ -46,7 +47,6 @@ class PE:
         self.__data_sections = []
         self.__data_sections_content = []
         self.__exec_sections = []
-        self.__imported_syms = {}
 
         self.arch_lookup = {
             # See machine_types in pefile.py
@@ -143,7 +143,6 @@ class PE:
             for imp in entry.imports:
                 if imp.name is None:
                     continue
-                self.__imported_syms[imp.address] = imp.name
                 self.classbinary.reverse_symbols[imp.address] = imp.name
                 self.classbinary.symbols[imp.name] = imp.address
 
@@ -174,6 +173,10 @@ class PE:
 
             if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
                 goto = i.operands[0].value.imm
+
+                if goto in self.classbinary.reverse_symbols:
+                    continue
+
                 nxt = dis.lazy_disasm(goto)
 
                 if not ARCH_UTILS.is_uncond_jump(nxt) or \
@@ -181,18 +184,24 @@ class PE:
                     continue
                
                 mm = nxt.operands[0].mem
+                next_ip = nxt.address + nxt.size
 
             elif ARCH_UTILS.is_uncond_jump(i) and \
                     i.address in self.classbinary.reverse_symbols:
                 goto = i.address
                 mm = i.operands[0].mem
+                next_ip = i.address + i.size
 
             else:
                 continue
 
-            if inv(mm.base) and mm.disp in self.__imported_syms \
+            ptr = mm.disp
+            if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
+                ptr += next_ip
+
+            if ptr in self.classbinary.reverse_symbols \
                     and inv(mm.segment) and inv(mm.index):
-                name = "_" + self.__imported_syms[mm.disp]
+                name = "_" + self.classbinary.reverse_symbols[ptr]
                 self.classbinary.reverse_symbols[goto] = name
                 self.classbinary.symbols[name] = goto
                 count += 1
@@ -235,77 +244,3 @@ class PE:
     def get_entry_point(self):
         return self.pe.OPTIONAL_HEADER.ImageBase + \
                self.pe.OPTIONAL_HEADER.AddressOfEntryPoint
-
-
-
-
-    def is_data(self, addr):
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        for s in self.__data_sections:
-            start = base + s.VirtualAddress
-            end = start + s.SizeOfRawData
-            if start <= addr < end:
-                return True
-        return False
-
-
-    def __get_data_section(self, addr):
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        for i, s in enumerate(self.__data_sections):
-            start = base + s.VirtualAddress
-            end = start + s.SizeOfRawData
-            if start <= addr < end:
-                return i
-        return -1
-
-
-    def __get_cached_exec_section(self, addr):
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        for s in self.__exec_sections:
-            start = base + s.VirtualAddress
-            end = start + s.SizeOfRawData
-            if start <= addr < end:
-                return s
-        return None
-
-
-    def __get_section(self, addr):
-        s = self.__get_cached_exec_section(addr)
-        if s is not None:
-            return s
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        s = self.pe.get_section_by_rva(addr - base)
-        if s is None:
-            return None
-        self.__exec_sections.append(s)
-        return s
-
-
-    def check_addr(self, addr):
-        s = self.__get_section(addr)
-        return (s is not None, self.__section_is_exec(s))
-
-
-    def get_section_meta(self, addr):
-        s = self.__get_section(addr)
-        if s is None:
-            return None
-        n = s.Name.decode().rstrip(' \0')
-        a = s.VirtualAddress + self.pe.OPTIONAL_HEADER.ImageBase
-        return n, a, a + s.SizeOfRawData - 1
-
-
-
-
-    def is_address(self, imm):
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        if imm > base:
-            s = self.pe.get_section_by_rva(imm - base)
-            if s is not None:
-                return s.Name.decode().rstrip(' \0'), self.__section_is_data(s)
-        return None, False
-
-
-
-
-

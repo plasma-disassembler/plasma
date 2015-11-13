@@ -249,11 +249,14 @@ def init_entry_addr(ctx):
 
 
 def disasm(ctx):
-    ctx.gph = ctx.dis.get_graph(ctx.entry_addr)
+    ctx.gph, pe_nb_new_syms = ctx.dis.get_graph(ctx.entry_addr)
     if ctx.gph == None:
         error("capstone can't disassemble here")
         return None
     ctx.gph.graph_init(ctx)
+
+    if ctx.db is not None and pe_nb_new_syms:
+        ctx.db_modified = True
     
     if ctx.graph:
         ctx.gph.html_graph(ctx.dis.jmptables)

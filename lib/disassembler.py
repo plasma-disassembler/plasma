@@ -476,13 +476,15 @@ class Disassembler():
             return None
 
         if self.binary.type == T_BIN_PE:
-            self.binary.pe_reverse_stripped_symbols(self)
+            nb_new_syms = self.binary.pe_reverse_stripped_symbols(self)
+        else:
+            nb_new_syms = 0
 
         elapsed = time.clock()
         elapsed = elapsed - start
         debug__("Graph built in %fs (%d instructions)" % (elapsed, len(gph.nodes)))
 
-        return gph
+        return gph, nb_new_syms
 
 
     def add_jmptable(self, inst_addr, table_addr, entry_size, nb_entries):

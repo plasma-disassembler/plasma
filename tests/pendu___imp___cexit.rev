@@ -8,7 +8,7 @@ function __imp___cexit (.text) {
     0x401104: esp -= 36 # sub esp, 0x24
     0x401107: ebx = &(var1) # lea ebx, dword ptr [ebp - 8]
     0x40110a: *(esp) = ___crt_xt_end__  # mov dword ptr [esp], 0x401000
-    0x401111: call _SetUnhandledExceptionFilter
+    0x401111: call _SetUnhandledExceptionFilter@4
     0x401116: esp -= 4 # sub esp, 4
     0x401119: call __fpreset
     0x40111e: var1 = 0 # mov dword ptr [ebp - 8], 0
@@ -53,7 +53,7 @@ function __imp___cexit (.text) {
         0x4011e7: ebx = eax # mov ebx, eax
         0x4011e9: call __cexit
         0x4011ee: *(esp) = ebx # mov dword ptr [esp], ebx
-        0x4011f1: call _ExitProcess
+        0x4011f1: call _ExitProcess@4
         0x4011f6: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
         0x4011fa: edx = *(_iob) # mov edx, dword ptr [0x405104]
         __file_alignment__
