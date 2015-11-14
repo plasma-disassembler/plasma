@@ -475,7 +475,7 @@ class Disassembler():
                 gph.new_node(inst, None, [nxt])
 
         if len(gph.nodes) == 0:
-            return None
+            return None, 0
 
         if self.binary.type == T_BIN_PE:
             nb_new_syms = self.binary.pe_reverse_stripped_symbols(self)
