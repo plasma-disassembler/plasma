@@ -96,7 +96,8 @@ class Output(OutputAbs):
 
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
-    def _operand(self, i, num_op, hexa=False, show_deref=True):
+    def _operand(self, i, num_op, hexa=False, show_deref=True,
+                 force_dont_print_data=False):
         def inv(n):
             return n == ARM_OP_INVALID
 
@@ -106,7 +107,8 @@ class Output(OutputAbs):
             self._add("(")
 
         if op.type == ARM_OP_IMM:
-            return self._imm(i, op.value.imm, 4, hexa)
+            return self._imm(i, op.value.imm, 4, hexa,
+                             force_dont_print_data=force_dont_print_data)
 
         elif op.type == ARM_OP_REG:
             if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
@@ -139,13 +141,15 @@ class Output(OutputAbs):
                     if section is not None:
                         val = self.ctx.dis.read_word(ad, 4)
                         if val in self.binary.reverse_symbols:
-                            self._imm(i, val, 0, True, section=section,
-                                      print_data=False)
+                            self._imm(i, val, 0, True,
+                                      section=section, print_data=False,
+                                      force_dont_print_data=force_dont_print_data)
                             return True
 
                     if show_deref:
                         self._add("*(")
-                    self._imm(i, ad, 4, True, print_data=False)
+                    self._imm(i, ad, 4, True, print_data=False,
+                              force_dont_print_data=force_dont_print_data)
                     if show_deref:
                         self._add(")")
                     return True
@@ -184,7 +188,8 @@ class Output(OutputAbs):
                     if printed:
                         self._add(" + ")
                     # is_data=False : don't print string next to the symbol
-                    self._imm(i, mm.disp, 0, True, section=section, print_data=False)
+                    self._imm(i, mm.disp, 0, True, section=section, print_data=False,
+                              force_dont_print_data=force_dont_print_data)
                 else:
                     if printed:
                         if mm.disp < 0:
@@ -236,7 +241,7 @@ class Output(OutputAbs):
         if is_call(i):
             self._retcall(i.mnemonic)
             self._add(" ")
-            self._operand(i, 0, hexa=True)
+            self._operand(i, 0, hexa=True, force_dont_print_data=True)
             return False
 
         # Here we can have conditional jump with the option --dump
@@ -247,13 +252,14 @@ class Output(OutputAbs):
 
             if i.operands[0].type != ARM_OP_IMM:
                 self._add(i.mnemonic + " ")
-                self._add(i.op_str)
+                self._operand(i, 0, force_dont_print_data=True)
+                self.inst_end_here()
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
                         and not i.address in self.ctx.dis.jmptables:
-                    self.inst_end_here()
                     self._add(" ")
                     self._comment("# STOPPED")
                 return False
+
             addr = i.operands[0].value.imm
             if addr in self.ctx.addr_color:
                 self._label_or_address(addr, -1, False)

@@ -279,8 +279,11 @@ class OutputAbs():
     # hexa        print in hexa if no symbol or something else was found
     # section     the section where `imm` is, if None a search will be done
     # print_data  print the string at the address `imm` only if `imm` is not a symbol
+    # force_dont_print_data  really don't print data even if it's not a symbol
+    #                        it's used for jump/call
     #
-    def _imm(self, i, imm, op_size, hexa, section=None, print_data=True):
+    def _imm(self, i, imm, op_size, hexa, section=None, print_data=True,
+             force_dont_print_data=False):
 
         if imm in self.ctx.labels:
             self._label(imm, print_colon=False)
@@ -316,7 +319,8 @@ class OutputAbs():
                     self._add(" ")
                 self._add(hex(imm))
 
-            if (print_data or not is_sym) and \
+            if not force_dont_print_data and \
+                    (print_data or not is_sym) and \
                     section is not None and section.is_data:
                 s = self.binary.get_string(imm, self.ctx.max_data_size)
                 if s != "\"\"":

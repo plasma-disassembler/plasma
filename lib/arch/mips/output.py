@@ -62,14 +62,16 @@ INST_CHECK = {MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
 class Output(OutputAbs):
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
-    def _operand(self, i, num_op, hexa=False, show_deref=True):
+    def _operand(self, i, num_op, hexa=False, show_deref=True,
+                 force_dont_print_data=False):
         def inv(n):
             return n == MIPS_OP_INVALID
 
         op = i.operands[num_op]
 
         if op.type == MIPS_OP_IMM:
-            return self._imm(i, op.value.imm, 4, hexa)
+            return self._imm(i, op.value.imm, 4, hexa,
+                             force_dont_print_data=force_dont_print_data)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")
@@ -88,12 +90,14 @@ class Output(OutputAbs):
                 if section is not None:
                     val = self.ctx.dis.read_word(ad, 4)
                     if val in self.binary.reverse_symbols:
-                        self._imm(i, val, 0, True, print_data=False)
+                        self._imm(i, val, 0, True, print_data=False,
+                                  force_dont_print_data=force_dont_print_data)
                         return True
 
                 if show_deref:
                     self._add("*(")
-                self._imm(i, ad, 0, True, section=section, print_data=False)
+                self._imm(i, ad, 0, True, section=section, print_data=False,
+                          force_dont_print_data=force_dont_print_data)
                 if show_deref:
                     self._add(")")
                 return True
@@ -113,7 +117,8 @@ class Output(OutputAbs):
                     if printed:
                         self._add(" + ")
                     self._imm(i, mm.disp, 0, True, False,
-                              section=section, print_data=False)
+                              section=section, print_data=False,
+                              force_dont_print_data=force_dont_print_data)
                 else:
                     if printed:
                         if mm.disp < 0:
@@ -179,7 +184,7 @@ class Output(OutputAbs):
         if is_call(i):
             self._retcall(i.mnemonic)
             self._add(" ")
-            self._operand(i, 0, hexa=True)
+            self._operand(i, 0, hexa=True, force_dont_print_data=True)
             return False
 
         # Here we can have conditional jump with the option --dump
@@ -189,20 +194,21 @@ class Output(OutputAbs):
                 return False
 
             self._add(i.mnemonic + " ")
-            if i.operands[-1].type != MIPS_OP_IMM:
-                self._add(i.op_str)
-                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
-                        and not i.address in self.ctx.dis.jmptables:
-                    self.inst_end_here()
-                    self._add(" ")
-                    self._comment("# STOPPED")
-                return False
 
             for num in range(len(i.operands)-1):
                 self._operand(i, num)
                 self._add(", ")
 
-            addr = i.operands[0].value.imm
+            if i.operands[-1].type != MIPS_OP_IMM:
+                self._operand(i, -1, force_dont_print_data=True)
+                self.inst_end_here()
+                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
+                        and not i.address in self.ctx.dis.jmptables:
+                    self._add(" ")
+                    self._comment("# STOPPED")
+                return False
+
+            addr = i.operands[-1].value.imm
             if addr in self.ctx.addr_color:
                 self._label_or_address(addr, -1, False)
             else:

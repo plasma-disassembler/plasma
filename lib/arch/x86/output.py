@@ -72,14 +72,16 @@ REP_PREFIX = {X86_PREFIX_REPNE, X86_PREFIX_REP}
 class Output(OutputAbs):
     # Return True if the operand is a variable (because the output is
     # modified, we reprint the original instruction later)
-    def _operand(self, i, num_op, hexa=False, show_deref=True):
+    def _operand(self, i, num_op, hexa=False, show_deref=True,
+                 force_dont_print_data=False):
         def inv(n):
             return n == X86_OP_INVALID
 
         op = i.operands[num_op]
 
         if op.type == X86_OP_IMM:
-            return self._imm(i, op.value.imm, op.size, hexa)
+            return self._imm(i, op.value.imm, op.size, hexa,
+                             force_dont_print_data=force_dont_print_data)
 
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
@@ -112,12 +114,14 @@ class Output(OutputAbs):
                         val = self.ctx.dis.read_word(ad, op.size)
                         if val in self.binary.reverse_symbols:
                             self._imm(i, val, 0, True, section=section,
-                                      print_data=False)
+                                      print_data=False,
+                                      force_dont_print_data=force_dont_print_data)
                             return True
 
                     if show_deref:
                         self._add("*(")
-                    self._imm(i, ad, 4, True, print_data=False)
+                    self._imm(i, ad, 4, True, print_data=False,
+                              force_dont_print_data=force_dont_print_data)
                     if show_deref:
                         self._add(")")
                     return True
@@ -150,7 +154,8 @@ class Output(OutputAbs):
                 if is_sym or section is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, 0, True, section=section, print_data=False)
+                    self._imm(i, mm.disp, 0, True, section=section, print_data=False,
+                              force_dont_print_data=force_dont_print_data)
                 else:
                     if printed:
                         if mm.disp < 0:
@@ -239,17 +244,17 @@ class Output(OutputAbs):
         if is_call(i):
             self._retcall(i.mnemonic)
             self._add(" ")
-            self._operand(i, 0, hexa=True)
+            self._operand(i, 0, hexa=True, force_dont_print_data=True)
             return False
 
         # Here we can have conditional jump with the option --dump
         if is_jump(i):
             self._add(i.mnemonic + " ")
             if i.operands[0].type != X86_OP_IMM:
-                self._operand(i, 0)
+                self._operand(i, 0, force_dont_print_data=True)
+                self.inst_end_here()
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
                         and not i.address in self.ctx.dis.jmptables:
-                    self.inst_end_here()
                     self._add(" ")
                     self._comment("# STOPPED")
                 return False
