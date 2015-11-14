@@ -316,7 +316,8 @@ class OutputAbs():
                     self._add(" ")
                 self._add(hex(imm))
 
-            if print_data and section is not None and section.is_data:
+            if (print_data or not is_sym) and \
+                    section is not None and section.is_data:
                 s = self.binary.get_string(imm, self.ctx.max_data_size)
                 if s != "\"\"":
                     self._add(" ")
