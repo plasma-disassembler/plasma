@@ -19,12 +19,16 @@
 
 import curses
 from curses import A_UNDERLINE, color_pair
+from time import time
 
 from lib import init_entry_addr, disasm
 from custom_colors import *
 
 
 class Visual():
+    MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
+    MOUSE_INTERVAL = 200
+
     def __init__(self, interactive, disassembler, output):
         self.win_y = 0
         self.cursor_y = 0
@@ -39,6 +43,9 @@ class Visual():
         self.saved_stack = [] # when we enter, go back, then re-enter
 
         self.word_accepted_chars = ["_", "@", "."]
+
+        self.time_last_mouse_key = self.MOUSE_INTERVAL + 1
+        self.set_key_timeout = True
 
         self.main_mapping = {
             b"\x1b\x5b\x44": self.main_k_left,
@@ -89,7 +96,6 @@ class Visual():
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         curses.start_color()
         curses.use_default_colors()
-        curses.mouseinterval(0)
 
         for i in range(0, curses.COLORS):
             curses.init_pair(i, i, -1)
@@ -109,18 +115,32 @@ class Visual():
 
 
     def read_escape_keys(self):
-        self.screen.timeout(-1)
+        if self.set_key_timeout:
+            self.screen.timeout(-1)
+
         k = self.screen.getch()
         seq = []
-        while k:
-            seq.append(k & 0xff)
-            k >>= 8
-        self.screen.timeout(0)
-        for i in range(8):
-            k = self.screen.getch()
-            if k == -1:
-                break
-            seq.append(k)
+
+        if k != -1:
+            while k:
+                seq.append(k & 0xff)
+                k >>= 8
+
+            self.screen.timeout(0)
+            for i in range(8):
+                k = self.screen.getch()
+                if k == -1:
+                    break
+                seq.append(k)
+
+                if seq == self.MOUSE_EVENT:
+                    seq.append(self.screen.getch())
+                    seq.append(self.screen.getch())
+                    seq.append(self.screen.getch())
+                    self.set_key_timeout = False
+                    return bytes(seq)
+
+        self.set_key_timeout = True
         return bytes(seq)
 
 
@@ -198,7 +218,7 @@ class Visual():
             if k in self.main_mapping:
                 refr = self.main_mapping[k](h, w)
             elif k.startswith(b"\x1b[M"):
-                refr = self.main_mouse_event(k, h)
+                refr = self.main_mouse_event(k, h, w)
 
 
     def view_inline_comment_editor(self, h, w):
@@ -423,8 +443,20 @@ class Visual():
         self.scroll_down(h, h-1, True)
         return True
 
-    def main_mouse_event(self, k, h):
+    def main_mouse_event(self, k, h, w):
         button = k[3]
+
+        if button == 0x20:
+            now = time()
+            diff = now - self.time_last_mouse_key
+            diff = int(diff * 1000)
+
+            self.time_last_mouse_key = now
+
+            if diff <= self.MOUSE_INTERVAL:
+                # double left-click
+                return self. main_cmd_enter(h, w)
+
         if button == 0x20: # left-click
             self.cursor_x = k[4] - 33
             diff = k[5] - 33 - self.cursor_y
@@ -437,6 +469,7 @@ class Visual():
             self.scroll_up(h, 3, True)
         elif button == 0x61: # scroll down
             self.scroll_down(h, 3, True)
+
         return True
 
     def main_k_home(self, h, w):
