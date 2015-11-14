@@ -17,8 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
 import struct
+from time import time
 
 from lib.graph import Graph
 from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
@@ -398,7 +398,7 @@ class Disassembler():
 
         gph = Graph(self, entry_addr)
         stack = [entry_addr]
-        start = time.clock()
+        start = time()
         prefetch = None
 
         # WARNING: this assume that on every architectures the jump
@@ -482,7 +482,7 @@ class Disassembler():
         else:
             nb_new_syms = 0
 
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
         debug__("Graph built in %fs (%d instructions)" % (elapsed, len(gph.nodes)))
 

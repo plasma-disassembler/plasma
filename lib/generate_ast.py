@@ -18,7 +18,7 @@
 #
 
 import sys
-import time
+from time import time
 
 from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
         Ast_IfGoto, Ast_Ifelse, Ast_AndIf)
@@ -376,7 +376,7 @@ def generate_ast(ctx__):
     global ctx
     ctx = ctx__
 
-    start = time.clock()
+    start = time()
 
     ast = Ast_Branch()
     ast.parent = None
@@ -656,18 +656,18 @@ def generate_ast(ctx__):
     remove_all_unnecessary_goto(ast)
     fix_non_consecutives(ctx, ast)
 
-    elapsed = time.clock()
+    elapsed = time()
     elapsed = elapsed - start
     debug__("Ast generated in %fs" % elapsed)
 
     # Process ast
 
-    start = time.clock()
+    start = time()
 
     for func in ctx.libarch.registered:
         func(ctx, ast)
 
-    elapsed = time.clock()
+    elapsed = time()
     elapsed = elapsed - start
     debug__("Functions for processing ast in %fs" % elapsed)
 

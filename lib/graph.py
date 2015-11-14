@@ -18,7 +18,7 @@
 #
 
 import os
-import time
+from time import time
 
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 
@@ -103,7 +103,7 @@ class Graph:
     # jumps are in separated blocks
     def __simplify(self):
         nodes = list(self.nodes.keys())
-        start = time.clock()
+        start = time()
 
         for ad in nodes:
             if ad in self.uncond_jumps_set or ad in self.cond_jumps_set:
@@ -140,7 +140,7 @@ class Graph:
                 if ad in lst_i:
                     lst_i[lst_i.index(ad)] = pred
 
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
         debug__("Graph simplified in %fs (%d nodes)" % (elapsed, len(self.nodes)))
 
@@ -603,7 +603,7 @@ class Graph:
 
 
     def __loop_detection(self, ctx, entry):
-        start = time.clock()
+        start = time()
 
         self.__explore(entry, set(), set(), {}, None, set())
 
@@ -628,17 +628,15 @@ class Graph:
                 self.infinite_loop.add(l_curr_loop)
 
         # Save first address of loops
-        for _, start in self.loops_all:
-            self.loops_start.add(start)
+        for _, l_start in self.loops_all:
+            self.loops_start.add(l_start)
 
         # search last node which force to looping
         for (l_prev_loop, l_start), l_set in self.loops_all.items():
             self.last_loop_node[(l_prev_loop, l_start)] = set()
             self.__search_last_loop_node(set(), l_prev_loop, l_start, l_set)
 
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
-        if elapsed < 0.:
-            elapsed = 0.
         debug__("Exploration: found %d loop(s) in %fs" %
                 (len(self.loops_all), elapsed))

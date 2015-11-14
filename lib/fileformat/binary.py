@@ -17,8 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
 import bisect
+from time import time
 
 from lib.utils import debug__, print_no_end, get_char
 from lib.colors import color_section
@@ -70,7 +70,7 @@ class Binary(object):
             self.type = T_BIN_RAW
             return
 
-        start = time.clock()
+        start = time()
         self.load_magic(filename)
 
         if self.type == T_BIN_ELF:
@@ -82,7 +82,7 @@ class Binary(object):
         else:
             raise ExcFileFormat()
 
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
         debug__("Binary loaded in %fs" % elapsed)
 
@@ -153,10 +153,10 @@ class Binary(object):
 
 
     def load_symbols(self):
-        start = time.clock()
+        start = time()
         self.__binary.load_static_sym()
         self.__binary.load_dyn_sym()
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
 
@@ -183,8 +183,8 @@ class Binary(object):
 
     # Only for PE !
     def pe_reverse_stripped_symbols(self, dis):
-        start = time.clock()
+        start = time()
         n = self.__binary.pe_reverse_stripped_symbols(dis)
-        elapsed = time.clock()
+        elapsed = time()
         elapsed = elapsed - start
         debug__("Found %d imported symbols (PE) in %fs" % (n, elapsed))
