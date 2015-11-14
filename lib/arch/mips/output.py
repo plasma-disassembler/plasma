@@ -69,8 +69,7 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == MIPS_OP_IMM:
-            add_space = not is_call(i)
-            return self._imm(i, op.value.imm, 4, hexa, add_space)
+            return self._imm(i, op.value.imm, 4, hexa)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")
@@ -88,11 +87,9 @@ class Output(OutputAbs):
                 if section is not None:
                     val = self.ctx.dis.read_word(ad, 4)
                     section = self.binary.get_section(val)
-                    self._imm(i, val, 0, True, False,
-                              section=section, print_data=False)
+                    self._imm(i, val, 0, True, section=section, print_data=False)
                 else:
-                    self._imm(i, ad, 0, True, False,
-                              section=section, print_data=False)
+                    self._imm(i, ad, 0, True, section=section, print_data=False)
                 return True
 
             if show_deref:

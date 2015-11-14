@@ -7,7 +7,7 @@ function __imp___cexit (.text) {
     __imp___iob
     0x401104: esp -= 36 # sub esp, 0x24
     0x401107: ebx = &(var1) # lea ebx, dword ptr [ebp - 8]
-    0x40110a: *(esp) = ___crt_xt_end__  # mov dword ptr [esp], 0x401000
+    0x40110a: *(esp) = ___crt_xt_end__ # mov dword ptr [esp], 0x401000
     0x401111: call _SetUnhandledExceptionFilter@4
     0x401116: esp -= 4 # sub esp, 4
     0x401119: call __fpreset

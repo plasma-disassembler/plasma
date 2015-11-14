@@ -277,12 +277,10 @@ class OutputAbs():
     # imm         the immediate to print
     # op_size     op.size is not available in arm, so it's in arguments
     # hexa        print in hexa if no symbol or something else was found
-    # add_space   add a final space if modified
     # section     the section where `imm` is, if None a search will be done
-    # print_data  if `imm` is an address in a section data, try to get a string
+    # print_data  print the string at the address `imm` only if `imm` is not a symbol
     #
-    def _imm(self, i, imm, op_size, hexa, add_final_space,
-             section=None, print_data=True):
+    def _imm(self, i, imm, op_size, hexa, section=None, print_data=True):
 
         if imm in self.ctx.labels:
             self._label(imm, print_colon=False)
@@ -323,9 +321,6 @@ class OutputAbs():
                 if s != "\"\"":
                     self._add(" ")
                     self._string(s)
-
-            if modified and add_final_space:
-                self._add(" ")
 
             return modified
 

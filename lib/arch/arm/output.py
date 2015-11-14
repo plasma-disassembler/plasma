@@ -106,8 +106,7 @@ class Output(OutputAbs):
             self._add("(")
 
         if op.type == ARM_OP_IMM:
-            add_space = not is_call(i)
-            return self._imm(i, op.value.imm, 4, hexa, add_space)
+            return self._imm(i, op.value.imm, 4, hexa)
 
         elif op.type == ARM_OP_REG:
             if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
@@ -136,7 +135,7 @@ class Output(OutputAbs):
                 if mm.base == ARM_REG_PC:
                     addr = i.address + i.size * 2 + mm.disp
                     self._add("*(")
-                    self._imm(i, addr, 4, True, False, print_data=False)
+                    self._imm(i, addr, 4, True, print_data=False)
                     self._add(")")
                     return True
 
@@ -174,8 +173,7 @@ class Output(OutputAbs):
                     if printed:
                         self._add(" + ")
                     # is_data=False : don't print string next to the symbol
-                    self._imm(i, mm.disp, 0, True, False,
-                              section=section, print_data=False)
+                    self._imm(i, mm.disp, 0, True, section=section, print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

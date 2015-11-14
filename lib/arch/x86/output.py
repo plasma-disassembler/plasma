@@ -79,8 +79,7 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == X86_OP_IMM:
-            add_space = not is_call(i)
-            return self._imm(i, op.value.imm, op.size, hexa, add_space)
+            return self._imm(i, op.value.imm, op.size, hexa)
 
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
@@ -111,7 +110,7 @@ class Output(OutputAbs):
                     if show_deref:
                         self._add("*(")
 
-                    self._imm(i, addr, op.size, True, False, print_data=False)
+                    self._imm(i, addr, op.size, True, print_data=False)
 
                     if show_deref:
                         self._add(")")
@@ -146,8 +145,7 @@ class Output(OutputAbs):
                 if is_sym or section is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, 0, True, False,
-                              section=section, print_data=False)
+                    self._imm(i, mm.disp, 0, True, section=section, print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

@@ -82,7 +82,7 @@ function main (.text) {
                 0x400aa6: rdx = var10 # mov rdx, qword ptr [rbp - 0x10]
                 0x400aaa: rax = &(var11) # lea rax, qword ptr [rbp - 0x48]
                 0x400aae: rcx = rdx # mov rcx, rdx
-                0x400ab1: edx = connection_handler  # mov edx, 0x400b1e
+                0x400ab1: edx = connection_handler # mov edx, 0x400b1e
                 0x400ab6: esi = 0 # mov esi, 0
                 0x400abb: rdi = rax # mov rdi, rax
                 0x400abe: call pthread_create@plt
