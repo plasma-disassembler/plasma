@@ -133,10 +133,21 @@ class Output(OutputAbs):
                     # print_no_end(color_var(self.get_var_name(i, num_op)))
                     # return True
                 if mm.base == ARM_REG_PC:
-                    addr = i.address + i.size * 2 + mm.disp
-                    self._add("*(")
-                    self._imm(i, addr, 4, True, print_data=False)
-                    self._add(")")
+                    ad = i.address + i.size * 2 + mm.disp
+                    section = self.binary.get_section(ad)
+
+                    if section is not None:
+                        val = self.ctx.dis.read_word(ad, 4)
+                        if val in self.binary.reverse_symbols:
+                            self._imm(i, val, 0, True, section=section,
+                                      print_data=False)
+                            return True
+
+                    if show_deref:
+                        self._add("*(")
+                    self._imm(i, ad, 4, True, print_data=False)
+                    if show_deref:
+                        self._add(")")
                     return True
 
             printed = False

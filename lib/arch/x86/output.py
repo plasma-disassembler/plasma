@@ -105,16 +105,21 @@ class Output(OutputAbs):
                     return True
 
                 elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                    addr = i.address + i.size + mm.disp
+                    ad = i.address + i.size + mm.disp
+                    section = self.binary.get_section(ad)
+
+                    if section is not None:
+                        val = self.ctx.dis.read_word(ad, op.size)
+                        if val in self.binary.reverse_symbols:
+                            self._imm(i, val, 0, True, section=section,
+                                      print_data=False)
+                            return True
 
                     if show_deref:
                         self._add("*(")
-
-                    self._imm(i, addr, op.size, True, print_data=False)
-
+                    self._imm(i, ad, 4, True, print_data=False)
                     if show_deref:
                         self._add(")")
-
                     return True
 
             printed = False

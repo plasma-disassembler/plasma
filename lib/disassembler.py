@@ -103,6 +103,8 @@ class Disassembler():
     def read_word(self, ad, size_word):
         unpack_str = self.get_unpack_str(size_word)
         b = self.binary.section_stream_read(ad, size_word)
+        if len(b) != size_word:
+            return 0
         return struct.unpack(unpack_str, b)[0]
 
 
