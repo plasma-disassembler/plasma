@@ -111,7 +111,7 @@ class Visual():
         self.interact.ctx.quiet = saved_quiet
 
         if self.stack:
-            print("last address seen 0x%x" % self.stack[-1][0])
+            print("last address seen 0x%x" % self.interact.ctx.entry_addr)
 
 
     def read_escape_keys(self):
