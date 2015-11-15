@@ -325,9 +325,9 @@ class Visual():
 
             x += len(string)
             if force_exit:
-                return
+                break
 
-        if is_current_line:
+        if is_current_line and not force_exit:
             n = w - x - 1
             self.screen.addstr(i, x, " " * n, color_pair(0) | A_UNDERLINE)
             x += n
