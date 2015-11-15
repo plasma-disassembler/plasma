@@ -522,20 +522,20 @@ class Graph:
     def __search_false_loops(self):
         # Mark recursively parent loops
         def rec_false_loop_parent(k):
-            if k in self.false_loops:
-                return
             self.false_loops.add(k)
             if k not in self.rev_deps:
                 return
             for par in self.rev_deps[k]:
+                if par in self.false_loops:
+                    continue
                 rec_false_loop_parent(par)
 
         # Mark recursively sub loops
         def rec_false_loop_sub(k):
-            if k in self.false_loops:
-                return
             self.false_loops.add(k)
             for sub in self.deps[k]:
+                if sub in self.false_loops:
+                    continue
                 rec_false_loop_sub(sub)
 
         def rec_unset_false_loop(k):
