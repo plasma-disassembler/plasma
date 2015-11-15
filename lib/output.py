@@ -342,8 +342,7 @@ class OutputAbs():
                 elif op_size == 8:
                     packed = struct.pack("<Q", imm)
                 else:
-                    return False
-                packed = struct.pack("<L", imm)
+                    return True
                 if set(packed).issubset(BYTES_PRINTABLE_SET):
                     self._string(" \"" + "".join(map(chr, packed)) + "\"")
                     return False
