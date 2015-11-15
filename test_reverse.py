@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+# to run this script :
+# $ nosetest3
+# or
+# $ python3 test_reverse.py
+
+import os
+import sys
+from time import time
 from contextlib import redirect_stdout
 from nose.tools import assert_equal
 from pathlib import Path
@@ -50,3 +58,39 @@ def reverse_file(filename, symbol, options):
     postfix = '{0}.rev'.format('' if symbol is None else '_' + symbol)
     with open(filename.replace('.bin', postfix)) as f:
         assert_equal(sio.getvalue(), f.read())
+
+
+def color(text, c):
+    return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"
+
+
+if __name__ == "__main__":
+    start = time()
+    passed = 0
+    nb = 0
+    failed = []
+
+    for reverse_file, path, symbol, options in test_reverse():
+        name = os.path.basename(path)
+
+        nb += 1
+
+        try:
+            reverse_file(path, symbol, options)
+            print(".", end="")
+            passed += 1
+        except AssertionError:
+            print(color("F", 1), end="")
+            failed.append(name)
+        except:
+            print(color("E", 1), end="")
+            failed.append(name)
+
+        sys.stdout.flush()
+
+    elapsed = time()
+    elapsed = elapsed - start
+    print("\n%d/%d tests passed successfully in %fs" % (passed, nb, elapsed))
+
+    for p in failed:
+        print("failed:", p)

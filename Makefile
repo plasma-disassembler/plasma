@@ -18,7 +18,11 @@ SYMBOLS[tests/malloc.rev] = "malloc"
 OPTIONS[tests/shellcode.rev] = "--raw x86"
 OPTIONS[tests/malloc.rev] = "--raw x64 --rawbase 0x77110"
 
-all: check
+all: python_check
+
+
+python_check:
+	@python3 test_reverse.py
 
 
 # Verbose : print the diff at each test
