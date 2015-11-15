@@ -18,10 +18,10 @@ SYMBOLS[tests/malloc.rev] = "malloc"
 OPTIONS[tests/shellcode.rev] = "--raw x86"
 OPTIONS[tests/malloc.rev] = "--raw x64 --rawbase 0x77110"
 
-all: python_check
+all: check
 
 
-python_check:
+check:
 	@python3 test_reverse.py
 
 
@@ -32,7 +32,7 @@ python_check:
 # Don't rebuild. We want to keep the original rev file.
 # You need to recreate the file .rev at hand (with the options -nc -ns)
 # Or you can use the file regen.sh
-check: $(REV)
+oldcheck: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
 	@./diff.sh $@ ${OPTIONS[$@]} ${V} $(SYMBOLS[$@])
