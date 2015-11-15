@@ -522,6 +522,8 @@ class Graph:
     def __search_false_loops(self):
         # Mark recursively parent loops
         def rec_false_loop_parent(k):
+            if k in self.false_loops:
+                return
             self.false_loops.add(k)
             if k not in self.rev_deps:
                 return
@@ -530,6 +532,8 @@ class Graph:
 
         # Mark recursively sub loops
         def rec_false_loop_sub(k):
+            if k in self.false_loops:
+                return
             self.false_loops.add(k)
             for sub in self.deps[k]:
                 rec_false_loop_sub(sub)
@@ -613,6 +617,14 @@ class Graph:
         self.__explore(entry, set(), set(), {}, None, set())
 
         self.__search_equiv_loops()
+
+        elapsed = time()
+        elapsed = elapsed - start
+        debug__("Exploration: found %d loop(s) in %fs" %
+                (len(self.loops_all), elapsed))
+
+        self.html_graph([])
+
         self.__search_false_loops()
 
         for k in self.false_loops:
