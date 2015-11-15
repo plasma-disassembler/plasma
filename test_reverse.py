@@ -23,11 +23,13 @@ SYMBOLS = {
         TESTS / 'pendu.bin': ["_main", "___main", "__imp___cexit"],
         TESTS / 'shellcode.bin': ["0x0"],
         TESTS / 'malloc.bin': ["malloc"],
+        TESTS / 'entryloop1.bin': ["0x4041b0"],
         }
 
 OPTIONS = {
     TESTS / 'shellcode.bin': ["--raw x86"],
     TESTS / 'malloc.bin': ["--raw x64", "--rawbase 0x77110"],
+    TESTS / 'entryloop1.bin': ["--raw x64", "--rawbase 0x4041b0"],
     }
 
 

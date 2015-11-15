@@ -397,11 +397,16 @@ class Graph:
     def __explore(self, entry, par_loops, visited, waiting, l_set, done):
         stack = []
 
-        if entry in self.link_out:
-            for n in self.link_out[entry]:
-                stack.append((entry, n))
-
-        visited.add(entry)
+        # Check if the first address (entry point of the function) is the
+        # beginning of a loop.
+        if not visited and entry in self.link_in:
+            for p in self.link_in[entry]:
+                stack.append((p, entry))
+        else:
+            if entry in self.link_out:
+                for n in self.link_out[entry]:
+                    stack.append((entry, n))
+            visited.add(entry)
 
         is_sub_loop = set()
 

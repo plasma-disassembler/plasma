@@ -1,0 +1,31 @@
+function 0x4041b0 (raw) {
+    loop {
+        loop_0x4041b0:
+        0x4041b0: push rbx
+        0x4041b1: rbx = rdi # mov rbx, rdi
+        0x4041b4: call 0x401600
+        # 0x4041b9: test rax, rax
+        # 0x4041bc: jne 0x4041c3
+        if (rax != 0)  goto ret_0x4041c3
+        # 0x4041be: test rbx, rbx
+        # 0x4041c1: jne 0x4041c5
+        if (rbx == 0)  goto ret_0x4041c3
+        0x4041c5: call 0x4043c0
+        0x4041ca: nop *(rax + rax) # nop word ptr [rax + rax]
+        0x4041d0: edx = 0 # xor edx, edx
+        0x4041d2: rax = -1 # mov rax, -1
+        0x4041d9: div rsi
+        # 0x4041dc: cmp rax, rdi
+        # 0x4041df: jb 0x4041ea
+        if (rax (unsigned) >= rdi) {
+            0x4041e1: rdi *= rsi # imul rdi, rsi
+            0x4041e5: jmp 0x4041b0
+        }
+        0x4041ea: push rax
+        0x4041eb: call 0x4043c0
+        0x4041f0: jmp 0x4041b0
+    }
+    ret_0x4041c3:
+    0x4041c3: pop rbx
+    0x4041c4: ret
+}
