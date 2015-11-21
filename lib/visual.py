@@ -42,7 +42,7 @@ class Visual():
         self.stack = []
         self.saved_stack = [] # when we enter, go back, then re-enter
 
-        self.word_accepted_chars = ["_", "@", "."]
+        self.word_accepted_chars = ["_", "@", ".", "$"]
 
         self.time_last_mouse_key = self.MOUSE_INTERVAL + 1
         self.set_key_timeout = True
