@@ -133,9 +133,9 @@ class OutputAbs():
 
 
     def _label(self, addr, tab=-1, print_colon=True):
-        if addr not in self.ctx.labels:
+        if addr not in self.ctx.reverse_labels:
             return False
-        l = str(self.ctx.labels[addr])
+        l = str(self.ctx.reverse_labels[addr])
 
         if print_colon:
             l += ":"
@@ -185,7 +185,7 @@ class OutputAbs():
 
 
     def _commented_inst(self, i, tab):
-        if i.address in self.ctx.labels:
+        if i.address in self.ctx.reverse_labels:
             self._label(i.address, tab)
             self._new_line()
             self._tabs(tab)

@@ -69,7 +69,8 @@ class Context():
         self.entry_addr = 0 # address where we disassemble,
                             # same as self.entry but it's an int
         self.addr_color = {}
-        self.labels = {}
+        self.reverse_labels = {} # label -> addr
+        self.labels = {} # addr -> label
         self.color_counter = 112
         self.local_vars_idx = {}
         self.local_vars_size = []

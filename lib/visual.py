@@ -168,6 +168,25 @@ class Visual():
         return None
 
 
+    def goto_line(self, new_line, h):
+        curr_line = self.win_y + self.cursor_y
+        diff = new_line - curr_line
+        if diff > 0:
+            self.scroll_down(h, diff, False)
+        elif diff < 0:
+            self.scroll_up(h, -diff, False)
+
+
+    def goto_address(self, ad, h, w):
+        if ad in self.output.addr_line:
+            self.goto_line(self.output.addr_line[ad], h)
+            # double home moves the cursor at the beginning of the line
+            self.main_k_home(h, w)
+            self.main_k_home(h, w)
+            return True
+        return False
+
+
     def exec_disasm(self, addr):
         self.interact.ctx.reset_vars()
         self.interact.ctx.entry_addr = addr
@@ -239,11 +258,7 @@ class Visual():
         new_line = self.output.addr_line[addr]
 
         if new_line != line:
-            diff = new_line - line
-            if diff > 0:
-                self.scroll_down(h, diff, False)
-            elif diff < 0:
-                self.scroll_up(h, -diff, False)
+            self.goto_line(new_line, h)
             line = new_line
             (h, w) = self.screen.getmaxyx()
             self.view_main_redraw(h, w)
@@ -459,11 +474,7 @@ class Visual():
 
         if button == 0x20: # left-click
             self.cursor_x = k[4] - 33
-            diff = k[5] - 33 - self.cursor_y
-            if diff > 0:
-                self.scroll_down(h, diff, False)
-            elif diff < 0:
-                self.scroll_up(h, -diff, False)
+            self.goto_line(self.win_y + k[5] - 33, h)
             self.check_cursor_x()
         elif button == 0x60: # scroll up
             self.scroll_up(h, 3, True)
@@ -526,13 +537,13 @@ class Visual():
         if x >= len(line_str):
             x = len(line_str) - 1
         char = line_str[x]
-        diff = 0
+        new_line = -1
 
         if char == "}":
             l = line - 1
             while l >= 0:
                 if self.output.lines[l][x] != " ":
-                    diff = line - l
+                    new_line = l
                     break
                 l -= 1
 
@@ -544,7 +555,6 @@ class Visual():
                     x += 1
 
             self.cursor_x = x
-            self.scroll_up(h, diff, False)
 
         elif char == "{":
             x = 0
@@ -556,12 +566,14 @@ class Visual():
             l = line + 1
             while l < len(self.output.lines):
                 if self.output.lines[l][x] != " ":
-                    diff = l - line
+                    new_line = l
                     break
                 l += 1
 
             self.cursor_x = x
-            self.scroll_down(h, diff, False)
+
+        if new_line != -1:
+            self.goto_line(new_line, h)
 
         return True
 
@@ -575,17 +587,45 @@ class Visual():
 
 
     def main_cmd_enter(self, h, w):
-        w = self.get_word_under_cursor()
-        if w is None:
+        word = self.get_word_under_cursor()
+        if word is None:
             return False
-        self.interact.ctx.entry = w
+
+        line = self.win_y + self.cursor_y
+        x = self.cursor_x
+
+        if word.startswith("0x"):
+            try:
+                ad = int(word, 16)
+                if self.goto_address(ad, h, w):
+                    self.saved_stack = []
+                    self.stack.append((line, -1, -1, x, True))
+                    return True
+            except:
+                return False
+
+        elif word in self.interact.ctx.labels:
+            ad = self.interact.ctx.labels[word]
+            if self.goto_address(ad, h, w):
+                self.saved_stack = []
+                self.stack.append((line, -1, -1, x, True))
+                return True
+
+        self.interact.ctx.entry = word
         last = self.interact.ctx.entry_addr
         if not init_entry_addr(self.interact.ctx):
             return False
+
         ret = self.exec_disasm(self.interact.ctx.entry_addr)
         if ret:
             self.saved_stack = []
-            self.stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+            self.stack.append((
+                last,
+                self.win_y,
+                self.cursor_y,
+                self.cursor_x,
+                False
+            ))
             self.win_y = 0
             self.cursor_y = 0
             self.cursor_x = 0
@@ -595,9 +635,28 @@ class Visual():
     def main_cmd_escape(self, h, w):
         if not self.stack:
             return False
-        addr, wy, y, x = self.stack.pop(-1)
+
+        value, wy, y, x, is_line = self.stack.pop(-1)
+
+        if is_line:
+            prev_x = self.cursor_x
+            line = self.win_y + self.cursor_y
+            self.goto_line(value, h)
+            self.saved_stack.append((line, -1, -1, prev_x, True))
+            self.cursor_x = x
+            return True
+
+        addr = value
         last = self.interact.ctx.entry_addr
-        self.saved_stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+
+        self.saved_stack.append((
+            last,
+            self.win_y,
+            self.cursor_y,
+            self.cursor_x,
+            False
+        ))
+
         ret = self.exec_disasm(addr)
         if ret:
             self.win_y = wy
@@ -609,9 +668,28 @@ class Visual():
     def main_cmd_reenter(self, h, w):
         if not self.saved_stack:
             return False
-        addr, wy, y, x = self.saved_stack.pop(-1)
+
+        value, wy, y, x, is_line = self.saved_stack.pop(-1)
+
+        if is_line:
+            line = self.win_y + self.cursor_y
+            prev_x = self.cursor_x
+            self.goto_line(value, h)
+            self.stack.append((line, -1, -1, prev_x, True))
+            self.cursor_x = x
+            return True
+
+        addr = value
         last = self.interact.ctx.entry_addr
-        self.stack.append((last, self.win_y, self.cursor_y, self.cursor_x))
+
+        self.stack.append((
+            last,
+            self.win_y,
+            self.cursor_y,
+            self.cursor_x,
+            False
+        ))
+
         ret = self.exec_disasm(addr)
         if ret:
             self.win_y = wy
