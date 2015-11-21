@@ -207,6 +207,11 @@ class Disassembler():
         # dump
         ad = ctx.entry_addr
         l = 0
+
+        if ad in self.binary.reverse_symbols:
+            o._symbol(ad)
+            o._new_line()
+
         while l < lines and ad <= s.end:
             i = self.lazy_disasm(ad, s.start)
             if i is None:

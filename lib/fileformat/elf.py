@@ -123,7 +123,9 @@ class ELF:
         got_off = {}
         for r in rel.iter_relocations():
             sym = symtab.get_symbol(r.entry.r_info_sym)
-            got_off[r.entry.r_offset] = sym.name.decode() + "@plt"
+            name = sym.name.decode()
+            if name and r.entry.r_offset:
+                got_off[r.entry.r_offset] = name + "@plt"
 
         data = got_plt.data()
 
@@ -138,13 +140,16 @@ class ELF:
 
         # Read the .got.plt and for each address in the plt, substract 6
         # to go at the begining of the plt entry.
+
+        opcode_jmp = [b"\xff\x25", b"\xff\xa3"]
+
         for jump_in_plt in got_values:
             if off in got_off:
                 plt_start = jump_in_plt - 6
                 plt_off = plt_start - plt.header.sh_addr
 
                 # Check "jmp *(ADDR)" opcode.
-                if plt_data[plt_off:plt_off+2] != b"\xff\x25":
+                if plt_data[plt_off:plt_off+2] not in opcode_jmp:
                     wrong_jump_opcode = True
                     continue
 
