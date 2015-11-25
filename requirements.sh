@@ -1,10 +1,12 @@
 #!/bin/sh
 
 REQ_EXEC="python3 pip3"
-for EXEC in ${REQ_EXEC}; do
-    if [[ ! -x $(command -v $EXEC) ]]; then
-	echo "error: unable to find $EXEC, this is required to setup this project"
-	exit
+for EXEC in ${REQ_EXEC} 
+do
+    if [ ! -x "$(command -v $EXEC)" ]
+    then
+        echo "error: unable to find $EXEC, this is required to setup this project"
+        exit
     fi
 done
 
