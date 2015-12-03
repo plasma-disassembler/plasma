@@ -295,6 +295,55 @@ def remove_unnecessary_goto(ast, ad):
             ast.nodes.pop(-1)
 
 
+def rm_waiting(ctx, waiting, ad):
+    # Get the ast which has the smallest level
+
+    min_level_idx = -1
+    list_ast = waiting[ad].ast
+    list_loop_start = waiting[ad].loop_start
+
+    for i, a in enumerate(list_ast):
+        if (list_loop_start[i], ad) in ctx.gph.false_loops:
+            continue
+        if min_level_idx == -1 or a.level < list_ast[min_level_idx].level:
+            min_level_idx = i
+
+    if min_level_idx == -1:
+        print("errorD: this is a bug, please report")
+        sys.exit(1)
+
+    ast = list_ast[min_level_idx]
+
+    # Add goto on each other ast
+    # If they are finally unuseful, they will be deleted with
+    # remove_unnecessary_goto or in remove_unnecessary_goto
+    for i, a in enumerate(list_ast):
+        if i == min_level_idx:
+            continue
+        if len(a.nodes) == 0:
+            a.add(Ast_Goto(ad))
+            continue
+        # The previous instruction has not `ad` as the next instruction
+        if isinstance(a.nodes[-1], list):
+            prev = a.nodes[-1][0].address
+            if prev in ctx.gph.uncond_jumps_set:
+                continue
+            if prev in ctx.gph.link_out:
+                n = ctx.gph.link_out[prev][BRANCH_NEXT]
+                if n != ad:
+                    a.add(Ast_Goto(n))
+                    continue
+        # The previous is a goto, skip it
+        if isinstance(a.nodes[-1], Ast_Goto):
+            continue
+        a.add(Ast_Goto(ad))
+
+    waiting[ad].ast.clear()
+    del waiting[ad]
+
+    return ast
+
+
 def manage_endpoint(ctx, waiting, ast, prev, ad, l_set, l_prev_loop,
                     l_start, ad_is_visited):
     if ad not in ctx.gph.link_in or len(ctx.gph.link_in[ad]) <= 1:
@@ -315,51 +364,7 @@ def manage_endpoint(ctx, waiting, ast, prev, ad, l_set, l_prev_loop,
         if len(waiting[ad].unseen) != 0:
             return None
 
-        # Get the ast which has the smallest level
-
-        min_level_idx = -1
-        list_ast = waiting[ad].ast
-        list_loop_start = waiting[ad].loop_start
-
-        for i, a in enumerate(list_ast):
-            if (list_loop_start[i], ad) in ctx.gph.false_loops:
-                continue
-            if min_level_idx == -1 or a.level < list_ast[min_level_idx].level:
-                min_level_idx = i
-
-        if min_level_idx == -1:
-            print("errorD: this is a bug, please report")
-            sys.exit(1)
-
-        ast = list_ast[min_level_idx]
-
-        # Add goto on each other ast
-        # If they are finally unuseful, they will be deleted with
-        # remove_unnecessary_goto or in remove_unnecessary_goto
-        for i, a in enumerate(list_ast):
-            if i == min_level_idx:
-                continue
-            if len(a.nodes) == 0:
-                a.add(Ast_Goto(ad))
-                continue
-            # The previous instruction has not `ad` as the next instruction
-            if isinstance(a.nodes[-1], list):
-                prev = a.nodes[-1][0].address
-                if prev in ctx.gph.uncond_jumps_set:
-                    continue
-                if prev in ctx.gph.link_out:
-                    n = ctx.gph.link_out[prev][BRANCH_NEXT]
-                    if n != ad:
-                        a.add(Ast_Goto(n))
-                        continue
-            # The previous is a goto, skip it
-            if isinstance(a.nodes[-1], Ast_Goto):
-                continue
-            a.add(Ast_Goto(ad))
-
-        waiting[ad].ast.clear()
-        del waiting[ad]
-
+        ast = rm_waiting(ctx, waiting, ad)
         return ast
 
     unseen = get_unseen_links_in(ad, l_set, l_prev_loop, l_start)
