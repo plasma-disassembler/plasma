@@ -379,11 +379,10 @@ function malloc (raw) {
                         }
                         0x79891: test *(r15 + 4), '\x01' # test byte ptr [r15 + 4], 1
                         # 0x79896: jne 0x798a0
-                        if != {
-                            goto 0x798a0
+                        if == {
+                            0x79898: rdi = r15 # mov rdi, r15
+                            0x7989b: call malloc_consolidate
                         }
-                        0x79898: rdi = r15 # mov rdi, r15
-                        0x7989b: call malloc_consolidate
                         0x798a0: rdi = r13 # mov rdi, r13
                         0x798a3: rax = r13 # mov rax, r13
                         0x798a6: rbx = r13 # mov rbx, r13
@@ -569,9 +568,9 @@ function malloc (raw) {
                                                 0x79c10: rdi = *(rax + 16) # mov rdi, qword ptr [rax + 0x10]
                                                 0x79c14: jmp 0x79ad7
                                             }
+                                            0x79ad7: r8 = *(rdi + 24) # mov r8, qword ptr [rdi + 0x18]
+                                            0x79adb: jmp 0x79938
                                         }
-                                        0x79ad7: r8 = *(rdi + 24) # mov r8, qword ptr [rdi + 0x18]
-                                        0x79adb: jmp 0x79938
                                     } else {
                                         0x79be0: *(r14 + 40) = r14 # mov qword ptr [r14 + 0x28], r14
                                         0x79be4: *(r14 + 32) = r14 # mov qword ptr [r14 + 0x20], r14
@@ -603,21 +602,20 @@ function malloc (raw) {
                             }
                             # 0x79c39: cmp r13, 0x3ff
                             # 0x79c40: ja 0x79dbe
-                            if (r13 (unsigned) <= 1023) {
-                                goto 0x79c46
-                            }
-                            0x79dbe: eax = *(rsp + 8) # mov eax, dword ptr [rsp + 8]
-                            0x79dc2: eax = rax + rax - 2 # lea eax, dword ptr [rax + rax - 2]
-                            0x79dc6: rax = r15 + (rax*8) + 96 # lea rax, qword ptr [r15 + rax*8 + 0x60]
-                            0x79dcb: rdx = *(rax + 8) # mov rdx, qword ptr [rax + 8]
-                            0x79dcf: rcx = rax + 8 # lea rcx, qword ptr [rax + 8]
-                            0x79dd3: rax -= 8 # sub rax, 8
-                            # 0x79dd7: cmp rdx, rax
-                            # 0x79dda: je 0x79c46
-                            if (rdx != rax) {
-                                # 0x79de0: cmp r13, qword ptr [rdx + 8]
-                                # 0x79de4: ja 0x79c46
-                                if (r13 (unsigned) <= *(rdx + 8))  goto 0x79dea
+                            if (r13 (unsigned) > 1023) {
+                                0x79dbe: eax = *(rsp + 8) # mov eax, dword ptr [rsp + 8]
+                                0x79dc2: eax = rax + rax - 2 # lea eax, dword ptr [rax + rax - 2]
+                                0x79dc6: rax = r15 + (rax*8) + 96 # lea rax, qword ptr [r15 + rax*8 + 0x60]
+                                0x79dcb: rdx = *(rax + 8) # mov rdx, qword ptr [rax + 8]
+                                0x79dcf: rcx = rax + 8 # lea rcx, qword ptr [rax + 8]
+                                0x79dd3: rax -= 8 # sub rax, 8
+                                # 0x79dd7: cmp rdx, rax
+                                # 0x79dda: je 0x79c46
+                                if (rdx != rax) {
+                                    # 0x79de0: cmp r13, qword ptr [rdx + 8]
+                                    # 0x79de4: ja 0x79c46
+                                    if (r13 (unsigned) <= *(rdx + 8))  goto 0x79dea
+                                }
                             }
                             0x79c46: eax = *(rsp + 8) # mov eax, dword ptr [rsp + 8]
                             0x79c4a: ecx = rax + 1 # lea ecx, dword ptr [rax + 1]
@@ -638,8 +636,9 @@ function malloc (raw) {
                                     # 0x79c71: jne 0x79c84
                                     if (eax == 0) {
                                         0x79c73: jmp 0x79cc3
+                                    } else {
+                                        goto loop_0x79c84
                                     }
-                                    goto loop_0x79c84
                                 }
                                 loop {
                                     loop_0x79cc3:

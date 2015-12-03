@@ -71,6 +71,18 @@ def index(L, obj, k=0):
         return -1
 
 
+def list_starts_with(l, prefix):
+    if len(prefix) > len(l):
+        return False
+    i = 0
+    for v in prefix:
+        if v != l[i]:
+            return False
+        i += 1
+    return True
+
+
+
 def error(txt):
     if not ctx.quiet:
         print("error: " + txt, file=sys.stderr)

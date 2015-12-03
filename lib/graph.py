@@ -20,7 +20,7 @@
 import os
 from time import time
 
-from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
+from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__, list_starts_with
 
 
 class Graph:
@@ -143,6 +143,30 @@ class Graph:
         elapsed = time()
         elapsed = elapsed - start
         debug__("Graph simplified in %fs (%d nodes)" % (elapsed, len(self.nodes)))
+
+
+    def html_deps(self):
+        revpath = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
+        output = open(revpath + "/../d3/graph_deps.js", "w+")
+        output.write("mygraph = \"digraph {\\\n")
+
+        for k, dp in self.deps.items():
+            output.write("node_%x_%x [label=\\\"(%x, %x)\\\"" % (k[0], k[1], k[0], k[1]))
+
+            if k in self.false_loops:
+                output.write(" style=\\\"fill:#B6FFDD\\\"")
+            elif k in self.equiv:
+                output.write(" style=\\\"fill:#f77\\\"")
+
+            output.write("];\\\n")
+
+            for sub in dp:
+                output.write("node_%x_%x -> node_%x_%x;\\\n" % (k[0], k[1], sub[0], sub[1]))
+
+        output.write("}\";\n")
+        output.write("inputGraph.innerHTML = mygraph;")
+        output.write("tryDraw();")
+
 
 
     # Check d3/index.html !
@@ -478,7 +502,13 @@ class Graph:
         for (prev1, start1), l1 in self.loops_set.items():
             keys.remove((prev1, start1))
 
+            if (prev1, start1) in self.false_loops:
+                continue
+
             for prev2, start2 in keys:
+                if (prev2, start2) in self.false_loops:
+                    continue
+
                 l2 = self.loops_set[(prev2, start2)]
 
                 if start1 in l2 and start2 in l1 and l1 == l2:
@@ -525,10 +555,20 @@ class Graph:
             self.false_loops.add(k)
             if k not in self.rev_deps:
                 return
+
             for par in self.rev_deps[k]:
                 if par in self.false_loops:
                     continue
-                rec_false_loop_parent(par)
+
+                all_false = True
+
+                for sub in self.deps[par]:
+                    if sub not in self.false_loops:
+                        all_false = False
+                        break
+
+                if all_false:
+                    rec_false_loop_parent(par)
 
         # Mark recursively sub loops
         def rec_false_loop_sub(k):
@@ -538,14 +578,6 @@ class Graph:
                     continue
                 rec_false_loop_sub(sub)
 
-        def rec_unset_false_loop(k):
-            if k not in self.false_loops:
-                return
-            self.false_loops.remove(k)
-            if k not in self.rev_deps:
-                return
-            for par in self.rev_deps[k]:
-                rec_unset_false_loop(par)
 
         # optim: don't compare twice two loops
         keys = set(self.loops_set.keys())
@@ -603,12 +635,134 @@ class Graph:
                         rec_false_loop_parent((prev1, start1))
                         rec_false_loop_sub((prev1, start1))
 
-        # Now remove false positive: with rec_add_false_loop we can
-        # go up too much and add a parent loop which is not a "false loop".
 
-        for k in self.deps:
-            if len(self.deps[k]) == 0:
-                rec_unset_false_loop(k)
+    def __prune_loops(self):
+        def set_paths(k, p):
+            nonlocal deps, loop_paths
+            loop_paths[k].append(p)
+            i = 0
+            for sub in deps[k]:
+                set_paths(sub, p + [i])
+                i += 1
+
+        #
+        # Create loop paths
+        # example:
+        #
+        #     loop1
+        #    /     \
+        # loop2   loop3
+        #
+        # paths:
+        # loop1 = [0]
+        # loop2 = [0, 0]
+        # loop3 = [0, 1]
+        #
+
+        deps = self.deps
+        loop_paths = {}
+
+        for k in deps:
+            deps[k] = list(deps[k])
+            loop_paths[k] = []
+
+
+        roots = self.loops_set.keys() - self.rev_deps.keys()
+        i = 0
+        for k in roots:
+            set_paths(k, [i])
+            i += 1
+
+        # If there are more than one path for a loop, it means
+        # that a loop has more than one parent. The goal is to
+        # determine which parent is "wrong". If there is two parents
+        # we can't say anything.
+
+        prefix_to_remove = []
+
+        for k, paths in loop_paths.items():
+
+            if len(paths) > 2:
+                stop_at_first_diff = False
+                i = 0
+                prefix = []
+
+                while not stop_at_first_diff:
+                    count = {}
+                    for p in paths:
+                        curr = p[i]
+                        if curr in count:
+                            count[curr] += 1
+                        else:
+                            count[curr] = 1
+
+                    if len(count) > 1:
+                        # Keep only the parent loop which has only one reference
+                        # to this loop (and ONLY this loop must have ONLY ONE
+                        # reference).
+
+                        n = 0
+                        for idx, c in count.items():
+                            if c == 1:
+                                n += 1
+
+                        if n == 1:
+                            # Remove all others loops
+                            for loop_idx, c in count.items():
+                                if c != 1:
+                                    prefix.append(loop_idx)
+
+                                    if prefix not in prefix_to_remove:
+                                        prefix_to_remove.append(prefix)
+
+                        stop_at_first_diff = True
+
+                    else:
+                        # here len(count) == 1
+                        prefix.append(curr)
+
+                    i += 1
+
+        # Remove all loops which start with these prefix
+
+        # if prefix_to_remove:
+            # debug__(loop_paths)
+            # for prefix in prefix_to_remove:
+                # debug__("prune %s" % repr(prefix))
+
+
+        for k, paths in loop_paths.items():
+            if k in self.false_loops:
+                continue
+
+            all_matches = True
+
+            for p in paths:
+                one_match = False
+                for prefix in prefix_to_remove:
+                    if list_starts_with(p, prefix):
+                        one_match = True
+                        break
+
+                if not one_match:
+                    all_matches = False
+                    break
+
+            if all_matches:
+                self.false_loops.add(k)
+
+
+    def __update_loops(self):
+        for k in self.false_loops:
+            del self.loops_all[k]
+            del self.loops_set[k]
+
+            if k in self.equiv:
+                for keq in self.equiv[k]:
+                    self.equiv[keq].remove(k)
+                    if not self.equiv[keq]:
+                        del self.equiv[keq]
+                del self.equiv[k]
 
 
     def __loop_detection(self, ctx, entry):
@@ -616,12 +770,10 @@ class Graph:
 
         self.__explore(entry, set(), set(), {}, None, set())
 
+        self.__prune_loops()
         self.__search_equiv_loops()
         self.__search_false_loops()
-
-        for k in self.false_loops:
-            del self.loops_all[k]
-            del self.loops_set[k]
+        self.__update_loops()
 
         # Compute all address which are not in a loop
         in_loop = set()
