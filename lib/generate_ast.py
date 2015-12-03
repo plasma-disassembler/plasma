@@ -21,7 +21,7 @@ import sys
 from time import time
 
 from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
-        Ast_IfGoto, Ast_Ifelse, Ast_AndIf)
+        Ast_IfGoto, Ast_Ifelse, Ast_AndIf, Ast_Comment)
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from lib.exceptions import ExcIfelse
 
@@ -443,6 +443,7 @@ def generate_ast(ctx__):
                                 l_prev_loop, l_start, True)
             if a is None:
                 continue
+
             ast = a
             remove_unnecessary_goto(ast, curr)
 
@@ -610,8 +611,12 @@ def generate_ast(ctx__):
 
             if endpoint != -1:
                 if (l_start, endpoint) not in ctx.gph.false_loops:
-                    manage_endpoint(ctx, waiting, ast, -1, endpoint, l_set,
-                                    l_prev_loop, l_start, False)
+                    # If we have already seen this address (for example the
+                    # endpoint is the beginning of the current loop) we don't
+                    # re-add in the waiting list.
+                    if endpoint not in visited:
+                        manage_endpoint(ctx, waiting, ast, -1, endpoint, l_set,
+                                        l_prev_loop, l_start, False)
                 else:
                     endpoint = -1
 
@@ -682,5 +687,13 @@ def generate_ast(ctx__):
 
     if ctx.color:
         ctx.libarch.process_ast.assign_colors(ctx, ast)
+
+    if waiting:
+        ast_head.nodes.insert(0, Ast_Comment(""))
+        ast_head.nodes.insert(0, Ast_Comment(""))
+        ast_head.nodes.insert(0,
+            Ast_Comment("WARNING: there is a bug, the output is incomplete !"))
+        ast_head.nodes.insert(0, Ast_Comment(""))
+        ast_head.nodes.insert(0, Ast_Comment(""))
 
     return ast
