@@ -60,6 +60,9 @@ def get_first_addr(ast):
     if isinstance(ast, Ast_Goto):
         return ast.addr_jump
 
+    if isinstance(ast, Ast_IfGoto):
+        return ast.orig_jump.address
+
     if isinstance(ast, Ast_AndIf):
         return ast.orig_jump.address
 
@@ -81,6 +84,21 @@ def get_next_addr(ast):
         return get_next_addr(par)
 
     return get_first_addr(par.nodes[i])
+
+
+def is_last_in_loop(ast, i):
+    par = ast.parent
+    if par is None:
+        return False
+
+    is_last = i == len(ast.nodes) - 1
+    if isinstance(ast.parent.nodes[ast.idx_in_parent], Ast_Loop) and is_last:
+        return True
+
+    if not is_last:
+        return False
+
+    return is_last_in_loop(par, ast.idx_in_parent)
 
 
 def remove_all_unnecessary_goto(ast):
@@ -110,21 +128,25 @@ def remove_all_unnecessary_goto(ast):
 
 def fix_non_consecutives(ctx, ast):
     if isinstance(ast, Ast_Branch):
-        prev_blk = None
         idx_to_add = {}
 
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
-                if prev_blk is not None:
-                    prev = prev_blk[0].address
-                    if prev not in ctx.gph.uncond_jumps_set and \
-                            prev in ctx.gph.link_out:
-                        nxt = ctx.gph.link_out[prev][BRANCH_NEXT]
-                        if nxt != n[0].address:
-                            idx_to_add[i] = nxt
-                prev_blk = n
+                ad = n[0].address
+                if ad in ctx.gph.uncond_jumps_set or ad not in ctx.gph.link_out:
+                    continue
+
+                if i == len(ast.nodes) - 1:
+                    if is_last_in_loop(ast, i):
+                        continue
+                    nxt1 = get_next_addr(ast)
+                else:
+                    nxt1 = get_first_addr(ast.nodes[i + 1])
+
+                nxt2 = ctx.gph.link_out[ad][BRANCH_NEXT]
+                if nxt1 != nxt2:
+                    idx_to_add[i + 1] = nxt2
             else:
-                prev_blk = None
                 fix_non_consecutives(ctx, n)
 
         if not idx_to_add:
@@ -663,7 +685,6 @@ def generate_ast(ctx__):
             ast.add(blk)
             stack.append((ast, loops_stack, curr,
                           nxt[BRANCH_NEXT], else_addr))
-
 
     ast = ast_head
 
