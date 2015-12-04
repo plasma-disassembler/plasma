@@ -162,6 +162,8 @@ class Output(OutputAbs):
                             self._add(" - %d" % (-mm.disp))
                         else:
                             self._add(" + %d" % mm.disp)
+                    else:
+                        self._add("%d" % mm.disp)
 
             if show_deref:
                 self._add(")")
