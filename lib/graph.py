@@ -145,35 +145,41 @@ class Graph:
         debug__("Graph simplified in %fs (%d nodes)" % (elapsed, len(self.nodes)))
 
 
-    def html_deps(self):
-        revpath = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
-        output = open(revpath + "/../d3/graph_deps.js", "w+")
-        output.write("mygraph = \"digraph {\\\n")
+    def dot_loop_deps(self):
+        output = open("graph_loop_deps.dot", "w+")
+        output.write('digraph {\n')
+        output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
 
         for k, dp in self.deps.items():
-            output.write("node_%x_%x [label=\\\"(%x, %x)\\\"" % (k[0], k[1], k[0], k[1]))
+            output.write('node_%x_%x [label="(%x, %x)' % (k[0], k[1], k[0], k[1]))
+
+            if k in self.equiv:
+                output.write('\\l----------------\\l')
+                for k2 in self.equiv[k]:
+                    output.write('(%x, %x)\\l' % (k2[0], k2[1]))
+
+            output.write('"')
 
             if k in self.false_loops:
-                output.write(" style=\\\"fill:#B6FFDD\\\"")
+                output.write(' fillcolor="#B6FFDD"')
             elif k in self.equiv:
-                output.write(" style=\\\"fill:#f77\\\"")
+                output.write(' fillcolor="#FFDA9A"')
 
-            output.write("];\\\n")
+            output.write('];\n')
 
             for sub in dp:
-                output.write("node_%x_%x -> node_%x_%x;\\\n" % (k[0], k[1], sub[0], sub[1]))
+                output.write('node_%x_%x -> node_%x_%x;\n'
+                        % (k[0], k[1], sub[0], sub[1]))
 
-        output.write("}\";\n")
-        output.write("inputGraph.innerHTML = mygraph;")
-        output.write("tryDraw();")
-
+        output.write('}\n')
 
 
-    # Check d3/index.html !
-    def html_graph(self, jmptables):
-        revpath = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
-        output = open(revpath + "/../d3/graph.js", "w+")
-        output.write("mygraph = \"digraph {\\\n")
+    def dot_graph(self, jmptables):
+        output = open("graph.dot", "w+")
+        output.write('digraph {\n')
+        # output.write('graph [bgcolor="#aaaaaa" pad=20];\n')
+        # output.write('node [fontname="liberation mono" style=filled fillcolor="#333333" fontcolor="#d3d3d3" shape=box];\n')
+        output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
 
         keys = list(self.nodes.keys())
         keys.sort()
@@ -181,45 +187,38 @@ class Graph:
         for k in keys:
             lst_i = self.nodes[k]
 
-            output.write("node_%x [label=\\\"" % k)
+            output.write('node_%x [label="' % k)
 
             for i in lst_i:
-                output.write("0x%x: %s %s\\n" % (i.address, i.mnemonic, i.op_str))
+                output.write('0x%x: %s %s\\l' % (i.address, i.mnemonic, i.op_str))
 
-            output.write("\\\"")
+            output.write('"')
 
             if k in self.loops_start:
-                output.write(" style=\\\"fill:#FFFCC4\\\"")
+                output.write(' fillcolor="#FFFCC4"')
             elif k not in self.link_out:
-                output.write(" style=\\\"fill:#f77\\\"")
+                output.write(' fillcolor="#ff7777"')
             elif k not in self.link_in:
-                output.write(" style=\\\"fill:#B6FFDD\\\"")
+                output.write(' fillcolor="#B6FFDD"')
 
-            output.write("];\\\n")
+            output.write('];\n')
         
         for k, i in self.link_out.items():
             if k in jmptables:
                 for ad in jmptables[k].table:
-                    output.write("node_%x -> node_%x;\\\n" % (k, ad))
+                    output.write('node_%x -> node_%x;\n' % (k, ad))
             elif len(i) == 2:
                 # true green branch (jump is taken)
-                output.write("node_%x -> node_%x [" % (k, i[BRANCH_NEXT_JUMP]))
-                output.write("style=\\\"stroke: #58DA9C; stroke-width: 3px;\\\" ")
-                output.write("arrowheadStyle=\\\"fill: #58DA9C\\\"")
-                output.write("];\\\n")
+                output.write('node_%x -> node_%x [color="#58DA9C"];\n'
+                        % (k, i[BRANCH_NEXT_JUMP]))
 
                 # false red branch (jump is not taken)
-                output.write("node_%x -> node_%x [" % (k, i[BRANCH_NEXT]))
-                output.write("style=\\\"stroke: #f77; stroke-width: 3px;\\\" ")
-                output.write("arrowheadStyle=\\\"fill: #f77\\\"")
-                output.write("];\\\n")
-
+                output.write('node_%x -> node_%x [color="#ff7777"];\n'
+                        % (k, i[BRANCH_NEXT]))
             else:
-                output.write("node_%x -> node_%x;\\\n" % (k, i[BRANCH_NEXT]))
+                output.write('node_%x -> node_%x;\n' % (k, i[BRANCH_NEXT]))
 
-        output.write("}\";\n")
-        output.write("inputGraph.innerHTML = mygraph;")
-        output.write("tryDraw();")
+        output.write('}')
 
 
     def __search_last_loop_node(self, visited, l_prev_loop, l_start, l_set):
@@ -550,6 +549,14 @@ class Graph:
 
 
     def __search_false_loops(self):
+
+        def all_false(loops_key):
+            for k in loops_key:
+                if k not in self.false_loops:
+                    return False
+            return True
+
+
         # Mark recursively parent loops
         def rec_false_loop_parent(k):
             self.false_loops.add(k)
@@ -560,14 +567,7 @@ class Graph:
                 if par in self.false_loops:
                     continue
 
-                all_false = True
-
-                for sub in self.deps[par]:
-                    if sub not in self.false_loops:
-                        all_false = False
-                        break
-
-                if all_false:
+                if all_false(self.deps[par]):
                     rec_false_loop_parent(par)
 
         # Mark recursively sub loops

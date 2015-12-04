@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('filename', nargs='?', metavar='FILENAME')
     parser.add_argument('-nc', '--nocolor', action='store_true')
     parser.add_argument('-g', '--graph', action='store_true',
-            help='Generate an html flow graph. See d3/index.html.')
+            help='Generate a file graph.dot.')
     parser.add_argument('--nocomment', action='store_true',
             help="Don't print comments")
     parser.add_argument('--noandif', action='store_true',
@@ -259,7 +259,7 @@ def disasm(ctx):
         ctx.db_modified = True
     
     if ctx.graph:
-        ctx.gph.html_graph(ctx.dis.jmptables)
+        ctx.gph.dot_graph(ctx.dis.jmptables)
 
     try:
         ast = generate_ast(ctx)
