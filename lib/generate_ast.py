@@ -86,17 +86,20 @@ def get_next_addr(ast):
     return get_first_addr(par.nodes[i])
 
 
+# Returns the first address of the current loop only if the i th ast
+# is the last in the parent ast.
 def is_last_in_loop(ast, i):
     par = ast.parent
     if par is None:
-        return False
+        return -1
 
     is_last = i == len(ast.nodes) - 1
-    if isinstance(ast.parent.nodes[ast.idx_in_parent], Ast_Loop) and is_last:
-        return True
+    a = ast.parent.nodes[ast.idx_in_parent]
+    if isinstance(a, Ast_Loop) and is_last:
+        return get_first_addr(a)
 
     if not is_last:
-        return False
+        return -1
 
     return is_last_in_loop(par, ast.idx_in_parent)
 
@@ -136,16 +139,20 @@ def fix_non_consecutives(ctx, ast):
                 if ad in ctx.gph.uncond_jumps_set or ad not in ctx.gph.link_out:
                     continue
 
-                if i == len(ast.nodes) - 1:
-                    if is_last_in_loop(ast, i):
-                        continue
-                    nxt1 = get_next_addr(ast)
-                else:
-                    nxt1 = get_first_addr(ast.nodes[i + 1])
+                nxt1 = ctx.gph.link_out[ad][BRANCH_NEXT]
 
-                nxt2 = ctx.gph.link_out[ad][BRANCH_NEXT]
+                if i == len(ast.nodes) - 1:
+                    loop_start = is_last_in_loop(ast, i)
+                    if loop_start != -1:
+                        if nxt1 != loop_start:
+                            idx_to_add[i + 1] = nxt1
+                        continue
+                    nxt2 = get_next_addr(ast)
+                else:
+                    nxt2 = get_first_addr(ast.nodes[i + 1])
+
                 if nxt1 != nxt2:
-                    idx_to_add[i + 1] = nxt2
+                    idx_to_add[i + 1] = nxt1
             else:
                 fix_non_consecutives(ctx, n)
 
