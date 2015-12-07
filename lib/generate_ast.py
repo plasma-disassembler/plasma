@@ -291,13 +291,6 @@ def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
 def get_unseen_links_in(ad, l_set, l_prev_loop, l_start):
     unseen = set(ctx.gph.link_in[ad])
 
-    # Remove external jumps to the current node if it's an "equivalent loop"
-    if (l_prev_loop, l_start) in ctx.gph.equiv and \
-        (l_prev_loop, ad) in ctx.gph.equiv[(l_prev_loop, l_start)]:
-        for prev in ctx.gph.link_in[ad]:
-            if prev not in l_set and prev in unseen:
-                unseen.remove(prev)
-
     # Is it the beginning of a loop ?
     # Remove internal links to the beginning of the loop
     if (l_start, ad) in ctx.gph.loops_all:
@@ -432,21 +425,6 @@ def generate_ast(ctx__):
         if (l_start, curr) in ctx.gph.false_loops:
             continue
 
-        # Check if we have already an other equivalent loop in waiting.
-        if (l_start, curr) in ctx.gph.equiv:
-            eq = ctx.gph.equiv[(l_start, curr)]
-            dont_enter = False
-            for ad in waiting:
-                for i in waiting[ad].loop_start:
-                    if (i, ad) in eq:
-                        dont_enter = True
-                        break
-                if dont_enter:
-                    break
-            if dont_enter:
-                # Restart main loop
-                continue
-
         blk = ctx.gph.nodes[curr]
 
         # Exit the current loop
@@ -477,18 +455,7 @@ def generate_ast(ctx__):
             remove_unnecessary_goto(ast, curr)
 
             # Check if we enter in a new loop
-            is_new_loop = True
-            if (l_start, curr) not in ctx.gph.loops_all:
-                is_new_loop = False
-            else:
-                # Check if if it's not equivalent as the current loop
-                if loops_stack:
-                    l_ast, l_prev_loop, l_start = loops_stack[-1]
-                    if (l_prev_loop, curr) in ctx.gph.equiv and \
-                        (l_prev_loop, l_start) in ctx.gph.equiv[(l_prev_loop, curr)]:
-                        is_new_loop = False
-
-            if is_new_loop:
+            if (l_start, curr) in ctx.gph.loops_all:
                 name = "loop_0x%x" % curr
                 ctx.labels[name] = curr
                 ctx.reverse_labels[curr] = name

@@ -151,19 +151,10 @@ class Graph:
         output.write('node [fontname="liberation mono" style=filled fillcolor=white shape=box];\n')
 
         for k, dp in self.deps.items():
-            output.write('node_%x_%x [label="(%x, %x)' % (k[0], k[1], k[0], k[1]))
-
-            if k in self.equiv:
-                output.write('\\l----------------\\l')
-                for k2 in self.equiv[k]:
-                    output.write('(%x, %x)\\l' % (k2[0], k2[1]))
-
-            output.write('"')
+            output.write('node_%x_%x [label="(%x, %x)"' % (k[0], k[1], k[0], k[1]))
 
             if k in self.false_loops:
                 output.write(' fillcolor="#B6FFDD"')
-            elif k in self.equiv:
-                output.write(' fillcolor="#FFDA9A"')
 
             output.write('];\n')
 
@@ -172,6 +163,7 @@ class Graph:
                         % (k[0], k[1], sub[0], sub[1]))
 
         output.write('}\n')
+        output.close()
 
 
     def dot_graph(self, jmptables):
@@ -219,6 +211,7 @@ class Graph:
                 output.write('node_%x -> node_%x;\n' % (k, i[BRANCH_NEXT]))
 
         output.write('}')
+        output.close()
 
 
     def __search_last_loop_node(self, visited, l_prev_loop, l_start, l_set):
@@ -494,146 +487,90 @@ class Graph:
                     self.loops_all[(entry, ad)].update(self.loops_all[(prev, start)])
 
 
-    def __search_equiv_loops(self):
-        # optim: don't compare twice two loops
-        keys = set(self.loops_set.keys())
+    def all_false(self, loops_key):
+        for k in loops_key:
+            if k not in self.false_loops:
+                return False
+        return True
 
-        for (prev1, start1), l1 in self.loops_set.items():
-            keys.remove((prev1, start1))
 
-            if (prev1, start1) in self.false_loops:
+    # Mark recursively parent loops
+    def __rec_mark_parent_false(self, k):
+        self.false_loops.add(k)
+        if k not in self.rev_deps:
+            return
+
+        for par in self.rev_deps[k]:
+            if par in self.false_loops:
                 continue
 
-            for prev2, start2 in keys:
-                if (prev2, start2) in self.false_loops:
+            if self.all_false(self.deps[par]):
+                self.__rec_mark_parent_false(par)
+
+
+    # Mark recursively sub loops
+    def __rec_mark_sub_false(self, k):
+        self.false_loops.add(k)
+        for sub in self.deps[k]:
+            if sub in self.false_loops:
+                continue
+            self.__rec_mark_sub_false(sub)
+
+
+    def __yield_cmp_loops(self, keys1, not_in_false=True):
+        # optim: don't compare twice two loops
+        keys2 = set(keys1)
+        for k1 in keys1:
+            keys2.remove(k1)
+            if not_in_false and k1 in self.false_loops:
+                continue
+            for k2 in keys2:
+                if not_in_false and k2 in self.false_loops:
                     continue
-
-                l2 = self.loops_set[(prev2, start2)]
-
-                if start1 in l2 and start2 in l1 and l1 == l2:
-                    #
-                    # Try to detect equivalent or shifted loops :
-                    #
-                    # example :
-                    #
-                    # if {
-                    #   goto label
-                    # }
-                    #
-                    # while {
-                    #   statement_1
-                    # label:
-                    #   statement_2
-                    # }
-                    #
-                    # There is one loop, but in reality there are two loops,
-                    # which are :
-                    # [statement_1, statement_2]
-                    # [statement_2, statement_1]
-                    #
-                    # This is what I call an equivalent or shifted loop.
-                    # We can't say which one is the original, during the
-                    # generation of the ast, we will keep the loop where
-                    # we entered first.
-                    #
-
-                    if (prev1, start1) not in self.equiv:
-                        self.equiv[(prev1, start1)] = {(prev2, start2)}
-                    else:
-                        self.equiv[(prev1, start1)].add((prev2, start2))
-
-                    if (prev2, start2) not in self.equiv:
-                        self.equiv[(prev2, start2)] = {(prev1, start1)}
-                    else:
-                        self.equiv[(prev2, start2)].add((prev1, start1))
+                yield k1, k2
 
 
     def __search_false_loops(self):
+        #
+        # Try to detect "strange" loops:
+        #
+        # example :
+        #
+        # if {
+        #   goto label
+        # }
+        #
+        # while {
+        #   if {
+        #     statement_1
+        # label:
+        #     statement_2
+        #   } else {
+        #     statement_3
+        #   }
+        # }
+        #
+        # Check for example gotoinloop6 to see the result.
+        #
 
-        def all_false(loops_key):
-            for k in loops_key:
-                if k not in self.false_loops:
-                    return False
-            return True
+        for (prev1, start1), (prev2, start2) in \
+                    self.__yield_cmp_loops(self.loops_all.keys()):
+            l1 = self.loops_set[(prev1, start1)]
+            l2 = self.loops_set[(prev2, start2)]
 
+            if prev2 in l1 and \
+               start2 in l1 and \
+               start1 in l2:
+                if l2.issubset(l1):
+                    self.__rec_mark_parent_false((prev2, start2))
+                    self.__rec_mark_sub_false((prev2, start2))
 
-        # Mark recursively parent loops
-        def rec_false_loop_parent(k):
-            self.false_loops.add(k)
-            if k not in self.rev_deps:
-                return
-
-            for par in self.rev_deps[k]:
-                if par in self.false_loops:
-                    continue
-
-                if all_false(self.deps[par]):
-                    rec_false_loop_parent(par)
-
-        # Mark recursively sub loops
-        def rec_false_loop_sub(k):
-            self.false_loops.add(k)
-            for sub in self.deps[k]:
-                if sub in self.false_loops:
-                    continue
-                rec_false_loop_sub(sub)
-
-
-        # optim: don't compare twice two loops
-        keys = set(self.loops_set.keys())
-
-        for (prev1, start1), l1 in self.loops_set.items():
-            keys.remove((prev1, start1))
-
-            if (prev1, start1) in self.false_loops:
-                continue
-
-            for prev2, start2 in keys:
-                if (prev2, start2) in self.false_loops:
-                    continue
-
-                l2 = self.loops_set[(prev2, start2)]
-
-                #
-                # Try to detect "strange" loops:
-                #
-                # example :
-                #
-                # if {
-                #   goto label
-                # }
-                #
-                # while {
-                #   if {
-                #     statement_1
-                # label:
-                #     statement_2
-                #   } else {
-                #     statement_3
-                #   }
-                # }
-                #
-                # Here there are no equivalent loops. Check for example
-                # gotoinloop6 to see the result.
-                #
-
-                if (prev2, start2) in self.equiv and \
-                    (prev1, start1) in self.equiv[(prev2, start2)]:
-                    continue
-
-                if prev2 in l1 and \
-                   start2 in l1 and \
-                   start1 in l2:
-                    if l2.issubset(l1):
-                        rec_false_loop_parent((prev2, start2))
-                        rec_false_loop_sub((prev2, start2))
-
-                elif prev1 in l2 and \
-                     start1 in l2 and \
-                     start2 in l1:
-                    if l1.issubset(l2):
-                        rec_false_loop_parent((prev1, start1))
-                        rec_false_loop_sub((prev1, start1))
+            elif prev1 in l2 and \
+                 start1 in l2 and \
+                 start2 in l1:
+                if l1.issubset(l2):
+                    self.__rec_mark_parent_false((prev1, start1))
+                    self.__rec_mark_sub_false((prev1, start1))
 
 
     def __prune_loops(self):
@@ -666,10 +603,8 @@ class Graph:
             deps[k] = list(deps[k])
             loop_paths[k] = []
 
-
-        roots = self.loops_set.keys() - self.rev_deps.keys()
         i = 0
-        for k in roots:
+        for k in self.roots:
             set_paths(k, [i])
             i += 1
 
@@ -753,16 +688,17 @@ class Graph:
 
 
     def __update_loops(self):
-        for k in self.false_loops:
+        def rec_remove(k):
+            if k not in self.loops_all:
+                return
             del self.loops_all[k]
             del self.loops_set[k]
-
-            if k in self.equiv:
-                for keq in self.equiv[k]:
-                    self.equiv[keq].remove(k)
-                    if not self.equiv[keq]:
-                        del self.equiv[keq]
-                del self.equiv[k]
+            for sub in self.deps[k]:
+                if sub in self.false_loops:
+                    rec_remove(sub)
+        for k in self.false_loops:
+            if k not in self.rev_deps:
+                rec_remove(k)
 
 
     def __loop_detection(self, ctx, entry):
@@ -770,8 +706,9 @@ class Graph:
 
         self.__explore(entry, set(), set(), {}, None, set())
 
+        self.roots = self.loops_set.keys() - self.rev_deps.keys()
+
         self.__prune_loops()
-        self.__search_equiv_loops()
         self.__search_false_loops()
         self.__update_loops()
 
