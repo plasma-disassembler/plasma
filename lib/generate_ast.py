@@ -690,5 +690,6 @@ def generate_ast(ctx__):
             Ast_Comment("WARNING: there is a bug, the output is incomplete !"))
         ast_head.nodes.insert(0, Ast_Comment(""))
         ast_head.nodes.insert(0, Ast_Comment(""))
+        return ast, False
 
-    return ast
+    return ast, True

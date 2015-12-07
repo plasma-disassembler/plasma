@@ -96,14 +96,9 @@ class Graph:
         return inst.address in self.nodes
 
 
-    def graph_init(self, ctx):
-        self.__simplify()
-        self.__loop_detection(ctx, self.entry_point_addr)
-
-
     # Concat instructions in single block
     # jumps are in separated blocks
-    def __simplify(self):
+    def simplify(self):
         nodes = list(self.nodes.keys())
         start = time()
 
@@ -780,16 +775,30 @@ class Graph:
                 rec_remove(k)
 
 
-    def __loop_detection(self, ctx, entry):
+    def loop_detection(self, ctx, entry, bypass_false_search=False):
         start = time()
+
+        # Equivalent loops at a same deep in the loops dependencies tree
+        self.deep_equiv = set()
+        # For one loop : contains all address of the loop only
+        self.loops_set = {}
+        # For one loop : contains all address of the loop and sub-loops
+        self.loops_all = {}
+        # Loop dependencies
+        self.deps = {}
+        self.rev_deps = {}
+        # Loops marked as "False"
+        self.false_loops = set()
 
         self.__explore(entry, set(), set(), {}, None, set())
 
         self.roots = self.loops_set.keys() - self.rev_deps.keys()
 
         self.__prune_loops()
-        self.__search_false_loops()
-        self.__search_same_deep_equiv_loops()
+
+        if not bypass_false_search:
+            self.__search_false_loops()
+            self.__search_same_deep_equiv_loops()
 
         self.__update_loops()
 
@@ -798,6 +807,7 @@ class Graph:
         for l in self.loops_set.items():
             in_loop.update(l[1])
 
+        # Rest of all address which are not in a loop
         self.not_in_loop = self.nodes.keys() - in_loop
 
         # Search inifinite loops
@@ -807,10 +817,13 @@ class Graph:
                 self.infinite_loop.add(l_curr_loop)
 
         # Save first address of loops
+        self.loops_start = set()
         for _, l_start in self.loops_all:
             self.loops_start.add(l_start)
 
-        # search last node which force to looping
+        # For each loop we search the last node that if we enter in it,
+        # we are sure to return to the loop.
+        self.last_loop_node = {}
         for (l_prev_loop, l_start), l_set in self.loops_all.items():
             self.last_loop_node[(l_prev_loop, l_start)] = set()
             self.__search_last_loop_node(set(), l_prev_loop, l_start, l_set)

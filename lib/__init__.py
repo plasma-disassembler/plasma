@@ -23,7 +23,7 @@ import json
 from argparse import ArgumentParser
 
 from lib.disassembler import Disassembler, Jmptable
-from lib.utils import die, error, warning, info
+from lib.utils import die, error, warning, info, debug__
 from lib.generate_ast import generate_ast
 from lib.vim import generate_vim_syntax
 from lib.context import Context
@@ -253,21 +253,26 @@ def disasm(ctx):
     if ctx.gph == None:
         error("capstone can't disassemble here")
         return None
-    ctx.gph.graph_init(ctx)
+    ctx.gph.simplify()
 
     if ctx.db is not None and pe_nb_new_syms:
         ctx.db_modified = True
     
-    if ctx.graph:
-        ctx.gph.dot_graph(ctx.dis.jmptables)
-
     try:
-        ast = generate_ast(ctx)
+        ctx.gph.loop_detection(ctx, ctx.entry_addr)
+        ast, correctly_ended = generate_ast(ctx)
+        if not correctly_ended:
+            debug__("Second try...")
+            ctx.gph.loop_detection(ctx, ctx.entry_addr, True)
+            ast, _ = generate_ast(ctx)
     except ExcIfelse as e:
         error("can't have a ifelse here     %x" % e.addr)
         if ctx.interactive:
             return None
         die()
+
+    if ctx.graph:
+        ctx.gph.dot_graph(ctx.dis.jmptables)
 
     if ctx.vim:
         base = os.path.basename(ctx.filename) + "_" + ctx.entry
