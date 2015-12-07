@@ -1,0 +1,63 @@
+function main (.text) {
+    int32_t var1
+    int32_t var2
+    0x400506: push rbp
+    0x400507: rbp = rsp # mov rbp, rsp
+    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x40050e: edi = 0x400614 "1" # mov edi, 0x400614
+    0x400513: call puts@plt
+    0x400518: jmp 0x400541
+    loop {
+        loop_0x400541:
+        # 0x400541: cmp dword ptr [rbp - 4], 0x13
+        # 0x400545: jle 0x40051a
+        if (var1 > 19) {
+            0x400547: edi = 0x40061a "4" # mov edi, 0x40061a
+            0x40054c: call puts@plt
+            0x400551: jmp 0x40057a
+            loop {
+                loop_0x40057a:
+                # 0x40057a: cmp dword ptr [rbp - 8], 0x1d
+                # 0x40057e: jle 0x400553
+                if (var2 > 29)  goto ret_0x400580
+                0x400553: edi = 0x40061c "5" # mov edi, 0x40061c
+                0x400558: call puts@plt
+                # 0x40055d: cmp dword ptr [rbp - 8], 0x14
+                # 0x400561: jne 0x400570
+                if (var2 == 20) {
+                    0x400563: jmp 0x400566
+                }
+                loop {
+                    loop_0x400570:
+                    # 0x400570: cmp dword ptr [rbp - 8], 0x19
+                    # 0x400574: je 0x40052c
+                    if (var2 != 25)  goto 0x400576
+                    0x40052c: nop
+                    0x40052d: edi = 0x400618 "3" # mov edi, 0x400618
+                    0x400532: call puts@plt
+                    # 0x400537: cmp dword ptr [rbp - 4], 0xf
+                    # 0x40053b: je 0x400565
+                    if (var1 != 15)  goto 0x40053d
+                    0x400565: nop
+                    0x400566: edi = 0x40061e "6" # mov edi, 0x40061e
+                    0x40056b: call puts@plt
+                }
+                0x400576: var2 += 1 # add dword ptr [rbp - 8], 1
+            }
+            0x40053d: var1 += 1 # add dword ptr [rbp - 4], 1
+            goto loop_0x400541
+        }
+        0x40051a: edi = 0x400616 "2" # mov edi, 0x400616
+        0x40051f: call puts@plt
+        # 0x400524: cmp dword ptr [rbp - 4], 0xa
+        # 0x400528: jne 0x400537
+        if (var1 == 10) {
+            0x40052a: jmp 0x40052d
+        }
+        goto 0x400537
+    }
+    ret_0x400580:
+    0x400580: eax = 0 # mov eax, 0
+    0x400585: leave
+    0x400586: ret
+}

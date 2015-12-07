@@ -68,6 +68,8 @@ class Graph:
         # we are sure to return to the loop.
         self.last_loop_node = {}
 
+        self.all_deep_equiv = set()
+
 
     # A jump is normally alone in a block, but for some architectures
     # we save the prefetched instruction after.
@@ -155,6 +157,9 @@ class Graph:
 
             if k in self.false_loops:
                 output.write(' fillcolor="#B6FFDD"')
+
+            if k in self.all_deep_equiv:
+                output.write(' color="#ff0000"')
 
             output.write('];\n')
 
@@ -573,6 +578,80 @@ class Graph:
                     self.__rec_mark_sub_false((prev1, start1))
 
 
+    def __search_same_deep_equiv_loops(self):
+        #
+        # Search equivalent loops at the same deep, but compare with
+        # 'loops_all' -> each item contains all sub-loops instead of
+        # 'loops_set' wich contains only the loop.
+        #
+        # example:
+        #
+        #      loop1
+        #     /     \
+        #  loop2   loop3
+        #
+        # If loops_all[loop2] == loops_all[loop3], and if loop2 or loop3 is
+        # in false_loops, we removed these loops.
+        #
+
+        def do_add(k1, k2):
+            nonlocal idx_count, set_index, deep_equiv
+            l1 = self.loops_all[k1]
+            l2 = self.loops_all[k2]
+            if l1 == l2:
+                if k1 in set_index:
+                    i = set_index[k1]
+                    deep_equiv[i].add(k2)
+                    self.all_deep_equiv.add(k2)
+                    set_index[k2] = i
+                elif k2 in set_index:
+                    i = set_index[k2]
+                    deep_equiv[i].add(k1)
+                    self.all_deep_equiv.add(k1)
+                    set_index[k1] = i
+                else:
+                    i = idx_count
+                    idx_count += 1
+                    deep_equiv[i] = {k1, k2}
+                    set_index[k1] = i
+                    set_index[k2] = i
+                    self.all_deep_equiv.add(k1)
+                    self.all_deep_equiv.add(k2)
+
+        set_index = {}
+        deep_equiv = {}
+        idx_count = 0
+
+        for k in self.deps:
+            for k1, k2 in self.__yield_cmp_loops(self.deps[k], False):
+                do_add(k1, k2)
+
+        for k1, k2 in self.__yield_cmp_loops(self.roots, False):
+            do_add(k1, k2)
+
+        if not deep_equiv:
+            return
+
+        last_length = 0
+        while last_length != len(self.false_loops):
+            last_length = len(self.false_loops)
+
+            for i, keys in deep_equiv.items():
+                nb_false = 0
+                for k in keys:
+                    if k in self.false_loops:
+                        nb_false += 1
+
+                if nb_false > 0:
+                    for k in set(keys):
+                        if k in self.false_loops:
+                            continue
+                        subs = self.deps[k]
+                        if len(subs) == 0 or self.all_false(subs):
+                            keys.remove(k)
+                            self.__rec_mark_parent_false(k)
+
+
     def __prune_loops(self):
         def set_paths(k, p):
             nonlocal deps, loop_paths
@@ -697,7 +776,7 @@ class Graph:
                 if sub in self.false_loops:
                     rec_remove(sub)
         for k in self.false_loops:
-            if k not in self.rev_deps:
+            if k not in self.rev_deps or k in self.all_deep_equiv:
                 rec_remove(k)
 
 
@@ -710,6 +789,8 @@ class Graph:
 
         self.__prune_loops()
         self.__search_false_loops()
+        self.__search_same_deep_equiv_loops()
+
         self.__update_loops()
 
         # Compute all address which are not in a loop
