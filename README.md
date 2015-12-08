@@ -20,6 +20,7 @@ of the repository `simonzack/pefile-py3k`.
     capstone + python bindings (see requirements.sh)
     python-pyelftools
     https://github.com/mlaferrera/python3-pefile
+    python-msgpack
     terminal with 256 colors (if not use the option `--nocolor`)
 
 For Python binding of [Capstone engine](http://www.capstone-engine.org), you 

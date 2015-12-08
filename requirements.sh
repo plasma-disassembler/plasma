@@ -45,3 +45,6 @@ cd ..
 
 # ELF
 sudo -H pip3 install pyelftools
+
+# Msgpack
+sudo -H pip3 install msgpack-python

@@ -364,8 +364,6 @@ class Interactive():
             ),
         }
 
-        self.ctx.db_modified = False
-
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
 
@@ -379,7 +377,7 @@ class Interactive():
 
         while 1:
             rl.loop()
-            if not self.ctx.db_modified:
+            if self.ctx.db is None or not self.ctx.db.modified:
                 break
             print("the database was modified, run save or exit to force")
 
@@ -583,7 +581,7 @@ class Interactive():
         self.ctx.filename = args[1]
         load_file(self.ctx)
         if self.ctx.db is not None:
-            self.rl.history = self.ctx.db["history"]
+            self.rl.history = self.ctx.db.history
 
 
     def __exec_lrawx86(self, args):
@@ -684,7 +682,7 @@ class Interactive():
         # Save new symbol
         try:
             addr = int(args[2], 16)
-            self.ctx.db_modified = True
+            self.ctx.db.modified = True
             self.ctx.dis.add_symbol(addr, args[1])
         except:
             error("there was an error when creating a symbol")
@@ -817,28 +815,9 @@ class Interactive():
         if self.ctx.dis is None:
             error("load a file before")
             return
-
-        fd = open(self.ctx.db_path, "w+")
-        db = {
-            "symbols": self.ctx.dis.binary.symbols,
-            "history": self.rl.history,
-            "inline_comments": self.ctx.dis.inline_comments,
-            "previous_comments": self.ctx.dis.previous_comments,
-            "jmptables": [],
-            "mips_gp": self.ctx.dis.mips_gp,
-        }
-        for j in self.ctx.dis.jmptables.values():
-            o = {
-                "inst_addr": j.inst_addr,
-                "table_addr": j.table_addr,
-                "table": j.table,
-                "name": j.name,
-            }
-            db["jmptables"].append(o)
-        fd.write(json.dumps(db))
-        fd.close()
-        print("database saved to", self.ctx.db_path)
-        self.ctx.db_modified = False
+        self.ctx.db.save(self.rl.history)
+        print("database saved to", self.ctx.db.path)
+        self.ctx.db.modified = False
 
 
     def __exec_jmptable(self, args):
@@ -858,7 +837,7 @@ class Interactive():
             error("error the entry size should be in [2, 4, 8]")
             return
 
-        self.ctx.db_modified = True
+        self.ctx.db.modified = True
         self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
 
 
@@ -876,4 +855,4 @@ class Interactive():
         except:
             error("bad address")
 
-        self.ctx.db_modified = True
+        self.ctx.db.modified = True

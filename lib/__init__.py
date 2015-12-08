@@ -22,6 +22,7 @@ import os
 import json
 from argparse import ArgumentParser
 
+from lib.database import Database
 from lib.disassembler import Disassembler, Jmptable
 from lib.utils import die, error, warning, info, debug__
 from lib.generate_ast import generate_ast
@@ -123,64 +124,13 @@ def load_file(ctx):
            return False
         die()
 
-    dirname = os.path.dirname(ctx.filename)
-    db_path = dirname + "/" if dirname != "" else ""
-    db_path +=  "." + os.path.basename(ctx.filename) + ".db"
-    db_exists = os.path.exists(db_path)
-    ctx.db_path = db_path
-
-    jmptables = {}
-    inline_comments = {}
-    previous_comments = {}
-    sym = {}
-    rev_sym = {}
-    mips_gp = -1
-
-    # Open the database
-    if db_exists:
-        info("open database %s" % db_path)
-        fd = open(db_path, "r")
-        db = json.loads(fd.read())
-        ctx.db = db
-
-        # Saved symbols
-        sym = db["symbols"]
-        for name, addr in db["symbols"].items():
-            rev_sym[addr] = name
-
-        try:
-            # Saved comments
-            for ad, comm in db["inline_comments"].items():
-                inline_comments[int(ad)] = comm
-            for ad, comm in db["previous_comments"].items():
-                previous_comments[int(ad)] = comm
-
-            # Saved jmptables
-            for j in db["jmptables"]:
-                jmptables[j["inst_addr"]] = \
-                    Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
-
-        try:
-            mips_gp = db["mips_gp"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
-
-        fd.close()
+    ctx.db = Database()
+    ctx.db.load(ctx.filename)
 
     try:
         dis = Disassembler(ctx.filename, ctx.raw_type,
                            ctx.raw_base, ctx.raw_big_endian,
-                           sym, rev_sym,
-                           jmptables, inline_comments,
-                           previous_comments,
-                           load_symbols=not db_exists,
-                           mips_gp=mips_gp)
+                           ctx.db)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
         if ctx.interactive:
@@ -250,13 +200,14 @@ def init_entry_addr(ctx):
 
 def disasm(ctx):
     ctx.gph, pe_nb_new_syms = ctx.dis.get_graph(ctx.entry_addr)
+
     if ctx.gph == None:
         error("capstone can't disassemble here")
         return None
     ctx.gph.simplify()
 
-    if ctx.db is not None and pe_nb_new_syms:
-        ctx.db_modified = True
+    if ctx.db.loaded and pe_nb_new_syms:
+        ctx.db.modified = True
     
     try:
         ctx.gph.loop_detection(ctx, ctx.entry_addr)

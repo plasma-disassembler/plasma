@@ -58,9 +58,7 @@ class Context():
         self.gph = None
         self.libarch = None
         self.raw_type = None
-        self.db_path = None
         self.db = None
-        self.db_modified = False
         self.reset_vars()
 
 

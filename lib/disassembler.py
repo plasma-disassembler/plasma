@@ -37,29 +37,30 @@ class Jmptable():
 
 
 class Disassembler():
-    def __init__(self, filename, raw_type, raw_base,
-                 raw_big_endian, sym, rev_sym,
-                 jmptables, inline_comments,
-                 previous_comments, load_symbols=True,
-                 mips_gp=-1):
+    def __init__(self, filename, raw_type, raw_base, raw_big_endian, database):
         import capstone as CAPSTONE
 
         self.code = {}
         self.binary = Binary(filename, raw_type, raw_base, raw_big_endian)
-
-        # TODO: is it a global constant or $gp can change during the execution ?
-        self.mips_gp = mips_gp
 
         arch, mode = self.binary.get_arch()
 
         if arch is None or mode is None:
             raise ExcArch(self.binary.get_arch_string())
 
-        if load_symbols:
-            self.binary.load_symbols()
+        if database.loaded:
+            self.binary.symbols = database.symbols
+            self.binary.reverse_symbols = database.reverse_symbols
         else:
-            self.binary.symbols = sym
-            self.binary.reverse_symbols = rev_sym
+            self.binary.load_symbols()
+            database.symbols = self.binary.symbols
+            database.reverse_symbols = self.binary.reverse_symbols
+
+        self.jmptables = database.jmptables
+        self.inline_comments = database.inline_comments
+        self.previous_comments = database.previous_comments
+        # TODO: is it a global constant or $gp can change during the execution ?
+        self.mips_gp = database.mips_gp
 
         self.binary.load_section_names()
 
@@ -68,9 +69,6 @@ class Disassembler():
         self.md.detail = True
         self.arch = arch
         self.mode = mode
-        self.jmptables = jmptables
-        self.inline_comments = inline_comments
-        self.previous_comments = previous_comments
 
 
     def get_unpack_str(self, size_word):

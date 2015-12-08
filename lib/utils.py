@@ -104,7 +104,6 @@ def die(txt=None):
     sys.exit(1)
 
 
-
 # Debug functions
 
 def print_set(s, end="\n"):
