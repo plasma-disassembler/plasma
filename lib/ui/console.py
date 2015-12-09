@@ -539,7 +539,9 @@ class Console():
             self.ctx.entry = args[1]
         self.ctx.reset_vars()
         if init_entry_addr(self.ctx):
+            self.ctx.dump = True
             self.ctx.dis.dump_asm(self.ctx, lines).print()
+            self.ctx.dump = False
             self.ctx.entry = None
             self.ctx.entry_addr = 0
 

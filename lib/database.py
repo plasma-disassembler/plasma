@@ -46,8 +46,10 @@ class Database():
         self.history = []
         self.symbols = {}
         self.reverse_symbols = {}
-        self.inline_comments = {}
-        self.previous_comments = {}
+        self.user_inline_comments = {}
+        self.internal_inline_comments = {}
+        self.user_previous_comments = {}
+        self.internal_previous_comments = {}
         self.jmptables = {}
         self.mips_gp = -1
         self.modified = False
@@ -87,8 +89,10 @@ class Database():
         data = {
             "symbols": self.symbols,
             "history": history,
-            "inline_comments": self.inline_comments,
-            "previous_comments": self.previous_comments,
+            "user_inline_comments": self.user_inline_comments,
+            "internal_inline_comments": self.internal_inline_comments,
+            "user_previous_comments": self.user_previous_comments,
+            "internal_previous_comments": self.internal_previous_comments,
             "jmptables": [],
             "mips_gp": self.mips_gp,
         }
@@ -114,16 +118,10 @@ class Database():
 
 
     def __load_comments(self, data):
-        try:
-            for ad, comm in data["inline_comments"].items():
-                self.inline_comments[int(ad)] = comm
-            for ad, comm in data["previous_comments"].items():
-                self.previous_comments[int(ad)] = comm
-
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        self.user_inline_comments = data["user_inline_comments"]
+        self.internal_inline_comments = data["internal_inline_comments"]
+        self.user_previous_comments = data["user_previous_comments"]
+        self.internal_previous_comments = data["internal_previous_comments"]
 
 
     def __load_jmptables(self, data):
@@ -160,5 +158,17 @@ class Database():
             fd = open(self.path, "r")
             data = json.loads(fd.read())
             fd.close()
+
+            try:
+                data["user_inline_comments"] = data["inline_comments"]
+                data["user_previous_comments"] = data["previous_comments"]
+                del data["inline_comments"]
+                del data["previous_comments"]
+            except:
+                data["user_inline_comments"] = {}
+                data["user_previous_comments"] = {}
+
+            data["internal_inline_comments"] = {}
+            data["internal_previous_comments"] = {}
             return data
         return None

@@ -57,8 +57,10 @@ class Disassembler():
             database.reverse_symbols = self.binary.reverse_symbols
 
         self.jmptables = database.jmptables
-        self.inline_comments = database.inline_comments
-        self.previous_comments = database.previous_comments
+        self.user_inline_comments = database.user_inline_comments
+        self.internal_inline_comments = database.internal_inline_comments
+        self.user_previous_comments = database.user_previous_comments
+        self.internal_previous_comments = database.internal_previous_comments
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
@@ -206,18 +208,15 @@ class Disassembler():
         ad = ctx.entry_addr
         l = 0
 
-        if ad in self.binary.reverse_symbols:
-            o._symbol(ad)
-            o._new_line()
-
         while l < lines and ad <= s.end:
             i = self.lazy_disasm(ad, s.start)
             if i is None:
-                ad += 1
                 o._bad(ad)
+                ad += 1
             else:
                 o._asm_inst(i)
                 ad += i.size
+
             l += 1
 
         # empty line
@@ -498,7 +497,7 @@ class Disassembler():
         table = self.read_array(table_addr, nb_entries, entry_size)
         self.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
 
-        self.inline_comments[inst_addr] = "switch statement %s" % name
+        self.internal_inline_comments[inst_addr] = "switch statement %s" % name
 
         all_cases = {}
         for ad in table:
@@ -510,7 +509,7 @@ class Disassembler():
             case += 1
 
         for ad in all_cases:
-            self.previous_comments[ad] = \
+            self.internal_previous_comments[ad] = \
                 ["case %s  %s" % (
                     ", ".join(map(str, all_cases[ad])),
                     name

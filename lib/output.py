@@ -126,6 +126,11 @@ class OutputAbs():
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
+    def _user_comment(self, string):
+        self.token_lines[-1].append((string, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
+
     def _retcall(self, string):
         self.token_lines[-1].append((string, COLOR_RETCALL.val, COLOR_RETCALL.bold))
         self.lines[-1].append(string)
@@ -176,11 +181,18 @@ class OutputAbs():
 
 
     def _previous_comment(self, i, tab):
-        if i.address in self.ctx.dis.previous_comments:
-            for comm in self.ctx.dis.previous_comments[i.address]:
+        if i.address in self.ctx.dis.internal_previous_comments:
+            if self.ctx.dump:
+                self._new_line()
+            for comm in self.ctx.dis.internal_previous_comments[i.address]:
                 self._tabs(tab)
-                self.inst_end_here()
                 self._internal_comment("; %s" % comm)
+                self._new_line()
+
+        if i.address in self.ctx.dis.user_previous_comments:
+            for comm in self.ctx.dis.user_previous_comments[i.address]:
+                self._tabs(tab)
+                self._user_comment("; %s" % comm)
                 self._new_line()
 
 
@@ -204,10 +216,14 @@ class OutputAbs():
 
     def _inline_comment(self, i):
         self.inst_end_here()
-        if i.address in self.ctx.dis.inline_comments:
+        if i.address in self.ctx.dis.user_inline_comments:
+            self._add(" ")
+            self._user_comment("; %s" %
+                    self.ctx.dis.user_inline_comments[i.address])
+        if i.address in self.ctx.dis.internal_inline_comments:
             self._add(" ")
             self._internal_comment("; %s" %
-                    self.ctx.dis.inline_comments[i.address])
+                    self.ctx.dis.internal_inline_comments[i.address])
 
 
     def _comment_orig_inst(self, i, modified):
@@ -270,6 +286,10 @@ class OutputAbs():
         self._add("(bad)")
         self._new_line()
 
+
+    def _comment_dash(self):
+        self._user_comment("; ---------------------------------------------")
+        self._new_line()
 
     #
     # Print an immediate value

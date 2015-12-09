@@ -29,14 +29,14 @@ class Visual():
     MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
     MOUSE_INTERVAL = 200
 
-    def __init__(self, interactive, disassembler, output):
+    def __init__(self, console, disassembler, output):
         self.win_y = 0
         self.cursor_y = 0
         self.cursor_x = 0
         self.output = output
         self.token_lines = output.token_lines
         self.dis = disassembler
-        self.interact = interactive
+        self.console = console
         self.search = None
 
         self.stack = []
@@ -86,8 +86,8 @@ class Visual():
             b"\x05": self.inline_k_end, # ctrl-e
         }
 
-        saved_quiet = self.interact.ctx.quiet
-        self.interact.ctx.quiet = True
+        saved_quiet = self.console.ctx.quiet
+        self.console.ctx.quiet = True
 
         self.screen = curses.initscr()
 
@@ -108,10 +108,10 @@ class Visual():
         curses.echo()
         curses.endwin()
 
-        self.interact.ctx.quiet = saved_quiet
+        self.console.ctx.quiet = saved_quiet
 
         if self.stack:
-            print("last address seen 0x%x" % self.interact.ctx.entry_addr)
+            print("last address seen 0x%x" % self.console.ctx.entry_addr)
 
 
     def read_escape_keys(self):
@@ -188,9 +188,9 @@ class Visual():
 
 
     def exec_disasm(self, addr):
-        self.interact.ctx.reset_vars()
-        self.interact.ctx.entry_addr = addr
-        o = disasm(self.interact.ctx)
+        self.console.ctx.reset_vars()
+        self.console.ctx.entry_addr = addr
+        o = disasm(self.console.ctx)
         if self.output is not None:
             self.output = o
             self.token_lines = o.token_lines
@@ -245,7 +245,7 @@ class Visual():
         if line not in self.output.line_addr:
             return True
 
-        self.interact.database_modified = True
+        self.console.ctx.db.modified = True
 
         addr = self.output.line_addr[line]
 
@@ -269,10 +269,10 @@ class Visual():
         self.comm = []
         screen = self.screen
         y = self.cursor_y
-        col_intern = color_pair(COLOR_INTERN_COMMENT.val) | A_UNDERLINE
+        col_intern = color_pair(COLOR_USER_COMMENT.val) | A_UNDERLINE
 
-        if addr in self.dis.inline_comments:
-            self.comm = list(self.dis.inline_comments[addr])
+        if addr in self.dis.user_inline_comments:
+            self.comm = list(self.dis.user_inline_comments[addr])
 
         self.cursor_x = xbegin + 3
         i = 0 # index in the string comment
@@ -755,7 +755,7 @@ class Visual():
 
         xbegin, idx_token = self.output.index_end_inst[line]
 
-        if addr in self.dis.inline_comments:
+        if addr in self.dis.user_inline_comments:
             is_new_comment = False
             # Extract the comment which starts by #
             instr_comm = lines[line][xbegin + 3 + len(self.comm) + 1:]
@@ -765,7 +765,7 @@ class Visual():
 
         if not self.comm:
             if not is_new_comment:
-                del self.dis.inline_comments[addr]
+                del self.dis.user_inline_comments[addr]
 
                 lines[line] = "".join([
                     lines[line][:xbegin],
@@ -777,7 +777,7 @@ class Visual():
                 del self.token_lines[line][idx_token]
         else:
             self.comm = "".join(self.comm)
-            self.dis.inline_comments[addr] = self.comm
+            self.dis.user_inline_comments[addr] = self.comm
 
             if is_new_comment:
                 # Space token
@@ -786,14 +786,14 @@ class Visual():
 
                 # Insert the new token
                 self.token_lines[line].insert(idx_token + 1,
-                        ("; " + self.comm, COLOR_INTERN_COMMENT.val, False))
+                        ("; " + self.comm, COLOR_USER_COMMENT.val, False))
 
                 self.output.index_end_inst[line] = \
                         (xbegin, idx_token)
             else:
                 # Plus 1 for the space token
                 self.token_lines[line][idx_token + 1] = \
-                        ("; " + self.comm, COLOR_INTERN_COMMENT.val, False)
+                        ("; " + self.comm, COLOR_USER_COMMENT.val, False)
 
             lines[line] = "".join([
                 lines[line][:xbegin],
