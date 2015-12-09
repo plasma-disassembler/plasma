@@ -26,9 +26,9 @@ import code
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
 from lib.utils import error, print_no_end
-from lib.readline import ReadLine
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
-from lib.visual import Visual
+from lib.ui.readline import ReadLine
+from lib.ui.visualdecompile import Visual
 
 
 class Command():
@@ -39,7 +39,7 @@ class Command():
         self.desc = desc
 
 
-class Interactive():
+class Console():
     COMMANDS = None
     TAB = "      "
     MAX_PRINT_COMPLETE = 80

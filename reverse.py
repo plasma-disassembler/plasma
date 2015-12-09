@@ -25,8 +25,8 @@ import lib.colors
 if __name__ == '__main__':
     ctx = parse_args()
 
-    if ctx.interactive:
-        from lib.interactive import Interactive
-        i = Interactive(ctx)
+    if ctx.interactive_mode:
+        from lib.ui.console import Console
+        i = Console(ctx)
     elif ctx.filename is not None:
         reverse(ctx)

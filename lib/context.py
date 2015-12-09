@@ -43,7 +43,7 @@ class Context():
         self.vim = False
         self.lines = 30
         self.graph = False # Print graph != gph -> object
-        self.interactive = False
+        self.interactive_mode = False
         self.debug = False
         self.raw_base = 0
         self.raw_big_endian = False

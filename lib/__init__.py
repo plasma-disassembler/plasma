@@ -26,7 +26,7 @@ from lib.database import Database
 from lib.disassembler import Disassembler, Jmptable
 from lib.utils import die, error, warning, info, debug__
 from lib.generate_ast import generate_ast
-from lib.vim import generate_vim_syntax
+from lib.ui.vim import generate_vim_syntax
 from lib.context import Context
 from lib.exceptions import (ExcSymNotFound, ExcArch, ExcFileFormat,
        ExcIfelse, ExcPEFail)
@@ -92,7 +92,7 @@ def parse_args():
     ctx.entry           = args.entry
     ctx.dump            = args.dump
     ctx.vim             = args.vim
-    ctx.interactive     = args.interactive
+    ctx.interactive_mode = args.interactive
     ctx.lines           = args.lines
     ctx.graph           = args.graph
     ctx.raw_big_endian  = args.rawbe
@@ -114,13 +114,13 @@ def parse_args():
 def load_file(ctx):
     if not os.path.exists(ctx.filename):
         error("file {ctx.filename} doesn't exist".format(ctx=ctx))
-        if ctx.interactive:
+        if ctx.interactive_mode:
            return False
         die()
 
     if not os.path.isfile(ctx.filename):
         error("this is not a file".format(ctx=ctx))
-        if ctx.interactive:
+        if ctx.interactive_mode:
            return False
         die()
 
@@ -133,19 +133,19 @@ def load_file(ctx):
                            ctx.db)
     except ExcArch as e:
         error("arch %s is not supported" % e.arch)
-        if ctx.interactive:
+        if ctx.interactive_mode:
             return False
         die()
     except ExcFileFormat:
         error("the file is not PE or ELF binary")
-        if ctx.interactive:
+        if ctx.interactive_mode:
             return False
         die()
     except ExcPEFail as e:
         error(str(e.e))
         error("it seems that there is a random bug in pefile, you shoul retry.")
         error("please report here https://github.com/joelpx/reverse/issues/16")
-        if ctx.interactive:
+        if ctx.interactive_mode:
             return False
         die()
 
@@ -160,7 +160,7 @@ def init_entry_addr(ctx):
         s = ctx.dis.binary.get_section_by_name(ctx.calls_in_section)
         if s is None:
             error("section %s not found" % ctx.calls_in_section)
-            if ctx.interactive:
+            if ctx.interactive_mode:
                 return False
             die()
         entry_addr = s.start
@@ -177,7 +177,7 @@ def init_entry_addr(ctx):
                 ctx.entry = "main"
         except ExcSymNotFound as e:
             error("symbol %s not found" % e.symname)
-            if ctx.interactive:
+            if ctx.interactive_mode:
                 return False
             error("You can see all symbols with -s (if resolution is done).")
             error("Note: --dump need the option -x.")
@@ -186,7 +186,7 @@ def init_entry_addr(ctx):
     s = ctx.dis.binary.get_section(entry_addr)
     if s is None:
         error("the address 0x%x was not found" % entry_addr)
-        if ctx.interactive:
+        if ctx.interactive_mode:
             return False
         die()
 
@@ -218,7 +218,7 @@ def disasm(ctx):
             ast, _ = generate_ast(ctx)
     except ExcIfelse as e:
         error("can't have a ifelse here     %x" % e.addr)
-        if ctx.interactive:
+        if ctx.interactive_mode:
             return None
         die()
 
