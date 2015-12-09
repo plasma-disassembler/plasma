@@ -250,23 +250,23 @@ class Graph:
         return True
 
 
+
+
+
     def path_exists(self, from_addr, to_addr):
         def __rec_path_exists(curr, local_visited):
-            if curr == to_addr:
-                return True
-
-            if curr in local_visited:
-                return False
-
-            local_visited.add(curr)
-
-            if curr not in self.link_out:
-                return False
-
-            for n in self.link_out[curr]:
-                found = __rec_path_exists(n, local_visited)
-                if found:
+            stack = [curr]
+            while stack:
+                curr = stack.pop(-1)
+                if curr == to_addr:
                     return True
+                if curr in local_visited:
+                    continue
+                local_visited.add(curr)
+                if curr not in self.link_out:
+                    continue
+                for n in self.link_out[curr]:
+                    stack.append(n)
             return False
 
         if (from_addr, to_addr) in self.cache_path_exists:
