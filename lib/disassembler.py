@@ -349,6 +349,8 @@ class Disassembler():
             else:
                 invert_match = False
 
+        total = 0
+
         for sy in self.binary.symbols:
             addr = self.binary.symbols[sy]
             if sym_filter is None or \
@@ -361,6 +363,9 @@ class Disassembler():
                     if print_sections and section is not None:
                         print_no_end(" (" + color_section(section.name) + ")")
                     print()
+                    total += 1
+
+        print("Total:", total)
 
 
     def lazy_disasm(self, addr, stay_in_section=-1):
