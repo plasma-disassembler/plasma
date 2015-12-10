@@ -74,11 +74,6 @@ class PE:
             if is_data or is_exec:
                 bisect.insort_left(classbinary._sorted_sections, start)
 
-            if is_data:
-                data = s.get_data()
-            else:
-                data = None
-
             classbinary._abs_sections[start] = SectionAbs(
                     s.Name.decode().rstrip(' \0'),
                     start,
@@ -86,7 +81,7 @@ class PE:
                     s.SizeOfRawData,
                     is_exec,
                     is_data,
-                    data)
+                    s.get_data())
 
 
     def load_section_names(self):

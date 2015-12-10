@@ -40,7 +40,7 @@ class SectionAbs():
         self.end = start + virt_size - 1
         self.is_exec = is_exec
         self.is_data = is_data
-        self.data = data # only for data sections (not code)
+        self.data = data
 
     def print_header(self):
         print_no_end(color_section(self.name.ljust(20)))
@@ -106,6 +106,22 @@ class Binary(object):
         if ad <= s.end:
             return s
         return None
+
+
+    def read(self, ad, size):
+        s = self.get_section(ad)
+        if s is None:
+            return b""
+        off = ad - s.start
+        return s.data[off:off + size]
+
+
+    def read_byte(self, ad):
+        s = self.get_section(ad)
+        if s is None:
+            return b""
+        off = ad - s.start
+        return s.data[off]
 
 
     # not optimized

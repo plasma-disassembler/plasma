@@ -54,7 +54,7 @@ class Raw:
                 len(self.raw),
                 True,
                 False,
-                None)
+                self.raw)
 
 
     def load_section_names(self):

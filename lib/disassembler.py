@@ -86,6 +86,8 @@ class Disassembler():
             unpack_str = endian + "L"
         elif size_word == 8:
             unpack_str = endian + "Q"
+        else:
+            return None
         return unpack_str
 
 
@@ -102,7 +104,9 @@ class Disassembler():
 
     def read_word(self, ad, size_word):
         unpack_str = self.get_unpack_str(size_word)
-        b = self.binary.section_stream_read(ad, size_word)
+        if unpack_str is None:
+            return -1
+        b = self.binary.read(ad, size_word)
         if len(b) != size_word:
             return 0
         return struct.unpack(unpack_str, b)[0]
@@ -116,7 +120,7 @@ class Disassembler():
         l = 0
 
         while l < array_max_size:
-            buf = self.binary.section_stream_read(ad, N)
+            buf = self.binary.read(ad, N)
             if not buf:
                 break
 
@@ -238,7 +242,7 @@ class Disassembler():
         addr_str = -1
 
         while l < lines:
-            buf = self.binary.section_stream_read(addr, N)
+            buf = self.binary.read(addr, N)
             if not buf:
                 break
 
@@ -372,7 +376,7 @@ class Disassembler():
         
         # Disassemble by block of N bytes
         N = 1024
-        d = self.binary.section_stream_read(addr, N)
+        d = self.binary.read(addr, N)
         gen = self.md.disasm(d, addr)
 
         try:
