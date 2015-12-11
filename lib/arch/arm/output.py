@@ -139,7 +139,7 @@ class Output(OutputAbs):
                     section = self.binary.get_section(ad)
 
                     if section is not None:
-                        val = self.ctx.dis.read_word(ad, 4)
+                        val = section.read_int(ad, 4)
                         if val in self.binary.reverse_symbols:
                             self._imm(i, val, 0, True,
                                       section=section, print_data=False,

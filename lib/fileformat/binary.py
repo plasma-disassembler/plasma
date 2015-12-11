@@ -38,9 +38,11 @@ class SectionAbs():
         self.virt_size = virt_size
         self.real_size = real_size
         self.end = start + virt_size - 1
+        self.real_end = start + real_size - 1
         self.is_exec = is_exec
         self.is_data = is_data
         self.data = data
+        self.big_endian = False
 
     def print_header(self):
         print_no_end(color_section(self.name.ljust(20)))
@@ -50,6 +52,64 @@ class SectionAbs():
         print_no_end(hex(self.end))
         print_no_end(" - %d - %d" % (self.virt_size, self.real_size))
         print(" ]")
+
+    def read(self, ad, size):
+        if ad >= self.real_end:
+            return b""
+        off = ad - self.start
+        return self.data[off:off + size]
+
+    def read_int(self, ad, size):
+        if size == 1:
+            return self.read_byte(ad)
+        if size == 2:
+            return self.read_word(ad)
+        if size == 4:
+            return self.read_dword(ad)
+        if size == 8:
+            return self.read_qword(ad)
+        return None
+
+    def read_byte(self, ad):
+        if ad >= self.real_end:
+            return None
+        off = ad - self.start
+        return self.data[off]
+
+    def read_word(self, ad):
+        if ad >= self.real_end:
+            return None
+        off = ad - self.start
+        w = self.data[off:off+2]
+        if len(w) != 2:
+            return None
+        if self.big_endian:
+            return (w[0] << 8) + w[1]
+        return (w[1] << 8) + w[0]
+
+    def read_dword(self, ad):
+        if ad >= self.real_end:
+            return None
+        off = ad - self.start
+        w = self.data[off:off+4]
+        if len(w) != 4:
+            return None
+        if self.big_endian:
+            return (w[0] << 24) + (w[1] << 16) + (w[2] << 8) + w[3]
+        return (w[3] << 24) + (w[2] << 16) + (w[1] << 8) + w[0]
+
+    def read_qword(self, ad):
+        if ad >= self.real_end:
+            return None
+        off = ad - self.start
+        w = self.data[off:off+8]
+        if len(w) != 8:
+            return None
+        if self.big_endian:
+            return (w[0] << 56) + (w[1] << 48) + (w[2] << 40) + (w[3] << 32) + \
+                   (w[4] << 24) + (w[5] << 16) + (w[6] << 8) + w[7]
+        return (w[7] << 56) + (w[6] << 48) + (w[5] << 40) + (w[4] << 32) + \
+               (w[3] << 24) + (w[2] << 16) + (w[1] << 8) + w[0]
 
 
 class Binary(object):
@@ -101,7 +161,18 @@ class Binary(object):
         i = bisect.bisect_right(self._sorted_sections, ad)
         if not i:
             return None
-        start = self._sorted_sections[i-1]
+        start = self._sorted_sections[i - 1]
+        s = self._abs_sections[start]
+        if ad <= s.end:
+            return s
+        return None
+
+
+    def get_next_section(self, ad):
+        i = bisect.bisect_right(self._sorted_sections, ad)
+        if i >= len(self._sorted_sections):
+            return None
+        start = self._sorted_sections[i]
         s = self._abs_sections[start]
         if ad <= s.end:
             return s
@@ -112,16 +183,14 @@ class Binary(object):
         s = self.get_section(ad)
         if s is None:
             return b""
-        off = ad - s.start
-        return s.data[off:off + size]
+        return s.read(ad, size)
 
 
     def read_byte(self, ad):
         s = self.get_section(ad)
-        if s is None:
-            return b""
-        off = ad - s.start
-        return s.data[off]
+        if ad >= s.real_end:
+            return None
+        return s.read_byte(ad)
 
 
     # not optimized
@@ -139,6 +208,7 @@ class Binary(object):
             yield self._abs_sections[ad]
 
 
+    # TODO : move in SectionAbs
     def get_string(self, addr, max_data_size):
         s = self.get_section(addr)
         if s is None:

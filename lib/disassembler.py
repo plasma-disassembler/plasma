@@ -72,6 +72,9 @@ class Disassembler():
         self.arch = arch
         self.mode = mode
 
+        for s in self.binary.iter_sections():
+            s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
+
 
     def get_unpack_str(self, size_word):
         if self.mode & self.capstone.CS_MODE_BIG_ENDIAN:
@@ -102,25 +105,19 @@ class Disassembler():
         return name
 
 
-    def read_word(self, ad, size_word):
-        unpack_str = self.get_unpack_str(size_word)
-        if unpack_str is None:
-            return -1
-        b = self.binary.read(ad, size_word)
-        if len(b) != size_word:
-            return 0
-        return struct.unpack(unpack_str, b)[0]
-
-
-    def read_array(self, ad, array_max_size, size_word):
+    # TODO: create a function in SectionAbs
+    def read_array(self, ad, array_max_size, size_word, s=None):
         unpack_str = self.get_unpack_str(size_word)
         N = size_word * array_max_size
-        s = self.binary.get_section(ad)
+
+        if s is None:
+            s = self.binary.get_section(ad)
+
         array = []
         l = 0
 
         while l < array_max_size:
-            buf = self.binary.read(ad, N)
+            buf = s.read(ad, N)
             if not buf:
                 break
 
@@ -242,7 +239,7 @@ class Disassembler():
         addr_str = -1
 
         while l < lines:
-            buf = self.binary.read(addr, N)
+            buf = s.read(addr, N)
             if not buf:
                 break
 
@@ -292,7 +289,7 @@ class Disassembler():
 
         ad = ctx.entry_addr
 
-        for w in self.read_array(ctx.entry_addr, lines, size_word):
+        for w in self.read_array(ctx.entry_addr, lines, size_word, s):
             if ad in self.binary.reverse_symbols:
                 print(color_symbol(self.binary.reverse_symbols[ad]))
             print_no_end(color_addr(ad))
@@ -381,7 +378,7 @@ class Disassembler():
         
         # Disassemble by block of N bytes
         N = 1024
-        d = self.binary.read(addr, N)
+        d = s.read(addr, N)
         gen = self.md.disasm(d, addr)
 
         try:
