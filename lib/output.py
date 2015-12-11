@@ -74,7 +74,7 @@ class OutputAbs():
         self.curr_index += len(t)
 
     def _symbol(self, addr):
-        s = self.binary.reverse_symbols[addr]
+        s = self.binary.reverse_symbols[addr][0]
         self.token_lines[-1].append((s, COLOR_SYMBOL.val, COLOR_SYMBOL.bold))
         self.lines[-1].append(s)
         self.curr_index += len(s)
@@ -399,7 +399,10 @@ class OutputAbs():
     def _ast(self, entry, ast):
         self._new_line()
         self._keyword("function ")
-        self._add(self.binary.reverse_symbols.get(entry, hex(entry)))
+        if entry in self.binary.reverse_symbols:
+            self._add(self.binary.reverse_symbols[entry][0])
+        else:
+            self._add(hex(entry))
         section = self.binary.get_section(entry)
         if section is not None:
             self._add(" (")

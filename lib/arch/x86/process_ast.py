@@ -26,6 +26,7 @@ from lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
         Ast_AndIf)
 from lib.arch.x86.output import ASSIGNMENT_OPS
 from lib.arch.x86.utils import is_uncond_jump, is_call
+from lib.fileformat.binary import SYM_FUNC
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
@@ -120,7 +121,7 @@ def search_canary_plt(ctx, ast):
     fname = "__stack_chk_fail@plt"
     if fname not in ctx.dis.binary.symbols:
         return
-    faddr = ctx.dis.binary.symbols[fname]
+    faddr = ctx.dis.binary.symbols[fname][0]
     __rec_search_canary_plt(faddr, ctx, ast, [])
 
 

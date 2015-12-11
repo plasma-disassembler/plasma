@@ -25,8 +25,8 @@ from capstone.x86 import (X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM, X86_REG_RIP,
 from ctypes import sizeof
 
 from lib.exceptions import ExcPEFail
-from lib.fileformat.pefile2 import PE2, SymbolEntry
-from lib.fileformat.binary import SectionAbs
+from lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN
+from lib.fileformat.binary import SectionAbs, SYM_UNK, SYM_FUNC
 from lib.utils import warning
 
 try:
@@ -116,8 +116,12 @@ class PE:
 
                 # print("%d   %s" % (sym.scnum, name))
 
-                self.classbinary.reverse_symbols[sym.value + base] = name
-                self.classbinary.symbols[name] = sym.value + base
+                ad = sym.value + base
+
+                ty = SYM_FUNC if sym.type & PE_DT_FCN else SYM_UNK
+                self.classbinary.reverse_symbols[ad] = [name, ty]
+                self.classbinary.symbols[name] = [ad, ty]
+
                 
             if sym.numaux != 0:
                 off += sym.numaux * sizeof(SymbolEntry)
@@ -138,8 +142,9 @@ class PE:
             for imp in entry.imports:
                 if imp.name is None:
                     continue
-                self.classbinary.reverse_symbols[imp.address] = imp.name
-                self.classbinary.symbols[imp.name] = imp.address
+                # TODO: always unk ?
+                self.classbinary.reverse_symbols[imp.address] = [imp.name, SYM_UNK]
+                self.classbinary.symbols[imp.name] = [imp.address, SYM_UNK]
 
 
     def pe_reverse_stripped_symbols(self, dis):
@@ -196,9 +201,10 @@ class PE:
 
             if ptr in self.classbinary.reverse_symbols \
                     and inv(mm.segment) and inv(mm.index):
-                name = "_" + self.classbinary.reverse_symbols[ptr]
-                self.classbinary.reverse_symbols[goto] = name
-                self.classbinary.symbols[name] = goto
+                name = "_" + self.classbinary.reverse_symbols[ptr][0]
+                ty = "_" + self.classbinary.reverse_symbols[ptr][1]
+                self.classbinary.reverse_symbols[goto] = [name, ty]
+                self.classbinary.symbols[name] = [goto, ty]
                 count += 1
 
         return count

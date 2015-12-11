@@ -28,7 +28,8 @@ from lib.colors import color
 from lib.utils import error, print_no_end
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 from lib.ui.readline import ReadLine
-from lib.ui.visualdecompile import Visual
+from lib.ui.visual import Visual, NB_LINES_TO_DISASM
+from lib.fileformat.binary import SYM_FUNC
 
 
 class Command():
@@ -57,6 +58,7 @@ class Console():
             "dq",
             "dump",
             "exit",
+            "functions",
             "help",
             "info",
             "jmptable",
@@ -360,6 +362,16 @@ class Console():
                 [
                 "ADDR",
                 "Set the register $gp to a fixed value."
+                ]
+            ),
+
+            "functions": Command(
+                1,
+                self.__exec_functions,
+                None,
+                [
+                "",
+                "Print the functions list."
                 ]
             ),
         }
@@ -858,3 +870,10 @@ class Console():
             error("bad address")
 
         self.ctx.db.modified = True
+
+
+    def __exec_functions(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        self.ctx.dis.print_symbols(self.ctx.sectionsname, only_func=True)

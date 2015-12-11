@@ -22,7 +22,7 @@ from time import time
 
 from lib.graph import Graph
 from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
-from lib.fileformat.binary import Binary, T_BIN_PE
+from lib.fileformat.binary import Binary, T_BIN_PE, SYM_UNK, SYM_FUNC
 from lib.colors import (pick_color, color_addr, color_symbol,
         color_section, color_string)
 from lib.exceptions import ExcSymNotFound, ExcArch
@@ -99,8 +99,8 @@ class Disassembler():
             last = self.binary.symbols[name]
             del self.binary.reverse_symbols[last]
 
-        self.binary.symbols[name] = addr
-        self.binary.reverse_symbols[addr] = name
+        self.binary.symbols[name] = [addr, SYM_UNK]
+        self.binary.reverse_symbols[addr] = [name, SYM_UNK]
 
         return name
 
@@ -166,6 +166,8 @@ class Disassembler():
                 a = self.binary.symbols.get(s, -1)
                 if a == -1:
                     a = self.binary.section_names.get(s, -1)
+                else:
+                    a = a[0] # it contains [ad, type]
 
             if a != -1:
                 return a
@@ -291,7 +293,7 @@ class Disassembler():
 
         for w in self.read_array(ctx.entry_addr, lines, size_word, s):
             if ad in self.binary.reverse_symbols:
-                print(color_symbol(self.binary.reverse_symbols[ad]))
+                print(color_symbol(self.binary.reverse_symbols[ad][0]))
             print_no_end(color_addr(ad))
             print_no_end("0x%.2x" % w)
 
@@ -303,7 +305,7 @@ class Disassembler():
                 print_no_end(")")
                 if size_word >= 4 and w in self.binary.reverse_symbols:
                     print_no_end(" ")
-                    print_no_end(color_symbol(self.binary.reverse_symbols[w]))
+                    print_no_end(color_symbol(self.binary.reverse_symbols[w][0]))
 
             ad += size_word
             print()
@@ -337,7 +339,7 @@ class Disassembler():
     # sym_filter : search a symbol, non case-sensitive
     #    if it starts with '-', it prints non-matching symbols
     #
-    def print_symbols(self, print_sections, sym_filter=None):
+    def print_symbols(self, print_sections, sym_filter=None, only_func=False):
         if sym_filter is not None:
             sym_filter = sym_filter.lower()
             if sym_filter[0] == "-":
@@ -349,7 +351,9 @@ class Disassembler():
         total = 0
 
         for sy in self.binary.symbols:
-            addr = self.binary.symbols[sy]
+            addr, ty = self.binary.symbols[sy]
+            if only_func and ty != SYM_FUNC:
+                continue
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
                     (not invert_match and sym_filter in sy.lower()):

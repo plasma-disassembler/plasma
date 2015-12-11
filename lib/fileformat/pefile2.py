@@ -23,6 +23,31 @@ from ctypes import (c_char, c_short, c_ubyte, c_uint, c_ushort, sizeof,
         Structure, Union)
 
 
+# http://www.delorie.com/djgpp/doc/coff/symtab.html
+
+# PE Symbol types
+PE_T_NULL = 0b0000
+PE_T_VOID = 0b0001
+PE_T_CHAR = 0b0010
+PE_T_SHORT = 0b0011
+PE_T_INT = 0b0100
+PE_T_LONG = 0b0101
+PE_T_FLOAT = 0b0110
+PE_T_DOUBLE = 0b0111
+PE_T_STRUCT = 0b1000
+PE_T_UNION = 0b1001
+PE_T_ENUM = 0b1010
+PE_T_MOE = 0b1011
+PE_T_UCHAR = 0b1100
+PE_T_USHORT = 0b1101
+PE_T_UINT = 0b1110
+PE_T_ULONG = 0b1111
+PE_T_LNGDBL = 0b10000
+PE_DT_NON = 0b000000
+PE_DT_PTR = 0b010000
+PE_DT_FCN = 0b100000
+PE_DT_ARY = 0b110000
+
 
 class SymAddr(Structure):
     _fields_ = [

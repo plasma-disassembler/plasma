@@ -32,6 +32,7 @@ import json
 
 from lib.disassembler import Jmptable
 from lib.utils import info, error, die
+from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 
 
 VERSION = 1.0
@@ -113,8 +114,9 @@ class Database():
 
     def __load_symbols(self, data):
         self.symbols = data["symbols"]
-        for name, addr in data["symbols"].items():
-            self.reverse_symbols[addr] = name
+        for name, a in self.symbols.items():
+            self.reverse_symbols[a[0]] = [name, a[1]]
+            self.symbols[name] = [a[0], a[1]]
 
 
     def __load_comments(self, data):
@@ -170,5 +172,10 @@ class Database():
 
             data["internal_inline_comments"] = {}
             data["internal_previous_comments"] = {}
+
+            ptr = data["symbols"]
+            for name, ad in ptr.items():
+                ptr[name] = [ad, SYM_UNK]
+
             return data
         return None

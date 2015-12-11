@@ -29,6 +29,9 @@ T_BIN_PE  = 1
 T_BIN_RAW = 2
 T_BIN_UNK = 3
 
+SYM_UNK = 0
+SYM_FUNC = 1
+
 
 class SectionAbs():
     # virt_size: size of the mapped section in memory
@@ -115,8 +118,8 @@ class SectionAbs():
 class Binary(object):
     def __init__(self, filename, raw_type=None, raw_base=None, raw_big_endian=None):
         self.__binary = None
-        self.reverse_symbols = {}
-        self.symbols = {}
+        self.reverse_symbols = {} # ad -> [name, type]
+        self.symbols = {} # name -> [ad, type]
         self.section_names = {}
         self.type = None
 
@@ -202,9 +205,7 @@ class Binary(object):
 
 
     def iter_sections(self):
-        starts = list(self._abs_sections.keys())
-        starts.sort()
-        for ad in starts:
+        for ad in self._sorted_sections:
             yield self._abs_sections[ad]
 
 
