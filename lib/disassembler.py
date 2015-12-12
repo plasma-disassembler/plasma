@@ -255,6 +255,7 @@ class Disassembler():
                     if o.is_symbol(ad):
                         o._symbol(ad)
                         o._new_line()
+                    o.set_line(ad)
                     o._address(ad)
                     o._db(s.read_byte(ad))
                     o._new_line()

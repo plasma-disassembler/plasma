@@ -97,7 +97,6 @@ class OutputAbs():
             self._comment(self.curr_section.name)
             self._add(" ")
 
-        self.set_line(addr)
         s = hex(addr)
         if print_colon:
             s += ": "
@@ -227,6 +226,7 @@ class OutputAbs():
             self._tabs(tab)
             self._comment("# ")
             self._address(i.address)
+        self.set_line(i.address)
         self._bytes(i, True)
         self._comment(self.get_inst_str(i))
         self._inline_comment(i)
@@ -463,6 +463,8 @@ class OutputAbs():
             self._tabs(tab)
             self._symbol(i.address)
             self._new_line()
+
+        self.set_line(i.address)
 
         # debug
         # from lib.utils import BRANCH_NEXT
