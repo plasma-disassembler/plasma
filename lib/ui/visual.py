@@ -201,12 +201,9 @@ class Visual():
 
     # If the address is already in the output, we only move the cursor.
     # Otherwise this address must be disassembled (it returns False).
-    def goto_address(self, ad, h, w):
+    def goto_address(self, ad, h, w, go_home=True):
         if ad in self.output.addr_line:
             self.goto_line(self.output.addr_line[ad], h)
-            # double home moves the cursor at the beginning of the line
-            self.main_k_home(h, w)
-            self.main_k_home(h, w)
             return True
         return False
 
@@ -418,6 +415,7 @@ class Visual():
             else:
                 self.win_y = 0
         else:
+            # TODO: find another way
             for i in range(n):
                 self.dump_update_up(self.win_y, h)
 
@@ -455,6 +453,7 @@ class Visual():
                 else:
                     self.cursor_y = 3
         else:
+            # TODO: find another way
             for i in range(n):
                 self.dump_update_bottom(self.win_y, h)
 
@@ -649,8 +648,13 @@ class Visual():
 
 
     def main_cmd_top(self, h, w):
+        self.stack.append(self.__compute_curr_position())
+        self.saved_stack.clear()
+
         self.cursor_y = 0
         self.win_y = 0
+        self.cursor_x = 0
+
         if self.mode == MODE_DUMP:
             top = self.dis.binary.get_first_addr()
             if self.first_addr != top:
@@ -659,6 +663,11 @@ class Visual():
 
 
     def main_cmd_bottom(self, h, w):
+        self.stack.append(self.__compute_curr_position())
+        self.saved_stack.clear()
+
+        self.cursor_x = 0
+
         if self.mode == MODE_DUMP:
             bottom = self.dis.binary.get_last_addr()
             if self.last_addr != bottom:
@@ -733,116 +742,106 @@ class Visual():
         return True
 
 
+    def __compute_curr_position(self):
+        line = self.win_y + self.cursor_y
+        if self.mode == MODE_DECOMPILE:
+            last = self.console.ctx.entry_addr
+            offset_y = (self.win_y, self.cursor_y)
+        else:
+            # We save only addresses on the stack, so if the cursor is
+            # not on a line with an address, we search the nearest line
+            # and save an offset to the original line.
+            offset_y = 0
+            while line not in self.output.line_addr:
+                line += 1
+                offset_y += 1
+            last = self.output.line_addr[line]
+        return (last, self.cursor_x, self.mode, offset_y)
+
+
     def main_cmd_enter(self, h, w):
         word = self.get_word_under_cursor()
         if word is None:
             return False
 
-        line = self.win_y + self.cursor_y
-        x = self.cursor_x
+        topush = self.__compute_curr_position()
 
         if word.startswith("0x"):
             try:
                 ad = int(word, 16)
-                if self.goto_address(ad, h, w):
-                    self.saved_stack = []
-                    self.stack.append((line, -1, -1, x, True))
-                    return True
             except:
                 return False
 
         elif word in self.console.ctx.labels:
             ad = self.console.ctx.labels[word]
-            if self.goto_address(ad, h, w):
-                self.saved_stack = []
-                self.stack.append((line, -1, -1, x, True))
+
+        else:
+            self.console.ctx.entry = word
+            if not init_entry_addr(self.console.ctx):
+                return False
+            ad = self.console.ctx.entry_addr
+
+        self.cursor_x = 0
+
+        if self.goto_address(ad, h, w):
+            self.saved_stack.clear()
+            self.stack.append(topush)
+            return True
+
+        ret = self.exec_disasm(ad)
+        if ret:
+            self.cursor_y = 0
+            self.win_y = 0
+            self.saved_stack.clear()
+            self.stack.append(topush)
+            self.goto_address(ad, h, w)
+        return ret
+
+
+    def __do_go_back(self, args, h, w):
+        ad, x, mode, offset_y = args
+        self.cursor_x = x
+
+        if mode == MODE_DECOMPILE:
+            self.win_y = offset_y[0]
+            self.cursor_y = offset_y[1]
+            if self.mode == MODE_DECOMPILE and ad == self.console.ctx.entry_addr:
                 return True
 
-        self.console.ctx.entry = word
-        last = self.console.ctx.entry_addr
-        if not init_entry_addr(self.console.ctx):
-            return False
+            self.mode = mode
+            ret = self.exec_disasm(ad)
 
-        ret = self.exec_disasm(self.console.ctx.entry_addr)
-        if ret:
-            self.saved_stack = []
-            self.stack.append((
-                last,
-                self.win_y,
-                self.cursor_y,
-                self.cursor_x,
-                False
-            ))
-            self.win_y = 0
-            self.cursor_y = 0
-            self.cursor_x = 0
+        else:
+            if self.mode == MODE_DUMP and self.goto_address(ad, h, w):
+                if offset_y != 0:
+                    self.scroll_up(h, offset_y, False)
+                return True
+
+            self.mode = mode
+            ret = self.exec_disasm(ad)
+
+            if ret:
+                self.goto_address(ad, h, w)
+                if offset_y != 0:
+                    self.scroll_up(h, offset_y, False)
+
         return ret
 
 
     def main_cmd_escape(self, h, w):
         if not self.stack:
             return False
-
-        value, wy, y, x, is_line = self.stack.pop(-1)
-
-        if is_line:
-            prev_x = self.cursor_x
-            line = self.win_y + self.cursor_y
-            self.goto_line(value, h)
-            self.saved_stack.append((line, -1, -1, prev_x, True))
-            self.cursor_x = x
-            return True
-
-        addr = value
-        last = self.console.ctx.entry_addr
-
-        self.saved_stack.append((
-            last,
-            self.win_y,
-            self.cursor_y,
-            self.cursor_x,
-            False
-        ))
-
-        ret = self.exec_disasm(addr)
-        if ret:
-            self.win_y = wy
-            self.cursor_y = y
-            self.cursor_x = x
-        return ret
+        poped = self.stack.pop(-1)
+        self.saved_stack.append(self.__compute_curr_position())
+        return self.__do_go_back(poped, h, w)
 
 
     def main_cmd_reenter(self, h, w):
         if not self.saved_stack:
             return False
-
-        value, wy, y, x, is_line = self.saved_stack.pop(-1)
-
-        if is_line:
-            line = self.win_y + self.cursor_y
-            prev_x = self.cursor_x
-            self.goto_line(value, h)
-            self.stack.append((line, -1, -1, prev_x, True))
-            self.cursor_x = x
-            return True
-
-        addr = value
-        last = self.console.ctx.entry_addr
-
-        self.stack.append((
-            last,
-            self.win_y,
-            self.cursor_y,
-            self.cursor_x,
-            False
-        ))
-
-        ret = self.exec_disasm(addr)
-        if ret:
-            self.win_y = wy
-            self.cursor_y = y
-            self.cursor_x = x
-        return ret
+        poped = self.saved_stack.pop(-1)
+        self.stack.append(self.__compute_curr_position())
+        return self.__do_go_back(poped, h, w)
 
 
     def main_cmd_highlight_clear(self, h, w):
