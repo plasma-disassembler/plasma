@@ -203,9 +203,12 @@ class Visual():
 
     # If the address is already in the output, we only move the cursor.
     # Otherwise this address must be disassembled (it returns False).
-    def goto_address(self, ad, h, w, go_home=True):
+    def goto_address(self, ad, h, w):
         if ad in self.output.addr_line:
             self.goto_line(self.output.addr_line[ad], h)
+            if self.mode == MODE_DECOMPILE:
+                self.cursor_x = 0
+                self.main_k_home(h, w)
             return True
         return False
 
