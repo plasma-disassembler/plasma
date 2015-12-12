@@ -23,6 +23,7 @@ from time import time
 
 from lib import init_entry_addr, disasm
 from custom_colors import *
+from lib.disassembler import NB_LINES_TO_DISASM
 
 
 MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
@@ -30,8 +31,6 @@ MOUSE_INTERVAL = 200
 
 MODE_DUMP = 1
 MODE_DECOMPILE = 2
-
-NB_LINES_TO_DISASM = 200
 
 
 class Visual():
@@ -41,7 +40,6 @@ class Visual():
         self.cursor_y = 0
         self.cursor_x = 0
         self.output = output
-        self.dump_output = output
         self.token_lines = output.token_lines
         self.dis = disassembler
         self.console = console
@@ -79,6 +77,7 @@ class Visual():
             b"\x0b": self.main_cmd_highlight_clear, # ctrl-k
             b"\n": self.main_cmd_enter,
             b"\x1b": self.main_cmd_escape,
+            b"\t": self.main_cmd_switch_mode,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -103,16 +102,23 @@ class Visual():
 
         self.screen = curses.initscr()
 
+        (h, w) = self.screen.getmaxyx()
+        self.goto_address(self.first_addr, h, w)
+
         curses.noecho()
         curses.cbreak()
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+
         curses.start_color()
         curses.use_default_colors()
 
-        for i in range(0, curses.COLORS):
-            curses.init_pair(i, i, -1)
-
-        curses.init_pair(1, 253, 66) # for the highlight search
+        if console.ctx.color:
+            for i in range(0, curses.COLORS):
+                curses.init_pair(i, i, -1)
+            curses.init_pair(1, 253, 66) # for the highlight search
+        else:
+            for i in range(0, curses.COLORS):
+                curses.init_pair(i, 7, -1) # white
 
         curses.wrapper(self.view_main)
 
@@ -215,11 +221,14 @@ class Visual():
             self.console.ctx.dump = False
 
         elif self.mode == MODE_DECOMPILE:
+            self.console.ctx.dump = False
             o = disasm(self.console.ctx)
 
         if o is not None:
             self.output = o
             self.token_lines = o.token_lines
+            self.last_addr = max(o.addr_line)
+            self.first_addr = min(o.addr_line)
             return True
         return False
 
@@ -396,6 +405,9 @@ class Visual():
             wy = self.win_y - n
             y = self.cursor_y + n
             line = self.win_y + self.cursor_y
+
+            wy = self.dump_update_up(wy, h)
+
             if wy >= 0:
                 self.win_y = wy
                 if y <= h - 3:
@@ -408,6 +420,7 @@ class Visual():
         else:
             for i in range(n):
                 self.dump_update_up(self.win_y, h)
+
                 if self.win_y == 0:
                     if self.cursor_y == 0:
                         break
@@ -457,88 +470,87 @@ class Visual():
 
 
     def dump_update_up(self, wy, h):
-        return
-        if self.mode != MODE_DUMP:
-            return
+        if self.mode != MODE_DUMP or wy > 10:
+            return wy
 
-        if wy <= 10:
-            # Compute NB_LINES_TO_DISASM (approximately) before the first address
-            ad = self.first_addr - 1
-            l = 0
-            while l < 10:
-                # Search the previous instruction
-                found = False
-                for i in range(64):
-                    if ad - i in self.dis.mem.code_addr:
-                        found = True
-                        break
+        if self.first_addr == self.dis.binary.get_first_addr():
+            return wy
 
-                if found:
-                    inst = self.dis.capstone_inst[ad - i]
-                    # `i' bytes + the instruction
-                    l += i - inst.size
+        ad = self.dis.find_addr_before(self.first_addr)
+
+        self.console.ctx.entry_addr = ad
+        self.console.ctx.dump = True
+        o = self.dis.dump_asm(self.console.ctx, until=self.first_addr)
+        self.console.ctx.dump = False
+
+        if o is not None:
+            nb_new_lines = len(o.lines)
+
+            if self.win_y == 0 and self.cursor_y < 3:
+                if nb_new_lines >= 3:
+                    diff = 3 - self.cursor_y
+                    self.cursor_y = 3
+                    wy -= diff
+                    self.win_y -= diff
                 else:
-                    break
-                    ad -= 64
-                    l += 64
+                    self.cursor_y = nb_new_lines
 
-                break
+            if nb_new_lines >= 3:
+                wy += nb_new_lines
+                self.win_y += nb_new_lines
 
-            l = 10
+            # Update line counter on each line
 
-            self.console.ctx.entry_addr = ad
-            self.console.ctx.dump = True
-            o = self.dis.dump_asm(self.console.ctx, l, True)
-            self.console.ctx.dump = False
+            self.output.lines = o.lines + self.output.lines
+            self.output.token_lines = o.token_lines + self.output.token_lines
+            self.first_addr = min(o.addr_line)
 
-            if o is not None:
-                nb_new_lines = o.lines
-                self.output.lines = o.lines + self.output.lines
-                self.output.token_lines = o.token_lines + self.output.lines
-                self.first_addr = min(o.addr_line)
+            for ad, l in self.output.addr_line.items():
+                o.line_addr[nb_new_lines + l] = ad
+                o.index_end_inst[nb_new_lines + l] = self.output.index_end_inst[l]
+                o.addr_line[ad] = nb_new_lines + l
 
-                for l in o.line_addr:
-                    self.output.line_addr[end + l] = o.line_addr[l]
-                    self.output.index_end_inst[end + l] = o.index_end_inst[l]
+            self.output.line_addr.clear()
+            self.output.addr_line.clear()
+            self.output.index_end_inst.clear()
+            self.output.line_addr = o.line_addr
+            self.output.addr_line = o.addr_line
+            self.output.index_end_inst = o.index_end_inst
+            self.token_lines = self.output.token_lines
 
-                for ad, l in self.output.addr_line:
-                    self.output.addr_line[ad] = end + l
-
-                self.output.line_addr.update(o.line_addr)
-                self.output.addr_line.update(o.addr_line)
-                self.output.index_end_inst.update(o.index_end_inst)
+        return wy
 
 
     def dump_update_bottom(self, wy, h):
-        if self.mode != MODE_DUMP:
+        if self.mode != MODE_DUMP or wy < len(self.token_lines) - h - 10:
             return
 
-        if wy >= len(self.token_lines) - h - 10:
-            self.console.ctx.reset_vars()
+        if self.last_addr == self.dis.binary.get_last_addr():
+            return
 
-            # TODO : if we delete capstone_inst when it's too big ??
+        self.console.ctx.reset_vars()
 
-            if self.dis.mem.is_code(self.last_addr):
-                inst = self.dis.capstone_inst[self.last_addr]
-                self.console.ctx.entry_addr = self.last_addr + inst.size
-            else:
-                self.console.ctx.entry_addr = self.last_addr + 1
+        if self.dis.mem.is_code(self.last_addr):
+            inst = self.dis.lazy_disasm(self.last_addr)
+            self.console.ctx.entry_addr = self.last_addr + inst.size
+        else:
+            self.console.ctx.entry_addr = self.last_addr + 1
 
-            self.console.ctx.dump = True
-            o = self.dis.dump_asm(self.console.ctx, NB_LINES_TO_DISASM, True)
-            self.console.ctx.dump = False
+        self.console.ctx.dump = True
+        o = self.dis.dump_asm(self.console.ctx, NB_LINES_TO_DISASM)
+        self.console.ctx.dump = False
 
-            if o is not None:
-                end = len(self.output.lines)
+        if o is not None:
+            nb_new_lines = len(self.output.lines)
 
-                self.output.lines += o.lines
-                self.output.token_lines += o.token_lines
-                self.last_addr = max(o.addr_line)
+            self.output.lines += o.lines
+            self.output.token_lines += o.token_lines
+            self.last_addr = max(o.addr_line)
 
-                for l in o.line_addr:
-                    self.output.line_addr[end + l] = o.line_addr[l]
-                    self.output.addr_line[o.line_addr[l]] = end + l
-                    self.output.index_end_inst[end + l] = o.index_end_inst[l]
+            for l in o.line_addr:
+                self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
+                self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
+                self.output.index_end_inst[nb_new_lines + l] = o.index_end_inst[l]
 
 
     def check_cursor_x(self):
@@ -639,10 +651,22 @@ class Visual():
     def main_cmd_top(self, h, w):
         self.cursor_y = 0
         self.win_y = 0
+        if self.mode == MODE_DUMP:
+            top = self.dis.binary.get_first_addr()
+            if self.first_addr != top:
+                self.exec_disasm(top)
         return True
 
 
     def main_cmd_bottom(self, h, w):
+        if self.mode == MODE_DUMP:
+            bottom = self.dis.binary.get_last_addr()
+            if self.last_addr != bottom:
+                ad = self.dis.find_addr_before(bottom)
+                self.exec_disasm(ad)
+                self.win_y = 0
+                self.cursor_y = 0
+
         if self.win_y >= len(self.token_lines) - h:
             self.cursor_y += len(self.token_lines) - \
                              self.win_y - self.cursor_y - 1
@@ -821,10 +845,39 @@ class Visual():
         return ret
 
 
-
     def main_cmd_highlight_clear(self, h, w):
         self.search = None
         return True
+
+
+    def main_cmd_switch_mode(self, h, w):
+        if self.mode == MODE_DUMP:
+            self.mode = MODE_DECOMPILE
+        else:
+            self.mode = MODE_DUMP
+
+        # This is for moving the cursor at the same address
+        l = self.win_y + self.cursor_y
+        while l not in self.output.line_addr and l > 0:
+            l -= 1
+        if l == 0:
+            ad = self.first_addr
+        else:
+            ad = self.output.line_addr[l]
+
+        ret = self.exec_disasm(ad)
+
+        if ret:
+            self.cursor_x = 0
+
+            if self.mode == MODE_DUMP:
+                self.goto_address(ad, h, w)
+            else:
+                self.win_y = 0
+                self.cursor_y = 0
+
+        return ret
+
 
 
     # Inline comment editor : keys mapping

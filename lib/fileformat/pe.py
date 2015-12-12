@@ -147,7 +147,7 @@ class PE:
                 self.classbinary.symbols[imp.name] = [imp.address, SYM_UNK]
 
 
-    def pe_reverse_stripped_symbols(self, dis):
+    def pe_reverse_stripped_symbols(self, dis, addr_to_analyze):
         def inv(n):
             return n == X86_OP_INVALID
 
@@ -165,11 +165,12 @@ class PE:
         # Search in the code every call which point to a "jmp SYMBOL"
 
         ARCH_UTILS = dis.load_arch_module().utils
-        k = list(dis.code.keys())
         count = 0
 
-        for ad in k:
-            i = dis.code[ad]
+        for ad in addr_to_analyze:
+            i = dis.lazy_disasm(ad)
+            if i is None:
+                break
 
             if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
                 goto = i.operands[0].value.imm
@@ -202,7 +203,7 @@ class PE:
             if ptr in self.classbinary.reverse_symbols \
                     and inv(mm.segment) and inv(mm.index):
                 name = "_" + self.classbinary.reverse_symbols[ptr][0]
-                ty = "_" + self.classbinary.reverse_symbols[ptr][1]
+                ty = self.classbinary.reverse_symbols[ptr][1]
                 self.classbinary.reverse_symbols[goto] = [name, ty]
                 self.classbinary.symbols[name] = [goto, ty]
                 count += 1

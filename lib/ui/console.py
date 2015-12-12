@@ -25,10 +25,12 @@ import code
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
-from lib.utils import error, print_no_end
+from lib.utils import error, print_no_end, info
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 from lib.ui.readline import ReadLine
-from lib.ui.visual import Visual, NB_LINES_TO_DISASM
+from lib.ui.visual import Visual
+from lib.disassembler import NB_LINES_TO_DISASM
+from lib.analyzer import Analyzer
 from lib.fileformat.binary import SYM_FUNC
 
 
@@ -166,7 +168,9 @@ class Console():
                 self.__complete_x,
                 [
                 "[SYMBOL|0xXXXX|EP]",
-                "Decompile. By default it will be main.",
+                "Decompile and print on stdout. By default it will be main.",
+                "The decompilation is forced, it dosn't check if addresses",
+                "are defined as code."
                 ]
             ),
 
@@ -176,7 +180,7 @@ class Console():
                 self.__complete_x,
                 [
                 "[SYMBOL|0xXXXX|EP]",
-                "Same as x, but in visual mode.",
+                "Visual mode",
                 "Shortcuts:",
                 "g       top",
                 "G       bottom",
@@ -185,6 +189,7 @@ class Console():
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "%       goto next bracket",
                 "*       highlight current word (ctrl-k to clear)",
+                "tab     switch between dump/decompilation",
                 "enter   follow address",
                 "escape  go back",
                 "u       re-enter (for undo)",
@@ -376,6 +381,10 @@ class Console():
             ),
         }
 
+        self.analyzer = Analyzer()
+        self.analyzer.start()
+        info("analyzer is running in background...")
+
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
 
@@ -392,6 +401,8 @@ class Console():
             if self.ctx.db is None or not self.ctx.db.modified:
                 break
             print("the database was modified, run save or exit to force")
+
+        self.analyzer.msg.put("exit")
 
 
     def send_control_c(self):
@@ -535,6 +546,7 @@ class Console():
 
 
     def __exec_exit(self, args):
+        self.analyzer.msg.put("exit")
         sys.exit(0)
 
 
@@ -587,6 +599,13 @@ class Console():
             self.ctx.print_data = False
 
 
+    def push_analyze_symbols(self):
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        for ad, (name, ty) in self.ctx.db.reverse_symbols.items():
+            if ty == SYM_FUNC:
+                self.analyzer.msg.put((ad, True))
+
+
     def __exec_load(self, args):
         if len(args) != 2:
             error("filename required")
@@ -596,6 +615,7 @@ class Console():
         load_file(self.ctx)
         if self.ctx.db is not None:
             self.rl.history = self.ctx.db.history
+            self.push_analyze_symbols()
 
 
     def __exec_lrawx86(self, args):
@@ -607,6 +627,7 @@ class Console():
         self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawx64(self, args):
@@ -618,6 +639,7 @@ class Console():
         self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawarm(self, args):
@@ -628,6 +650,7 @@ class Console():
         self.ctx.raw_type = "arm"
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawmips(self, args):
@@ -638,6 +661,7 @@ class Console():
         self.ctx.raw_type = "mips"
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawmips64(self, args):
@@ -648,6 +672,7 @@ class Console():
         self.ctx.raw_type = "mips64"
         self.ctx.filename = args[1]
         load_file(self.ctx)
+        self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_calls(self, args):
@@ -729,7 +754,9 @@ class Console():
             self.ctx.entry = args[1]
         self.ctx.reset_vars()
         if init_entry_addr(self.ctx):
-            o = disasm(self.ctx)
+            self.ctx.dump = True
+            o = self.ctx.dis.dump_asm(self.ctx, NB_LINES_TO_DISASM)
+            self.ctx.dump = False
             if o is not None:
                 Visual(self, self.ctx.dis, o)
             self.ctx.entry = None
@@ -853,6 +880,11 @@ class Console():
 
         self.ctx.db.modified = True
         self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
+
+        # TODO: it will be better to start from the beginning of the function
+        # end-function may differ.
+        # Re-run the analyzer
+        self.analyzer.msg.put((inst_addr, False))
 
 
     def __exec_py(self, args):

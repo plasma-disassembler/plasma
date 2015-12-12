@@ -48,15 +48,22 @@ for a full list.
 
 ## Visual mode (NEW)
 
-New command `v` in the interactive mode. For the moment we can only scroll
-and add inline comments. This mode requires `ncurses`.
+From the interactive mode, use the command `v` to enter in the visual mode.
+This mode requires `ncurses`. Use the `tab` to switch between dump/decompilation.
 
 More features will come :
 
+* reload automatically if the analyzer has modified the content
+* decompilation at the beginning of the function (and not at the cursor)
 * multi-line comments
-* follow calls/addresses
+* create code/functions/data
 * renaming
+* stack variables
+* x-refs
+* structure, enums
 * ...
+
+![reverse](/images/visual.png?raw=true)
 
 
 ## Switch jump-tables

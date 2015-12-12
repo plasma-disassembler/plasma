@@ -182,6 +182,15 @@ class Binary(object):
         return None
 
 
+    def get_first_addr(self):
+        return self._sorted_sections[0]
+
+
+    def get_last_addr(self):
+        ad = self._sorted_sections[-1]
+        return self._abs_sections[ad].end
+
+
     def read(self, ad, size):
         s = self.get_section(ad)
         if s is None:
@@ -202,6 +211,14 @@ class Binary(object):
             if s.name == name:
                 return s
         return None
+
+
+    def get_prev_section(self, ad):
+        i = bisect.bisect_right(self._sorted_sections, ad - 1)
+        if not i:
+            return None
+        start = self._sorted_sections[i - 1]
+        return self._abs_sections[start]
 
 
     def iter_sections(self):
@@ -269,9 +286,5 @@ class Binary(object):
 
 
     # Only for PE !
-    def pe_reverse_stripped_symbols(self, dis):
-        start = time()
-        n = self.__binary.pe_reverse_stripped_symbols(dis)
-        elapsed = time()
-        elapsed = elapsed - start
-        debug__("Found %d imported symbols (PE) in %fs" % (n, elapsed))
+    def pe_reverse_stripped_symbols(self, dis, addr_to_analyze):
+        return self.__binary.pe_reverse_stripped_symbols(dis, addr_to_analyze)

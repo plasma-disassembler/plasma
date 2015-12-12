@@ -26,6 +26,11 @@ from lib.fileformat.binary import Binary, T_BIN_PE, SYM_UNK, SYM_FUNC
 from lib.colors import (pick_color, color_addr, color_symbol,
         color_section, color_string)
 from lib.exceptions import ExcSymNotFound, ExcArch
+from lib.memory import Memory, MEM_UNK
+
+
+NB_LINES_TO_DISASM = 200 # without comments, ...
+CAPSTONE_CACHE_SIZE = 60000
 
 
 class Jmptable():
@@ -40,7 +45,8 @@ class Disassembler():
     def __init__(self, filename, raw_type, raw_base, raw_big_endian, database):
         import capstone as CAPSTONE
 
-        self.code = {}
+        self.capstone_inst = {} # capstone instruction cache
+
         self.binary = Binary(filename, raw_type, raw_base, raw_big_endian)
 
         arch, mode = self.binary.get_arch()
@@ -51,16 +57,21 @@ class Disassembler():
         if database.loaded:
             self.binary.symbols = database.symbols
             self.binary.reverse_symbols = database.reverse_symbols
+            self.mem = database.mem
         else:
             self.binary.load_symbols()
             database.symbols = self.binary.symbols
             database.reverse_symbols = self.binary.reverse_symbols
+            self.mem = Memory()
+            database.mem = self.mem
 
         self.jmptables = database.jmptables
         self.user_inline_comments = database.user_inline_comments
         self.internal_inline_comments = database.internal_inline_comments
         self.user_previous_comments = database.user_previous_comments
         self.internal_previous_comments = database.internal_previous_comments
+        self.functions = database.functions
+        self.end_functions = database.end_functions
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
@@ -74,6 +85,9 @@ class Disassembler():
 
         for s in self.binary.iter_sections():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
+
+            if not database.loaded:
+                self.mem.add(s.start, s.end, MEM_UNK)
 
 
     def get_unpack_str(self, size_word):
@@ -161,7 +175,10 @@ class Disassembler():
 
         for s in search:
             if s.startswith("0x"):
-                a = int(opt_addr, 16)
+                try:
+                    a = int(opt_addr, 16)
+                except:
+                    raise ExcSymNotFound(search[0])
             else:
                 a = self.binary.symbols.get(s, -1)
                 if a == -1:
@@ -175,58 +192,128 @@ class Disassembler():
         raise ExcSymNotFound(search[0])
 
 
-    def dump_asm(self, ctx, lines):
+    def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
         from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
         ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        s = self.binary.get_section(ctx.entry_addr)
-        s.print_header()
-
-        # WARNING: this assume that on every architectures the jump
-        # address is the last operand (operands[-1])
-
-        # set jumps color
         ad = ctx.entry_addr
-        l = 0
-        while l < lines and ad <= s.end:
-            i = self.lazy_disasm(ad, s.start)
-            if i is None:
-                ad += 1
-            else:
-                if ARCH_UTILS.is_jump(i) and i.operands[-1].type == CS_OP_IMM:
-                    pick_color(i.operands[-1].value.imm)
-                ad += i.size
-            l += 1
+        s = self.binary.get_section(ctx.entry_addr)
 
-        # Here we have loaded all instructions we want to print
-        if self.binary.type == T_BIN_PE:
-            self.binary.pe_reverse_stripped_symbols(self)
+        if s is None:
+            # until is != -1 only from the visual mode
+            # It allows to not go before the first section.
+            if until != -1: 
+                return None
+            # Get the next section, it's not mandatory that sections
+            # are consecutives !
+            s = self.binary.get_next_section(ad)
+            if s is None:
+                return None
+            ad = s.start
 
         o = ARCH_OUTPUT.Output(ctx)
         o._new_line()
-
-        # dump
-        ad = ctx.entry_addr
+        o.section_prefix = True
+        o.curr_section = s
         l = 0
 
-        while l < lines and ad <= s.end:
-            i = self.lazy_disasm(ad, s.start)
-            if i is None:
-                o._bad(ad)
-                ad += 1
-            else:
-                o._asm_inst(i)
-                ad += i.size
+        while 1:
+            if ad == s.start:
+                o._new_line()
+                o._dash()
+                o._section(s.name)
+                o._add("  0x%x -> 0x%x" % (s.start, s.end))
+                o._new_line()
+                o._new_line()
 
-            l += 1
+            while ((l < lines and until == -1) or (ad != until and until != -1)) \
+                    and ad <= s.end:
+                if self.mem.is_code(ad): # TODO optimize
+                    if ad in self.functions:
+                        if not o.is_last_2_line_empty():
+                            o._new_line()
+                        o._dash()
+                        o._user_comment("; SUBROUTINE")
+                        o._new_line()
+                        o._dash()
 
-        # empty line
+                    i = self.lazy_disasm(ad, s.start)
+                    o._asm_inst(i)
+
+                    if ad in self.end_functions:
+                        for e in self.end_functions[ad]:
+                            sy = self.binary.reverse_symbols[e][0]
+                            o._user_comment("; end function %s" % sy)
+                            o._new_line()
+                        o._new_line()
+
+                    ad += i.size
+
+                else:
+                    if o.is_symbol(ad):
+                        o._symbol(ad)
+                        o._new_line()
+                    o._address(ad)
+                    o._db(s.read_byte(ad))
+                    o._new_line()
+                    ad += 1
+
+                l += 1
+
+            if (l >= lines and until == -1) or (ad == until and until != -1):
+                break
+
+            s = self.binary.get_section(ad)
+            if s is None:
+                # Get the next section, it's not mandatory that sections
+                # are consecutives !
+                s = self.binary.get_next_section(ad)
+                if s is None:
+                    break
+                ad = s.start
+                if ad == until:
+                    break
+            o.curr_section = s
+
+        if until in self.functions:
+            o._new_line()
+
+        # remove the last empty line
         o.lines.pop(-1)
         o.token_lines.pop(-1)
 
+        o.join_lines()
+
+        # TODO: move it in the analyzer
+        if self.binary.type == T_BIN_PE:
+            # TODO: if ret != 0 : database is modified
+            self.binary.pe_reverse_stripped_symbols(self, o.addr_line)
+
         return o
+
+
+    def find_addr_before(self, ad):
+        l = 0
+        s = self.binary.get_section(ad)
+
+        while l < NB_LINES_TO_DISASM:
+            if self.mem.is_code(ad):
+                size = self.mem.code[ad][0]
+                l += 1
+                l -= size
+            else:
+                l += 1
+
+            if ad == s.start:
+                s = self.binary.get_prev_section(ad)
+                if s is None:
+                    return ad
+                ad = s.end
+            ad -= 1
+
+        return ad
 
 
     def dump_data_ascii(self, ctx, lines):
@@ -370,19 +457,23 @@ class Disassembler():
         print("Total:", total)
 
 
-    def lazy_disasm(self, addr, stay_in_section=-1):
+    def lazy_disasm(self, addr, stay_in_section=-1, s=None):
         s = self.binary.get_section(addr)
         if s is None:
             return None
 
-        if stay_in_section != -1 and s.start != stay_in_section:
-            return None
+        # if stay_in_section != -1 and s.start != stay_in_section:
+            # return None, s
 
-        if addr in self.code:
-            return self.code[addr]
-        
+        if addr in self.capstone_inst:
+            return self.capstone_inst[addr]
+
+        # TODO: remove when it's too big ?
+        if len(self.capstone_inst) > CAPSTONE_CACHE_SIZE:
+            self.capstone_inst.clear()
+
         # Disassemble by block of N bytes
-        N = 1024
+        N = 128
         d = s.read(addr, N)
         gen = self.md.disasm(d, addr)
 
@@ -391,10 +482,11 @@ class Disassembler():
         except StopIteration:
             return None
 
+        self.capstone_inst[first.address] = first
         for i in gen:
-            if i.address in self.code:
+            if i.address in self.capstone_inst:
                 break
-            self.code[i.address] = i
+            self.capstone_inst[i.address] = i
 
         return first
 
@@ -413,6 +505,7 @@ class Disassembler():
         stack = [entry_addr]
         start = time()
         prefetch = None
+        addresses = set()
 
         # WARNING: this assume that on every architectures the jump
         # address is the last operand (operands[-1])
@@ -439,14 +532,18 @@ class Disassembler():
             if gph.exists(inst):
                 continue
 
+            addresses.add(ad)
+
             if ARCH_UTILS.is_ret(inst):
                 if self.arch == CS_ARCH_MIPS:
                     prefetch = self.__prefetch_inst(inst)
+                    addresses.add(prefetch.address)
                 gph.new_node(inst, prefetch, None)
 
             elif ARCH_UTILS.is_uncond_jump(inst):
                 if self.arch == CS_ARCH_MIPS:
                     prefetch = self.__prefetch_inst(inst)
+                    addresses.add(prefetch.address)
                 gph.uncond_jumps_set.add(ad)
                 op = inst.operands[-1]
                 if op.type == CS_OP_IMM:
@@ -465,6 +562,7 @@ class Disassembler():
             elif ARCH_UTILS.is_cond_jump(inst):
                 if self.arch == CS_ARCH_MIPS:
                     prefetch = self.__prefetch_inst(inst)
+                    addresses.add(prefetch.address)
                 gph.cond_jumps_set.add(ad)
                 op = inst.operands[-1]
                 if op.type == CS_OP_IMM:
@@ -491,7 +589,7 @@ class Disassembler():
             return None, 0
 
         if self.binary.type == T_BIN_PE:
-            nb_new_syms = self.binary.pe_reverse_stripped_symbols(self)
+            nb_new_syms = self.binary.pe_reverse_stripped_symbols(self, addresses)
         else:
             nb_new_syms = 0
 

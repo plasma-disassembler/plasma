@@ -33,8 +33,11 @@ class OutputAbs():
         self.lines = [] # each line contains the entire string
         self.line_addr = {} # line -> address
         self.addr_line = {} # address -> line
-        self.index_end_inst = {}
+        self.index_end_inst = {} # line -> (char_index, token_index)
         self.curr_index = 0
+
+        self.section_prefix = False
+        self.curr_section = None # must be updated at hand !!
 
 
     # All functions which start with a '_' add a new token/string on
@@ -53,6 +56,11 @@ class OutputAbs():
         line = len(self.token_lines)-1
         self.index_end_inst[line] = \
             (self.curr_index, len(self.token_lines[line]))
+
+    def is_last_2_line_empty(self):
+        if len(self.lines) < 2:
+            return True
+        return len(self.lines[-1]) == 0 and len(self.lines[-2]) == 0
 
     def _new_line(self):
         self.curr_index = 0
@@ -85,6 +93,11 @@ class OutputAbs():
         self.curr_index += len(string)
 
     def _address(self, addr, print_colon=True, normal_color=False):
+        if self.section_prefix:
+            self._comment(self.curr_section.name)
+            self._add(" ")
+
+        self.set_line(addr)
         s = hex(addr)
         if print_colon:
             s += ": "
@@ -135,6 +148,13 @@ class OutputAbs():
         self.token_lines[-1].append((string, COLOR_RETCALL.val, COLOR_RETCALL.bold))
         self.lines[-1].append(string)
         self.curr_index += len(string)
+
+    def _db(self, by):
+        self._retcall(".db")
+        if by is None:
+            self._add(" ?")
+        else:
+            self._add(" %0.2x" % by)
 
 
     def _label(self, addr, tab=-1, print_colon=True):
@@ -207,7 +227,6 @@ class OutputAbs():
             self._tabs(tab)
             self._comment("# ")
             self._address(i.address)
-        self.set_line(i.address)
         self._bytes(i, True)
         self._comment(self.get_inst_str(i))
         self._inline_comment(i)
@@ -287,8 +306,8 @@ class OutputAbs():
         self._new_line()
 
 
-    def _comment_dash(self):
-        self._user_comment("; ---------------------------------------------")
+    def _dash(self):
+        self._user_comment("; ---------------------------------------------------------------------")
         self._new_line()
 
     #
@@ -414,7 +433,10 @@ class OutputAbs():
         self._all_vars()
         ast.dump(self, 1)
         self._add("}")
+        self.join_lines()
 
+
+    def join_lines(self):
         # Join all lines
         for i, l in enumerate(self.lines):
             self.lines[i] = "".join(self.lines[i])
@@ -441,8 +463,6 @@ class OutputAbs():
             self._tabs(tab)
             self._symbol(i.address)
             self._new_line()
-
-        self.set_line(i.address)
 
         # debug
         # from lib.utils import BRANCH_NEXT

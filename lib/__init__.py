@@ -190,9 +190,6 @@ def init_entry_addr(ctx):
             return False
         die()
 
-    if not s.is_exec:
-        warning("the address 0x%x is not in an executable section" % entry_addr)
-
     ctx.entry_addr = entry_addr
 
     return True

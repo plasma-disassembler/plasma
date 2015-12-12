@@ -33,6 +33,7 @@ import json
 from lib.disassembler import Jmptable
 from lib.utils import info, error, die
 from lib.fileformat.binary import SYM_UNK, SYM_FUNC
+from lib.memory import Memory
 
 
 VERSION = 1.0
@@ -55,6 +56,9 @@ class Database():
         self.mips_gp = -1
         self.modified = False
         self.loaded = False
+        self.mem = None
+        self.functions = {}
+        self.end_functions = {}
 
 
     def load(self, filename):
@@ -80,6 +84,8 @@ class Database():
             self.__load_jmptables(data)
             self.__load_comments(data)
             self.__load_meta(data)
+            self.__load_memory(data)
+            self.__load_functions(data)
 
             self.loaded = True
 
@@ -96,6 +102,9 @@ class Database():
             "internal_previous_comments": self.internal_previous_comments,
             "jmptables": [],
             "mips_gp": self.mips_gp,
+            "mem_code": self.mem.code,
+            "functions": self.functions,
+            "end_functions": self.end_functions,
         }
 
         for j in self.jmptables.values():
@@ -147,6 +156,27 @@ class Database():
 
         try:
             version = data["version"]
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
+
+
+    def __load_memory(self, data):
+        self.mem = Memory()
+
+        try:
+            self.mem.code = data["mem_code"]
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
+
+
+    def __load_functions(self, data):
+        try:
+            self.functions = data["functions"]
+            self.end_functions = data["end_functions"]
         except:
             # Not available in previous versions, this try will be
             # removed in the future
