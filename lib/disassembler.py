@@ -350,7 +350,8 @@ class Disassembler():
 
         total = 0
 
-        for sy in self.binary.symbols:
+        # TODO: race condition with the analyzer
+        for sy in list(self.binary.symbols):
             addr, ty = self.binary.symbols[sy]
             if only_func and ty != SYM_FUNC:
                 continue

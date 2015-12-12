@@ -18,12 +18,19 @@
 #
 
 from lib import reverse, parse_args
+from lib.utils import info, die
 
 # Generates the file custom_colors.py at the beginning
 import lib.colors
 
 if __name__ == '__main__':
     ctx = parse_args()
+
+    if ctx.color and lib.colors.VERSION < 1.3:
+        info("There is a new version of custom_colors.py. If it's wasn't")
+        info("modified you can delete it. Otherwise you can copy it")
+        info("somewhere, run again your command then merge the file at hand.")
+        die()
 
     if ctx.interactive_mode:
         from lib.ui.console import Console

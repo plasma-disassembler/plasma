@@ -44,7 +44,7 @@ def default_custom_file():
             COLOR_SYMBOL         = COLOR(144, False)
             COLOR_RETCALL        = COLOR(161, False)
             COLOR_INTERN_COMMENT = COLOR(217, False)
-            COLOR_ADDR_CODE      = COLOR(220, False)
+            COLOR_CODE_ADDR      = COLOR(220, False)
             COLOR_USER_COMMENT   = COLOR(38, False)
             """))
 
@@ -63,12 +63,6 @@ try:
     VERSION
 except:
     VERSION = 0
-
-if VERSION < 1.3:
-    print("There is a new version of custom_colors.py. If it's wasn't")
-    print("modified you can delete it. Otherwise you can copy it")
-    print("somewhere, run again your command then merge the file at hand.")
-    sys.exit(1)
 
 
 ctx = None
