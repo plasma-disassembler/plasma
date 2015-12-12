@@ -22,6 +22,9 @@ from time import time
 
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__, list_starts_with
 
+# For the loop's analysis
+MAX_NODES = 800
+
 
 class Graph:
     def __init__(self, dis, entry_point_addr):
@@ -69,6 +72,8 @@ class Graph:
         self.last_loop_node = {}
 
         self.all_deep_equiv = set()
+
+        self.skipped_loops_analysis = False
 
 
     # A jump is normally alone in a block, but for some architectures
@@ -789,6 +794,10 @@ class Graph:
         self.rev_deps = {}
         # Loops marked as "False"
         self.false_loops = set()
+
+        if len(self.nodes) > MAX_NODES:
+            self.skipped_loops_analysis = True
+            return
 
         self.__explore(entry, set(), set(), {}, None, set())
 

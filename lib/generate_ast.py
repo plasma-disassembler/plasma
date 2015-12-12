@@ -413,7 +413,18 @@ def generate_ast(ctx__):
 
     ast_head = ast
 
-    while stack:
+    fake_br = Ast_Branch()
+    fake_br.level = sys.maxsize
+
+    while stack or waiting:
+
+        if not stack and waiting:
+            if not ctx.gph.skipped_loops_analysis:
+                break
+            for ad in set(waiting):
+                waiting[ad].unseen.clear()
+                stack.append((fake_br, [], -1, ad, -1))
+
         ast, loops_stack, prev, curr, else_addr = stack.pop(-1)
 
         # Check if we enter in a false loop (see gotoinloop*)
@@ -559,9 +570,6 @@ def generate_ast(ctx__):
 
                     # Add a fake branch, with this in the manage function
                     # all gotos to the else_addr will be invisible.
-                    fake_br = Ast_Branch()
-                    fake_br.level = sys.maxsize
-
                     stack.append((fake_br, list(loops_stack), curr,
                                   nxt[BRANCH_NEXT_JUMP], else_addr))
 
@@ -577,9 +585,6 @@ def generate_ast(ctx__):
                     a.idx_in_parent = len(ast.nodes)
                     ast.add(a)
                     ast.add(Ast_Goto(nxt[BRANCH_NEXT_JUMP]))
-
-                    fake_br = Ast_Branch()
-                    fake_br.level = sys.maxsize
 
                     stack.append((fake_br, list(loops_stack), curr,
                                   nxt[BRANCH_NEXT], else_addr))
