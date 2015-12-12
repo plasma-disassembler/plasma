@@ -78,6 +78,8 @@ class Visual():
             b"\n": self.main_cmd_enter,
             b"\x1b": self.main_cmd_escape,
             b"\t": self.main_cmd_switch_mode,
+            b"\x1b\x5b\x31\x3b\x35\x44": self.main_k_ctrl_left,
+            b"\x1b\x5b\x31\x3b\x35\x43": self.main_k_ctrl_right,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -637,6 +639,30 @@ class Visual():
         else:
             self.cursor_x = 0
         return False
+
+    def main_k_ctrl_right(self, h, w):
+        # TODO: fix self.cursor_x >= w
+        line = self.output.lines[self.win_y + self.cursor_y]
+        x = self.cursor_x
+        while x < len(line) and line[x] == " " and x < w:
+            x += 1
+        while x < len(line) and line[x] != " " and x < w:
+            x += 1
+        self.cursor_x = x
+
+    def main_k_ctrl_left(self, h, w):
+        line = self.output.lines[self.win_y + self.cursor_y]
+        x = self.cursor_x
+        if x == 0:
+            return
+        x -= 1
+        while x > 0 and line[x] == " ":
+            x -= 1
+        while x > 0 and line[x] != " ":
+            x -= 1
+        if x != 0:
+            x += 1
+        self.cursor_x = x
 
 
     def main_cmd_line_middle(self, h, w):
