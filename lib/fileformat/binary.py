@@ -205,6 +205,15 @@ class Binary(object):
         return s.read_byte(ad)
 
 
+    def rename_sym(self, name):
+        count = 0
+        n = "%s_%d" % (name, count)
+        while n in self.symbols:
+            n = "%s_%d" % (name, count)
+            count += 1
+        return n
+
+
     # not optimized
     def get_section_by_name(self, name):
         for s in self._abs_sections.values():

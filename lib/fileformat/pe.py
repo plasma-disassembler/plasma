@@ -118,6 +118,9 @@ class PE:
 
                 ad = sym.value + base
 
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
+
                 ty = SYM_FUNC if sym.type & PE_DT_FCN else SYM_UNK
                 self.classbinary.reverse_symbols[ad] = [name, ty]
                 self.classbinary.symbols[name] = [ad, ty]
@@ -142,9 +145,14 @@ class PE:
             for imp in entry.imports:
                 if imp.name is None:
                     continue
+
+                name = imp.name
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
+
                 # TODO: always unk ?
-                self.classbinary.reverse_symbols[imp.address] = [imp.name, SYM_UNK]
-                self.classbinary.symbols[imp.name] = [imp.address, SYM_UNK]
+                self.classbinary.reverse_symbols[imp.address] = [name, SYM_UNK]
+                self.classbinary.symbols[name] = [imp.address, SYM_UNK]
 
 
     def pe_reverse_stripped_symbols(self, dis, addr_to_analyze):
@@ -204,6 +212,10 @@ class PE:
                     and inv(mm.segment) and inv(mm.index):
                 name = "_" + self.classbinary.reverse_symbols[ptr][0]
                 ty = self.classbinary.reverse_symbols[ptr][1]
+
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
+
                 self.classbinary.reverse_symbols[goto] = [name, ty]
                 self.classbinary.symbols[name] = [goto, ty]
                 count += 1

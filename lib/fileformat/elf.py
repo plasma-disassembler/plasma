@@ -118,6 +118,8 @@ class ELF:
             ad = sy.entry.st_value
             if ad != 0 and sy.name != b"":
                 name = sy.name.decode()
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
                 ty = self.sym_type_lookup.get(sy.entry.st_info.type, SYM_UNK)
                 self.classbinary.reverse_symbols[ad] = [name, ty]
                 self.classbinary.symbols[name] = [ad, ty]
@@ -160,9 +162,12 @@ class ELF:
                     wrong_jump_opcode = True
                     continue
 
-                sym = got_off[off]
-                self.classbinary.reverse_symbols[plt_start] = sym
-                self.classbinary.symbols[sym[0]] = [plt_start, sym[1]]
+                name, ty = got_off[off]
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
+
+                self.classbinary.reverse_symbols[plt_start] = (name, ty)
+                self.classbinary.symbols[name] = [plt_start, ty]
 
             off += addr_size
 
@@ -185,6 +190,8 @@ class ELF:
             ad = sym.entry.st_value
             if ad != 0:
                 name = sym.name.decode()
+                if name in self.classbinary.symbols:
+                    name = self.classbinary.rename_sym(name)
                 ty = self.sym_type_lookup.get(sym.entry.st_info.type, SYM_UNK)
                 self.classbinary.reverse_symbols[ad] = [name, ty]
                 self.classbinary.symbols[name] = [ad, ty]

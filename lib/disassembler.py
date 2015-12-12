@@ -243,8 +243,8 @@ class Disassembler():
                     o._asm_inst(i)
 
                     if ad in self.end_functions:
-                        for e in self.end_functions[ad]:
-                            sy = self.binary.reverse_symbols[e][0]
+                        for fad in self.end_functions[ad]:
+                            sy = self.binary.reverse_symbols[fad][0]
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
