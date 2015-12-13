@@ -85,6 +85,8 @@ class Visual():
             b"\x1b\x5b\x31\x3b\x35\x43": self.main_k_ctrl_right,
             b"c": self.main_cmd_code,
             b"p": self.main_cmd_set_function,
+            b"{": self.main_k_prev_paragraph,
+            b"}": self.main_k_next_paragraph,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -683,6 +685,22 @@ class Visual():
         if x != 0:
             x += 1
         self.cursor_x = x
+
+    def main_k_prev_paragraph(self, h, w):
+        l = self.win_y + self.cursor_y - 1
+        while l > 0 and len(self.output.lines[l]) != 0:
+            l -= 1
+        if l >= 0:
+            self.goto_line(l, h)
+        return True
+
+    def main_k_next_paragraph(self, h, w):
+        l = self.win_y + self.cursor_y + 1
+        while l < len(self.output.lines)-1 and len(self.output.lines[l]) != 0:
+            l += 1
+        if l < len(self.output.lines):
+            self.goto_line(l, h)
+        return True
 
 
     def main_cmd_line_middle(self, h, w):
