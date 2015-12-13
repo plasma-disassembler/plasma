@@ -1,39 +1,31 @@
 Reverse
 =======
 
-Reverse engineering for x86/ARM/MIPS binaries. Generate a more readable code
-(pseudo-C) with colored syntax.
+It generates a more readable code (pseudo-C) with colored syntax. An interactive
+mode is in development.
 
-Supported formats : `ELF`, `PE`, `RAW`.
+It supports :
+* architectures : x86, ARM, MIPS
+* formats : ELF, PE, RAW
 
-
-The `Makefile` is used only for checking tests (or you can use the
-command `nosetest3` which is faster).
+The `Makefile` is used only for checking tests.
 
 
 ## Requirements
 
-WARNING: a more recent port of pefile for python3 is recommended instead
-of the repository `simonzack/pefile-py3k`.
+* python >= 3.4
+* [capstone](https://github.com/aquynh/capstone)
+* [python-pyelftools](https://github.com/eliben/pyelftools)
+* [pefile](https://github.com/mlaferrera/python3-pefile)
+* [python-msgpack](https://github.com/msgpack/msgpack-python)
+* terminal with 256 colors (if not, use the option `--nocolor`)
 
-    python >= 3.4
-    capstone + python bindings (see requirements.sh)
-    python-pyelftools
-    https://github.com/mlaferrera/python3-pefile
-    python-msgpack
-    terminal with 256 colors (if not use the option `--nocolor`)
-
-For Python binding of [Capstone engine](http://www.capstone-engine.org), you 
-can install it from PyPi, like followings: 
-
-    sudo pip3 install capstone
-
-You can also run `requirements.sh` which will retrieve all requirements.
+You can run `requirements.sh` which will retrieve all requirements.
 
 
 ## Pseudo-decompilation of functions
 
-The option `-x main` is optional because the binary contains the symbol main.
+Here the option `-x main` is optional because the binary contains the symbol main.
 
     $ ./reverse.py tests/server.bin
 
@@ -54,10 +46,9 @@ This mode requires `ncurses`. Use the `tab` to switch between dump/decompilation
 More features will come :
 
 * reload automatically if the analyzer has modified the content
-* decompilation at the beginning of the function (and not at the cursor)
 * multi-lines comments
 * create data
-* renaming
+* symbols renaming
 * stack variables
 * x-refs
 * structure, enums
@@ -66,7 +57,7 @@ More features will come :
 ![reverse](/images/visual.png?raw=true)
 
 
-## Switch jump-tables
+## Switch jump-tables example
 
 Switch statements which require a jump-table are not detected automatically.
 So we need to tell it which jump-table to use.
