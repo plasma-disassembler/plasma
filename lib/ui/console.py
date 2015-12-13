@@ -190,6 +190,7 @@ class Console():
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "%       goto next bracket",
                 "*       highlight current word (ctrl-k to clear)",
+                "{ }     previous/next paragraph",
                 "tab     switch between dump/decompilation",
                 "enter   follow address",
                 "escape  go back",
