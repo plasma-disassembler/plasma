@@ -188,6 +188,9 @@ class PE:
 
                 nxt = dis.lazy_disasm(goto)
 
+                if nxt is None:
+                    continue
+
                 if not ARCH_UTILS.is_uncond_jump(nxt) or \
                         nxt.operands[0].type != X86_OP_MEM:
                     continue
