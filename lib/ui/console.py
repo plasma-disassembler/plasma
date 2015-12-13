@@ -182,6 +182,7 @@ class Console():
                 "[SYMBOL|0xXXXX|EP]",
                 "Visual mode",
                 "Shortcuts:",
+                "c       create code",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -603,7 +604,7 @@ class Console():
         self.analyzer.set(self.ctx.dis, self.ctx.db)
         for ad, (name, ty) in self.ctx.db.reverse_symbols.items():
             if ty == SYM_FUNC:
-                self.analyzer.msg.put((ad, True))
+                self.analyzer.msg.put((ad, True, None))
 
 
     def __exec_load(self, args):
@@ -884,7 +885,7 @@ class Console():
         # TODO: it will be better to start from the beginning of the function
         # end-function may differ.
         # Re-run the analyzer
-        self.analyzer.msg.put((inst_addr, False))
+        self.analyzer.msg.put((inst_addr, False, None))
 
 
     def __exec_py(self, args):

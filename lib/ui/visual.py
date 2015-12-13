@@ -20,6 +20,7 @@
 import curses
 from curses import A_UNDERLINE, color_pair
 from time import time
+from queue import Queue
 
 from lib import init_entry_addr, disasm
 from custom_colors import *
@@ -44,6 +45,8 @@ class Visual():
         self.dis = disassembler
         self.console = console
         self.search = None
+
+        self.queue_wait_analyzer = Queue()
 
         # Last/first address printed (only in MODE_DUMP)
         self.last_addr = max(output.addr_line)
@@ -80,6 +83,7 @@ class Visual():
             b"\t": self.main_cmd_switch_mode,
             b"\x1b\x5b\x31\x3b\x35\x44": self.main_k_ctrl_left,
             b"\x1b\x5b\x31\x3b\x35\x43": self.main_k_ctrl_right,
+            b"c": self.main_cmd_code,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -905,6 +909,35 @@ class Visual():
                 self.cursor_y = 0
 
         return ret
+
+
+    def main_cmd_code(self, h, w):
+        if self.mode == MODE_DECOMPILE:
+            return False
+
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+
+        ad = self.output.line_addr[line]
+
+        if self.dis.mem.is_code(ad):
+            return False
+
+        self.console.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
+        self.queue_wait_analyzer.get()
+
+        self.console.ctx.entry_addr = self.first_addr
+        self.console.ctx.dump = True
+        o = self.dis.dump_asm(self.console.ctx, until=self.last_addr)
+        self.console.ctx.dump = False
+
+        self.output = o
+        self.token_lines = o.token_lines
+
+        self.console.ctx.db.modified = True
+
+        return True
 
 
 

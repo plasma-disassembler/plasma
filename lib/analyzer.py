@@ -48,7 +48,10 @@ class Analyzer(threading.Thread):
             item = self.msg.get()
             if isinstance(item, tuple):
                 if self.dis is not None:
-                    self.analyze_flow(item[0], item[1])
+                    (ad, entry_is_func, queue_response) = item
+                    self.analyze_flow(ad, entry_is_func)
+                    if queue_response is not None:
+                        queue_response.put(1)
             elif isinstance(item, str):
                 if item == "exit":
                     break
