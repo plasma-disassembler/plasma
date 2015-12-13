@@ -55,7 +55,7 @@ More features will come :
 
 * reload automatically if the analyzer has modified the content
 * decompilation at the beginning of the function (and not at the cursor)
-* multi-line comments
+* multi-lines comments
 * create data
 * renaming
 * stack variables

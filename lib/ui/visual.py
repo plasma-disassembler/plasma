@@ -896,6 +896,8 @@ class Visual():
 
 
     def main_cmd_switch_mode(self, h, w):
+        self.stack.append(self.__compute_curr_position())
+
         if self.mode == MODE_DUMP:
             self.mode = MODE_DECOMPILE
         else:
