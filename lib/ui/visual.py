@@ -110,6 +110,7 @@ class Visual():
         self.screen = curses.initscr()
 
         (h, w) = self.screen.getmaxyx()
+        h -= 1 # status bar
         self.goto_address(self.first_addr, h, w)
 
         curses.noecho()
@@ -218,7 +219,7 @@ class Visual():
         return False
 
 
-    def exec_disasm(self, addr):
+    def exec_disasm(self, addr, h):
         self.console.ctx.reset_vars()
         self.console.ctx.entry_addr = addr
 
@@ -228,6 +229,8 @@ class Visual():
             self.console.ctx.dump = False
 
         elif self.mode == MODE_DECOMPILE:
+            self.screen.addstr(h, 0, "decompiling...")
+            self.screen.refresh()
             self.console.ctx.dump = False
             o = disasm(self.console.ctx)
 
@@ -250,6 +253,9 @@ class Visual():
                 self.screen.move(i, 0)
             self.screen.clrtoeol()
             i += 1
+
+        self.screen.move(h, 0)
+        self.screen.clrtoeol()
         self.screen.refresh()
 
 
@@ -260,6 +266,7 @@ class Visual():
 
         while 1:
             (h, w) = screen.getmaxyx()
+            h -= 1 # status bar
             if refr:
                 self.view_main_redraw(h, w)
                 refr = False
@@ -320,10 +327,15 @@ class Visual():
         self.cursor_x = xbegin + 3
         i = 0 # index in the string comment
 
+        self.screen.addstr(h, 0, "-- INLINE COMMENT --")
+
         while 1:
             (h, w) = screen.getmaxyx()
+            h -= 1 # status bar
+
             x = xbegin
             screen.move(y, xbegin)
+
             if x + 3 < w:
                 screen.addstr(y, x, " ; ", col_intern)
                 x += 3
@@ -692,7 +704,7 @@ class Visual():
         if self.mode == MODE_DUMP:
             top = self.dis.binary.get_first_addr()
             if self.first_addr != top:
-                self.exec_disasm(top)
+                self.exec_disasm(top, h)
         return True
 
 
@@ -706,7 +718,7 @@ class Visual():
             bottom = self.dis.binary.get_last_addr()
             if self.last_addr != bottom:
                 ad = self.dis.find_addr_before(bottom)
-                self.exec_disasm(ad)
+                self.exec_disasm(ad, h)
                 self.win_y = 0
                 self.cursor_y = 0
 
@@ -822,7 +834,7 @@ class Visual():
             self.stack.append(topush)
             return True
 
-        ret = self.exec_disasm(ad)
+        ret = self.exec_disasm(ad, h)
         if ret:
             self.cursor_y = 0
             self.win_y = 0
@@ -843,7 +855,7 @@ class Visual():
                 return True
 
             self.mode = mode
-            ret = self.exec_disasm(ad)
+            ret = self.exec_disasm(ad, h)
 
         else:
             if self.mode == MODE_DUMP and self.goto_address(ad, h, w):
@@ -852,7 +864,7 @@ class Visual():
                 return True
 
             self.mode = mode
-            ret = self.exec_disasm(ad)
+            ret = self.exec_disasm(ad, h)
 
             if ret:
                 self.goto_address(ad, h, w)
@@ -898,7 +910,7 @@ class Visual():
         else:
             ad = self.output.line_addr[l]
 
-        ret = self.exec_disasm(ad)
+        ret = self.exec_disasm(ad, h)
 
         if ret:
             self.cursor_x = 0
