@@ -377,7 +377,7 @@ class Console():
                 None,
                 [
                 "",
-                "Print the functions list."
+                "Print the function list."
                 ]
             ),
         }

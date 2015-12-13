@@ -146,16 +146,23 @@ class Analyzer(threading.Thread):
 
             if inner_code:
                 if entry_is_func:
-                    functions[fad] = 1
                     e = max(inner_code)
+                    func_id = self.db.func_id_counter
+
+                    functions[fad] = [e, func_id]
+                    self.db.func_id_counter += 1
+
                     if e in end_functions:
                         end_functions[e].append(fad)
                     else:
                         end_functions[e] = [fad]
+
                     if fad not in self.db.reverse_symbols:
                         sy = "sub_%x" % fad
                         self.db.reverse_symbols[fad] = (sy, SYM_FUNC)
                         self.db.symbols[sy] = (fad, SYM_FUNC)
+                else:
+                    func_id = -1
 
                 for ad, size in inner_code.items():
                     mem.add(ad, size, MEM_CODE)

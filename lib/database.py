@@ -36,7 +36,7 @@ from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
 
-VERSION = 1.0
+VERSION = 1.1
 
 
 class Database():
@@ -47,7 +47,6 @@ class Database():
     def __init_vars(self):
         self.history = []
         self.symbols = {}
-        self.reverse_symbols = {}
         self.user_inline_comments = {}
         self.internal_inline_comments = {}
         self.user_previous_comments = {}
@@ -58,7 +57,12 @@ class Database():
         self.loaded = False
         self.mem = None
         self.functions = {}
+
+        # Computed variables
+        self.func_id_counter = 0
+        self.func_id = {} # id -> func address
         self.end_functions = {}
+        self.reverse_symbols = {}
 
 
     def load(self, filename):
@@ -80,10 +84,10 @@ class Database():
                 data = msgpack.unpackb(fd.read(), encoding="utf-8")
                 fd.close()
 
+            self.__load_meta(data)
             self.__load_symbols(data)
             self.__load_jmptables(data)
             self.__load_comments(data)
-            self.__load_meta(data)
             self.__load_memory(data)
             self.__load_functions(data)
 
@@ -104,7 +108,6 @@ class Database():
             "mips_gp": self.mips_gp,
             "mem_code": self.mem.code,
             "functions": self.functions,
-            "end_functions": self.end_functions,
         }
 
         for j in self.jmptables.values():
@@ -176,7 +179,37 @@ class Database():
     def __load_functions(self, data):
         try:
             self.functions = data["functions"]
-            self.end_functions = data["end_functions"]
+
+            if self.version == 1.0:
+                self.end_functions = data["end_functions"]
+
+                tmp_rev_func_id = {}
+
+                for fad in self.functions:
+                    self.func_id[self.func_id_counter] = fad
+                    self.tmp_rev_func_id[fad] = self.func_id_counter
+                    self.func_id_counter += 1
+
+                for e in self.end_functions:
+                    for fad in e:
+                        self.functions[fad] = [e, self.tmp_rev_func_id[fad]]
+
+                return
+
+            for fad, value in self.functions.items():
+                # end of the function
+                e = value[0]
+                if e in self.end_functions:
+                    self.end_functions[e].append(fad)
+                else:
+                    self.end_functions[e] = [fad]
+
+                # function id
+                id = value[1]
+                self.func_id[id] = fad
+
+            self.func_id_counter = max(self.func_id) + 1
+
         except:
             # Not available in previous versions, this try will be
             # removed in the future
