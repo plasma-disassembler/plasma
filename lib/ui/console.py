@@ -183,6 +183,7 @@ class Console():
                 "Visual mode",
                 "Shortcuts:",
                 "c       create code",
+                "p       create function",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
