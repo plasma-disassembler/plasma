@@ -4,6 +4,6 @@ function main (.text) {
     for (;;) {
         next
         loop_0x4004ba:
-        0x4004ba: jmp 0x4004ba
+        0x4004ba: jmp next
     }
 }

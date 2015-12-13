@@ -216,6 +216,11 @@ class OutputAbs():
 
 
     def _commented_inst(self, i, tab):
+        if self.is_symbol(i.address):
+            self._tabs(tab)
+            self._symbol(i.address)
+            self._new_line()
+
         if i.address in self.ctx.reverse_labels:
             self._label(i.address, tab)
             self._new_line()

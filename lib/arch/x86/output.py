@@ -260,11 +260,16 @@ class Output(OutputAbs):
                     self._add(" ")
                     self._comment("# STOPPED")
                 return False
+
             addr = i.operands[0].value.imm
-            if addr in self.ctx.addr_color:
-                self._label_or_address(addr, -1, False)
+
+            if self.is_symbol(addr):
+                self._symbol(addr)
             else:
-                self._add(hex(addr))
+                if addr in self.ctx.addr_color:
+                    self._label_or_address(addr, -1, False)
+                else:
+                    self._add(hex(addr))
             return False
 
 

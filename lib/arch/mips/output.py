@@ -211,10 +211,14 @@ class Output(OutputAbs):
                 return False
 
             addr = i.operands[-1].value.imm
-            if addr in self.ctx.addr_color:
-                self._label_or_address(addr, -1, False)
+
+            if self.is_symbol(addr):
+                self._symbol(addr)
             else:
-                self._add(hex(addr))
+                if addr in self.ctx.addr_color:
+                    self._label_or_address(addr, -1, False)
+                else:
+                    self._add(hex(addr))
             return False
 
 

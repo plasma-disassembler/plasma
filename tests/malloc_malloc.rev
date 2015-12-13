@@ -204,7 +204,8 @@ function malloc (raw) {
             if (*(save_malloc_hook) != rax) {
                 0x7b5c0: rsi = rdi # mov rsi, rdi
                 0x7b5c3: rdi = main_arena # lea rdi, qword ptr [rip + 0x323576]
-                0x7b5ca: jmp 0x79740
+                0x7b5ca: jmp _int_malloc
+                _int_malloc
                 # 0x79740: cmp rsi, 0xbf
                 # 0x79744: ja 0x79eec
                 if (rsi (unsigned) <= '\xbf') {
@@ -1163,7 +1164,7 @@ function malloc (raw) {
                 0x7b5ed: rsi = rbx # mov rsi, rbx
                 0x7b5f0: rdi = rax # mov rdi, rax
                 0x7b5f3: pop rbx
-                0x7b5f4: jmp 0x77110
+                0x7b5f4: jmp mem2mem_check
                 mem2mem_check
                 0x77110: test rdi, rdi
                 0x77113: rax = rdi # mov rax, rdi

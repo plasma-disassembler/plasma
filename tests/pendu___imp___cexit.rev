@@ -22,6 +22,7 @@ function __imp___cexit (.text) {
     0x401143: *(esp) = 0x404004 # mov dword ptr [esp], 0x404004
     0x40114a: call ___getmainargs
     0x40114f: eax = *(0x404010) # mov eax, dword ptr [0x404010]
+    __imp__strlen
     # 0x401154: test eax, eax
     # 0x401156: je 0x4011b0
     if (eax != 0) {
