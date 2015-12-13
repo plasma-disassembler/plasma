@@ -84,6 +84,7 @@ class Visual():
             b"\x1b\x5b\x31\x3b\x35\x44": self.main_k_ctrl_left,
             b"\x1b\x5b\x31\x3b\x35\x43": self.main_k_ctrl_right,
             b"c": self.main_cmd_code,
+            b"p": self.main_cmd_set_function,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -911,6 +912,15 @@ class Visual():
         return ret
 
 
+    def reload_dump(self):
+        self.console.ctx.entry_addr = self.first_addr
+        self.console.ctx.dump = True
+        o = self.dis.dump_asm(self.console.ctx, until=self.last_addr)
+        self.console.ctx.dump = False
+        self.output = o
+        self.token_lines = o.token_lines
+
+
     def main_cmd_code(self, h, w):
         if self.mode == MODE_DECOMPILE:
             return False
@@ -926,19 +936,28 @@ class Visual():
 
         self.console.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
-
-        self.console.ctx.entry_addr = self.first_addr
-        self.console.ctx.dump = True
-        o = self.dis.dump_asm(self.console.ctx, until=self.last_addr)
-        self.console.ctx.dump = False
-
-        self.output = o
-        self.token_lines = o.token_lines
-
+        self.reload_dump()
         self.console.ctx.db.modified = True
-
         return True
 
+
+    def main_cmd_set_function(self, h, w):
+        if self.mode == MODE_DECOMPILE:
+            return False
+
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+
+        # TODO: check if the address is not already in a function
+
+        ad = self.output.line_addr[line]
+        self.console.analyzer.msg.put((ad, True, self.queue_wait_analyzer))
+        self.queue_wait_analyzer.get()
+        self.reload_dump()
+        self.console.ctx.db.modified = True
+        self.goto_address(ad, h, w)
+        return True
 
 
     # Inline comment editor : keys mapping

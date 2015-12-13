@@ -63,6 +63,7 @@ class Database():
         self.func_id = {} # id -> func address
         self.end_functions = {}
         self.reverse_symbols = {}
+        self.version = VERSION
 
 
     def load(self, filename):
@@ -158,7 +159,7 @@ class Database():
             pass
 
         try:
-            version = data["version"]
+            self.version = data["version"]
         except:
             # Not available in previous versions, this try will be
             # removed in the future
