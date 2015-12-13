@@ -399,11 +399,17 @@ class Console():
 
         while 1:
             rl.loop()
-            if self.ctx.db is None or not self.ctx.db.modified:
+            if not self.check_db_modified():
                 break
-            print("the database was modified, run save or exit to force")
 
         self.analyzer.msg.put("exit")
+
+
+    def check_db_modified(self):
+        if self.ctx.db is not None and self.ctx.db.modified:
+            print("the database was modified, run save or exit to force")
+            return True
+        return False
 
 
     def send_control_c(self):
@@ -608,6 +614,8 @@ class Console():
 
 
     def __exec_load(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
@@ -620,6 +628,8 @@ class Console():
 
 
     def __exec_lrawx86(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
@@ -632,6 +642,8 @@ class Console():
 
 
     def __exec_lrawx64(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
@@ -644,6 +656,8 @@ class Console():
 
 
     def __exec_lrawarm(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
@@ -655,6 +669,8 @@ class Console():
 
 
     def __exec_lrawmips(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
@@ -666,6 +682,8 @@ class Console():
 
 
     def __exec_lrawmips64(self, args):
+        if self.check_db_modified():
+            return
         if len(args) != 2:
             error("filename required")
             return
