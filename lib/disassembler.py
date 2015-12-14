@@ -228,7 +228,7 @@ class Disassembler():
                 o._new_line()
                 o._new_line()
 
-            while ((l < lines and until == -1) or (ad != until and until != -1)) \
+            while ((l < lines and until == -1) or (ad < until and until != -1)) \
                     and ad <= s.end:
                 if self.mem.is_code(ad): # TODO optimize
                     if ad in self.functions:
@@ -263,7 +263,7 @@ class Disassembler():
 
                 l += 1
 
-            if (l >= lines and until == -1) or (ad == until and until != -1):
+            if (l >= lines and until == -1) or (ad >= until and until != -1):
                 break
 
             s = self.binary.get_section(ad)
@@ -274,7 +274,7 @@ class Disassembler():
                 if s is None:
                     break
                 ad = s.start
-                if ad == until:
+                if ad >= until:
                     break
             o.curr_section = s
 
