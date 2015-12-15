@@ -31,7 +31,7 @@ except:
 import json
 
 from lib.disassembler import Jmptable
-from lib.utils import info, error, die
+from lib.utils import info, error, die, warning
 from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
@@ -42,6 +42,9 @@ VERSION = 1.1
 class Database():
     def __init__(self):
         self.__init_vars()
+
+        if msgpack.version < (0, 4, 6):
+            warning("your version of msgpack is less than 0.4.6")
 
 
     def __init_vars(self):
