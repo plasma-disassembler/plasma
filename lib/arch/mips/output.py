@@ -116,7 +116,7 @@ class Output(OutputAbs):
                 if is_sym or section is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, 0, True, False,
+                    self._imm(i, mm.disp, 0, True,
                               section=section, print_data=False,
                               force_dont_print_data=force_dont_print_data)
                 else:
