@@ -62,6 +62,7 @@ class Console():
             "exit",
             "functions",
             "help",
+            "history",
             "info",
             "jmptable",
             "load",
@@ -89,6 +90,16 @@ class Console():
                 [
                 "",
                 "Display this help"
+                ]
+            ),
+
+            "history": Command(
+                0,
+                self.__exec_history,
+                None,
+                [
+                "",
+                "Display the command history",
                 ]
             ),
 
@@ -795,6 +806,11 @@ class Console():
                         self.rl.print(self.TAB)
                     self.rl.print(line)
                     self.rl.print("\n")
+
+
+    def __exec_history(self, args):
+        for line in reversed(self.rl.history):
+            print(line)
 
 
     def __exec_sections(self, args):
