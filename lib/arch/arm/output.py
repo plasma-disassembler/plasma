@@ -252,8 +252,9 @@ class Output(OutputAbs):
                 self._add(i.mnemonic)
                 return False
 
+            self._add(i.mnemonic + " ")
+
             if i.operands[0].type != ARM_OP_IMM:
-                self._add(i.mnemonic + " ")
                 self._operand(i, 0, force_dont_print_data=True)
                 self.inst_end_here()
                 if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
