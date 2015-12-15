@@ -692,6 +692,7 @@ class Visual():
             l -= 1
         if l >= 0:
             self.goto_line(l, h)
+            self.check_cursor_x()
         return True
 
     def main_k_next_paragraph(self, h, w):
@@ -700,6 +701,7 @@ class Visual():
             l += 1
         if l < len(self.output.lines):
             self.goto_line(l, h)
+            self.check_cursor_x()
         return True
 
 
