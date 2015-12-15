@@ -91,6 +91,7 @@ class Database():
             self.__load_comments(data)
             self.__load_memory(data)
             self.__load_functions(data)
+            self.__load_history(data)
 
             self.loaded = True
 
@@ -175,6 +176,10 @@ class Database():
             # Not available in previous versions, this try will be
             # removed in the future
             pass
+
+
+    def __load_history(self, data):
+        self.history = data["history"]
 
 
     def __load_functions(self, data):
