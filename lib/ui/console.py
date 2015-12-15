@@ -935,6 +935,7 @@ class Console():
 
         try:
             self.ctx.dis.mips_gp = int(args[1], 16)
+            self.ctx.db.mips_gp = self.ctx.dis.mips_gp
         except:
             error("bad address")
 
