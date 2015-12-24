@@ -295,5 +295,18 @@ class Binary(object):
 
 
     # Only for PE !
-    def pe_reverse_stripped_symbols(self, dis, addr_to_analyze):
-        return self.__binary.pe_reverse_stripped_symbols(dis, addr_to_analyze)
+
+
+    def pe_reverse_stripped(self, dis, i):
+        return self.__binary.pe_reverse_stripped(dis, i)
+
+
+    def pe_reverse_stripped_list(self, dis, addr_to_analyze):
+        count = 0
+        for ad in addr_to_analyze:
+            i = dis.lazy_disasm(ad)
+            if i is None:
+                continue
+            if self.__binary.pe_reverse_stripped(dis, i):
+                count += 1
+        return count

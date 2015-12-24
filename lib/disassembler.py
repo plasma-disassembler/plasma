@@ -244,6 +244,10 @@ class Disassembler():
                         o._dash()
 
                     i = self.lazy_disasm(ad, s.start)
+
+                    if self.binary.type == T_BIN_PE:
+                        self.binary.pe_reverse_stripped(self, i)
+
                     o._asm_inst(i)
 
                     if ad in self.end_functions:
@@ -290,11 +294,6 @@ class Disassembler():
         o.token_lines.pop(-1)
 
         o.join_lines()
-
-        # TODO: move it in the analyzer
-        if self.binary.type == T_BIN_PE:
-            # TODO: if ret != 0 : database is modified
-            self.binary.pe_reverse_stripped_symbols(self, o.addr_line)
 
         return o
 
@@ -594,7 +593,7 @@ class Disassembler():
             return None, 0
 
         if self.binary.type == T_BIN_PE:
-            nb_new_syms = self.binary.pe_reverse_stripped_symbols(self, addresses)
+            nb_new_syms = self.binary.pe_reverse_stripped_list(self, addresses)
         else:
             nb_new_syms = 0
 

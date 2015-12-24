@@ -155,10 +155,7 @@ class PE:
                 self.classbinary.symbols[name] = [imp.address, SYM_UNK]
 
 
-    def pe_reverse_stripped_symbols(self, dis, addr_to_analyze):
-        def inv(n):
-            return n == X86_OP_INVALID
-
+    def pe_reverse_stripped(self, dis, i):
         # Now try to find the real call. For each SYMBOL address 
         # we have this :
         #
@@ -172,58 +169,49 @@ class PE:
 
         # Search in the code every call which point to a "jmp SYMBOL"
 
+        def inv(n):
+            return n == X86_OP_INVALID
+
         ARCH_UTILS = dis.load_arch_module().utils
-        count = 0
 
-        for ad in addr_to_analyze:
-            i = dis.lazy_disasm(ad)
-            if i is None:
-                break
+        if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
+            goto = i.operands[0].value.imm
 
-            if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
-                goto = i.operands[0].value.imm
+            if goto in self.classbinary.reverse_symbols:
+                if not self.classbinary.reverse_symbols[goto][0].startswith("sub_"):
+                    return False
 
-                if goto in self.classbinary.reverse_symbols:
-                    continue
+            nxt = dis.lazy_disasm(goto)
 
-                nxt = dis.lazy_disasm(goto)
+            if nxt is None:
+                return False
 
-                if nxt is None:
-                    continue
+            if not ARCH_UTILS.is_uncond_jump(nxt) or \
+                    nxt.operands[0].type != X86_OP_MEM:
+                return False
 
-                if not ARCH_UTILS.is_uncond_jump(nxt) or \
-                        nxt.operands[0].type != X86_OP_MEM:
-                    continue
-               
-                mm = nxt.operands[0].mem
-                next_ip = nxt.address + nxt.size
+            mm = nxt.operands[0].mem
+            next_ip = nxt.address + nxt.size
 
-            elif ARCH_UTILS.is_uncond_jump(i) and \
-                    i.address in self.classbinary.reverse_symbols:
-                goto = i.address
-                mm = i.operands[0].mem
-                next_ip = i.address + i.size
+        else:
+            return False
 
-            else:
-                continue
+        ptr = mm.disp
+        if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
+            ptr += next_ip
 
-            ptr = mm.disp
-            if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
-                ptr += next_ip
+        if ptr in self.classbinary.reverse_symbols \
+                and inv(mm.segment) and inv(mm.index):
+            name = "_" + self.classbinary.reverse_symbols[ptr][0]
+            ty = self.classbinary.reverse_symbols[ptr][1]
 
-            if ptr in self.classbinary.reverse_symbols \
-                    and inv(mm.segment) and inv(mm.index):
-                name = "_" + self.classbinary.reverse_symbols[ptr][0]
-                ty = self.classbinary.reverse_symbols[ptr][1]
+            if name in self.classbinary.symbols:
+                name = self.classbinary.rename_sym(name)
 
-                if name in self.classbinary.symbols:
-                    name = self.classbinary.rename_sym(name)
+            self.classbinary.reverse_symbols[goto] = [name, ty]
+            self.classbinary.symbols[name] = [goto, ty]
 
-                self.classbinary.reverse_symbols[goto] = [name, ty]
-                self.classbinary.symbols[name] = [goto, ty]
-                count += 1
-
-        return count
+        return True
 
 
     def __section_is_data(self, s):
