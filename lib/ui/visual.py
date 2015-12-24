@@ -231,8 +231,7 @@ class Visual():
             self.console.ctx.dump = False
 
         elif self.mode == MODE_DECOMPILE:
-            self.screen.addstr(h, 0, "decompiling...")
-            self.screen.refresh()
+            self.status_bar("decompiling...", h, True)
             self.console.ctx.dump = False
             o = disasm(self.console.ctx)
 
@@ -243,6 +242,12 @@ class Visual():
             self.first_addr = min(o.addr_line)
             return True
         return False
+
+
+    def status_bar(self, s, h, refresh=False):
+        self.screen.addstr(h, 0, s)
+        if refresh:
+            self.screen.refresh()
 
 
     def view_main_redraw(self, h, w):
@@ -329,7 +334,7 @@ class Visual():
         self.cursor_x = xbegin + 3
         i = 0 # index in the string comment
 
-        self.screen.addstr(h, 0, "-- INLINE COMMENT --")
+        self.status_bar("-- INLINE COMMENT --", h)
 
         while 1:
             (h, w) = screen.getmaxyx()
@@ -916,6 +921,26 @@ class Visual():
 
 
     def main_cmd_switch_mode(self, h, w):
+        # Get a line with an address: the cursor is maybe on a comment
+        l = self.win_y + self.cursor_y
+        while l not in self.output.line_addr and l <= len(self.token_lines):
+            l += 1
+
+        ad = self.output.line_addr[l]
+
+        if self.mode == MODE_DUMP:
+            func_id = self.dis.mem.get_func_id(ad)
+
+            if func_id == -1:
+                self.status_bar("not in a function: create a function or use "
+                                "the cmd x in the console", h, True)
+                return False
+
+            ad_disasm = self.dis.func_id[func_id]
+
+        else:
+            ad_disasm = ad
+
         self.stack.append(self.__compute_curr_position())
 
         if self.mode == MODE_DUMP:
@@ -923,25 +948,13 @@ class Visual():
         else:
             self.mode = MODE_DUMP
 
-        # This is for moving the cursor at the same address
-        l = self.win_y + self.cursor_y
-        while l not in self.output.line_addr and l > 0:
-            l -= 1
-        if l == 0:
-            ad = self.first_addr
-        else:
-            ad = self.output.line_addr[l]
-
-        ret = self.exec_disasm(ad, h)
+        ret = self.exec_disasm(ad_disasm, h)
 
         if ret:
             self.cursor_x = 0
-
-            if self.mode == MODE_DUMP:
-                self.goto_address(ad, h, w)
-            else:
-                self.win_y = 0
-                self.cursor_y = 0
+            self.win_y = 0
+            self.cursor_y = 0
+            self.goto_address(ad, h, w)
 
         return ret
 

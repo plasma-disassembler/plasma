@@ -36,7 +36,7 @@ from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
 
-VERSION = 1.1
+VERSION = 1.2
 
 
 class Database():
@@ -59,11 +59,11 @@ class Database():
         self.modified = False
         self.loaded = False
         self.mem = None
-        self.functions = {}
+        self.functions = {} # func address -> [end addr]
+        self.func_id = {} # id -> func address
 
         # Computed variables
         self.func_id_counter = 0
-        self.func_id = {} # id -> func address
         self.end_functions = {}
         self.reverse_symbols = {}
         self.version = VERSION
@@ -96,6 +96,9 @@ class Database():
             self.__load_functions(data)
             self.__load_history(data)
 
+            if self.version != VERSION:
+                warning("the database version is old, some information may be missing")
+
             self.loaded = True
 
         gc.enable()
@@ -103,6 +106,7 @@ class Database():
 
     def save(self, history):
         data = {
+            "version": VERSION,
             "symbols": self.symbols,
             "history": history,
             "user_inline_comments": self.user_inline_comments,
@@ -111,8 +115,9 @@ class Database():
             "internal_previous_comments": self.internal_previous_comments,
             "jmptables": [],
             "mips_gp": self.mips_gp,
-            "mem_code": self.mem.code,
+            "mem": self.mem.mm,
             "functions": self.functions,
+            "func_id": self.func_id,
         }
 
         for j in self.jmptables.values():
@@ -167,6 +172,7 @@ class Database():
         except:
             # Not available in previous versions, this try will be
             # removed in the future
+            self.version = -1
             pass
 
 
@@ -174,7 +180,13 @@ class Database():
         self.mem = Memory()
 
         try:
-            self.mem.code = data["mem_code"]
+            if self.version == -1:
+                self.mem.mm = data["mem_code"]
+                for ad in self.mem.mm:
+                    self.mem.mm[ad].append(-1)
+                return
+
+            self.mem.mm = data["mem"]
         except:
             # Not available in previous versions, this try will be
             # removed in the future
@@ -189,33 +201,29 @@ class Database():
         try:
             self.functions = data["functions"]
 
-            if self.version == 1.0:
-                self.end_functions = data["end_functions"]
+            if self.version == -1:
+                for fad, value in self.functions.items():
+                    # end of the function
+                    e = value[0]
+                    if e in self.end_functions:
+                        self.end_functions[e].append(fad)
+                    else:
+                        self.end_functions[e] = [fad]
 
-                tmp_rev_func_id = {}
+                    # function id
+                    id = value[1]
+                    self.func_id[id] = fad
 
-                for fad in self.functions:
-                    self.func_id[self.func_id_counter] = fad
-                    self.tmp_rev_func_id[fad] = self.func_id_counter
-                    self.func_id_counter += 1
+            else:
+                for fad, value in self.functions.items():
+                    # end of the function
+                    e = value[0]
+                    if e in self.end_functions:
+                        self.end_functions[e].append(fad)
+                    else:
+                        self.end_functions[e] = [fad]
 
-                for e in self.end_functions:
-                    for fad in e:
-                        self.functions[fad] = [e, self.tmp_rev_func_id[fad]]
-
-                return
-
-            for fad, value in self.functions.items():
-                # end of the function
-                e = value[0]
-                if e in self.end_functions:
-                    self.end_functions[e].append(fad)
-                else:
-                    self.end_functions[e] = [fad]
-
-                # function id
-                id = value[1]
-                self.func_id[id] = fad
+                self.func_id = data["func_id"]
 
             self.func_id_counter = max(self.func_id) + 1
 

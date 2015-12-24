@@ -23,14 +23,28 @@ MEM_CODE = 2
 
 class Memory():
     def __init__(self):
-        self.code = {}
+        #
+        # Each item contains a list :
+        # [size, type, value]
+        #
+        # type == MEM_CODE
+        # the value is the function id where the instruction is.
+        #
+
+        self.mm = {}
 
 
-    def add(self, ad, size, ty=MEM_CODE):
-        self.code[ad] = (size, ty)
+    def add(self, ad, size, val, ty=MEM_CODE):
+        self.mm[ad] = [size, ty, val]
 
 
     def is_code(self, ad):
-        if ad in self.code:
-            return self.code[ad][1] == MEM_CODE
+        if ad in self.mm:
+            return self.mm[ad][1] == MEM_CODE
         return False
+
+
+    def get_func_id(self, ad):
+        if not self.is_code(ad):
+            return -1
+        return self.mm[ad][2]

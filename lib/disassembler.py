@@ -71,6 +71,7 @@ class Disassembler():
         self.user_previous_comments = database.user_previous_comments
         self.internal_previous_comments = database.internal_previous_comments
         self.functions = database.functions
+        self.func_id = database.func_id
         self.end_functions = database.end_functions
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
@@ -87,7 +88,7 @@ class Disassembler():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
 
             if not database.loaded:
-                self.mem.add(s.start, s.end, MEM_UNK)
+                self.mem.add(s.start, s.end, None, MEM_UNK)
 
 
     def get_unpack_str(self, size_word):
@@ -301,7 +302,7 @@ class Disassembler():
 
         while l < NB_LINES_TO_DISASM:
             if self.mem.is_code(ad):
-                size = self.mem.code[ad][0]
+                size = self.mem.mm[ad][0]
                 l += 1
                 l -= size
             else:

@@ -149,7 +149,8 @@ class Analyzer(threading.Thread):
                     e = max(inner_code)
                     func_id = self.db.func_id_counter
 
-                    functions[fad] = [e, func_id]
+                    functions[fad] = [e]
+                    self.db.func_id[func_id] = fad
                     self.db.func_id_counter += 1
 
                     if e in end_functions:
@@ -165,7 +166,7 @@ class Analyzer(threading.Thread):
                     func_id = -1
 
                 for ad, size in inner_code.items():
-                    mem.add(ad, size, MEM_CODE)
+                    mem.add(ad, size, func_id, MEM_CODE)
 
                 inner_code.clear()
 
