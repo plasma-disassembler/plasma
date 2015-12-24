@@ -27,7 +27,7 @@ function main (.text) {
         and if (var2 <= 9)
         0x40058a: edi = 0x400644 "1" # mov edi, 0x400644
         0x40058f: call puts@plt
-        0x400594: jmp 0x4005a0
+        0x400594: jmp ret_0x4005a0
     } else {
         0x400596: edi = 0x400646 "2" # mov edi, 0x400646
         0x40059b: call puts@plt

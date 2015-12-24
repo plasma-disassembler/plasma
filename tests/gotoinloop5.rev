@@ -20,7 +20,7 @@ function main (.text) {
     }
     0x400532: edi = 0x400648 "3" # mov edi, 0x400648
     0x400537: call puts@plt
-    0x40053c: jmp 0x4005a6
+    0x40053c: jmp loop_0x4005a6
     loop {
         loop_0x4005a6:
         # 0x4005a6: cmp dword ptr [rbp - 4], 9

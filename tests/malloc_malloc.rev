@@ -418,7 +418,7 @@ function malloc (raw) {
                         loop {
                             loop_0x79916:
                             0x79916: ebp = 10000 # mov ebp, 0x2710
-                            0x7991b: jmp 0x79967
+                            0x7991b: jmp loop_0x79967
                             loop {
                                 loop_0x79967:
                                 0x79967: r14 = *(r15 + 112) # mov r14, qword ptr [r15 + 0x70]
@@ -636,7 +636,7 @@ function malloc (raw) {
                                     # 0x79c6f: test eax, eax
                                     # 0x79c71: jne 0x79c84
                                     if (eax == 0) {
-                                        0x79c73: jmp 0x79cc3
+                                        0x79c73: jmp loop_0x79cc3
                                     } else {
                                         goto loop_0x79c84
                                     }
@@ -658,7 +658,7 @@ function malloc (raw) {
                                 0x79d7d: eax -= 2 # sub eax, 2
                                 0x79d80: rdx = r15 + (rax*8) + 88 # lea rdx, qword ptr [r15 + rax*8 + 0x58]
                                 0x79d85: eax = 1 # mov eax, 1
-                                0x79d8a: jmp 0x79c84
+                                0x79d8a: jmp loop_0x79c84
                                 loop {
                                     loop_0x79c84:
                                     0x79c84: test esi, eax
@@ -679,7 +679,7 @@ function malloc (raw) {
                                 0x79c9d: ecx ^= -1 # not ecx
                                 0x79c9f: esi &= ecx # and esi, ecx
                                 0x79ca1: *(r15 + (r8*4) + 2136) = esi # mov dword ptr [r15 + r8*4 + 0x858], esi
-                                0x79ca9: jmp 0x79c6b
+                                0x79ca9: jmp loop_0x79c6b
                             }
                             0x79ccb: rdx = *(r15 + 88) # mov rdx, qword ptr [r15 + 0x58]
                             0x79ccf: rax = *(rdx + 8) # mov rax, qword ptr [rdx + 8]
@@ -721,7 +721,7 @@ function malloc (raw) {
                                 0x79d60: ebx = 126 # mov ebx, 0x7e
                                 0x79d65: cmovbe ebx, *(rsp + 92) # cmovbe ebx, dword ptr [rsp + 0x5c]
                                 0x79d6a: *(rsp + 8) = ebx # mov dword ptr [rsp + 8], ebx
-                                0x79d6e: jmp 0x79916
+                                0x79d6e: jmp loop_0x79916
                             }
                         }
                         0x79b45: rdx = rsi # mov rdx, rsi
@@ -762,7 +762,7 @@ function malloc (raw) {
                             0x79bc9: esi = eax # mov esi, eax
                             0x79bcb: call __memset_sse2
                             0x79bd0: rcx = rax # mov rcx, rax
-                            0x79bd3: jmp 0x79a52
+                            0x79bd3: jmp ret_0x79a52
                         }
                         goto ret_0x79a52
                         0x7a01c: rcx = 0x16ae88 # lea rcx, qword ptr [rip + 0xf0e65]
@@ -793,7 +793,7 @@ function malloc (raw) {
                         }
                         goto 0x79a40
                         0x79dea: r14 = *(rdx + 40) # mov r14, qword ptr [rdx + 0x28]
-                        0x79dee: jmp 0x79df4
+                        0x79dee: jmp loop_0x79df4
                         loop {
                             loop_0x79df4:
                             0x79df4: rax = *(r14 + 8) # mov rax, qword ptr [r14 + 8]
@@ -1075,7 +1075,7 @@ function malloc (raw) {
                         # 0x7a0a9: jne 0x79f0f
                         if (rax == 0) {
                             0x7a0af: ecx = 0 # xor ecx, ecx
-                            0x7a0b1: jmp 0x79a52
+                            0x7a0b1: jmp ret_0x79a52
                         } else {
                             goto 0x79f0f
                         }
@@ -1128,12 +1128,12 @@ function malloc (raw) {
                             0x79f2a: sil ^= '\xff' # xor sil, 0xff
                             0x79f2e: call __memset_sse2
                             0x79f33: rcx = rax # mov rcx, rax
-                            0x79f36: jmp 0x79a52
+                            0x79f36: jmp ret_0x79a52
                         }
                         goto ret_0x79a52
                     }
                     0x79f54: ecx = 0 # xor ecx, ecx
-                    0x79f56: jmp 0x79a52
+                    0x79f56: jmp ret_0x79a52
                     ret_0x79a52:
                     0x79a52: rsp += 104 # add rsp, 0x68
                     0x79a56: rax = rcx # mov rax, rcx
@@ -1154,7 +1154,7 @@ function malloc (raw) {
             }
             0x7b5d0: push rbx
             0x7b5d1: rbx = rdi # mov rbx, rdi
-            0x7b5d4: call 0x77f00
+            0x7b5d4: call sub_77f00
             # 0x7b5d9: test eax, eax
             # 0x7b5db: js 0x7b5f9
             if (eax > 0) {
@@ -1226,7 +1226,7 @@ function malloc (raw) {
         goto ret_0x7b43f
     }
     0x7b4f8: eax = 0 # xor eax, eax
-    0x7b4fa: jmp 0x7b43f
+    0x7b4fa: jmp ret_0x7b43f
     ret_0x7b43f:
     0x7b43f: rsp += 8 # add rsp, 8
     0x7b443: pop rbx

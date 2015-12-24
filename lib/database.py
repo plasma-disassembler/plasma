@@ -37,7 +37,7 @@ from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
 
-VERSION = 1.2
+VERSION = 1.3
 
 
 class Database():
@@ -50,7 +50,7 @@ class Database():
 
     def __init_vars(self):
         self.history = []
-        self.symbols = {}
+        self.symbols = {} # name -> [addr, type]
         self.user_inline_comments = {}
         self.internal_inline_comments = {}
         self.user_previous_comments = {}
@@ -62,11 +62,13 @@ class Database():
         self.mem = None
         self.functions = {} # func address -> [end addr]
         self.func_id = {} # id -> func address
+        self.labels = {} # name -> addr
 
         # Computed variables
         self.func_id_counter = 0
         self.end_functions = {}
-        self.reverse_symbols = {}
+        self.reverse_symbols = {} # addr -> [name, type]
+        self.reverse_labels = {} # addr -> name
         self.version = VERSION
 
 
@@ -94,6 +96,7 @@ class Database():
 
             self.__load_meta(data)
             self.__load_symbols(data)
+            self.__load_labels(data)
             self.__load_jmptables(data)
             self.__load_comments(data)
             self.__load_memory(data)
@@ -122,6 +125,7 @@ class Database():
             "mem": self.mem.mm,
             "functions": self.functions,
             "func_id": self.func_id,
+            "labels": self.labels,
         }
 
         for j in self.jmptables.values():
@@ -144,6 +148,17 @@ class Database():
         for name, a in self.symbols.items():
             self.reverse_symbols[a[0]] = [name, a[1]]
             self.symbols[name] = [a[0], a[1]]
+
+
+    def __load_labels(self, data):
+        try:
+            self.labels = data["labels"]
+            for name, ad in self.labels.items():
+                self.reverse_labels[ad] = name
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
 
 
     def __load_comments(self, data):

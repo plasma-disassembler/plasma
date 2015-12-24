@@ -26,7 +26,7 @@ function main (.text) {
         if (ebp == '\x02') {
             0x400524: edi = 0x4006b6 "1" # mov edi, 0x4006b6
             0x400529: call puts@plt
-            0x40052e: jmp 0x40050c
+            0x40052e: jmp ret_0x40050c
         }
     }
     ret_0x40050c:

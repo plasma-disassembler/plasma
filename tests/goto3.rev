@@ -8,7 +8,7 @@ function main (.text) {
     0x40050e: var1 = 0 # mov dword ptr [rbp - 8], 0
     0x400515: var2 = 0 # mov dword ptr [rbp - 4], 0
     0x40051c: var3 = 0 # mov dword ptr [rbp - 0xc], 0
-    0x400523: jmp 0x400559
+    0x400523: jmp loop_0x400559
     loop {
         loop_0x400559:
         # 0x400559: cmp dword ptr [rbp - 4], 0x13

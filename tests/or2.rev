@@ -7,7 +7,7 @@ function main (.text) {
     0x400553: eax = 0 # mov eax, 0
     0x400558: call time@plt
     0x40055d: var1 = eax # mov dword ptr [rbp - 4], eax
-    0x400560: jmp 0x400570
+    0x400560: jmp loop_0x400570
     loop {
         loop_0x400570:
         # 0x400570: cmp dword ptr [rbp - 4], 0x63

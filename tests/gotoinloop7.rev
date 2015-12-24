@@ -5,7 +5,7 @@ function main (.text) {
     0x400506: push rbp
     0x400507: rbp = rsp # mov rbp, rsp
     0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: jmp 0x400569
+    0x40050e: jmp loop_0x400569
     loop {
         loop_0x400569:
         # 0x400569: cmp dword ptr [rbp - 4], 0
@@ -22,14 +22,14 @@ function main (.text) {
         }
         0x40052c: edi = 0x40060b "2" # mov edi, 0x40060b
         0x400531: call puts@plt
-        0x400536: jmp 0x40055f
+        0x400536: jmp loop_0x40055f
         loop {
             loop_0x40055f:
             # 0x40055f: cmp dword ptr [rbp - 0xc], 0x18
             # 0x400563: jle 0x400538
             if (var2 > 24)  goto 0x400565
             0x400538: var3 = 0 # mov dword ptr [rbp - 8], 0
-            0x40053f: jmp 0x400559
+            0x40053f: jmp loop_0x400559
             loop {
                 loop_0x400559:
                 # 0x400559: cmp dword ptr [rbp - 8], 0x7a

@@ -843,8 +843,8 @@ class Visual():
             except:
                 return False
 
-        elif word in self.console.ctx.labels:
-            ad = self.console.ctx.labels[word]
+        elif word in self.console.ctx.dis.labels:
+            ad = self.console.ctx.dis.labels[word]
 
         else:
             self.console.ctx.entry = word

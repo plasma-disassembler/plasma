@@ -9,7 +9,7 @@ function main (.text) {
     if (var1 > 0) {
         0x40051b: edi = 0x4005e4 "1" # mov edi, 0x4005e4
         0x400520: call puts@plt
-        0x400525: jmp 0x400540
+        0x400525: jmp ret_0x400540
         ret_0x400540:
         0x400540: edi = 0x4005e8 "3" # mov edi, 0x4005e8
         0x400545: call puts@plt
@@ -26,6 +26,6 @@ function main (.text) {
             0x400535: call puts@plt
         }
         0x40053a: var1 += 1 # add dword ptr [rbp - 4], 1
-        0x40053e: jmp 0x400527
+        0x40053e: jmp loop_0x400527
     }
 }

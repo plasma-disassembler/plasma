@@ -9,28 +9,28 @@ function main (.text) {
     if (var1 == 'a') {
         0x400518: edi = 0x400604 "1" # mov edi, 0x400604
         0x40051d: call puts@plt
-        0x400522: jmp 0x40056a
+        0x400522: jmp ret_0x40056a
     }
     # 0x400524: cmp byte ptr [rbp - 1], 0x62
     # 0x400528: jne 0x400536
     else if (var1 == 'b') {
         0x40052a: edi = 0x400606 "2" # mov edi, 0x400606
         0x40052f: call puts@plt
-        0x400534: jmp 0x40056a
+        0x400534: jmp ret_0x40056a
     }
     # 0x400536: cmp byte ptr [rbp - 1], 0x63
     # 0x40053a: jne 0x400548
     else if (var1 == 'c') {
         0x40053c: edi = 0x400608 "3" # mov edi, 0x400608
         0x400541: call puts@plt
-        0x400546: jmp 0x40056a
+        0x400546: jmp ret_0x40056a
     }
     # 0x400548: cmp byte ptr [rbp - 1], 0xfa
     # 0x40054c: jne 0x40055a
     else if (var1 == '\xfa') {
         0x40054e: edi = 0x40060a "4" # mov edi, 0x40060a
         0x400553: call puts@plt
-        0x400558: jmp 0x40056a
+        0x400558: jmp ret_0x40056a
     }
     # 0x40055a: cmp byte ptr [rbp - 1], 0xa
     # 0x40055e: jne 0x40056a

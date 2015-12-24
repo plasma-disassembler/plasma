@@ -23,7 +23,7 @@ function main (.text) {
         if (eax == 0) {
             0x400517: edi = 0x4006b4 "1" # mov edi, 0x4006b4
             0x40051c: call puts@plt
-            0x400521: jmp 0x40050f
+            0x400521: jmp ret_0x40050f
         }
     }
     ret_0x40050f:

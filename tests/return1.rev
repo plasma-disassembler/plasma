@@ -6,7 +6,7 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
     0x400515: var2 = 5 # mov dword ptr [rbp - 8], 5
-    0x40051c: jmp 0x400550
+    0x40051c: jmp loop_0x400550
     loop {
         loop_0x400550:
         # 0x400550: cmp dword ptr [rbp - 4], 0x63
@@ -23,11 +23,11 @@ function main (.text) {
     0x40053b: edi = 0x4005f6 "2" # mov edi, 0x4005f6
     0x400540: call puts@plt
     0x400545: eax = 2 # mov eax, 2
-    0x40054a: jmp 0x400565
+    0x40054a: jmp ret_0x400565
     0x400524: edi = 0x4005f4 "1" # mov edi, 0x4005f4
     0x400529: call puts@plt
     0x40052e: eax = 1 # mov eax, 1
-    0x400533: jmp 0x400565
+    0x400533: jmp ret_0x400565
     0x400556: edi = 0x4005f8 "3" # mov edi, 0x4005f8
     0x40055b: call puts@plt
     0x400560: eax = 0 # mov eax, 0

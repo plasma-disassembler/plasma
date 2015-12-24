@@ -26,11 +26,11 @@ function main (.text) {
             and if (var2 > 2)
             0x400540: edi = 0x400604 "1" # mov edi, 0x400604
             0x400545: call puts@plt
-            0x40054a: jmp 0x400562
+            0x40054a: jmp ret_0x400562
         } else {
             0x40054c: edi = 0x400606 "2" # mov edi, 0x400606
             0x400551: call puts@plt
-            0x400556: jmp 0x400562
+            0x400556: jmp ret_0x400562
         }
     } else {
         0x400558: edi = 0x400608 "3" # mov edi, 0x400608

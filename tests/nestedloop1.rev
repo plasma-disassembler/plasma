@@ -9,14 +9,14 @@ function main (.text) {
     # 0x400519: jle 0x40055d
     if (var1 > 0) {
         0x40051b: var1 = 0 # mov dword ptr [rbp - 4], 0
-        0x400522: jmp 0x40054d
+        0x400522: jmp loop_0x40054d
         loop {
             loop_0x40054d:
             # 0x40054d: cmp dword ptr [rbp - 4], 9
             # 0x400551: jle 0x400524
             if (var1 > 9)  goto 0x400553
             0x400524: var2 = 0 # mov dword ptr [rbp - 8], 0
-            0x40052b: jmp 0x400543
+            0x40052b: jmp loop_0x400543
             loop {
                 loop_0x400543:
                 # 0x400543: cmp dword ptr [rbp - 8], 4

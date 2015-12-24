@@ -14,14 +14,14 @@ function main (.text) {
     }
     0x400520: edi = 0x400616 "2" # mov edi, 0x400616
     0x400525: call puts@plt
-    0x40052a: jmp 0x40057b
+    0x40052a: jmp loop_0x40057b
     for (;;) {
         loop_0x40057b:
         # 0x40057b: cmp dword ptr [rbp - 8], 0x1c7
         # 0x400582: jle 0x400572
         if (var2 > 455) {
             0x400584: jmp 0x40052c
-            0x40052c: jmp 0x40057b
+            0x40052c: jmp loop_0x40057b
         }
         loop {
             loop_0x400572:

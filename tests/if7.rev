@@ -10,7 +10,7 @@ function main (.text) {
     0x400511: var2 = rsi # mov qword ptr [rbp - 0x20], rsi
     0x400515: edi = 0x4005f4 "0" # mov edi, 0x4005f4
     0x40051a: call puts@plt
-    0x40051f: jmp 0x40052b
+    0x40051f: jmp loop_0x40052b
     loop {
         loop_0x40052b:
         # 0x40052b: cmp dword ptr [rbp - 4], 0x13
@@ -24,7 +24,7 @@ function main (.text) {
     if (var4 == 0) {
         0x400537: edi = 0x4005f8 "2" # mov edi, 0x4005f8
         0x40053c: call puts@plt
-        0x400541: jmp 0x400553
+        0x400541: jmp ret_0x400553
     }
     # 0x400543: cmp dword ptr [rbp - 8], -1
     # 0x400547: jne 0x400553

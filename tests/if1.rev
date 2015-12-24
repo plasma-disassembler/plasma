@@ -9,7 +9,7 @@ function main (.text) {
     if (var1 > 0) {
         0x40051b: edi = 0x4005d4 "1" # mov edi, 0x4005d4
         0x400520: call puts@plt
-        0x400525: jmp 0x400531
+        0x400525: jmp ret_0x400531
     } else {
         0x400527: edi = 0x4005d6 "2" # mov edi, 0x4005d6
         0x40052c: call puts@plt

@@ -6,14 +6,14 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
     0x400515: var1 = 0 # mov dword ptr [rbp - 4], 0
-    0x40051c: jmp 0x400555
+    0x40051c: jmp loop_0x400555
     loop {
         loop_0x400555:
         # 0x400555: cmp dword ptr [rbp - 4], 9
         # 0x400559: jle 0x40051e
         if (var1 > 9)  goto ret_0x40055b
         0x40051e: var2 = 0 # mov dword ptr [rbp - 8], 0
-        0x400525: jmp 0x400535
+        0x400525: jmp loop_0x400535
         loop {
             loop_0x400535:
             # 0x400535: cmp dword ptr [rbp - 8], 9
@@ -23,7 +23,7 @@ function main (.text) {
             0x40052c: call puts@plt
             0x400531: var2 += 1 # add dword ptr [rbp - 8], 1
         }
-        0x40053b: jmp 0x40054b
+        0x40053b: jmp loop_0x40054b
         loop {
             loop_0x40054b:
             # 0x40054b: cmp dword ptr [rbp - 8], 0x13

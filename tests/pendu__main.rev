@@ -82,7 +82,7 @@ function _main (.text) {
                     0x401395: *(edx + eax) = 0 # mov dword ptr [edx + eax], 0
                     0x40139c: eax = &(var12) # lea eax, dword ptr [ebp - 0x20]
                     0x40139f: *(eax)++ # inc dword ptr [eax]
-                    0x4013a1: jmp 0x401380
+                    0x4013a1: jmp loop_0x401380
                 }
                 0x4013a3: eax = var3 # mov eax, dword ptr [ebp - 0x10]
                 0x4013a6: var2 = eax # mov dword ptr [ebp - 0xc], eax
@@ -124,7 +124,7 @@ function _main (.text) {
                         }
                         0x401419: eax = &(var12) # lea eax, dword ptr [ebp - 0x20]
                         0x40141c: *(eax)++ # inc dword ptr [eax]
-                        0x40141e: jmp 0x4013d2
+                        0x40141e: jmp loop_0x4013d2
                     }
                     0x401420: eax = var2 # mov eax, dword ptr [ebp - 0xc]
                     0x401423: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
@@ -143,7 +143,7 @@ function _main (.text) {
                         # 0x40145f: cmp byte ptr [ebp - 0xa9], 0xa
                         # 0x401466: jne 0x40146a
                         if (var14 != '\n')  goto 0x40146a
-                        0x401468: jmp 0x40143f
+                        0x401468: jmp loop_0x40143f
                     }
                     0x40146a: *(esp) = 0x40309e "\n" # mov dword ptr [esp], 0x40309e
                     0x401471: call _printf
@@ -164,7 +164,7 @@ function _main (.text) {
                     0x4014ac: var8 = eax # mov dword ptr [ebp - 0x24], eax
                     0x4014af: eax = var15 # mov eax, dword ptr [ebp - 0x28]
                     0x4014b2: var2 = eax # mov dword ptr [ebp - 0xc], eax
-                    0x4014b5: jmp 0x4013a9
+                    0x4014b5: jmp loop_0x4013a9
                 }
                 0x4014ba: eax = var8 # mov eax, dword ptr [ebp - 0x24]
                 # 0x4014bd: cmp eax, dword ptr [ebp - 0x1c]
@@ -206,7 +206,7 @@ function _main (.text) {
                     # 0x40152d: cmp dword ptr [ebp - 0xc], 0
                     # 0x401531: jg 0x401535
                     if (var2 > 0)  goto 0x401535
-                    0x401533: jmp 0x40150e
+                    0x401533: jmp loop_0x40150e
                 }
                 0x401535: eax = var2 # mov eax, dword ptr [ebp - 0xc]
                 0x401538: var3 = eax # mov dword ptr [ebp - 0x10], eax
@@ -214,7 +214,7 @@ function _main (.text) {
             # 0x40153b: cmp dword ptr [ebp - 0x14], 3
             # 0x40153f: je 0x401546
             if (var7 == 3)  goto ret_0x401546
-            0x401541: jmp 0x4012e6
+            0x401541: jmp loop_0x4012e6
         }
     }
     ret_0x401546:

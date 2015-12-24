@@ -15,7 +15,7 @@ function main (.text) {
         # 0x400519: jne 0x40053a
         if (var3 == 1) {
             0x40051b: var4 = 0 # mov dword ptr [rbp - 0xc], 0
-            0x400522: jmp 0x400532
+            0x400522: jmp loop_0x400532
             loop {
                 loop_0x400532:
                 0x400532: eax = var4 # mov eax, dword ptr [rbp - 0xc]

@@ -8,7 +8,7 @@ function main (.text) {
     0x40053a: var1_canary = rax # mov qword ptr [rbp - 8], rax
     0x40053e: eax = 0 # xor eax, eax
     0x400540: var2 = 0 # mov dword ptr [rbp - 0x94], 0
-    0x40054a: jmp 0x40055c
+    0x40054a: jmp loop_0x40055c
     loop {
         loop_0x40055c:
         # 0x40055c: cmp dword ptr [rbp - 0x94], 0x63

@@ -36,6 +36,7 @@ class OutputAbs():
         self.index_end_inst = {} # line -> (char_index, token_index)
         self.curr_index = 0
 
+        self.mode_dump = False
         self.section_prefix = False
         self.curr_section = None # must be updated at hand !!
 
@@ -157,9 +158,9 @@ class OutputAbs():
 
 
     def _label(self, addr, tab=-1, print_colon=True):
-        if addr not in self.ctx.reverse_labels:
+        if addr not in self.ctx.dis.reverse_labels:
             return False
-        l = str(self.ctx.reverse_labels[addr])
+        l = str(self.ctx.dis.reverse_labels[addr])
 
         if print_colon:
             l += ":"
@@ -167,7 +168,10 @@ class OutputAbs():
         if addr in self.ctx.addr_color:
             col = self.ctx.addr_color[addr]
         else:
-            col = COLOR_ADDR.val
+            if self.mode_dump:
+                col = COLOR_CODE_ADDR.val
+            else:
+                col = COLOR_ADDR.val
 
         if tab == -1:
             self.token_lines[-1].append((l, col, False))
@@ -221,7 +225,7 @@ class OutputAbs():
             self._symbol(i.address)
             self._new_line()
 
-        if i.address in self.ctx.reverse_labels:
+        if i.address in self.ctx.dis.reverse_labels:
             self._label(i.address, tab)
             self._new_line()
             self._tabs(tab)
@@ -329,7 +333,7 @@ class OutputAbs():
     def _imm(self, i, imm, op_size, hexa, section=None, print_data=True,
              force_dont_print_data=False):
 
-        if imm in self.ctx.labels:
+        if imm in self.ctx.dis.reverse_labels:
             self._label(imm, print_colon=False)
             return True
 

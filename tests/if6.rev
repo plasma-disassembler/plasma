@@ -12,7 +12,7 @@ function main (.text) {
     # 0x400515: cmp dword ptr [rbp - 4], 1
     # 0x400519: jne 0x400537
     if (var3 == 1) {
-        0x40051b: jmp 0x400527
+        0x40051b: jmp loop_0x400527
         loop {
             loop_0x400527:
             # 0x400527: cmp dword ptr [rbp - 8], 9

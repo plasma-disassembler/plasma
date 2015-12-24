@@ -73,6 +73,8 @@ class Disassembler():
         self.functions = database.functions
         self.func_id = database.func_id
         self.end_functions = database.end_functions
+        self.labels = database.labels
+        self.reverse_labels = database.reverse_labels
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
@@ -218,6 +220,7 @@ class Disassembler():
         o._new_line()
         o.section_prefix = True
         o.curr_section = s
+        o.mode_dump = True
         l = 0
 
         while 1:

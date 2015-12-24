@@ -5,13 +5,13 @@ function main (.text) {
     0x4004b7: rbp = rsp # mov rbp, rsp
     0x4004ba: var1 = 123 # mov dword ptr [rbp - 8], 0x7b
     0x4004c1: var2 = 5 # mov dword ptr [rbp - 4], 5
-    0x4004c8: jmp 0x4004d6
+    0x4004c8: jmp loop_0x4004d6
     loop {
         loop_0x4004d6:
         # 0x4004d6: cmp dword ptr [rbp - 8], 9
         # 0x4004da: jle 0x4004ca
         if (var1 > 9)  goto ret_0x4004dc
-        0x4004ca: jmp 0x4004d0
+        0x4004ca: jmp loop_0x4004d0
         loop {
             loop_0x4004d0:
             # 0x4004d0: cmp dword ptr [rbp - 4], 4

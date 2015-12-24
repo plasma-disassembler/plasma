@@ -215,7 +215,7 @@ class Output(OutputAbs):
             if self.is_symbol(addr):
                 self._symbol(addr)
             else:
-                if addr in self.ctx.addr_color:
+                if addr in self.ctx.dis.reverse_labels:
                     self._label_or_address(addr, -1, False)
                 else:
                     self._add(hex(addr))

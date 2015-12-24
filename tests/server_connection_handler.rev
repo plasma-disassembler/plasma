@@ -31,7 +31,7 @@ function connection_handler (.text) {
     0x400b82: rsi = rcx # mov rsi, rcx
     0x400b85: edi = eax # mov edi, eax
     0x400b87: call write@plt
-    0x400b8c: jmp 0x400bb4
+    0x400b8c: jmp loop_0x400bb4
     loop {
         loop_0x400bb4:
         0x400bb4: rsi = &(var4) # lea rsi, qword ptr [rbp - 0x7f0]
@@ -62,7 +62,7 @@ function connection_handler (.text) {
         0x400be8: rax = *(__TMC_END__) # mov rax, qword ptr [rip + 0x2006b9]
         0x400bef: rdi = rax # mov rdi, rax
         0x400bf2: call fflush@plt
-        0x400bf7: jmp 0x400c09
+        0x400bf7: jmp ret_0x400c09
     }
     # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
     # 0x400bfd: jne 0x400c09

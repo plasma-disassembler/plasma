@@ -6,7 +6,7 @@ function main (.text) {
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
     0x400515: var1 = 0 # mov dword ptr [rbp - 4], 0
-    0x40051c: jmp 0x400551
+    0x40051c: jmp loop_0x400551
     loop {
         loop_0x400551:
         # 0x400551: cmp dword ptr [rbp - 4], 9

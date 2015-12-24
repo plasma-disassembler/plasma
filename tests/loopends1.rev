@@ -3,7 +3,7 @@ function main (.text) {
     0x400506: push rbp
     0x400507: rbp = rsp # mov rbp, rsp
     0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: jmp 0x400522
+    0x40050e: jmp loop_0x400522
     loop {
         loop_0x400522:
         # 0x400522: cmp dword ptr [rbp - 4], 9
@@ -16,7 +16,7 @@ function main (.text) {
         if (var1 == 1)  goto 0x400520
     }
     0x400520: jmp 0x400528
-    0x400528: jmp 0x400534
+    0x400528: jmp loop_0x400534
     loop {
         loop_0x400534:
         # 0x400534: cmp dword ptr [rbp - 4], 0x13

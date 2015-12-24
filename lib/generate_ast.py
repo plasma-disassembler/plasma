@@ -467,9 +467,12 @@ def generate_ast(ctx__):
 
             # Check if we enter in a new loop
             if (l_start, curr) in ctx.gph.loops_all:
-                name = "loop_0x%x" % curr
-                ctx.labels[name] = curr
-                ctx.reverse_labels[curr] = name
+                if curr not in ctx.dis.reverse_labels:
+                    name = "loop_0x%x" % curr
+                    ctx.dis.labels[name] = curr
+                    ctx.dis.reverse_labels[curr] = name
+                    ctx.db.modified = True
+
                 level += 1
                 a = Ast_Loop()
                 a.level = level
@@ -506,9 +509,11 @@ def generate_ast(ctx__):
 
         # Return instruction
         if curr not in ctx.gph.link_out:
-            name = "ret_0x%x" % curr
-            ctx.labels[name] = curr
-            ctx.reverse_labels[curr] = name
+            if curr not in ctx.dis.reverse_labels:
+                name = "ret_0x%x" % curr
+                ctx.dis.labels[name] = curr
+                ctx.dis.reverse_labels[curr] = name
+                ctx.db.modified = True
             ast.add(blk)
             continue
 

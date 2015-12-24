@@ -16,7 +16,7 @@ function ___main (.text) {
             0x40190a: ecx = *(0x401e94) # mov ecx, dword ptr [0x401e94]
             0x401910: eax = 0 # xor eax, eax
             0x401912: test ecx, ecx
-            0x401914: jmp 0x401920
+            0x401914: jmp loop_0x401920
             loop {
                 loop_0x401920:
                 # 0x401920: jne 0x401916

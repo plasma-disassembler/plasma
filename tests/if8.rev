@@ -4,7 +4,7 @@ function main (.text) {
     0x400507: rbp = rsp # mov rbp, rsp
     0x40050a: rsp -= 16 # sub rsp, 0x10
     0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
-    0x400515: jmp 0x400946
+    0x400515: jmp loop_0x400946
     loop {
         loop_0x400946:
         # 0x400946: cmp dword ptr [rbp - 4], 9

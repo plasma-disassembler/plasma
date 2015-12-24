@@ -621,7 +621,9 @@ class Console():
 
     def push_analyze_symbols(self):
         self.analyzer.set(self.ctx.dis, self.ctx.db)
-        self.analyzer.msg.put((self.ctx.dis.binary.get_entry_point(), False, None))
+        ep = self.ctx.dis.binary.get_entry_point()
+        if ep is not None:
+            self.analyzer.msg.put((ep, False, None))
         for ad, (name, ty) in self.ctx.db.reverse_symbols.items():
             if ty == SYM_FUNC:
                 self.analyzer.msg.put((ad, True, None))
@@ -635,8 +637,7 @@ class Console():
             return
         self.ctx.reset_all()
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        if self.ctx.db is not None:
+        if load_file(self.ctx):
             self.rl.history = self.ctx.db.history
             self.push_analyze_symbols()
 
@@ -651,8 +652,8 @@ class Console():
         self.ctx.raw_type = "x86"
         self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        if load_file(self.ctx):
+            self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawx64(self, args):
@@ -665,8 +666,8 @@ class Console():
         self.ctx.raw_type = "x64"
         self.ctx.raw_big_endian = False
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        if load_file(self.ctx):
+            self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawarm(self, args):
@@ -678,8 +679,8 @@ class Console():
         self.ctx.reset_all()
         self.ctx.raw_type = "arm"
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        if load_file(self.ctx):
+            self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawmips(self, args):
@@ -691,8 +692,8 @@ class Console():
         self.ctx.reset_all()
         self.ctx.raw_type = "mips"
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        if load_file(self.ctx):
+            self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_lrawmips64(self, args):
@@ -704,8 +705,8 @@ class Console():
         self.ctx.reset_all()
         self.ctx.raw_type = "mips64"
         self.ctx.filename = args[1]
-        load_file(self.ctx)
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        if load_file(self.ctx):
+            self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
     def __exec_calls(self, args):
