@@ -20,6 +20,7 @@
 import os
 import gc
 import sys
+import zlib
 
 try:
     import msgpack
@@ -85,7 +86,10 @@ class Database():
 
             data = self.__check_old_json_db(fd)
             if data is None:
-                data = msgpack.unpackb(fd.read(), encoding="utf-8")
+                data = fd.read()
+                if data.startswith(b"ZLIB"):
+                    data = zlib.decompress(data[4:])
+                data = msgpack.unpackb(data, encoding="utf-8")
                 fd.close()
 
             self.__load_meta(data)
@@ -130,7 +134,8 @@ class Database():
             data["jmptables"].append(o)
 
         fd = open(self.path, "wb+")
-        fd.write(msgpack.packb(data, use_bin_type=True))
+        fd.write(b"ZLIB")
+        fd.write(zlib.compress(msgpack.packb(data, use_bin_type=True)))
         fd.close()
 
 
