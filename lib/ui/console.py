@@ -621,6 +621,7 @@ class Console():
 
     def push_analyze_symbols(self):
         self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.analyzer.msg.put((self.ctx.dis.binary.get_entry_point(), False, None))
         for ad, (name, ty) in self.ctx.db.reverse_symbols.items():
             if ty == SYM_FUNC:
                 self.analyzer.msg.put((ad, True, None))
