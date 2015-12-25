@@ -176,9 +176,6 @@ class Output(OutputAbs):
 
 
     def _sub_asm_inst(self, i, tab=0, prefix=""):
-        self._label_and_address(i.address, tab)
-        self._bytes(i)
-
         if is_ret(i):
             self._retcall(self.get_inst_str(i))
             return False

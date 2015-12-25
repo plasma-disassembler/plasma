@@ -235,6 +235,7 @@ class OutputAbs():
             self._tabs(tab)
             self._comment("# ")
             self._address(i.address)
+
         self.set_line(i.address)
         self._bytes(i, True)
         self._comment(self.get_inst_str(i))
@@ -472,6 +473,9 @@ class OutputAbs():
             self._tabs(tab)
             self._symbol(i.address)
             self._new_line()
+
+        self._label_and_address(i.address, tab)
+        self._bytes(i)
 
         self.set_line(i.address)
 

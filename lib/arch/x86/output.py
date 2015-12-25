@@ -208,11 +208,14 @@ class Output(OutputAbs):
 
     def _rep_begin(self, i, tab):
         if i.prefix[0] in REP_PREFIX:
+            self._new_line()
             self._tabs(tab)
             self._keyword("while")
             # TODO: for 16 and 32 bits
             self._add(" (!rcx)) {")
             self._new_line()
+            self._tabs(tab + 1)
+            self._address(i.address)
             tab += 1
         return tab
 
@@ -236,8 +239,6 @@ class Output(OutputAbs):
 
     def _sub_asm_inst(self, i, tab=0, prefix=""):
         tab = self._rep_begin(i, tab)
-        self._label_and_address(i.address, tab)
-        self._bytes(i)
 
         if is_ret(i):
             self._retcall(self.get_inst_str(i))

@@ -3,6 +3,7 @@ function main (.text) {
     0x4003c0: rdi = *(rsi) # mov rdi, qword ptr [rsi]
     0x4003c3: eax = 0 # xor eax, eax
     0x4003c5: rcx = -1 # or rcx, 0xffffffffffffffff
+    0x4003c9: 
     while (!rcx)) {
         0x4003c9: al cmp *(rdi)
         0x4003c9: rdi += D
