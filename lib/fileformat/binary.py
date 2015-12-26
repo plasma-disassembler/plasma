@@ -29,9 +29,6 @@ T_BIN_PE  = 1
 T_BIN_RAW = 2
 T_BIN_UNK = 3
 
-SYM_UNK = 0
-SYM_FUNC = 1
-
 
 class SectionAbs():
     # virt_size: size of the mapped section in memory
@@ -116,10 +113,10 @@ class SectionAbs():
 
 
 class Binary(object):
-    def __init__(self, filename, raw_type=None, raw_base=None, raw_big_endian=None):
+    def __init__(self, mem, filename, raw_type=None, raw_base=None, raw_big_endian=None):
         self.__binary = None
-        self.reverse_symbols = {} # ad -> [name, type]
-        self.symbols = {} # name -> [ad, type]
+        self.reverse_symbols = {} # ad -> name
+        self.symbols = {} # name -> ad
         self.section_names = {}
         self.type = None
 
@@ -138,10 +135,10 @@ class Binary(object):
 
         if self.type == T_BIN_ELF:
             import lib.fileformat.elf as LIB_ELF
-            self.__binary = LIB_ELF.ELF(self, filename)
+            self.__binary = LIB_ELF.ELF(mem, self, filename)
         elif self.type == T_BIN_PE:
             import lib.fileformat.pe as LIB_PE
-            self.__binary = LIB_PE.PE(self, filename)
+            self.__binary = LIB_PE.PE(mem, self, filename)
         else:
             raise ExcFileFormat()
 

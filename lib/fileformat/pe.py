@@ -26,8 +26,9 @@ from ctypes import sizeof
 
 from lib.exceptions import ExcPEFail
 from lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN
-from lib.fileformat.binary import SectionAbs, SYM_UNK, SYM_FUNC
+from lib.fileformat.binary import SectionAbs
 from lib.utils import warning
+from lib.memory import MEM_FUNC, MEM_UNK
 
 try:
     # This folder is not present in simonzack/pefile-py3k
@@ -39,10 +40,12 @@ except:
 
 
 class PE:
-    def __init__(self, classbinary, filename):
+    def __init__(self, mem, classbinary, filename):
         import capstone as CAPSTONE
 
         self.classbinary = classbinary
+        self.mem = mem
+
         self.pe = PE2(filename, fast_load=True)
         self.__data_sections = []
         self.__data_sections_content = []
@@ -121,9 +124,11 @@ class PE:
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
 
-                ty = SYM_FUNC if sym.type & PE_DT_FCN else SYM_UNK
-                self.classbinary.reverse_symbols[ad] = [name, ty]
-                self.classbinary.symbols[name] = [ad, ty]
+                self.classbinary.reverse_symbols[ad] = name
+                self.classbinary.symbols[name] = ad
+
+                ty = MEM_FUNC if sym.type & PE_DT_FCN else MEM_UNK
+                self.mem.add(ad, 1, ty)
 
                 
             if sym.numaux != 0:
@@ -150,9 +155,11 @@ class PE:
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
 
+                self.classbinary.reverse_symbols[imp.address] = name
+                self.classbinary.symbols[name] = imp.address
+
                 # TODO: always unk ?
-                self.classbinary.reverse_symbols[imp.address] = [name, SYM_UNK]
-                self.classbinary.symbols[name] = [imp.address, SYM_UNK]
+                self.mem.add(imp.address, 1, MEM_UNK)
 
 
     def pe_reverse_stripped(self, dis, i):
@@ -178,7 +185,7 @@ class PE:
             goto = i.operands[0].value.imm
 
             if goto in self.classbinary.reverse_symbols:
-                if not self.classbinary.reverse_symbols[goto][0].startswith("sub_"):
+                if not self.classbinary.reverse_symbols[goto].startswith("sub_"):
                     return False
 
             nxt = dis.lazy_disasm(goto)
@@ -202,14 +209,17 @@ class PE:
 
         if ptr in self.classbinary.reverse_symbols \
                 and inv(mm.segment) and inv(mm.index):
-            name = "_" + self.classbinary.reverse_symbols[ptr][0]
-            ty = self.classbinary.reverse_symbols[ptr][1]
+            name = "_" + self.classbinary.reverse_symbols[ptr]
+            ty = self.mem.get_type(ptr)
 
             if name in self.classbinary.symbols:
                 name = self.classbinary.rename_sym(name)
 
-            self.classbinary.reverse_symbols[goto] = [name, ty]
-            self.classbinary.symbols[name] = [goto, ty]
+            self.classbinary.reverse_symbols[goto] = name
+            self.classbinary.symbols[name] = goto
+
+            if ty != -1:
+                self.mem.add(goto, 1, ty)
 
         return True
 

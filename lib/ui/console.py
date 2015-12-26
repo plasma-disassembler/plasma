@@ -31,7 +31,6 @@ from lib.ui.readline import ReadLine
 from lib.ui.visual import Visual
 from lib.disassembler import NB_LINES_TO_DISASM
 from lib.analyzer import Analyzer
-from lib.fileformat.binary import SYM_FUNC
 
 
 class Command():
@@ -621,11 +620,13 @@ class Console():
 
     def push_analyze_symbols(self):
         self.analyzer.set(self.ctx.dis, self.ctx.db)
+
         ep = self.ctx.dis.binary.get_entry_point()
         if ep is not None:
             self.analyzer.msg.put((ep, False, None))
-        for ad, (name, ty) in self.ctx.db.reverse_symbols.items():
-            if ty == SYM_FUNC:
+
+        for ad, name in self.ctx.db.reverse_symbols.items():
+            if self.ctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, None))
 
 
@@ -937,7 +938,7 @@ class Console():
         if self.ctx.dis is None:
             error("load a file before")
             return
-        self.ctx.dis.print_symbols(self.ctx.sectionsname, only_func=True)
+        self.ctx.dis.print_functions()
 
 
     def __exec_xrefs(self, args):

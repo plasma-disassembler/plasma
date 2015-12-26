@@ -24,7 +24,8 @@ from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
 from lib.utils import warning
-from lib.fileformat.binary import SectionAbs, SYM_UNK, SYM_FUNC
+from lib.fileformat.binary import SectionAbs
+from lib.memory import MEM_FUNC, MEM_UNK
 
 
 # SHF_WRITE=0x1
@@ -43,12 +44,13 @@ from lib.fileformat.binary import SectionAbs, SYM_UNK, SYM_FUNC
 
 
 class ELF:
-    def __init__(self, classbinary, filename):
+    def __init__(self, mem, classbinary, filename):
         import capstone as CAPSTONE
 
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
+        self.mem = mem
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -68,7 +70,7 @@ class ELF:
         }
 
         self.sym_type_lookup = {
-            "STT_FUNC": SYM_FUNC,
+            "STT_FUNC": MEM_FUNC,
         }
 
         self.__sections = {} # start address -> elf section
@@ -112,17 +114,22 @@ class ELF:
         dont_save = [b"$a", b"$t", b"$d"]
         arch = self.elf.get_machine_arch()
         is_arm = arch == "ARM"
+
         for sy in symtab.iter_symbols():
             if is_arm and sy.name in dont_save:
                 continue
+
             ad = sy.entry.st_value
             if ad != 0 and sy.name != b"":
                 name = sy.name.decode()
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
-                ty = self.sym_type_lookup.get(sy.entry.st_info.type, SYM_UNK)
-                self.classbinary.reverse_symbols[ad] = [name, ty]
-                self.classbinary.symbols[name] = [ad, ty]
+
+                self.classbinary.reverse_symbols[ad] = name
+                self.classbinary.symbols[name] = ad
+
+                ty = self.sym_type_lookup.get(sy.entry.st_info.type, MEM_UNK)
+                self.mem.add(ad, 1, ty)
 
 
     def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
@@ -133,7 +140,7 @@ class ELF:
             name = sym.name.decode()
             ad = r.entry.r_offset
             if name and ad:
-                ty = self.sym_type_lookup.get(sym.entry.st_info.type, SYM_UNK)
+                ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
                 got_off[ad] = [name + "@plt", ty]
 
         data = got_plt.data()
@@ -166,8 +173,10 @@ class ELF:
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
 
-                self.classbinary.reverse_symbols[plt_start] = (name, ty)
-                self.classbinary.symbols[name] = [plt_start, ty]
+                self.classbinary.reverse_symbols[plt_start] = name
+                self.classbinary.symbols[name] = plt_start
+
+                self.mem.add(ad, 1, ty)
 
             off += addr_size
 
@@ -192,9 +201,12 @@ class ELF:
                 name = sym.name.decode()
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
-                ty = self.sym_type_lookup.get(sym.entry.st_info.type, SYM_UNK)
-                self.classbinary.reverse_symbols[ad] = [name, ty]
-                self.classbinary.symbols[name] = [ad, ty]
+
+                self.classbinary.reverse_symbols[ad] = name
+                self.classbinary.symbols[name] = ad
+
+                ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
+                self.mem.add(ad, 1, ty)
 
 
     def __iter_reloc(self):

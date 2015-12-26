@@ -33,11 +33,10 @@ import json
 
 from lib.disassembler import Jmptable
 from lib.utils import info, error, die, warning
-from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
 
-VERSION = 1.4
+VERSION = 1.5
 
 
 class Database():
@@ -96,11 +95,11 @@ class Database():
                 fd.close()
 
             self.__load_meta(data)
+            self.__load_memory(data)
             self.__load_symbols(data)
             self.__load_labels(data)
             self.__load_jmptables(data)
             self.__load_comments(data)
-            self.__load_memory(data)
             self.__load_functions(data)
             self.__load_history(data)
             self.__load_xrefs(data)
@@ -148,9 +147,17 @@ class Database():
 
     def __load_symbols(self, data):
         self.symbols = data["symbols"]
-        for name, a in self.symbols.items():
-            self.reverse_symbols[a[0]] = [name, a[1]]
-            self.symbols[name] = [a[0], a[1]]
+
+        if self.version <= 1.4 and self.version != -1:
+            for name, a in self.symbols.items():
+                self.reverse_symbols[a[0]] = name
+                self.symbols[name] = a[0]
+                self.mem.add(a[0], 1, a[1])
+            return
+
+        for name, ad in self.symbols.items():
+            self.reverse_symbols[ad] = name
+            self.symbols[name] = ad
 
 
     def __load_labels(self, data):
@@ -284,10 +291,6 @@ class Database():
 
             data["internal_inline_comments"] = {}
             data["internal_previous_comments"] = {}
-
-            ptr = data["symbols"]
-            for name, ad in ptr.items():
-                ptr[name] = [ad, SYM_UNK]
 
             return data
         return None

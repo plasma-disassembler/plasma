@@ -21,8 +21,7 @@ import threading
 from queue import Queue
 
 from lib.utils import debug__
-from lib.memory import Memory, MEM_CODE
-from lib.fileformat.binary import SYM_FUNC
+from lib.memory import Memory, MEM_CODE, MEM_FUNC, MEM_UNK
 
 # TODO: cleanup...
 
@@ -62,30 +61,19 @@ class Analyzer(threading.Thread):
                     break
 
 
-    def add_xref(self, xrefs, from_ad, to_ad):
-        if isinstance(to_ad, list):
-            for x in to_ad:
-                if x in xrefs:
-                    if from_ad not in xrefs[x]:
-                        xrefs[x].append(from_ad)
-                else:
-                    xrefs[x] = [from_ad]
-        else:
-            if to_ad in xrefs:
-                if from_ad not in xrefs[to_ad]:
-                    xrefs[to_ad].append(from_ad)
-            else:
-                xrefs[to_ad] = [from_ad]
-
-
-    def analyze_operands(self, i, xrefs):
+    def analyze_operands(self, i):
         b = self.dis.binary
         for op in i.operands:
             if op.type == self.CS_OP_IMM and b.get_section(op.value.imm) is not None:
-                self.add_xref(xrefs, i.address, op.value.imm)
+                self.dis.add_xref(i.address, op.value.imm)
+                if not self.dis.mem.exists(op.value.imm):
+                    self.dis.mem.add(op.value.imm, 1, MEM_UNK)
+
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0 and \
                     b.get_section(op.mem.disp) is not None:
-                self.add_xref(xrefs, i.address, op.mem.disp)
+                self.dis.add_xref(i.address, op.mem.disp)
+                if not self.dis.mem.exists(op.mem.disp):
+                    self.dis.mem.add(op.mem.disp, 1, MEM_UNK)
 
 
     def analyze_flow(self, entry, entry_is_func):
@@ -105,7 +93,6 @@ class Analyzer(threading.Thread):
         mem = self.dis.mem
         functions = self.dis.functions
         end_functions = self.dis.end_functions
-        xrefs = self.dis.xrefs
 
         inner_code = {} # ad -> instruction size
         stack = []
@@ -128,7 +115,7 @@ class Analyzer(threading.Thread):
                 if ad in inner_code:
                     continue
 
-                self.analyze_operands(inst, xrefs)
+                self.analyze_operands(inst)
                 inner_code[ad] = inst.size
 
                 if is_ret(inst):
@@ -145,12 +132,12 @@ class Analyzer(threading.Thread):
                     if op.type == CS_OP_IMM:
                         nxt = op.value.imm
                         stack.append(nxt)
-                        self.add_xref(xrefs, ad, nxt)
+                        self.dis.add_xref(ad, nxt)
                     else:
                         if inst.address in jmptables:
                             table = jmptables[inst.address].table
                             stack += table
-                            self.add_xref(xrefs, ad, table)
+                            self.dis.add_xref(ad, table)
 
                 elif is_cond_jump(inst):
                     if arch == CS_ARCH_MIPS:
@@ -167,14 +154,14 @@ class Analyzer(threading.Thread):
                         nxt_jmp = op.value.imm
                         stack.append(direct_nxt)
                         stack.append(nxt_jmp)
-                        self.add_xref(xrefs, ad, nxt_jmp)
+                        self.dis.add_xref(ad, nxt_jmp)
 
                 elif is_call(inst):
                     op = inst.operands[-1]
                     if op.type == CS_OP_IMM:
                         if op.value.imm not in functions:
                             func.append(op.value.imm)
-                        self.add_xref(xrefs, ad, op.value.imm)
+                        self.dis.add_xref(ad, op.value.imm)
                     nxt = inst.address + inst.size
                     stack.append(nxt)
 
@@ -195,16 +182,14 @@ class Analyzer(threading.Thread):
                         end_functions[e].append(fad)
                     else:
                         end_functions[e] = [fad]
-
-                    if fad not in self.db.reverse_symbols:
-                        sy = "sub_%x" % fad
-                        self.db.reverse_symbols[fad] = (sy, SYM_FUNC)
-                        self.db.symbols[sy] = (fad, SYM_FUNC)
                 else:
                     func_id = -1
 
                 for ad, size in inner_code.items():
-                    mem.add(ad, size, func_id, MEM_CODE)
+                    if ad in functions:
+                        mem.add(ad, size, MEM_FUNC, func_id)
+                    else:
+                        mem.add(ad, size, MEM_CODE, func_id)
 
                 inner_code.clear()
 

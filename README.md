@@ -58,6 +58,7 @@ Future :
 * symbols renaming
 * stack variables
 * structure, enums
+* improve analyzer performances
 * ...
 
 ![reverse](/images/visual.png?raw=true)

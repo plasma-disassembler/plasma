@@ -19,6 +19,7 @@
 
 MEM_UNK = 1
 MEM_CODE = 2
+MEM_FUNC = 3
 
 
 class Memory():
@@ -34,11 +35,28 @@ class Memory():
         self.mm = {}
 
 
-    def add(self, ad, size, val, ty=MEM_CODE):
+    def add(self, ad, size, ty, val=0):
         self.mm[ad] = [size, ty, val]
 
 
+    def type(self, ad, ty):
+        self.mm[ad][1] = ty
+
+
     def is_code(self, ad):
+        if ad in self.mm:
+            ty = self.mm[ad][1]
+            return ty == MEM_CODE or ty == MEM_FUNC
+        return False
+
+
+    def is_func(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][1] == MEM_FUNC
+        return False
+
+
+    def is_loc(self, ad):
         if ad in self.mm:
             return self.mm[ad][1] == MEM_CODE
         return False
@@ -53,4 +71,8 @@ class Memory():
     def get_type(self, ad):
         if ad in self.mm:
             return self.mm[ad][1]
-        return MEM_UNK
+        return -1
+
+
+    def exists(self, ad):
+        return ad in self.mm

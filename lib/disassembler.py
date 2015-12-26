@@ -22,14 +22,14 @@ from time import time
 
 from lib.graph import Graph
 from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
-from lib.fileformat.binary import Binary, T_BIN_PE, SYM_UNK, SYM_FUNC
+from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.colors import (pick_color, color_addr, color_symbol,
         color_section, color_string)
 from lib.exceptions import ExcSymNotFound, ExcArch
 from lib.memory import Memory, MEM_UNK
 
 
-NB_LINES_TO_DISASM = 200 # without comments, ...
+NB_LINES_TO_DISASM = 100 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_"]
@@ -49,7 +49,13 @@ class Disassembler():
 
         self.capstone_inst = {} # capstone instruction cache
 
-        self.binary = Binary(filename, raw_type, raw_base, raw_big_endian)
+        if database.loaded:
+            self.mem = database.mem
+        else:
+            self.mem = Memory()
+            database.mem = self.mem
+
+        self.binary = Binary(self.mem, filename, raw_type, raw_base, raw_big_endian)
 
         arch, mode = self.binary.get_arch()
 
@@ -59,13 +65,10 @@ class Disassembler():
         if database.loaded:
             self.binary.symbols = database.symbols
             self.binary.reverse_symbols = database.reverse_symbols
-            self.mem = database.mem
         else:
             self.binary.load_symbols()
             database.symbols = self.binary.symbols
             database.reverse_symbols = self.binary.reverse_symbols
-            self.mem = Memory()
-            database.mem = self.mem
 
         self.jmptables = database.jmptables
         self.user_inline_comments = database.user_inline_comments
@@ -94,7 +97,7 @@ class Disassembler():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
 
             if not database.loaded:
-                self.mem.add(s.start, s.end, None, MEM_UNK)
+                self.mem.add(s.start, s.end, MEM_UNK)
 
 
     def get_unpack_str(self, size_word):
@@ -115,17 +118,36 @@ class Disassembler():
         return unpack_str
 
 
+    def add_xref(self, from_ad, to_ad):
+        if isinstance(to_ad, list):
+            for x in to_ad:
+                if x in self.xrefs:
+                    if from_ad not in self.xrefs[x]:
+                        self.xrefs[x].append(from_ad)
+                else:
+                    self.xrefs[x] = [from_ad]
+        else:
+            if to_ad in self.xrefs:
+                if from_ad not in self.xrefs[to_ad]:
+                    self.xrefs[to_ad].append(from_ad)
+            else:
+                self.xrefs[to_ad] = [from_ad]
+
+
     def add_symbol(self, addr, name):
         if name in self.binary.symbols:
             last = self.binary.symbols[name]
-            del self.binary.reverse_symbols[last[0]]
+            del self.binary.reverse_symbols[last]
 
         if addr in self.binary.reverse_symbols:
             last = self.binary.reverse_symbols[addr]
-            del self.binary.symbols[last[0]]
+            del self.binary.symbols[last]
 
-        self.binary.symbols[name] = [addr, SYM_UNK]
-        self.binary.reverse_symbols[addr] = [name, SYM_UNK]
+        self.binary.symbols[name] = addr
+        self.binary.reverse_symbols[addr] = name
+
+        if not self.mem.exists(addr):
+            self.mem.add(addr, 1, MEM_UNK)
 
         return name
 
@@ -200,8 +222,6 @@ class Disassembler():
                 a = self.binary.symbols.get(s, -1)
                 if a == -1:
                     a = self.binary.section_names.get(s, -1)
-                else:
-                    a = a[0] # it contains [ad, type]
 
             if a != -1:
                 return a
@@ -231,9 +251,9 @@ class Disassembler():
                     o._symbol(fad)
                     diff = x - fad
                     if diff >= 0:
-                        o._add(" + %d" % diff)
+                        o._add(" + %d " % diff)
                     else:
-                        o._add(" - %d" % diff)
+                        o._add(" - %d " % diff)
 
                     o._pad_width(20)
 
@@ -250,6 +270,19 @@ class Disassembler():
         o.join_lines()
 
         return o
+
+
+    def is_symbol(self, ad):
+        return ad in self.binary.reverse_symbols or self.mem.is_func(ad)
+
+
+    def get_sym(self, ad):
+        s = self.binary.reverse_symbols.get(ad, None)
+        if s is None:
+            if self.mem.is_func(ad):
+                return "sub_%x" % ad
+            return "unk_%x" % ad
+        return s
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
@@ -315,7 +348,7 @@ class Disassembler():
 
                     if ad in self.end_functions:
                         for fad in self.end_functions[ad]:
-                            sy = self.binary.reverse_symbols[fad][0]
+                            sy = self.get_sym(fad)
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
@@ -446,8 +479,8 @@ class Disassembler():
         ad = ctx.entry_addr
 
         for w in self.read_array(ctx.entry_addr, lines, size_word, s):
-            if ad in self.binary.reverse_symbols:
-                print(color_symbol(self.binary.reverse_symbols[ad][0]))
+            if self.is_symbol(ad):
+                print(color_symbol(self.get_sym(ad)))
             print_no_end(color_addr(ad))
             print_no_end("0x%.2x" % w)
 
@@ -457,19 +490,29 @@ class Disassembler():
                 print_no_end(" (")
                 print_no_end(color_section(section.name))
                 print_no_end(")")
-                if size_word >= 4 and w in self.binary.reverse_symbols:
+                if size_word >= 4 and self.is_symbol(w):
                     print_no_end(" ")
-                    print_no_end(color_symbol(self.binary.reverse_symbols[w][0]))
+                    print_no_end(color_symbol(self.get_sym(w)))
 
             ad += size_word
             print()
 
 
+    def print_functions(self):
+        total = 0
+
+        # TODO: race condition with the analyzer ?
+        for ad in list(self.functions):
+            print(color_addr(ad) + " " + self.get_sym(ad))
+            total += 1
+
+        print("Total:", total)
+
     #
     # sym_filter : search a symbol, non case-sensitive
     #    if it starts with '-', it prints non-matching symbols
     #
-    def print_symbols(self, print_sections, sym_filter=None, only_func=False):
+    def print_symbols(self, print_sections, sym_filter=None):
         if sym_filter is not None:
             sym_filter = sym_filter.lower()
             if sym_filter[0] == "-":
@@ -480,11 +523,9 @@ class Disassembler():
 
         total = 0
 
-        # TODO: race condition with the analyzer
+        # TODO: race condition with the analyzer ?
         for sy in list(self.binary.symbols):
-            addr, ty = self.binary.symbols[sy]
-            if only_func and ty != SYM_FUNC:
-                continue
+            addr = self.binary.symbols[sy]
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
                     (not invert_match and sym_filter in sy.lower()):

@@ -89,7 +89,7 @@ class OutputAbs():
         self.curr_index += len(t)
 
     def _symbol(self, addr):
-        s = self.binary.reverse_symbols[addr][0]
+        s = self.ctx.dis.get_sym(addr)
         self.token_lines[-1].append((s, COLOR_SYMBOL.val, COLOR_SYMBOL.bold))
         self.lines[-1].append(s)
         self.curr_index += len(s)
@@ -182,12 +182,12 @@ class OutputAbs():
             if addr in self.ctx.dis.xrefs:
                 ty = self.ctx.dis.mem.get_type(addr)
                 if ty == MEM_CODE:
-                    if not self.mode_dump:
-                        return False
-                    self._loc(addr)
+                    if self.mode_dump:
+                        self._loc(addr)
+                        return True
                 elif ty == MEM_UNK:
                     self._unk(addr)
-                return True
+                    return True
             return False
 
         l = str(self.ctx.dis.reverse_labels[addr])
@@ -223,7 +223,7 @@ class OutputAbs():
 
 
     def _label_and_address(self, addr, tab=-1, print_colon=True):
-        if self.print_labels and self._label(addr, tab, print_colon):
+        if self._label(addr, tab, print_colon):
             self._new_line()
             if tab != -1:
                 self._tabs(tab)
@@ -370,7 +370,9 @@ class OutputAbs():
             self._label(imm, print_colon=False)
             return True
 
-        if imm in self.ctx.dis.xrefs and not self.is_symbol(imm):
+        is_sym = self.is_symbol(imm)
+
+        if imm in self.ctx.dis.xrefs and not is_sym:
             ty = self.ctx.dis.mem.get_type(imm)
 
             if ty == MEM_CODE:
@@ -384,6 +386,10 @@ class OutputAbs():
                     if s != "\"\"":
                         self._add(" ")
                         self._string(s)
+
+            else:
+                self._add(hex(imm))
+
             return True
 
         if section is None:
@@ -394,8 +400,6 @@ class OutputAbs():
         # For a raw file, if the raw base is 0 the immediate is considered
         # as an address only if it's in the symbols list.
         raw_base_set = self.binary.type == T_BIN_RAW and self.ctx.raw_base == 0
-
-        is_sym = imm in self.binary.reverse_symbols
 
         if section is not None and not raw_base_set or is_sym:
             modified = False
@@ -461,7 +465,7 @@ class OutputAbs():
 
     def is_symbol(self, ad):
         return (self.ctx.dump or ad != self.ctx.entry_addr) and \
-            ad in self.ctx.dis.binary.reverse_symbols
+            self.ctx.dis.is_symbol(ad)
 
 
     def var_name_exists(self, i, op_num):
@@ -476,17 +480,21 @@ class OutputAbs():
     def _ast(self, entry, ast):
         self._new_line()
         self._keyword("function ")
-        if entry in self.binary.reverse_symbols:
-            self._add(self.binary.reverse_symbols[entry][0])
+
+        if self.ctx.dis.is_symbol(entry):
+            self._add(self.ctx.dis.get_sym(entry))
         else:
             self._add(hex(entry))
+
         section = self.binary.get_section(entry)
+
         if section is not None:
             self._add(" (")
             self._section(section.name)
             self._add(") {")
         else:
             self._add(" {")
+
         self._new_line()
         self._all_vars()
         ast.dump(self, 1)
@@ -517,13 +525,17 @@ class OutputAbs():
         if i.address in self.ctx.all_fused_inst:
             return
 
-        if self.is_symbol(i.address):
-            self._tabs(tab)
-            self._symbol(i.address)
-            self._new_line()
+        if self.print_labels:
+            if self.is_symbol(i.address):
+                self._tabs(tab)
+                self._symbol(i.address)
+                self._new_line()
 
-        self._label_and_address(i.address, tab)
-        self._bytes(i)
+            self._label_and_address(i.address, tab)
+            self._bytes(i)
+        else:
+            self._tabs(tab)
+            self._address(i.address)
 
         self.set_line(i.address)
 

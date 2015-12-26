@@ -113,7 +113,7 @@ class Visual(Window):
         self.console.ctx.quiet = saved_quiet
 
         if self.stack:
-            print("last address seen 0x%x" % self.console.ctx.entry_addr)
+            print(hex(self.console.ctx.entry_addr))
 
 
     def exec_disasm(self, addr, h):
