@@ -196,7 +196,9 @@ class Window():
                 refr = False
 
             size_line = len(self.output.lines[self.win_y + self.cursor_y])
-            if self.cursor_x >= size_line > 0:
+            if size_line == 0:
+                x = 0
+            elif self.cursor_x >= size_line:
                 x = size_line - 1
             else:
                 x = self.cursor_x
@@ -448,6 +450,7 @@ class Window():
         return False
 
     def k_ctrl_right(self, h, w):
+        self.check_cursor_x()
         # TODO: fix self.cursor_x >= w
         line = self.output.lines[self.win_y + self.cursor_y]
         x = self.cursor_x
@@ -458,6 +461,7 @@ class Window():
         self.cursor_x = x
 
     def k_ctrl_left(self, h, w):
+        self.check_cursor_x()
         line = self.output.lines[self.win_y + self.cursor_y]
         x = self.cursor_x
         if x == 0:
