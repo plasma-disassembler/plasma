@@ -37,7 +37,7 @@ from lib.fileformat.binary import SYM_UNK, SYM_FUNC
 from lib.memory import Memory
 
 
-VERSION = 1.3
+VERSION = 1.4
 
 
 class Database():
@@ -63,6 +63,7 @@ class Database():
         self.functions = {} # func address -> [end addr]
         self.func_id = {} # id -> func address
         self.labels = {} # name -> addr
+        self.xrefs = {} # addr -> list addr
 
         # Computed variables
         self.func_id_counter = 0
@@ -102,6 +103,7 @@ class Database():
             self.__load_memory(data)
             self.__load_functions(data)
             self.__load_history(data)
+            self.__load_xrefs(data)
 
             if self.version != VERSION:
                 warning("the database version is old, some information may be missing")
@@ -126,6 +128,7 @@ class Database():
             "functions": self.functions,
             "func_id": self.func_id,
             "labels": self.labels,
+            "xrefs": self.xrefs,
         }
 
         for j in self.jmptables.values():
@@ -215,6 +218,15 @@ class Database():
 
     def __load_history(self, data):
         self.history = data["history"]
+
+
+    def __load_xrefs(self, data):
+        try:
+            self.xrefs = data["xrefs"]
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
 
 
     def __load_functions(self, data):

@@ -48,3 +48,9 @@ class Memory():
         if not self.is_code(ad):
             return -1
         return self.mm[ad][2]
+
+
+    def get_type(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][1]
+        return MEM_UNK

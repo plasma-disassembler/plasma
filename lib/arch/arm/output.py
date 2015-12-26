@@ -265,7 +265,8 @@ class Output(OutputAbs):
             if self.is_symbol(addr):
                 self._symbol(addr)
             else:
-                if addr in self.ctx.dis.reverse_labels:
+                if addr in self.ctx.dis.reverse_labels or \
+                        (self.mode_dump and addr in self.ctx.dis.xrefs):
                     self._label_or_address(addr, -1, False)
                 else:
                     self._add(hex(addr))

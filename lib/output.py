@@ -23,6 +23,7 @@ from lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from lib.colors import color, bold
 from custom_colors import *
 from lib.fileformat.binary import T_BIN_RAW
+from lib.memory import MEM_CODE, MEM_UNK
 
 
 class OutputAbs():
@@ -39,6 +40,7 @@ class OutputAbs():
         self.mode_dump = False
         self.section_prefix = False
         self.curr_section = None # must be updated at hand !!
+        self.print_labels = True
 
 
     # All functions which start with a '_' add a new token/string on
@@ -72,6 +74,10 @@ class OutputAbs():
         self.token_lines[-1].append((string, 0, False))
         self.lines[-1].append(string)
         self.curr_index += len(string)
+
+    def _pad_width(self, w):
+        if self.curr_index != w:
+            self._add(" " * (w - self.curr_index))
 
     def _tabs(self, tab):
         # debug
@@ -157,9 +163,33 @@ class OutputAbs():
             self._add(" %0.2x" % by)
 
 
+    def _loc(self, ad):
+        s = "loc_%x" % ad
+        self.token_lines[-1].append((s, COLOR_CODE_ADDR.val, COLOR_CODE_ADDR.bold))
+        self.lines[-1].append(s)
+        self.curr_index += len(s)
+
+
+    def _unk(self, ad):
+        s = "unk_%x" % ad
+        self.token_lines[-1].append((s, COLOR_UNK.val, COLOR_UNK.bold))
+        self.lines[-1].append(s)
+        self.curr_index += len(s)
+
+
     def _label(self, addr, tab=-1, print_colon=True):
         if addr not in self.ctx.dis.reverse_labels:
+            if addr in self.ctx.dis.xrefs:
+                ty = self.ctx.dis.mem.get_type(addr)
+                if ty == MEM_CODE:
+                    if not self.mode_dump:
+                        return False
+                    self._loc(addr)
+                elif ty == MEM_UNK:
+                    self._unk(addr)
+                return True
             return False
+
         l = str(self.ctx.dis.reverse_labels[addr])
 
         if print_colon:
@@ -193,7 +223,7 @@ class OutputAbs():
 
 
     def _label_and_address(self, addr, tab=-1, print_colon=True):
-        if self._label(addr, tab, print_colon):
+        if self.print_labels and self._label(addr, tab, print_colon):
             self._new_line()
             if tab != -1:
                 self._tabs(tab)
@@ -205,7 +235,7 @@ class OutputAbs():
 
     def _previous_comment(self, i, tab):
         if i.address in self.ctx.dis.internal_previous_comments:
-            if self.ctx.dump:
+            if self.ctx.dump and not self.is_last_2_line_empty():
                 self._new_line()
             for comm in self.ctx.dis.internal_previous_comments[i.address]:
                 self._tabs(tab)
@@ -213,6 +243,8 @@ class OutputAbs():
                 self._new_line()
 
         if i.address in self.ctx.dis.user_previous_comments:
+            if self.ctx.dump and not self.is_last_2_line_empty():
+                self._new_line()
             for comm in self.ctx.dis.user_previous_comments[i.address]:
                 self._tabs(tab)
                 self._user_comment("; %s" % comm)
@@ -336,6 +368,22 @@ class OutputAbs():
 
         if imm in self.ctx.dis.reverse_labels:
             self._label(imm, print_colon=False)
+            return True
+
+        if imm in self.ctx.dis.xrefs and not self.is_symbol(imm):
+            ty = self.ctx.dis.mem.get_type(imm)
+
+            if ty == MEM_CODE:
+                self._loc(imm)
+
+            elif ty == MEM_UNK:
+                self._unk(imm)
+
+                if not force_dont_print_data:
+                    s = self.binary.get_string(imm, self.ctx.max_data_size)
+                    if s != "\"\"":
+                        self._add(" ")
+                        self._string(s)
             return True
 
         if section is None:

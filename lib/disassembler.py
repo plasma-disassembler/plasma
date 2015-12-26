@@ -32,6 +32,8 @@ from lib.memory import Memory, MEM_UNK
 NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
+RESERVED_PREFIX = ["loc_", "sub_", "unk_"]
+
 
 class Jmptable():
     def __init__(self, inst_addr, table_addr, table, name):
@@ -75,6 +77,8 @@ class Disassembler():
         self.end_functions = database.end_functions
         self.labels = database.labels
         self.reverse_labels = database.reverse_labels
+        self.xrefs = database.xrefs
+
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
@@ -114,7 +118,11 @@ class Disassembler():
     def add_symbol(self, addr, name):
         if name in self.binary.symbols:
             last = self.binary.symbols[name]
-            del self.binary.reverse_symbols[last]
+            del self.binary.reverse_symbols[last[0]]
+
+        if addr in self.binary.reverse_symbols:
+            last = self.binary.reverse_symbols[addr]
+            del self.binary.symbols[last[0]]
 
         self.binary.symbols[name] = [addr, SYM_UNK]
         self.binary.reverse_symbols[addr] = [name, SYM_UNK]
@@ -174,6 +182,12 @@ class Disassembler():
                 return 0
             search = ["main", "_main"]
         else:
+            if opt_addr[:4] in RESERVED_PREFIX:
+                try:
+                    return int(opt_addr[4:], 16)
+                except:
+                    raise ExcSymNotFound(search[0])
+
             search = [opt_addr]
 
         for s in search:
@@ -193,6 +207,49 @@ class Disassembler():
                 return a
 
         raise ExcSymNotFound(search[0])
+
+
+    def dump_xrefs(self, ctx, ad):
+        ARCH = self.load_arch_module()
+        ARCH_UTILS = ARCH.utils
+        ARCH_OUTPUT = ARCH.output
+
+        o = ARCH_OUTPUT.Output(ctx)
+        o._new_line()
+        o.mode_dump = True
+        o.print_labels = False
+
+        ctx.dump = True
+
+        for x in ctx.dis.xrefs[ad]:
+            s = self.binary.get_section(x)
+
+            if self.mem.is_code(x):
+                func_id = self.mem.get_func_id(x)
+                if func_id != -1:
+                    fad = self.func_id[func_id]
+                    o._symbol(fad)
+                    diff = x - fad
+                    if diff >= 0:
+                        o._add(" + %d" % diff)
+                    else:
+                        o._add(" - %d" % diff)
+
+                    o._pad_width(20)
+
+                i = self.lazy_disasm(x, s.start)
+                o._asm_inst(i)
+            else:
+                o_.address(x)
+                o._new_line()
+
+        # remove the last empty line
+        o.lines.pop(-1)
+        o.token_lines.pop(-1)
+
+        o.join_lines()
+
+        return o
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
@@ -235,7 +292,9 @@ class Disassembler():
             while ((l < lines and until == -1) or (ad < until and until != -1)) \
                     and ad <= s.end:
                 if self.mem.is_code(ad): # TODO optimize
-                    if ad in self.functions:
+                    is_func = ad in self.functions
+
+                    if is_func:
                         if not o.is_last_2_line_empty():
                             o._new_line()
                         o._dash()
@@ -247,6 +306,10 @@ class Disassembler():
 
                     if self.binary.type == T_BIN_PE:
                         self.binary.pe_reverse_stripped(self, i)
+
+                    if not is_func and ad in self.xrefs and \
+                                not o.is_last_2_line_empty():
+                            o._new_line()
 
                     o._asm_inst(i)
 
@@ -263,8 +326,8 @@ class Disassembler():
                     if o.is_symbol(ad):
                         o._symbol(ad)
                         o._new_line()
+                    o._label_and_address(ad)
                     o.set_line(ad)
-                    o._address(ad)
                     o._db(s.read_byte(ad))
                     o._new_line()
                     ad += 1
@@ -282,7 +345,7 @@ class Disassembler():
                 if s is None:
                     break
                 ad = s.start
-                if ad >= until:
+                if until != -1 and ad >= until:
                     break
             o.curr_section = s
 
@@ -400,30 +463,6 @@ class Disassembler():
 
             ad += size_word
             print()
-
-
-    def print_calls(self, ctx):
-        ARCH = self.load_arch_module()
-        ARCH_UTILS = ARCH.utils
-        ARCH_OUTPUT = ARCH.output
-
-        s = self.binary.get_section(ctx.entry_addr)
-        s.print_header()
-
-        o = ARCH_OUTPUT.Output(ctx)
-        o._new_line()
-
-        ad = s.start
-        while ad < s.end:
-            i = self.lazy_disasm(ad, s.start)
-            if i is None:
-                ad += 1
-            else:
-                ad += i.size
-                if ARCH_UTILS.is_call(i):
-                    o._asm_inst(i)
-
-        o.print()
 
 
     #
@@ -605,7 +644,7 @@ class Disassembler():
 
 
     def add_jmptable(self, inst_addr, table_addr, entry_size, nb_entries):
-        name = self.add_symbol(table_addr, "jmptable_0x%x" % table_addr)
+        name = self.add_symbol(table_addr, "jmptable_%x" % table_addr)
 
         table = self.read_array(table_addr, nb_entries, entry_size)
         self.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
@@ -627,3 +666,8 @@ class Disassembler():
                     ", ".join(map(str, all_cases[ad])),
                     name
                 )]
+
+        if inst_addr in self.reverse_labels:
+            ad = self.reverse_labels[inst_addr]
+            del self.reverse_labels[inst_addr]
+            del self.labels[ad]

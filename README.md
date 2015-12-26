@@ -1,11 +1,12 @@
 Reverse
 =======
 
-It generates a more readable code (pseudo-C) with colored syntax. An interactive
-mode is in development.
+Reverse is reverse engineering tool used to disassemble binaries.
+It can generate a more readable code (pseudo-C) with colored syntax.
+An interactive mode is in development.
 
 It supports :
-* architectures : x86, ARM, MIPS
+* architectures : x86, ARM, MIPS (partially)
 * formats : ELF, PE, RAW
 
 The `Makefile` is used only for checking tests.
@@ -41,16 +42,21 @@ for a full list.
 ## Visual mode (NEW)
 
 From the interactive mode, use the command `v` to enter in the visual mode.
-This mode requires `ncurses`. Use the `tab` to switch between dump/decompilation.
+This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
 
-More features will come :
+It supports :
+
+* define code/functions
+* inline comments
+* xrefs
+
+Future :
 
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
 * create data
 * symbols renaming
 * stack variables
-* x-refs
 * structure, enums
 * ...
 

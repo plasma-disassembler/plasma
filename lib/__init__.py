@@ -54,8 +54,6 @@ def parse_args():
             help='Generate syntax colors for vim')
     parser.add_argument('-s', '--symbols', action='store_true',
             help='Print all symbols')
-    parser.add_argument('-c', '--calls', metavar='SECTION_NAME', type=str,
-            help='Print all calls which are in the given section')
     parser.add_argument('--sections', action='store_true',
             help='Print all sections')
     parser.add_argument('--dump', action='store_true',
@@ -88,7 +86,6 @@ def parse_args():
     ctx.raw_type        = args.raw
     ctx.raw_base        = args.rawbase
     ctx.syms            = args.symbols
-    ctx.calls_in_section = args.calls
     ctx.entry           = args.entry
     ctx.dump            = args.dump
     ctx.vim             = args.vim
@@ -156,16 +153,7 @@ def load_file(ctx):
 
 
 def init_entry_addr(ctx):
-    if ctx.calls_in_section is not None:
-        s = ctx.dis.binary.get_section_by_name(ctx.calls_in_section)
-        if s is None:
-            error("section %s not found" % ctx.calls_in_section)
-            if ctx.interactive_mode:
-                return False
-            die()
-        entry_addr = s.start
-
-    elif ctx.entry == "EP":
+    if ctx.entry == "EP":
         entry_addr = ctx.dis.binary.get_entry_point()
 
     else:
@@ -253,10 +241,6 @@ def reverse(ctx):
         return
 
     init_entry_addr(ctx)
-
-    if ctx.calls_in_section is not None:
-        ctx.dis.print_calls(ctx)
-        return
 
     if ctx.dump:
         if ctx.dump:

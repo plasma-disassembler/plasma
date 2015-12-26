@@ -52,7 +52,6 @@ class Console():
         ctx.vim = False
 
         self.COMMANDS_ALPHA = [
-            "calls",
             "da",
             "db",
             "dd",
@@ -80,6 +79,7 @@ class Console():
             "v",
             "display.print_section",
             "display.print_comments",
+            "xrefs",
         ]
 
         self.COMMANDS = {
@@ -195,6 +195,7 @@ class Console():
                 "Shortcuts:",
                 "c       create code",
                 "p       create function",
+                "x       show xrefs",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -293,16 +294,6 @@ class Console():
                 ]
             ),
 
-            "calls": Command(
-                1,
-                self.__exec_calls,
-                self.__complete_x,
-                [
-                "[SECTION_NAME]",
-                "Print all calls which are in the given section"
-                ]
-            ),
-
             "exit": Command(
                 0,
                 self.__exec_exit,
@@ -393,11 +384,20 @@ class Console():
                 "Print the function list."
                 ]
             ),
+
+            "xrefs": Command(
+                1,
+                self.__exec_xrefs,
+                self.__complete_x,
+                [
+                "SYMBOL|0xXXXX|EP",
+                "Print all xrefs."
+                ]
+            ),
         }
 
         self.analyzer = Analyzer()
         self.analyzer.start()
-        info("analyzer is running in background...")
 
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
@@ -709,21 +709,6 @@ class Console():
             self.analyzer.set(self.ctx.dis, self.ctx.db)
 
 
-    def __exec_calls(self, args):
-        if len(args) != 2:
-            error("section required")
-            return
-        if self.ctx.dis is None:
-            error("load a file before")
-            return
-        self.ctx.calls_in_section = args[1]
-        if init_entry_addr(self.ctx):
-            self.ctx.dis.print_calls(self.ctx)
-            self.ctx.entry = None
-            self.ctx.entry_addr = 0
-        self.ctx.calls_in_section = None
-
-
     def __exec_sym(self, args):
         if self.ctx.dis is None:
             error("load a file before")
@@ -750,6 +735,10 @@ class Console():
 
         if not args[2].startswith("0x"):
             error("the address should starts with 0x")
+            return
+
+        if args[1].startswith("loc_"):
+            error("loc_ is a reserved prefix")
             return
 
         # Save new symbol
@@ -949,3 +938,21 @@ class Console():
             error("load a file before")
             return
         self.ctx.dis.print_symbols(self.ctx.sectionsname, only_func=True)
+
+
+    def __exec_xrefs(self, args):
+        if self.ctx.dis is None:
+            error("load a file before")
+            return
+        if len(args) == 1:
+            self.ctx.entry = None
+        else:
+            self.ctx.entry = args[1]
+        self.ctx.reset_vars()
+        if init_entry_addr(self.ctx):
+
+            ad = self.ctx.entry_addr
+            if ad not in self.ctx.dis.xrefs:
+                return
+
+            self.ctx.dis.dump_xrefs(self.ctx, ad).print()
