@@ -38,8 +38,14 @@ Here the option `-x main` is optional because the binary contains the symbol mai
 More commands are available in this mode (`da`, `db`, ...). See `help`
 for a full list.
 
+TODO :
 
-## Visual mode (NEW)
+* add commands : setbe/setle for the endianness of raw files
+* command rawbase
+* load raw files
+
+
+## Visual mode
 
 From the interactive mode, use the command `v` to enter in the visual mode.
 This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
@@ -50,16 +56,23 @@ It supports :
 * inline comments
 * xrefs
 
-Future :
+TODO :
 
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
-* create data
+* create data/arrays
 * symbols renaming
 * stack variables
-* structure, enums
+* structure, enum
 * improve analyzer performances
 * ...
+
+FIXME :
+
+* clean PE imports
+* xrefs with eip/rip + disp
+* re-run analyzer on the current function after definition of a jmptable + delete wrong labels
+* jmp FUNCTION -> don't continue to decompile
 
 ![reverse](/images/visual.png?raw=true)
 
