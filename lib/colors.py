@@ -23,11 +23,14 @@ from pathlib import Path
 from lib.utils import die, error
 
 
+CURR_VERSION = 1.4
+
+
 def default_custom_file():
     filename = str(Path(__file__).parent.parent / "custom_colors.py")
     with open(filename, "w+") as fd:
         fd.write(dedent("""\
-            VERSION = 1.3
+            VERSION = %.1f
 
             class COLOR:
                 def __init__(self, val, bold):
@@ -46,7 +49,9 @@ def default_custom_file():
             COLOR_INTERN_COMMENT = COLOR(217, False)
             COLOR_CODE_ADDR      = COLOR(220, False)
             COLOR_USER_COMMENT   = COLOR(38, False)
-            """))
+            COLOR_UNK            = COLOR(154, False)
+            COLOR_DATA           = COLOR(230, False)
+            """ % CURR_VERSION))
 
 
 try:
@@ -55,6 +60,7 @@ except:
     default_custom_file()
     from custom_colors import *
     print("the file custom_colors.py has been created")
+    VERSION = CURR_VERSION
 
 
 # Old versions of custom_colors.py

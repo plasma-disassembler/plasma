@@ -26,9 +26,9 @@ import lib.colors
 if __name__ == '__main__':
     ctx = parse_args()
 
-    if ctx.color and lib.colors.VERSION < 1.3:
-        info("There is a new version of custom_colors.py. If it's wasn't")
-        info("modified you can delete it. Otherwise you can copy it")
+    if ctx.color and lib.colors.VERSION < lib.colors.CURR_VERSION:
+        info("There is a new version of custom_colors.py. If you did any")
+        info("modifications you can delete it. Otherwise you can copy it")
         info("somewhere, run again your command then merge the file at hand.")
         die()
 
