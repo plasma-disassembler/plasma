@@ -461,6 +461,9 @@ class Visual(Window):
             self.stack.append(topush)
             return True
 
+        if self.mode == MODE_DECOMPILE and not self.dis.mem.is_code(ad):
+            self.mode = MODE_DUMP
+
         ret = self.exec_disasm(ad, h)
         if ret:
             self.cursor_y = 0
@@ -665,6 +668,7 @@ class Visual(Window):
 
         if self.mode == MODE_DECOMPILE:
             func_id = self.dis.mem.get_func_id(ad)
+            nop
             if func_id == -1:
                 self.mode = MODE_DUMP
             else:
