@@ -1,6 +1,5 @@
-function 0x4041b0 (raw) {
+function loop_0x4041b0 (raw) {
     loop {
-        loop_0x4041b0:
         0x4041b0: push rbx
         0x4041b1: rbx = rdi # mov rbx, rdi
         0x4041b4: call 0x401600

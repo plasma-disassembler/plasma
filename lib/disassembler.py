@@ -26,10 +26,10 @@ from lib.fileformat.binary import Binary, T_BIN_PE
 from lib.colors import (pick_color, color_addr, color_symbol,
         color_section, color_string)
 from lib.exceptions import ExcSymNotFound, ExcArch
-from lib.memory import Memory, MEM_UNK
+from lib.memory import Memory, MEM_UNK, MEM_FUNC, MEM_CODE
 
 
-NB_LINES_TO_DISASM = 100 # without comments, ...
+NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_"]
@@ -78,8 +78,6 @@ class Disassembler():
         self.functions = database.functions
         self.func_id = database.func_id
         self.end_functions = database.end_functions
-        self.labels = database.labels
-        self.reverse_labels = database.reverse_labels
         self.xrefs = database.xrefs
 
         # TODO: is it a global constant or $gp can change during the execution ?
@@ -248,19 +246,19 @@ class Disassembler():
                 func_id = self.mem.get_func_id(x)
                 if func_id != -1:
                     fad = self.func_id[func_id]
-                    o._symbol(fad)
+                    o._label(fad)
                     diff = x - fad
                     if diff >= 0:
                         o._add(" + %d " % diff)
                     else:
-                        o._add(" - %d " % diff)
+                        o._add(" - %d " % (-diff))
 
                     o._pad_width(20)
 
                 i = self.lazy_disasm(x, s.start)
                 o._asm_inst(i)
             else:
-                o_.address(x)
+                o._address(x)
                 o._new_line()
 
         # remove the last empty line
@@ -272,16 +270,20 @@ class Disassembler():
         return o
 
 
-    def is_symbol(self, ad):
-        return ad in self.binary.reverse_symbols or self.mem.is_func(ad)
+    def is_label(self, ad):
+        return ad in self.binary.reverse_symbols or ad in self.xrefs
 
 
-    def get_sym(self, ad):
+    def get_symbol(self, ad):
         s = self.binary.reverse_symbols.get(ad, None)
         if s is None:
-            if self.mem.is_func(ad):
+            ty = self.mem.get_type(ad)
+            if ty == MEM_FUNC:
                 return "sub_%x" % ad
-            return "unk_%x" % ad
+            if ty == MEM_CODE:
+                return "loc_%x" % ad
+            if ty == MEM_UNK:
+                return "unk_%x" % ad
         return s
 
 
@@ -324,7 +326,7 @@ class Disassembler():
 
             while ((l < lines and until == -1) or (ad < until and until != -1)) \
                     and ad <= s.end:
-                if self.mem.is_code(ad): # TODO optimize
+                if self.mem.is_code(ad):
                     is_func = ad in self.functions
 
                     if is_func:
@@ -348,7 +350,7 @@ class Disassembler():
 
                     if ad in self.end_functions:
                         for fad in self.end_functions[ad]:
-                            sy = self.get_sym(fad)
+                            sy = self.get_symbol(fad)
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
@@ -356,9 +358,6 @@ class Disassembler():
                     ad += i.size
 
                 else:
-                    if o.is_symbol(ad):
-                        o._symbol(ad)
-                        o._new_line()
                     o._label_and_address(ad)
                     o.set_line(ad)
                     o._db(s.read_byte(ad))
@@ -453,6 +452,8 @@ class Disassembler():
                     break
 
                 if c == 0 and len(ascii_str) >= 2:
+                    if self.is_label(addr_str):
+                        print(color_symbol(self.get_symbol(addr_str)))
                     print_no_end(color_addr(addr_str))
                     print_no_end(color_string(
                             "\"" + "".join(map(get_char, ascii_str)) + "\""))
@@ -460,6 +461,8 @@ class Disassembler():
                     addr += j - i
                     i = j
                 else:
+                    if self.is_label(addr):
+                        print(color_symbol(self.get_symbol(addr)))
                     print_no_end(color_addr(addr))
                     print("0x%.2x " % buf[i])
                     addr += 1
@@ -479,8 +482,8 @@ class Disassembler():
         ad = ctx.entry_addr
 
         for w in self.read_array(ctx.entry_addr, lines, size_word, s):
-            if self.is_symbol(ad):
-                print(color_symbol(self.get_sym(ad)))
+            if self.is_label(ad):
+                print(color_symbol(self.get_symbol(ad)))
             print_no_end(color_addr(ad))
             print_no_end("0x%.2x" % w)
 
@@ -490,9 +493,9 @@ class Disassembler():
                 print_no_end(" (")
                 print_no_end(color_section(section.name))
                 print_no_end(")")
-                if size_word >= 4 and self.is_symbol(w):
+                if size_word >= 4 and self.is_label(w):
                     print_no_end(" ")
-                    print_no_end(color_symbol(self.get_sym(w)))
+                    print_no_end(color_symbol(self.get_symbol(w)))
 
             ad += size_word
             print()
@@ -503,7 +506,7 @@ class Disassembler():
 
         # TODO: race condition with the analyzer ?
         for ad in list(self.functions):
-            print(color_addr(ad) + " " + self.get_sym(ad))
+            print(color_addr(ad) + " " + self.get_symbol(ad))
             total += 1
 
         print("Total:", total)
@@ -707,8 +710,3 @@ class Disassembler():
                     ", ".join(map(str, all_cases[ad])),
                     name
                 )]
-
-        if inst_addr in self.reverse_labels:
-            ad = self.reverse_labels[inst_addr]
-            del self.reverse_labels[inst_addr]
-            del self.labels[ad]

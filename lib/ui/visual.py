@@ -439,20 +439,10 @@ class Visual(Window):
 
         topush = self.__compute_curr_position()
 
-        if word.startswith("0x"):
-            try:
-                ad = int(word, 16)
-            except:
-                return False
-
-        elif word in self.console.ctx.dis.labels:
-            ad = self.console.ctx.dis.labels[word]
-
-        else:
-            self.console.ctx.entry = word
-            if not init_entry_addr(self.console.ctx):
-                return False
-            ad = self.console.ctx.entry_addr
+        self.console.ctx.entry = word
+        if not init_entry_addr(self.console.ctx):
+            return False
+        ad = self.console.ctx.entry_addr
 
         self.cursor_x = 0
 
@@ -612,20 +602,10 @@ class Visual(Window):
         if word is None:
             return False
 
-        if word.startswith("0x"):
-            try:
-                ad = int(word, 16)
-            except:
-                return False
-
-        elif word in self.console.ctx.dis.labels:
-            ad = self.console.ctx.dis.labels[word]
-
-        else:
-            self.console.ctx.entry = word
-            if not init_entry_addr(self.console.ctx):
-                return False
-            ad = self.console.ctx.entry_addr
+        self.console.ctx.entry = word
+        if not init_entry_addr(self.console.ctx):
+            return False
+        ad = self.console.ctx.entry_addr
 
         if ad not in self.dis.xrefs:
             self.status_bar("no xrefs", h, True)

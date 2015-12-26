@@ -4,7 +4,7 @@ function __imp___cexit (.text) {
     0x401100: push ebp
     0x401101: ebp = esp # mov ebp, esp
     0x401103: push ebx
-    __imp___iob
+    __imp___iob:
     0x401104: esp -= 36 # sub esp, 0x24
     0x401107: ebx = &(var1) # lea ebx, dword ptr [ebp - 8]
     0x40110a: *(esp) = ___crt_xt_end__ # mov dword ptr [esp], 0x401000
@@ -22,11 +22,11 @@ function __imp___cexit (.text) {
     0x401143: *(esp) = 0x404004 # mov dword ptr [esp], 0x404004
     0x40114a: call ___getmainargs
     0x40114f: eax = *(0x404010) # mov eax, dword ptr [0x404010]
-    __imp__strlen
+    __imp__strlen:
     # 0x401154: test eax, eax
     # 0x401156: je 0x4011b0
     if (eax != 0) {
-        __imp__system
+        __imp__system:
         0x401158: *(0x402010) = eax # mov dword ptr [0x402010], eax
         0x40115d: edx = *(_iob) # mov edx, dword ptr [0x405104]
         # 0x401163: test edx, edx
@@ -57,7 +57,7 @@ function __imp___cexit (.text) {
         0x4011f1: call _ExitProcess@4
         0x4011f6: *(esp + 4) = eax # mov dword ptr [esp + 4], eax
         0x4011fa: edx = *(_iob) # mov edx, dword ptr [0x405104]
-        __file_alignment__
+        __file_alignment__:
         0x401200: eax = *(edx + 16) # mov eax, dword ptr [edx + 0x10]
         0x401203: *(esp) = eax # mov dword ptr [esp], eax
         0x401206: call __setmode

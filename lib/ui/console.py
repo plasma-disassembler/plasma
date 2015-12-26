@@ -636,7 +636,7 @@ class Console():
         if ep is not None:
             self.analyzer.msg.put((ep, False, None))
 
-        for ad, name in self.ctx.db.reverse_symbols.items():
+        for ad in self.ctx.db.reverse_symbols:
             if self.ctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, None))
 

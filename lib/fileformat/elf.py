@@ -176,7 +176,7 @@ class ELF:
                 self.classbinary.reverse_symbols[plt_start] = name
                 self.classbinary.symbols[name] = plt_start
 
-                self.mem.add(ad, 1, ty)
+                self.mem.add(plt_start, 1, ty)
 
             off += addr_size
 

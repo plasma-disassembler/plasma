@@ -36,7 +36,7 @@ from lib.utils import info, error, die, warning
 from lib.memory import Memory
 
 
-VERSION = 1.5
+VERSION = 1.6
 
 
 class Database():
@@ -61,14 +61,12 @@ class Database():
         self.mem = None
         self.functions = {} # func address -> [end addr]
         self.func_id = {} # id -> func address
-        self.labels = {} # name -> addr
         self.xrefs = {} # addr -> list addr
 
         # Computed variables
         self.func_id_counter = 0
         self.end_functions = {}
         self.reverse_symbols = {} # addr -> [name, type]
-        self.reverse_labels = {} # addr -> name
         self.version = VERSION
 
 
@@ -97,12 +95,14 @@ class Database():
             self.__load_meta(data)
             self.__load_memory(data)
             self.__load_symbols(data)
-            self.__load_labels(data)
             self.__load_jmptables(data)
             self.__load_comments(data)
             self.__load_functions(data)
             self.__load_history(data)
             self.__load_xrefs(data)
+
+            if self.version <= 1.5:
+                self.__load_labels(data)
 
             if self.version != VERSION:
                 warning("the database version is old, some information may be missing")
@@ -126,7 +126,6 @@ class Database():
             "mem": self.mem.mm,
             "functions": self.functions,
             "func_id": self.func_id,
-            "labels": self.labels,
             "xrefs": self.xrefs,
         }
 
@@ -162,9 +161,9 @@ class Database():
 
     def __load_labels(self, data):
         try:
-            self.labels = data["labels"]
             for name, ad in self.labels.items():
-                self.reverse_labels[ad] = name
+                self.reverse_symbols[ad] = name
+                self.symbols[name] = ad
         except:
             # Not available in previous versions, this try will be
             # removed in the future

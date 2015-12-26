@@ -144,17 +144,6 @@ def color_addr_normal(addr, print_colon=True):
     return color_class(s, COLOR_ADDR)
 
 
-def color_label(addr, print_colon=True):
-    if addr not in ctx.labels:
-        return None
-    l = str(ctx.labels[addr])
-    if print_colon:
-        l += ":"
-    if addr in ctx.addr_color:
-        return color(l, ctx.addr_color[addr])
-    return color_class(l, COLOR_ADDR)
-
-
 def color_string(text):
     return color_class(text, COLOR_STRING)
 

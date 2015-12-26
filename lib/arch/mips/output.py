@@ -70,7 +70,7 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == MIPS_OP_IMM:
-            return self._imm(i, op.value.imm, 4, hexa,
+            return self._imm(op.value.imm, 4, hexa,
                              force_dont_print_data=force_dont_print_data)
 
         elif op.type == MIPS_OP_REG:
@@ -89,14 +89,14 @@ class Output(OutputAbs):
 
                 if section is not None:
                     val = section.read_int(ad, 4)
-                    if val in self.binary.reverse_symbols:
-                        self._imm(i, val, 0, True, print_data=False,
+                    if self.is_label(val):
+                        self._imm(val, 0, True, print_data=False,
                                   force_dont_print_data=force_dont_print_data)
                         return True
 
                 if show_deref:
                     self._add("*(")
-                self._imm(i, ad, 0, True, section=section, print_data=False,
+                self._imm(ad, 0, True, section=section, print_data=False,
                           force_dont_print_data=force_dont_print_data)
                 if show_deref:
                     self._add(")")
@@ -111,12 +111,12 @@ class Output(OutputAbs):
 
             if mm.disp != 0:
                 section = self.binary.get_section(mm.disp)
-                is_sym = mm.disp in self.binary.reverse_symbols
+                is_label = self.is_label(mm.disp)
 
-                if is_sym or section is not None:
+                if is_label or section is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(i, mm.disp, 0, True,
+                    self._imm(mm.disp, 0, True,
                               section=section, print_data=False,
                               force_dont_print_data=force_dont_print_data)
                 else:
@@ -183,6 +183,16 @@ class Output(OutputAbs):
         if is_call(i):
             self._retcall(i.mnemonic)
             self._add(" ")
+
+            if self.ctx.sectionsname:
+                op = i.operands[0]
+                if op.type == MIPS_OP_IMM:
+                    s = self.binary.get_section(op.value.imm)
+                    if s is not None:
+                        self._add("(")
+                        self._section(s.name)
+                        self._add(") ")
+
             self._operand(i, 0, hexa=True, force_dont_print_data=True)
             return False
 
@@ -207,16 +217,7 @@ class Output(OutputAbs):
                     self._comment("# STOPPED")
                 return False
 
-            addr = i.operands[-1].value.imm
-
-            if self.is_symbol(addr):
-                self._symbol(addr)
-            else:
-                if addr in self.ctx.dis.reverse_labels or \
-                        (self.mode_dump and addr in self.ctx.dis.xrefs):
-                    self._label_or_address(addr, -1, False)
-                else:
-                    self._add(hex(addr))
+            self._operand(i, -1, hexa=True, force_dont_print_data=True)
             return False
 
 

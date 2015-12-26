@@ -3,11 +3,10 @@ function main (.text) {
     0x4004b7: rbp = rsp # mov rbp, rsp
     0x4004ba: jmp cond
     loop {
-        cond
-        loop_0x4004bf:
+        cond:
         # 0x4004bf: jle 0x4004bc
         if >  goto ret_0x4004c1
-        myloop
+        myloop:
         0x4004bc: rax++ # inc rax
     }
     ret_0x4004c1:

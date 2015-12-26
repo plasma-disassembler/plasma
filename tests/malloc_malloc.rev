@@ -149,7 +149,7 @@ function malloc (raw) {
             0x7b514: edx = 2921 # mov edx, 0xb69
             0x7b519: call __malloc_assert
             0x7b51e: nop
-            malloc_atfork
+            malloc_atfork:
             0x7b520: rax = *(0x39dd80) # mov rax, qword ptr [rip + 0x322859]
             0x7b527: rdx = rdi # mov rdx, rdi
             # 0x7b52a: cmp qword ptr fs:[rax], -1
@@ -196,7 +196,7 @@ function malloc (raw) {
                     }
                 }
                 0x7b5a6: rdi = rdx # mov rdi, rdx
-                0x7b5a9: jmp 0x7b380
+                0x7b5a9: jmp malloc
             }
             0x7b5b0: rax = 0x7a320 # lea rax, qword ptr [rip - 0x1297]
             # 0x7b5b7: cmp qword ptr [rip + 0x325282], rax
@@ -205,7 +205,7 @@ function malloc (raw) {
                 0x7b5c0: rsi = rdi # mov rsi, rdi
                 0x7b5c3: rdi = main_arena # lea rdi, qword ptr [rip + 0x323576]
                 0x7b5ca: jmp _int_malloc
-                _int_malloc
+                _int_malloc:
                 # 0x79740: cmp rsi, 0xbf
                 # 0x79744: ja 0x79eec
                 if (rsi (unsigned) <= '\xbf') {
@@ -1165,7 +1165,7 @@ function malloc (raw) {
                 0x7b5f0: rdi = rax # mov rdi, rax
                 0x7b5f3: pop rbx
                 0x7b5f4: jmp mem2mem_check
-                mem2mem_check
+                mem2mem_check:
                 0x77110: test rdi, rdi
                 0x77113: rax = rdi # mov rax, rdi
                 # 0x77116: je 0x771a0
