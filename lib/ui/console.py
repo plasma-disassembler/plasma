@@ -51,6 +51,7 @@ class Console():
         ctx.vim = False
 
         self.COMMANDS_ALPHA = [
+            "analyzer",
             "da",
             "db",
             "dd",
@@ -82,6 +83,16 @@ class Console():
         ]
 
         self.COMMANDS = {
+            "analyzer": Command(
+                0,
+                self.__exec_analyzer,
+                None,
+                [
+                "",
+                "Analyzer information",
+                ]
+            ),
+
             "help": Command(
                 0,
                 self.__exec_help,
@@ -957,3 +968,7 @@ class Console():
                 return
 
             self.ctx.dis.dump_xrefs(self.ctx, ad).print()
+
+
+    def __exec_analyzer(self, args):
+        print("addresses remaining to analyze:", self.analyzer.msg.qsize())
