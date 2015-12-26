@@ -160,6 +160,8 @@ class OutputAbs():
             self._add(" ?")
         else:
             self._add(" %0.2x" % by)
+            if by in BYTES_PRINTABLE_SET:
+                self._string("  '%c'" % by)
 
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
