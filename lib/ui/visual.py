@@ -21,6 +21,7 @@ import curses
 from curses import A_UNDERLINE, color_pair
 from time import time
 from queue import Queue
+import traceback
 
 from lib import init_entry_addr, disasm
 from custom_colors import *
@@ -104,7 +105,14 @@ class Visual(Window):
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, 7, -1) # white
 
-        curses.wrapper(self.start_view)
+        try:
+            curses.wrapper(self.start_view)
+        except:
+            curses.nocbreak()
+            curses.echo()
+            curses.endwin()
+            traceback.print_exc()
+            return
 
         curses.nocbreak()
         curses.echo()

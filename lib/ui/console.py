@@ -22,6 +22,7 @@ import sys
 import shlex
 import json
 import code
+import traceback
 
 from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
@@ -772,11 +773,14 @@ class Console():
             self.ctx.entry = args[1]
         self.ctx.reset_vars()
         if init_entry_addr(self.ctx):
-            o = disasm(self.ctx)
-            if o is not None:
-                o.print()
-            self.ctx.entry = None
-            self.ctx.entry_addr = 0
+            try:
+                o = disasm(self.ctx)
+                if o is not None:
+                    o.print()
+                self.ctx.entry = None
+                self.ctx.entry_addr = 0
+            except:
+                traceback.print_exc()
 
 
     def __exec_v(self, args):
