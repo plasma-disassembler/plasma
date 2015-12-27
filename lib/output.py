@@ -208,7 +208,7 @@ class OutputAbs():
             if ad in self.ctx.addr_color:
                 col = self.ctx.addr_color[ad]
             else:
-                if is_sym:
+                if is_sym or ty == MEM_FUNC:
                     if l.startswith("loop_") or l.startswith("ret_"):
                         col = COLOR_ADDR.val
                     else:
