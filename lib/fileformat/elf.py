@@ -87,15 +87,16 @@ class ELF:
             self.__sections[start] = s
             is_data = self.__section_is_data(s)
             is_exec = self.__section_is_exec(s)
+            data = s.data()
 
             classbinary._abs_sections[start] = SectionAbs(
                     s.name.decode(),
                     start,
                     s.header.sh_size,
-                    s.header.sh_size,
+                    len(data),
                     is_exec,
                     is_data,
-                    s.data())
+                    data)
 
 
     def load_section_names(self):
