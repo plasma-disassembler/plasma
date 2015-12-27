@@ -1,12 +1,12 @@
 Reverse
 =======
 
-Reverse is reverse engineering tool used to disassemble binaries.
+`Reverse` is a reverse engineering tool used to disassemble binaries.
 It can generate a more readable code (pseudo-C) with colored syntax.
-An interactive mode is in development.
+An interactive mode is still in development.
 
 It supports :
-* architectures : x86, ARM, MIPS (partially)
+* architectures : x86, ARM, MIPS{64} (partially)
 * formats : ELF, PE, RAW
 
 The `Makefile` is used only for checking tests.
@@ -40,9 +40,8 @@ for a full list.
 
 TODO :
 
-* add commands : setbe/setle for the endianness of raw files
-* command rawbase
-* load raw files
+* add commands : setbe/setle (endianness of raw files), rawbase
+* load raw file if the file given from the shell is raw
 
 
 ## Visual mode
@@ -52,7 +51,7 @@ This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
 
 It supports :
 
-* define code/functions
+* definition of code/functions
 * inline comments
 * xrefs
 
@@ -87,8 +86,8 @@ So we need to tell it which jump-table to use.
     ...
     >> jmptable 0x400526 0x400620 11 8 
     # A jump-table at 0x400620 is set with 11 entries, an address is on 8 bytes.
-
-![reverse](/images/switch.png?raw=true)
+    >> x
+    # Decompilation with switch
 
 
 ## Analyze shellcodes
@@ -114,10 +113,4 @@ For every `int 0x80`, the tool try to detect syscalls with parameters.
 ## Edit with vim
 
     $ ./reverse tests/dowhile1.bin --vim
-    You can now run : vim dowhile1.bin.rev -S dowhile1.bin.vim
-
-
-## Custom colors
-
-At the first run, `reverse.py` creates a new file `custom_colors.py` with
-default values. Here you can set your own colors.
+    Run : vim dowhile1.bin.rev -S dowhile1.bin.vim
