@@ -207,6 +207,7 @@ class Console():
                 "c       create code",
                 "p       create function",
                 "x       show xrefs",
+                "r       rename a label",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",

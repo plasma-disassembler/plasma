@@ -25,7 +25,7 @@ import traceback
 
 from lib import init_entry_addr, disasm
 from custom_colors import *
-from lib.disassembler import NB_LINES_TO_DISASM
+from lib.disassembler import NB_LINES_TO_DISASM, RESERVED_PREFIX
 
 from lib.ui.window import *
 from lib.ui.inlineed import InlineEd
@@ -61,6 +61,7 @@ class Visual(Window):
             b"{": self.main_k_prev_paragraph,
             b"}": self.main_k_next_paragraph,
             b"x": self.main_cmd_xrefs,
+            b"r": self.main_cmd_rename,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -134,6 +135,53 @@ class Visual(Window):
         return False
 
 
+    def main_cmd_rename(self, h, w):
+        h2 = 1
+        w2 = int(w*6/7)
+
+        x = int((w - w2)/2) - 1
+        y = int((h - h2)/2) - 1
+
+        # A background with borders
+        scr_borders = curses.newwin(h2 + 2, w2 + 2, y, x)
+        scr_borders.border()
+        title = " rename "
+        scr_borders.addstr(0, int((w2 - len(title))/2), title)
+        scr_borders.refresh()
+
+        # The message box
+        scr = curses.newwin(h2, w2, y + 1, x + 1)
+
+        w = Window(None)
+        w.print_curr_line = False
+
+        word = self.get_word_under_cursor()
+
+        if word[:4] not in RESERVED_PREFIX:
+            if word not in self.dis.binary.symbols:
+                return True
+
+        text = w.open_textbox(scr, word)
+
+        if word == text or not text or text[:4] in RESERVED_PREFIX:
+            return True
+
+        if word[:4] in RESERVED_PREFIX:
+            try:
+                ad = int(word[4:], 16)
+            except:
+                return True
+        else:
+            ad = self.dis.binary.symbols[word]
+
+        self.dis.add_symbol(ad, text)
+
+        self.reload_dump()
+        self.console.ctx.db.modified = True
+
+        return True
+
+
     def view_inline_comment_editor(self, h, w):
         line = self.win_y + self.cursor_y
         if line not in self.output.line_addr:
@@ -169,9 +217,10 @@ class Visual(Window):
         is_new_token = addr not in self.dis.user_inline_comments
 
         ed = InlineEd(self, h, w, line, xbegin, idx_token, text,
-                      is_new_token, COLOR_USER_COMMENT.val)
+                      is_new_token, COLOR_USER_COMMENT.val,
+                      self.token_lines[line], prefix="; ")
 
-        ret = ed.start_view()
+        ret = ed.start_view(self.screen)
 
         if ret:
             self.console.ctx.db.modified = True

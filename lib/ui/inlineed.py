@@ -23,10 +23,12 @@ from custom_colors import *
 from lib.ui.window import Window
 
 
+# TODO: not very clean class...
+
+
 class InlineEd(Window):
-    def __init__(self, visual, h, w, line, xbegin, idx_token, text,
-                 is_new_token, color):
-        # TODO: cleanup
+    def __init__(self, window, h, w, line, xbegin, idx_token, text,
+                 is_new_token, color, tok_line, do_nothing=False, prefix=""):
         # The window class is only used for the read_escape_keys
         Window.__init__(self, None, has_statusbar=True)
 
@@ -44,30 +46,40 @@ class InlineEd(Window):
             b"\x05": self.k_end, # ctrl-e
         }
 
+        self.print_curr_line = True
+
         self.xbegin = xbegin
         self.idx_token = idx_token
-        self.par = visual # parent == main window
+        self.par = window # parent == main window
         self.text = list(text)
-        self.screen = visual.screen
         self.is_new_token = is_new_token
         self.line = line
         self.color = color
-        self.tok_line = self.par.token_lines[line]
+        self.tok_line = tok_line
+        self.do_nothing = do_nothing
+        self.prefix = prefix
 
 
-    def start_view(self):
-        screen = self.screen
+    def start_view(self, screen):
+        self.screen = screen
         y = self.par.cursor_y
         text_color = color_pair(self.color) | A_UNDERLINE
 
-        self.par.cursor_x = self.xbegin + 3
+        self.par.cursor_x = self.xbegin
+        if self.prefix:
+            self.par.cursor_x += len(self.prefix) + 1
+
         i = 0 # index of the cursor in self.text
 
         while 1:
             (h, w) = screen.getmaxyx()
-            h -= 1 # status bar
+
+            if self.has_statusbar:
+                h -= 1 # status bar
 
             x = self.xbegin
+            self.screen.move(y, 0)
+            self.screen.clrtoeol()
             self.print_line(w, y)
 
             if self.par.cursor_x >= w:
@@ -103,9 +115,11 @@ class InlineEd(Window):
         i = 0
         printed = False # the string currently edited
 
-        while i < len(self.tok_line):
+        while i < len(self.tok_line) or not printed:
             if not printed and i == self.idx_token:
-                string = " ; " + "".join(self.text)
+                string = "".join(self.text)
+                if self.prefix:
+                    string = " " + self.prefix + string
                 col = self.color
                 is_bold = False
                 printed = True
@@ -118,10 +132,10 @@ class InlineEd(Window):
             if x + len(string) >= w:
                 string = string[:w-x-1]
                 force_exit = True
-            
+
             c = color_pair(col)
 
-            if is_current_line:
+            if is_current_line and self.print_curr_line:
                 c |= A_UNDERLINE
 
             if is_bold:
@@ -133,7 +147,7 @@ class InlineEd(Window):
             if force_exit:
                 break
 
-        if is_current_line and not force_exit:
+        if is_current_line and not force_exit and self.print_curr_line:
             n = w - x - 1
             self.screen.addstr(y, x, " " * n, color_pair(0) | A_UNDERLINE)
             x += n
@@ -163,12 +177,16 @@ class InlineEd(Window):
         return i
 
     def k_home(self, i, w):
-        self.par.cursor_x = self.xbegin + 3 # 3 for " ; "
+        self.par.cursor_x = self.xbegin
+        if self.prefix:
+            self.par.cursor_x += len(self.prefix)
         return 0
 
     def k_end(self, i, w):
         n = len(self.text)
-        self.par.cursor_x = self.xbegin + 3 + n
+        self.par.cursor_x = self.xbegin + n
+        if self.prefix:
+            self.par.cursor_x += len(self.prefix)
         i = n
         # TODO: fix cursor_x >= w
         if self.par.cursor_x >= w:
@@ -182,6 +200,9 @@ class InlineEd(Window):
         return i
 
     def k_save(self, i, w):
+        if self.do_nothing:
+            return
+
         lines = self.par.output.lines
         token_lines = self.par.token_lines
 
@@ -191,7 +212,10 @@ class InlineEd(Window):
 
         if self.is_new_token:
             # Extract the rest of the lines (everything after the new string)
-            after = lines[line][xbegin + 3 + len(self.text) + 1:]
+            off = xbegin + len(self.text) + 1
+            if self.prefix:
+                off += len(self.prefix) + 1
+            after = lines[line][:]
         else:
             after = lines[line][xbegin + 1:]
 
@@ -219,16 +243,16 @@ class InlineEd(Window):
 
             # Insert the new token
             token_lines[line].insert(idx_token + 1,
-                    ("; " + self.text, self.color, False))
+                    (self.prefix + self.text, self.color, False))
 
         else:
             # Plus 1 for the space token
             token_lines[line][idx_token + 1] = \
-                    ("; " + self.text, self.color, False)
+                    (self.prefix + self.text, self.color, False)
 
         lines[line] = "".join([
             lines[line][:xbegin],
-            " ; ",
+            " " + self.prefix,
             self.text,
             " ",
             after])
@@ -236,7 +260,9 @@ class InlineEd(Window):
 
     def k_ctrl_u(self, i, w):
         self.text = self.text[i:]
-        self.par.cursor_x = self.xbegin + 3 # 3 for " ; "
+        self.par.cursor_x = self.xbegin
+        if self.prefix:
+            self.par.cursor_x += len(self.prefix)
         return 0
 
     def k_ctrl_k(self, i, w):

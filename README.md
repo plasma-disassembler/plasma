@@ -54,13 +54,13 @@ It supports :
 * definition of code/functions
 * inline comments
 * xrefs
+* symbols renaming
 
 TODO :
 
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
 * create data/arrays
-* symbols renaming
 * stack variables
 * structure, enum
 * improve analyzer performances

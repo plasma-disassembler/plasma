@@ -42,8 +42,10 @@ class Window():
         self.win_y = 0
         self.cursor_y = 0
         self.cursor_x = 0
-        self.output = output
-        self.token_lines = output.token_lines
+
+        if output is not None:
+            self.output = output
+            self.token_lines = output.token_lines
 
         self.should_stop = False
         self.has_statusbar = has_statusbar
@@ -523,3 +525,17 @@ class Window():
     def cmd_highlight_clear(self, h, w):
         self.search = None
         return True
+
+
+    def open_textbox(self, screen, text):
+        # TODO : cleanup !!!!!
+        from lib.ui.inlineed import InlineEd
+        (h, w) = screen.getmaxyx()
+
+        ed = InlineEd(self, h, w, 0, 0, 0, text,
+                      True, 0, [], do_nothing=True)
+        ed.print_curr_line = False
+        ed.start_view(screen)
+        ed.text = "".join(ed.text)
+
+        return ed.text
