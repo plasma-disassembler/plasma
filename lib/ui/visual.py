@@ -18,7 +18,7 @@
 #
 
 import curses
-from curses import A_UNDERLINE, color_pair
+
 from time import time
 from queue import Queue
 import traceback
@@ -28,6 +28,7 @@ from custom_colors import *
 from lib.disassembler import NB_LINES_TO_DISASM
 
 from lib.ui.window import *
+from lib.ui.inlineed import InlineEd
 
 
 class Visual(Window):
@@ -66,20 +67,6 @@ class Visual(Window):
         }
 
         self.mapping.update(new_mapping)
-
-        self.inline_mapping = {
-            b"\x1b\x5b\x44": self.inline_k_left,
-            b"\x1b\x5b\x43": self.inline_k_right,
-            b"\x7f": self.inline_k_backspace,
-            b"\x1b\x5b\x37\x7e": self.inline_k_home,
-            b"\x1b\x5b\x38\x7e": self.inline_k_end,
-            b"\x1b\x5b\x33\x7e": self.inline_k_delete,
-            b"\x15": self.inline_k_ctrl_u,
-            b"\x0b": self.inline_k_ctrl_k,
-            b"\n": self.inline_k_enter,
-            b"\x01": self.inline_k_home, # ctrl-a
-            b"\x05": self.inline_k_end, # ctrl-e
-        }
 
         saved_quiet = self.console.ctx.quiet
         self.console.ctx.quiet = True
@@ -152,8 +139,6 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return True
 
-        self.console.ctx.db.modified = True
-
         addr = self.output.line_addr[line]
 
         # The same address can be repeated on multiple lines
@@ -172,59 +157,33 @@ class Visual(Window):
 
         # xbegin is the first index just after all operands
         # So we need to add 1 to be at the index of ;
-        xbegin, _ = self.output.index_end_inst[line]
-        self.comm = []
-        screen = self.screen
-        y = self.cursor_y
-        col_intern = color_pair(COLOR_USER_COMMENT.val) | A_UNDERLINE
-
-        if addr in self.dis.user_inline_comments:
-            self.comm = list(self.dis.user_inline_comments[addr])
-
-        self.cursor_x = xbegin + 3
-        i = 0 # index in the string comment
+        xbegin, idx_token = self.output.index_end_inst[line]
 
         self.status_bar("-- INLINE COMMENT --", h)
 
-        while 1:
-            (h, w) = screen.getmaxyx()
-            h -= 1 # status bar
+        if addr in self.dis.user_inline_comments:
+            text = self.dis.user_inline_comments[addr]
+        else:
+            text = ""
 
-            x = xbegin
-            screen.move(y, xbegin)
+        is_new_token = addr not in self.dis.user_inline_comments
 
-            if x + 3 < w:
-                screen.addstr(y, x, " ; ", col_intern)
-                x += 3
-                if x + len(self.comm) >= w:
-                    screen.addstr("".join(self.comm[:w - x - 1]), col_intern)
-                else:
-                    screen.addstr("".join(self.comm), col_intern)
-            screen.clrtoeol()
+        ed = InlineEd(self, h, w, line, xbegin, idx_token, text,
+                      is_new_token, COLOR_USER_COMMENT.val)
 
-            # Underline the rest of the line
-            n = w - xbegin - len(self.comm) - 4
-            self.screen.addstr(" " * n, color_pair(0) | curses.A_UNDERLINE)
+        ret = ed.start_view()
 
-            if self.cursor_x >= w:
-                self.cursor_x = w - 1
-            screen.move(y, self.cursor_x)
-            k = self.read_escape_keys()
+        if ret:
+            self.console.ctx.db.modified = True
 
-            if k == b"\x1b": # escape = cancel
-                break
+            if ed.text:
+                self.dis.user_inline_comments[addr] = ed.text
+                if is_new_token:
+                    self.output.index_end_inst[line] = \
+                            (xbegin, idx_token)
 
-            if k in self.inline_mapping:
-                i = self.inline_mapping[k](xbegin, i, w)
-                if k == b"\n":
-                    break
-            elif k[0] >= 32 and k[0] <= 126 and self.cursor_x < w - 1:
-                # TODO: fix self.cursor_x >= w
-                # TODO: utf-8
-                c = chr(k[0])
-                self.comm.insert(i, c)
-                i += 1
-                self.cursor_x += 1
+            elif not is_new_token:
+                del self.dis.user_inline_comments[addr]
 
         return True
 
@@ -674,112 +633,3 @@ class Visual(Window):
 
     def mouse_double_left_click(self, h, w):
         return self.main_cmd_enter(h, w)
-
-
-    # Inline comment editor : keys mapping
-
-    def inline_k_left(self, xbegin, i, w):
-        if i != 0:
-            i -= 1
-            self.cursor_x -= 1
-        return i
-
-    def inline_k_right(self, xbegin, i, w):
-        if i != len(self.comm):
-            i += 1
-            self.cursor_x += 1
-            # TODO: fix self.cursor_x >= w
-            if self.cursor_x >= w:
-                i -= self.cursor_x - w + 1
-                self.cursor_x = w - 1
-        return i
-
-    def inline_k_backspace(self, xbegin, i, w):
-        if i != 0:
-            del self.comm[i-1]
-            i -= 1
-            self.cursor_x -= 1
-        return i
-
-    def inline_k_home(self, xbegin, i, w):
-        self.cursor_x = xbegin + 3 # 3 for " ; "
-        return 0
-
-    def inline_k_end(self, xbegin, i, w):
-        n = len(self.comm)
-        self.cursor_x = xbegin + 3 + n
-        i = n
-        # TODO: fix self.cursor_x >= w
-        if self.cursor_x >= w:
-            i -= self.cursor_x - w + 1
-            self.cursor_x = w - 1
-        return i
-
-    def inline_k_delete(self, xbegin, i, w):
-        if i != len(self.comm):
-            del self.comm[i]
-        return i
-
-    def inline_k_enter(self, xbegin, i, w):
-        line = self.win_y + self.cursor_y
-        addr = self.output.line_addr[line]
-        lines = self.output.lines
-
-        xbegin, idx_token = self.output.index_end_inst[line]
-
-        if addr in self.dis.user_inline_comments:
-            is_new_comment = False
-            # Extract the comment which starts by #
-            instr_comm = lines[line][xbegin + 3 + len(self.comm) + 1:]
-        else:
-            is_new_comment = True
-            instr_comm = lines[line][xbegin + 1:]
-
-        if not self.comm:
-            if not is_new_comment:
-                del self.dis.user_inline_comments[addr]
-
-                lines[line] = "".join([
-                    lines[line][:xbegin],
-                    " ",
-                    instr_comm])
-
-                # Remove space and comment
-                del self.token_lines[line][idx_token]
-                del self.token_lines[line][idx_token]
-        else:
-            self.comm = "".join(self.comm)
-            self.dis.user_inline_comments[addr] = self.comm
-
-            if is_new_comment:
-                # Space token
-                self.token_lines[line].insert(idx_token,
-                        (" ", 0, False))
-
-                # Insert the new token
-                self.token_lines[line].insert(idx_token + 1,
-                        ("; " + self.comm, COLOR_USER_COMMENT.val, False))
-
-                self.output.index_end_inst[line] = \
-                        (xbegin, idx_token)
-            else:
-                # Plus 1 for the space token
-                self.token_lines[line][idx_token + 1] = \
-                        ("; " + self.comm, COLOR_USER_COMMENT.val, False)
-
-            lines[line] = "".join([
-                lines[line][:xbegin],
-                " ; ",
-                self.comm,
-                " ",
-                instr_comm])
-        return i
-
-    def inline_k_ctrl_u(self, xbegin, i, w):
-        self.comm = self.comm[i:]
-        self.cursor_x = xbegin + 3 # 3 for " ; "
-        return 0
-
-    def inline_k_ctrl_k(self, xbegin, i, w):
-        self.comm = self.comm[:i]
-        return i
