@@ -535,7 +535,7 @@ class Window():
         ed = InlineEd(self, h, w, 0, 0, 0, text,
                       True, 0, [], do_nothing=True)
         ed.print_curr_line = False
-        ed.start_view(screen)
-        ed.text = "".join(ed.text)
-
-        return ed.text
+        ret = ed.start_view(screen)
+        if not ret:
+            return ""
+        return "".join(ed.text)
