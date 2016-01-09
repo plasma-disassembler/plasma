@@ -407,7 +407,7 @@ def generate_ast(ctx__):
 
     ast = Ast_Branch()
     ast.parent = None
-    stack = [(ast, [], -1, ctx.entry_addr, -1)]
+    stack = [(ast, [], -1, ctx.entry, -1)]
     visited = set()
     waiting = {}
 
@@ -431,7 +431,7 @@ def generate_ast(ctx__):
         if loops_stack:
             _, _, l_start = loops_stack[-1]
         else:
-            l_start = ctx.entry_addr
+            l_start = ctx.entry
 
         if (l_start, curr) in ctx.gph.false_loops:
             continue
@@ -450,7 +450,7 @@ def generate_ast(ctx__):
 
         if not loops_stack:
             l_prev_loop = -1
-            l_start = ctx.entry_addr
+            l_start = ctx.entry
             l_set = None
 
         level = ast.level
@@ -467,11 +467,11 @@ def generate_ast(ctx__):
 
             # Check if we enter in a new loop
             if (l_start, curr) in ctx.gph.loops_all:
-                if curr not in ctx.db.reverse_symbols:
+                if curr not in ctx.gctx.db.reverse_symbols:
                     name = "loop_0x%x" % curr
-                    ctx.db.symbols[name] = curr
-                    ctx.db.reverse_symbols[curr] = name
-                    ctx.db.modified = True
+                    ctx.gctx.db.symbols[name] = curr
+                    ctx.gctx.db.reverse_symbols[curr] = name
+                    ctx.gctx.db.modified = True
 
                 level += 1
                 a = Ast_Loop()
@@ -509,17 +509,17 @@ def generate_ast(ctx__):
 
         # Return instruction
         if curr not in ctx.gph.link_out:
-            if curr != ctx.entry_addr and curr not in ctx.db.reverse_symbols:
+            if curr != ctx.entry and curr not in ctx.gctx.db.reverse_symbols:
                 name = "ret_0x%x" % curr
-                ctx.db.symbols[name] = curr
-                ctx.db.reverse_symbols[curr] = name
-                ctx.db.modified = True
+                ctx.gctx.db.symbols[name] = curr
+                ctx.gctx.db.reverse_symbols[curr] = name
+                ctx.gctx.db.modified = True
             ast.add(blk)
             continue
 
         nxt = ctx.gph.link_out[curr]
 
-        if curr in ctx.dis.jmptables:
+        if curr in ctx.gctx.dis.jmptables:
             ast.add(blk)
             for n in nxt:
                 stack.append((ast, loops_stack, curr, n, else_addr))
@@ -541,13 +541,13 @@ def generate_ast(ctx__):
                 if c1:
                     exit_loop = nxt[BRANCH_NEXT]
                     nxt_node_in_loop = nxt[BRANCH_NEXT_JUMP]
-                    cond_id = ctx.libarch.utils.invert_cond(blk[0])
+                    cond_id = ctx.gctx.libarch.utils.invert_cond(blk[0])
                     goto_set = True
 
                 if c2:
                     exit_loop = nxt[BRANCH_NEXT_JUMP]
                     nxt_node_in_loop = nxt[BRANCH_NEXT]
-                    cond_id = ctx.libarch.utils.get_cond(blk[0])
+                    cond_id = ctx.gctx.libarch.utils.get_cond(blk[0])
                     goto_set = True
 
                 # goto to exit a loop
@@ -564,9 +564,9 @@ def generate_ast(ctx__):
                     continue
 
             # and-if
-            if ctx.print_andif:
+            if ctx.gctx.print_andif:
                 if else_addr == nxt[BRANCH_NEXT_JUMP]:
-                    cond_id = ctx.libarch.utils.invert_cond(blk[0])
+                    cond_id = ctx.gctx.libarch.utils.invert_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT], prefetch)
                     a.parent = ast
                     a.idx_in_parent = len(ast.nodes)
@@ -584,7 +584,7 @@ def generate_ast(ctx__):
 
                 # and-if
                 if else_addr == nxt[BRANCH_NEXT]:
-                    cond_id = ctx.libarch.utils.get_cond(blk[0])
+                    cond_id = ctx.gctx.libarch.utils.get_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT_JUMP], prefetch)
                     a.parent = ast
                     a.idx_in_parent = len(ast.nodes)
@@ -683,15 +683,15 @@ def generate_ast(ctx__):
 
     start = time()
 
-    for func in ctx.libarch.registered:
+    for func in ctx.gctx.libarch.registered:
         func(ctx, ast)
 
     elapsed = time()
     elapsed = elapsed - start
     debug__("Functions for processing ast in %fs" % elapsed)
 
-    if ctx.color:
-        ctx.libarch.process_ast.assign_colors(ctx, ast)
+    if ctx.gctx.color:
+        ctx.gctx.libarch.process_ast.assign_colors(ctx, ast)
 
     if waiting:
         ast_head.nodes.insert(0, Ast_Comment(""))

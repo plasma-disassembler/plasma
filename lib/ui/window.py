@@ -20,11 +20,8 @@
 import curses
 from curses import A_UNDERLINE, color_pair
 from time import time
-from queue import Queue
 
-from lib import init_entry_addr, disasm
 from custom_colors import *
-from lib.disassembler import NB_LINES_TO_DISASM
 
 
 MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
@@ -37,7 +34,6 @@ MODE_OTHER = 3
 
 class Window():
     def __init__(self, output, has_statusbar=False):
-        # Warning: 
         self.mode = MODE_OTHER
         self.win_y = 0
         self.cursor_y = 0

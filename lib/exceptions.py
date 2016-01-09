@@ -18,11 +18,6 @@
 #
 
 
-class ExcSymNotFound(Exception):
-    def __init__(self, symname):
-        self.symname = symname
-
-
 class ExcArch(Exception):
     def __init__(self, arch):
         self.arch = arch

@@ -17,23 +17,65 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lib import reverse, parse_args
+import sys
+from lib import GlobalContext, AddrContext
 from lib.utils import info, die
+from lib.ui.vim import generate_vim_syntax
 
 # Generates the file custom_colors.py at the beginning
 import lib.colors
 
 if __name__ == '__main__':
-    ctx = parse_args()
+    gctx = GlobalContext()
+    gctx.parse_args()
 
-    if ctx.color and lib.colors.VERSION < lib.colors.CURR_VERSION:
+    if gctx.color and lib.colors.VERSION < lib.colors.CURR_VERSION:
         info("There is a new version of custom_colors.py. If you did any")
         info("modifications you can delete it. Otherwise you can copy it")
         info("somewhere, run again your command then merge the file at hand.")
         die()
 
-    if ctx.interactive_mode:
+    if gctx.interactive_mode:
         from lib.ui.console import Console
-        i = Console(ctx)
-    elif ctx.filename is not None:
-        reverse(ctx)
+        i = Console(gctx)
+
+    elif gctx.filename is not None:
+        if not gctx.load_file():
+            die()
+
+        if gctx.list_sections:
+            for s in gctx.dis.binary.iter_sections():
+                s.print_header()
+            sys.exit(0)
+
+        if gctx.syms:
+            gctx.dis.print_symbols(gctx.sectionsname)
+            sys.exit(0)
+
+        ctx = gctx.get_addr_context(gctx.entry)
+
+        if ctx is None:
+            sys.exit(0)
+
+        if gctx.do_dump:
+            ctx.dump_asm(gctx.nb_lines).print()
+            sys.exit(0)
+
+        o = ctx.decompile()
+
+        if gctx.graph:
+            ctx.gph.dot_graph(gctx.dis.jmptables)
+
+        if o is not None:
+            if gctx.vim:
+                base = os.path.basename(gctx.filename) + "_" + gctx.entry
+                # re-assign if no colors
+                gctx.libarch.process_ast.assign_colors(gctx, ast)
+                gctx.color = False
+                generate_vim_syntax(gctx, base + ".vim")
+                sys.stdout = open(base + ".rev", "w+")
+
+            o.print()
+
+            if gctx.vim:
+                print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)

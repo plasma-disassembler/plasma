@@ -272,7 +272,7 @@ def get_value_written(inst):
 
 
 def read_block(ctx, blk):
-    inline_comm = ctx.dis.internal_inline_comments
+    inline_comm = ctx.gctx.dis.internal_inline_comments
     for i, inst in enumerate(blk):
         if inst.id != X86_INS_INT:
             continue

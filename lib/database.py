@@ -32,7 +32,7 @@ except:
 import json
 
 from lib.disassembler import Jmptable
-from lib.utils import info, error, die, warning
+from lib.utils import info, warning
 from lib.memory import Memory
 
 

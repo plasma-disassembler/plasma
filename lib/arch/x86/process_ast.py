@@ -118,9 +118,9 @@ def search_local_vars(ctx, ast):
 
 def search_canary_plt(ctx, ast):
     fname = "__stack_chk_fail@plt"
-    if fname not in ctx.dis.binary.symbols:
+    if fname not in ctx.gctx.dis.binary.symbols:
         return
-    faddr = ctx.dis.binary.symbols[fname]
+    faddr = ctx.gctx.dis.binary.symbols[fname]
     __rec_search_canary_plt(faddr, ctx, ast, [])
 
 

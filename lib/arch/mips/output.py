@@ -21,8 +21,8 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_OP_INVALID, MIPS_INS_LW, MIPS_INS_SW, MIPS_INS_AND,
         MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
         MIPS_INS_ADDIU, MIPS_INS_LB, MIPS_INS_LBU, MIPS_INS_SB,
-        MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_XOR,
-        MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU, MIPS_INS_BGTZ,
+        MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_SUB,
+        MIPS_INS_SUBU, MIPS_INS_BGTZ,
         MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
         MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP)
 
@@ -83,9 +83,9 @@ class Output(OutputAbs):
 
             printed = False
 
-            if mm.base == MIPS_REG_GP and self.ctx.dis.mips_gp != -1:
-                ad = self.ctx.dis.mips_gp + mm.disp
-                section = self.binary.get_section(ad)
+            if mm.base == MIPS_REG_GP and self._dis.mips_gp != -1:
+                ad = self._dis.mips_gp + mm.disp
+                section = self._binary.get_section(ad)
 
                 if section is not None:
                     val = section.read_int(ad, 4)
@@ -110,7 +110,7 @@ class Output(OutputAbs):
                 printed = True
 
             if mm.disp != 0:
-                section = self.binary.get_section(mm.disp)
+                section = self._binary.get_section(mm.disp)
                 is_label = self.is_label(mm.disp)
 
                 if is_label or section is not None:
@@ -184,10 +184,10 @@ class Output(OutputAbs):
             self._retcall(i.mnemonic)
             self._add(" ")
 
-            if self.ctx.sectionsname:
+            if self.gctx.sectionsname:
                 op = i.operands[0]
                 if op.type == MIPS_OP_IMM:
-                    s = self.binary.get_section(op.value.imm)
+                    s = self._binary.get_section(op.value.imm)
                     if s is not None:
                         self._add("(")
                         self._section(s.name)
@@ -211,8 +211,8 @@ class Output(OutputAbs):
             if i.operands[-1].type != MIPS_OP_IMM:
                 self._operand(i, -1, force_dont_print_data=True)
                 self.inst_end_here()
-                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
-                        and not i.address in self.ctx.dis.jmptables:
+                if is_uncond_jump(i) and self.gctx.comments and not self.ctx.is_dump \
+                        and not i.address in self._dis.jmptables:
                     self._add(" ")
                     self._comment("# STOPPED")
                 return False

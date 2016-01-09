@@ -19,30 +19,30 @@
 
 import curses
 
-from time import time
 from queue import Queue
 import traceback
 
-from lib import init_entry_addr, disasm
 from custom_colors import *
-from lib.disassembler import NB_LINES_TO_DISASM, RESERVED_PREFIX
+from lib.disassembler import RESERVED_PREFIX
 
 from lib.ui.window import *
 from lib.ui.inlineed import InlineEd
 
 
 class Visual(Window):
-    def __init__(self, console, disassembler, output):
-        Window.__init__(self, output, has_statusbar=True)
+    def __init__(self, gctx, ctx, analyzer):
+        Window.__init__(self, ctx.output, has_statusbar=True)
 
+        self.ctx = ctx
+        self.gctx = gctx
         self.mode = MODE_DUMP
-        self.dis = disassembler
-        self.console = console
+        self.dis = gctx.dis
+        self.analyzer = analyzer
         self.queue_wait_analyzer = Queue()
 
         # Last/first address printed (only in MODE_DUMP)
-        self.last_addr = max(output.addr_line)
-        self.first_addr = min(output.addr_line)
+        self.last_addr = max(self.output.addr_line)
+        self.first_addr = min(self.output.addr_line)
 
         self.stack = []
         self.saved_stack = [] # when we enter, go back, then re-enter
@@ -69,8 +69,8 @@ class Visual(Window):
 
         self.mapping.update(new_mapping)
 
-        saved_quiet = self.console.ctx.quiet
-        self.console.ctx.quiet = True
+        saved_quiet = self.gctx.quiet
+        self.gctx.quiet = True
 
         self.screen = curses.initscr()
 
@@ -85,7 +85,7 @@ class Visual(Window):
         curses.start_color()
         curses.use_default_colors()
 
-        if console.ctx.color:
+        if self.gctx.color:
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, i, -1)
             curses.init_pair(1, 253, 66) # for the highlight search
@@ -106,25 +106,21 @@ class Visual(Window):
         curses.echo()
         curses.endwin()
 
-        self.console.ctx.quiet = saved_quiet
+        self.gctx.quiet = saved_quiet
 
         if self.stack:
-            print(hex(self.console.ctx.entry_addr))
+            print(hex(self.ctx.entry))
 
 
-    def exec_disasm(self, addr, h):
-        self.console.ctx.reset_vars()
-        self.console.ctx.entry_addr = addr
+    def exec_disasm(self, addr, h, dump_until=-1):
+        self.ctx = self.gctx.get_addr_context(addr)
 
         if self.mode == MODE_DUMP:
-            self.console.ctx.dump = True
-            o = self.dis.dump_asm(self.console.ctx, NB_LINES_TO_DISASM)
-            self.console.ctx.dump = False
+            o = self.ctx.dump_asm(until=dump_until)
 
         elif self.mode == MODE_DECOMPILE:
             self.status_bar("decompiling...", h, True)
-            self.console.ctx.dump = False
-            o = disasm(self.console.ctx)
+            o = self.ctx.decompile()
 
         if o is not None:
             self.output = o
@@ -157,27 +153,26 @@ class Visual(Window):
 
         word = self.get_word_under_cursor()
 
-        if word[:4] not in RESERVED_PREFIX:
+        if word[:4] in RESERVED_PREFIX:
+            try:
+                ad = int(word[4:], 16)
+            except:
+                return True
+            word = ""
+        else:
             if word not in self.dis.binary.symbols:
                 return True
+            ad = self.dis.binary.symbols[word]
 
         text = w.open_textbox(scr, word)
 
         if word == text or not text or text[:4] in RESERVED_PREFIX:
             return True
 
-        if word[:4] in RESERVED_PREFIX:
-            try:
-                ad = int(word[4:], 16)
-            except:
-                return True
-        else:
-            ad = self.dis.binary.symbols[word]
-
         self.dis.add_symbol(ad, text)
 
-        self.reload_dump()
-        self.console.ctx.db.modified = True
+        self.reload_output(h)
+        self.gctx.db.modified = True
 
         return True
 
@@ -223,7 +218,7 @@ class Visual(Window):
         ret = ed.start_view(self.screen)
 
         if ret:
-            self.console.ctx.db.modified = True
+            self.gctx.db.modified = True
 
             if ed.text:
                 self.dis.user_inline_comments[addr] = ed.text
@@ -246,10 +241,8 @@ class Visual(Window):
 
         ad = self.dis.find_addr_before(self.first_addr)
 
-        self.console.ctx.entry_addr = ad
-        self.console.ctx.dump = True
-        o = self.dis.dump_asm(self.console.ctx, until=self.first_addr)
-        self.console.ctx.dump = False
+        self.ctx = self.gctx.get_addr_context(ad)
+        o = self.ctx.dump_asm(until=self.first_addr)
 
         if o is not None:
             nb_new_lines = len(o.lines)
@@ -296,17 +289,14 @@ class Visual(Window):
         if self.last_addr == self.dis.binary.get_last_addr():
             return
 
-        self.console.ctx.reset_vars()
-
         if self.dis.mem.is_code(self.last_addr):
             inst = self.dis.lazy_disasm(self.last_addr)
-            self.console.ctx.entry_addr = self.last_addr + inst.size
+            ad = self.last_addr + inst.size
         else:
-            self.console.ctx.entry_addr = self.last_addr + 1
+            ad = self.last_addr + 1
 
-        self.console.ctx.dump = True
-        o = self.dis.dump_asm(self.console.ctx, NB_LINES_TO_DISASM)
-        self.console.ctx.dump = False
+        self.ctx = self.gctx.get_addr_context(ad)
+        o = self.ctx.dump_asm()
 
         if o is not None:
             nb_new_lines = len(self.output.lines)
@@ -434,7 +424,7 @@ class Visual(Window):
     def __compute_curr_position(self):
         line = self.win_y + self.cursor_y
         if self.mode == MODE_DECOMPILE:
-            last = self.console.ctx.entry_addr
+            last = self.ctx.entry
             offset_y = (self.win_y, self.cursor_y)
         else:
             # We save only addresses on the stack, so if the cursor is
@@ -455,10 +445,10 @@ class Visual(Window):
 
         topush = self.__compute_curr_position()
 
-        self.console.ctx.entry = word
-        if not init_entry_addr(self.console.ctx):
+        self.ctx = self.gctx.get_addr_context(word)
+        if not self.ctx:
             return False
-        ad = self.console.ctx.entry_addr
+        ad = self.ctx.entry
 
         self.cursor_x = 0
 
@@ -487,7 +477,7 @@ class Visual(Window):
         if mode == MODE_DECOMPILE:
             self.win_y = offset_y[0]
             self.cursor_y = offset_y[1]
-            if self.mode == MODE_DECOMPILE and ad == self.console.ctx.entry_addr:
+            if self.mode == MODE_DECOMPILE and ad == self.ctx.entry:
                 return True
 
             self.mode = mode
@@ -565,13 +555,8 @@ class Visual(Window):
         return ret
 
 
-    def reload_dump(self):
-        self.console.ctx.entry_addr = self.first_addr
-        self.console.ctx.dump = True
-        o = self.dis.dump_asm(self.console.ctx, until=self.last_addr)
-        self.console.ctx.dump = False
-        self.output = o
-        self.token_lines = o.token_lines
+    def reload_output(self, h):
+        self.exec_disasm(self.first_addr, h, dump_until=self.last_addr)
 
 
     def main_cmd_code(self, h, w):
@@ -587,10 +572,10 @@ class Visual(Window):
         if self.dis.mem.is_code(ad):
             return False
 
-        self.console.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
+        self.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
-        self.reload_dump()
-        self.console.ctx.db.modified = True
+        self.reload_output(h)
+        self.gctx.db.modified = True
         return True
 
 
@@ -605,10 +590,10 @@ class Visual(Window):
         # TODO: check if the address is not already in a function
 
         ad = self.output.line_addr[line]
-        self.console.analyzer.msg.put((ad, True, self.queue_wait_analyzer))
+        self.analyzer.msg.put((ad, True, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
-        self.reload_dump()
-        self.console.ctx.db.modified = True
+        self.reload_output(h)
+        self.gctx.db.modified = True
         self.goto_address(ad, h, w)
         return True
 
@@ -618,12 +603,11 @@ class Visual(Window):
         if word is None:
             return False
 
-        self.console.ctx.entry = word
-        if not init_entry_addr(self.console.ctx):
+        ctx = self.gctx.get_addr_context(word)
+        if not ctx:
             return False
-        ad = self.console.ctx.entry_addr
 
-        if ad not in self.dis.xrefs:
+        if ctx.entry not in self.dis.xrefs:
             self.status_bar("no xrefs", h, True)
             return False
 
@@ -636,12 +620,12 @@ class Visual(Window):
         # A background with borders
         scr_borders = curses.newwin(h2 + 2, w2 + 2, y, x)
         scr_borders.border()
-        title = " xrefs for " + hex(ad)
+        title = " xrefs for " + hex(ctx.entry)
         scr_borders.addstr(0, int((w2 - len(title))/2), title)
         scr_borders.refresh()
 
         # The message box with xrefs
-        o = self.dis.dump_xrefs(self.console.ctx, ad)
+        o = ctx.dump_xrefs()
         scr = curses.newwin(h2, w2, y + 1, x + 1)
         w = Window(o)
         ret = w.start_view(scr)

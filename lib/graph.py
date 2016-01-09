@@ -17,7 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
 from time import time
 
 from lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__, list_starts_with
@@ -780,7 +779,7 @@ class Graph:
                 rec_remove(k)
 
 
-    def loop_detection(self, ctx, entry, bypass_false_search=False):
+    def loop_detection(self, entry, bypass_false_search=False):
         start = time()
 
         # Equivalent loops at a same deep in the loops dependencies tree

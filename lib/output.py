@@ -28,8 +28,6 @@ from lib.memory import MEM_CODE, MEM_UNK, MEM_FUNC
 
 class OutputAbs():
     def __init__(self, ctx=None):
-        self.ctx = ctx
-        self.binary = ctx.dis.binary
         self.token_lines = [] # each line is separated in tokens (string, color, is_bold)
         self.lines = [] # each line contains the entire string
         self.line_addr = {} # line -> address
@@ -37,10 +35,15 @@ class OutputAbs():
         self.index_end_inst = {} # line -> (char_index, token_index)
         self.curr_index = 0
 
-        self.mode_dump = False
         self.section_prefix = False
         self.curr_section = None # must be updated at hand !!
         self.print_labels = True
+
+        # Easy accesses
+        self._dis = ctx.gctx.dis
+        self._binary = self._dis.binary
+        self.gctx = ctx.gctx
+        self.ctx = ctx
 
 
     # All functions which start with a '_' add a new token/string on
@@ -168,13 +171,13 @@ class OutputAbs():
         l = None
         is_sym = False
 
-        ty = self.ctx.dis.mem.get_type(ad)
+        ty = self._dis.mem.get_type(ad)
 
-        if ad in self.ctx.db.reverse_symbols:
-            l = str(self.ctx.db.reverse_symbols[ad])
+        if ad in self.ctx.gctx.db.reverse_symbols:
+            l = str(self.ctx.gctx.db.reverse_symbols[ad])
             col = COLOR_SYMBOL.val
             is_sym = True
-        elif ad not in self.ctx.dis.xrefs and ty != MEM_FUNC:
+        elif ad not in self._dis.xrefs and ty != MEM_FUNC:
             return False
 
         if ty == MEM_FUNC:
@@ -183,7 +186,7 @@ class OutputAbs():
             col = COLOR_SYMBOL.val
 
         elif ty == MEM_CODE:
-            if self.mode_dump:
+            if self.ctx.is_dump:
                 if l is None:
                     l = "loc_%x" % ad
                 col = COLOR_CODE_ADDR.val
@@ -204,7 +207,7 @@ class OutputAbs():
             l += ":"
 
         # TODO: keep all colors in decompilation mode ?
-        if not self.mode_dump:
+        if not self.ctx.is_dump:
             if ad in self.ctx.addr_color:
                 col = self.ctx.addr_color[ad]
             else:
@@ -240,7 +243,7 @@ class OutputAbs():
 
 
     def _label_and_address(self, ad, tab=-1, print_colon=True, with_comment=False):
-        is_first = not self.mode_dump and ad == self.ctx.entry_addr
+        is_first = not self.ctx.is_dump and ad == self.ctx.entry
 
         if not is_first and self._label(ad, tab, print_colon):
             self._new_line()
@@ -258,18 +261,18 @@ class OutputAbs():
 
 
     def _previous_comment(self, i, tab):
-        if i.address in self.ctx.dis.internal_previous_comments:
-            if self.ctx.dump and not self.is_last_2_line_empty():
+        if i.address in self._dis.internal_previous_comments:
+            if self.ctx.is_dump and not self.is_last_2_line_empty():
                 self._new_line()
-            for comm in self.ctx.dis.internal_previous_comments[i.address]:
+            for comm in self._dis.internal_previous_comments[i.address]:
                 self._tabs(tab)
                 self._internal_comment("; %s" % comm)
                 self._new_line()
 
-        if i.address in self.ctx.dis.user_previous_comments:
-            if self.ctx.dump and not self.is_last_2_line_empty():
+        if i.address in self._dis.user_previous_comments:
+            if self.ctx.is_dump and not self.is_last_2_line_empty():
                 self._new_line()
-            for comm in self.ctx.dis.user_previous_comments[i.address]:
+            for comm in self._dis.user_previous_comments[i.address]:
                 self._tabs(tab)
                 self._user_comment("; %s" % comm)
                 self._new_line()
@@ -286,18 +289,18 @@ class OutputAbs():
 
     def _inline_comment(self, i):
         self.inst_end_here()
-        if i.address in self.ctx.dis.user_inline_comments:
+        if i.address in self._dis.user_inline_comments:
             self._add(" ")
             self._user_comment("; %s" %
-                    self.ctx.dis.user_inline_comments[i.address])
-        if i.address in self.ctx.dis.internal_inline_comments:
+                    self._dis.user_inline_comments[i.address])
+        if i.address in self._dis.internal_inline_comments:
             self._add(" ")
             self._internal_comment("; %s" %
-                    self.ctx.dis.internal_inline_comments[i.address])
+                    self._dis.internal_inline_comments[i.address])
 
 
     def _comment_orig_inst(self, i, modified):
-        if modified and self.ctx.comments:
+        if modified and self.ctx.gctx.comments:
             self._add(" ")
             self._comment("# %s" % self.get_inst_str(i))
 
@@ -310,9 +313,9 @@ class OutputAbs():
 
 
     def _bytes(self, i, comment_this=False):
-        if self.ctx.print_bytes:
+        if self.ctx.gctx.print_bytes:
             if comment_this:
-                if self.ctx.comments:
+                if self.ctx.gctx.comments:
                     for c in i.bytes:
                         self._comment("%x " % c)
             else:
@@ -321,7 +324,7 @@ class OutputAbs():
 
 
     def _comment_fused(self, jump_inst, fused_inst, tab):
-        if self.ctx.comments:
+        if self.ctx.gctx.comments:
             if fused_inst != None:
                 self._asm_inst(fused_inst, tab, "# ")
             if jump_inst != None:
@@ -377,26 +380,26 @@ class OutputAbs():
         label_printed = self._label(imm, print_colon=False)
 
         if label_printed:
-            ty = self.ctx.dis.mem.get_type(imm)
+            ty = self._dis.mem.get_type(imm)
             # ty == -1 : from the terminal (with -x) there are no xrefs
-            if imm in self.ctx.dis.xrefs and ty != MEM_UNK or ty == -1:
+            if imm in self._dis.xrefs and ty != MEM_UNK or ty == -1:
                 return True
 
         if section is None:
-            section = self.binary.get_section(imm)
+            section = self._binary.get_section(imm)
 
         # For a raw file, if the raw base is 0 the immediate is considered
         # as an address only if it's in the symbols list.
-        raw_base_zero = self.binary.type == T_BIN_RAW and self.ctx.raw_base == 0
+        raw_base_zero = self._binary.type == T_BIN_RAW and self.ctx.gctx.raw_base == 0
 
         if section is not None and not raw_base_zero:
             if not label_printed:
                 self._address(imm, print_colon=False, notprefix=True)
 
             if not force_dont_print_data and \
-                    print_data and imm not in self.ctx.db.reverse_symbols and \
+                    print_data and imm not in self._binary.reverse_symbols and \
                     section is not None and section.is_data:
-                s = self.binary.get_string(imm, self.ctx.max_data_size)
+                s = self._binary.get_string(imm, self.ctx.gctx.max_data_size)
                 if s != "\"\"":
                     self._add(" ")
                     self._string(s)
@@ -437,8 +440,8 @@ class OutputAbs():
 
 
     def is_label(self, ad):
-        return ad in self.ctx.dis.binary.reverse_symbols or \
-               ad in self.ctx.dis.xrefs
+        return ad in self._binary.reverse_symbols or \
+               ad in self._dis.xrefs
 
 
     def var_name_exists(self, i, op_num):
@@ -457,7 +460,7 @@ class OutputAbs():
         if not self._label(entry, print_colon=False, nocolor=True):
             self._add(hex(entry))
 
-        section = self.binary.get_section(entry)
+        section = self._binary.get_section(entry)
 
         if section is not None:
             self._add(" (")
@@ -520,7 +523,7 @@ class OutputAbs():
     def print(self):
         for l in self.token_lines:
             for (string, col, is_bold) in l:
-                if self.ctx.color:
+                if self.gctx.color:
                     if col != 0:
                         string = color(string, col)
                     if is_bold:

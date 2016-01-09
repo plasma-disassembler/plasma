@@ -136,7 +136,7 @@ class Output(OutputAbs):
                     # return True
                 if mm.base == ARM_REG_PC:
                     ad = i.address + i.size * 2 + mm.disp
-                    section = self.binary.get_section(ad)
+                    section = self._binary.get_section(ad)
 
                     if section is not None:
                         val = section.read_int(ad, 4)
@@ -181,7 +181,7 @@ class Output(OutputAbs):
                 printed = True
 
             if mm.disp != 0:
-                section = self.binary.get_section(mm.disp)
+                section = self._binary.get_section(mm.disp)
                 is_label = self.is_label(mm.disp)
 
                 if is_label or section is not None:
@@ -241,10 +241,10 @@ class Output(OutputAbs):
             self._retcall(i.mnemonic)
             self._add(" ")
 
-            if self.ctx.sectionsname:
+            if self.gctx.sectionsname:
                 op = i.operands[0]
                 if op.type == ARM_OP_IMM:
-                    s = self.binary.get_section(op.value.imm)
+                    s = self._binary.get_section(op.value.imm)
                     if s is not None:
                         self._add("(")
                         self._section(s.name)
@@ -264,8 +264,8 @@ class Output(OutputAbs):
             if i.operands[0].type != ARM_OP_IMM:
                 self._operand(i, 0, force_dont_print_data=True)
                 self.inst_end_here()
-                if is_uncond_jump(i) and self.ctx.comments and not self.ctx.dump \
-                        and not i.address in self.ctx.dis.jmptables:
+                if is_uncond_jump(i) and self.gctx.comments and not self.ctx.is_dump \
+                        and not i.address in self._dis.jmptables:
                     self._add(" ")
                     self._comment("# STOPPED")
                 return False

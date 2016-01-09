@@ -20,13 +20,11 @@
 import os
 import sys
 import shlex
-import json
 import code
 import traceback
 
-from lib import load_file, init_entry_addr, disasm
 from lib.colors import color
-from lib.utils import error, print_no_end, info
+from lib.utils import error, print_no_end
 from lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 from lib.ui.readline import ReadLine
 from lib.ui.visual import Visual
@@ -47,9 +45,9 @@ class Console():
     TAB = "      "
     MAX_PRINT_COMPLETE = 80
 
-    def __init__(self, ctx):
-        self.ctx = ctx
-        ctx.vim = False
+    def __init__(self, gctx):
+        self.gctx = gctx
+        gctx.vim = False
 
         self.COMMANDS_ALPHA = [
             "analyzer",
@@ -273,7 +271,7 @@ class Console():
                 ]
             ),
 
-            # by default it will be ctx.lines
+            # by default it will be gctx.nb_lines
             "dump": Command(
                 2,
                 self.__exec_dump,
@@ -414,11 +412,8 @@ class Console():
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
         self.rl = rl
 
-        if ctx.filename is not None:
-            self.__exec_load(["", ctx.filename])
-
-        if ctx.entry is not None:
-            self.__exec_x(["", ctx.entry])
+        if gctx.filename is not None:
+            self.__exec_load(["", gctx.filename])
 
         rl.reload_cursor_line()
 
@@ -431,7 +426,7 @@ class Console():
 
 
     def check_db_modified(self):
-        if self.ctx.db is not None and self.ctx.db.modified:
+        if self.gctx.db is not None and self.gctx.db.modified:
             print("the database was modified, run save or exit to force")
             return True
         return False
@@ -539,7 +534,7 @@ class Console():
 
 
     def __complete_x(self, tmp_line, nth_arg, last_tok):
-        if nth_arg != 1 or self.ctx.dis is None:
+        if nth_arg != 1 or self.gctx.dis is None:
             return []
         return self.__find_symbol(tmp_line, nth_arg, last_tok)
 
@@ -547,13 +542,13 @@ class Console():
     def __find_symbol(self, tmp_line, nth_arg, last_tok):
         comp = []
         i = 0
-        for sect in self.ctx.dis.binary.section_names:
+        for sect in self.gctx.dis.binary.section_names:
             if sect.startswith(last_tok):
                 comp.append((sect + " ")[len(last_tok):])
                 i += 1
                 if i == self.MAX_PRINT_COMPLETE:
                     return None
-        for sym in self.ctx.dis.binary.symbols:
+        for sym in self.gctx.dis.binary.symbols:
             if sym.startswith(last_tok):
                 comp.append((sym + " ")[len(last_tok):])
                 i += 1
@@ -583,63 +578,60 @@ class Console():
 
 
     def __exec_dump(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        lines = self.ctx.lines
-        if len(args) == 1:
-            self.ctx.entry = None
-        else:
-            if len(args) == 3:
-                lines = int(args[2])
-            self.ctx.entry = args[1]
-        self.ctx.reset_vars()
-        if init_entry_addr(self.ctx):
-            self.ctx.dump = True
-            self.ctx.dis.dump_asm(self.ctx, lines).print()
-            self.ctx.dump = False
-            self.ctx.entry = None
-            self.ctx.entry_addr = 0
+        nb_lines = self.gctx.nb_lines
+        if len(args) == 3:
+            try:
+                nb_lines = int(args[2])
+            except:
+                pass
+        ad = None if len(args) == 1 else args[1]
+        ctx = self.gctx.get_addr_context(ad)
+        if ctx:
+            ctx.dump_asm(nb_lines).print()
 
 
     def __exec_data(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        lines = self.ctx.lines
+        nb_lines = self.gctx.nb_lines
         if len(args) <= 1:
-            self.ctx.entry = None
+            self.gctx.entry = None
             error("no address in parameter")
             return
-        self.ctx.entry = args[1]
+
         if len(args) == 3:
-            lines = int(args[2])
-        self.ctx.print_data = True
-        if init_entry_addr(self.ctx):
+            try:
+                nb_lines = int(args[2])
+            except:
+                pass
+
+        ctx = self.gctx.get_addr_context(args[1])
+        if ctx:
             if args[0] == "da":
-                self.ctx.dis.dump_data_ascii(self.ctx, lines)
+                self.gctx.dis.dump_data_ascii(ctx, nb_lines)
             elif args[0] == "db":
-                self.ctx.dis.dump_data(self.ctx, lines, 1)
+                self.gctx.dis.dump_data(ctx, nb_lines, 1)
             elif args[0] == "dw":
-                self.ctx.dis.dump_data(self.ctx, lines, 2)
+                self.gctx.dis.dump_data(ctx, nb_lines, 2)
             elif args[0] == "dd":
-                self.ctx.dis.dump_data(self.ctx, lines, 4)
+                self.gctx.dis.dump_data(ctx, nb_lines, 4)
             elif args[0] == "dq":
-                self.ctx.dis.dump_data(self.ctx, lines, 8)
-            self.ctx.entry = None
-            self.ctx.entry_addr = 0
-            self.ctx.print_data = False
+                self.gctx.dis.dump_data(ctx, nb_lines, 8)
 
 
     def push_analyze_symbols(self):
-        self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.analyzer.set(self.gctx.dis, self.gctx.db)
 
-        ep = self.ctx.dis.binary.get_entry_point()
+        ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
             self.analyzer.msg.put((ep, False, None))
 
-        for ad in self.ctx.db.reverse_symbols:
-            if self.ctx.dis.mem.is_func(ad):
+        for ad in self.gctx.db.reverse_symbols:
+            if self.gctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, None))
 
 
@@ -649,10 +641,9 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.rl.history = self.ctx.db.history
+        self.gctx.raw_type = None
+        if self.gctx.load_file(args[1]):
+            self.rl.history = self.gctx.db.history
             self.push_analyze_symbols()
 
 
@@ -662,12 +653,10 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.raw_type = "x86"
-        self.ctx.raw_big_endian = False
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.gctx.raw_type = "x86"
+        self.gctx.raw_big_endian = False
+        if self.gctx.load_file(args[1]):
+            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_lrawx64(self, args):
@@ -676,12 +665,11 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.raw_type = "x64"
-        self.ctx.raw_big_endian = False
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.gctx.raw_type = "x64"
+        self.gctx.raw_big_endian = False
+        self.gctx.filename = args[1]
+        if self.gctx.load_file(args[1]):
+            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_lrawarm(self, args):
@@ -690,11 +678,9 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.raw_type = "arm"
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.gctx.raw_type = "arm"
+        if self.gctx.load_file(args[1]):
+            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_lrawmips(self, args):
@@ -703,11 +689,9 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.raw_type = "mips"
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.gctx.raw_type = "mips"
+        if self.gctx.load_file(args[1]):
+            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_lrawmips64(self, args):
@@ -716,27 +700,25 @@ class Console():
         if len(args) != 2:
             error("filename required")
             return
-        self.ctx.reset_all()
-        self.ctx.raw_type = "mips64"
-        self.ctx.filename = args[1]
-        if load_file(self.ctx):
-            self.analyzer.set(self.ctx.dis, self.ctx.db)
+        self.gctx.raw_type = "mips64"
+        if self.gctx.load_file(args[1]):
+            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_sym(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
 
         if len(args) == 1:
-            self.ctx.dis.print_symbols(self.ctx.sectionsname)
+            self.gctx.dis.print_symbols(self.gctx.sectionsname)
             return
 
         if args[1][0] == "|":
             if len(args) == 2 or len(args) > 3:
                 error("bad arguments (warn: need spaces between |)")
                 return
-            self.ctx.dis.print_symbols(self.ctx.sectionsname, args[2])
+            self.gctx.dis.print_symbols(self.gctx.sectionsname, args[2])
             return
 
         if len(args) > 3:
@@ -758,49 +740,37 @@ class Console():
         # Save new symbol
         try:
             addr = int(args[2], 16)
-            self.ctx.db.modified = True
-            self.ctx.dis.add_symbol(addr, args[1])
+            self.gctx.db.modified = True
+            self.gctx.dis.add_symbol(addr, args[1])
         except:
             error("there was an error when creating a symbol")
 
 
     def __exec_x(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        if len(args) == 1:
-            self.ctx.entry = None
-        else:
-            self.ctx.entry = args[1]
-        self.ctx.reset_vars()
-        if init_entry_addr(self.ctx):
+        ad = None if len(args) == 1 else args[1]
+        ctx = self.gctx.get_addr_context(ad)
+        if ctx:
             try:
-                o = disasm(self.ctx)
+                o = ctx.decompile()
                 if o is not None:
                     o.print()
-                self.ctx.entry = None
-                self.ctx.entry_addr = 0
             except:
                 traceback.print_exc()
 
 
     def __exec_v(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        if len(args) == 1:
-            self.ctx.entry = None
-        else:
-            self.ctx.entry = args[1]
-        self.ctx.reset_vars()
-        if init_entry_addr(self.ctx):
-            self.ctx.dump = True
-            o = self.ctx.dis.dump_asm(self.ctx, NB_LINES_TO_DISASM)
-            self.ctx.dump = False
+        ad = None if len(args) == 1 else args[1]
+        ctx = self.gctx.get_addr_context(ad)
+        if ctx:
+            o = ctx.dump_asm(NB_LINES_TO_DISASM)
             if o is not None:
-                Visual(self, self.ctx.dis, o)
-            self.ctx.entry = None
-            self.ctx.entry_addr = 0
+                Visual(self.gctx, ctx, self.analyzer)
 
 
     def __exec_help(self, args):
@@ -822,29 +792,29 @@ class Console():
 
 
     def __exec_sections(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
 
         self.rl.print("NAME".ljust(20))
         self.rl.print(" [ START - END - VIRTUAL_SIZE - RAW_SIZE ]\n")
 
-        for s in self.ctx.dis.binary.iter_sections():
+        for s in self.gctx.dis.binary.iter_sections():
             s.print_header()
 
 
     def __exec_info(self, args):
-        if self.ctx.filename is None:
+        if self.gctx.filename is None:
             print("no file loaded")
             return
-        print("File:", self.ctx.filename)
+        print("File:", self.gctx.filename)
 
-        statinfo = os.stat(self.ctx.filename)
+        statinfo = os.stat(self.gctx.filename)
         print("Size: %.2f ko" % (statinfo.st_size/1024.))
 
         print_no_end("Type: ")
 
-        ty = self.ctx.dis.binary.type
+        ty = self.gctx.dis.binary.type
         if ty == T_BIN_PE:
             print("PE")
         elif ty == T_BIN_ELF:
@@ -854,7 +824,7 @@ class Console():
 
         import capstone as CAPSTONE
 
-        arch, mode = self.ctx.dis.binary.get_arch()
+        arch, mode = self.gctx.dis.binary.get_arch()
 
         print_no_end("Arch: ")
 
@@ -880,34 +850,34 @@ class Console():
 
 
     def __exec_display_print_section(self, args):
-        if self.ctx.sectionsname:
+        if self.gctx.sectionsname:
             print("now it's off")
-            self.ctx.sectionsname = False
+            self.gctx.sectionsname = False
         else:
             print("now it's on")
-            self.ctx.sectionsname = True
+            self.gctx.sectionsname = True
 
 
     def __exec_display_print_comments(self, args):
-        if self.ctx.comments:
+        if self.gctx.comments:
             print("now it's off")
-            self.ctx.comments = False
+            self.gctx.comments = False
         else:
             print("now it's on")
-            self.ctx.comments = True
+            self.gctx.comments = True
 
 
     def __exec_save(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        self.ctx.db.save(self.rl.history)
-        print("database saved to", self.ctx.db.path)
-        self.ctx.db.modified = False
+        self.gctx.db.save(self.rl.history)
+        print("database saved to", self.gctx.db.path)
+        self.gctx.db.modified = False
 
 
     def __exec_jmptable(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
         try:
@@ -923,8 +893,8 @@ class Console():
             error("error the entry size should be in [2, 4, 8]")
             return
 
-        self.ctx.db.modified = True
-        self.ctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
+        self.gctx.db.modified = True
+        self.gctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
 
         # TODO: it will be better to start from the beginning of the function
         # end-function may differ.
@@ -937,42 +907,36 @@ class Console():
 
 
     def __exec_mips_set_gp(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
 
         try:
-            self.ctx.dis.mips_gp = int(args[1], 16)
-            self.ctx.db.mips_gp = self.ctx.dis.mips_gp
+            self.gctx.dis.mips_gp = int(args[1], 16)
+            self.gctx.db.mips_gp = self.gctx.dis.mips_gp
         except:
             error("bad address")
 
-        self.ctx.db.modified = True
+        self.gctx.db.modified = True
 
 
     def __exec_functions(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        self.ctx.dis.print_functions()
+        self.gctx.dis.print_functions()
 
 
     def __exec_xrefs(self, args):
-        if self.ctx.dis is None:
+        if self.gctx.dis is None:
             error("load a file before")
             return
-        if len(args) == 1:
-            self.ctx.entry = None
-        else:
-            self.ctx.entry = args[1]
-        self.ctx.reset_vars()
-        if init_entry_addr(self.ctx):
-
-            ad = self.ctx.entry_addr
-            if ad not in self.ctx.dis.xrefs:
+        ad = None if len(args) == 1 else args[1]
+        ctx = self.gctx.get_addr_context(ad)
+        if ctx:
+            if ctx.entry not in self.gctx.dis.xrefs:
                 return
-
-            self.ctx.dis.dump_xrefs(self.ctx, ad).print()
+            ctx.dump_xrefs().print()
 
 
     def __exec_analyzer(self, args):

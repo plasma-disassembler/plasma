@@ -23,9 +23,9 @@ from time import time
 from lib.graph import Graph
 from lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
 from lib.fileformat.binary import Binary, T_BIN_PE
-from lib.colors import (pick_color, color_addr, color_symbol,
+from lib.colors import (color_addr, color_symbol,
         color_section, color_string)
-from lib.exceptions import ExcSymNotFound, ExcArch
+from lib.exceptions import ExcArch
 from lib.memory import Memory, MEM_UNK, MEM_FUNC, MEM_CODE
 
 
@@ -132,20 +132,20 @@ class Disassembler():
                 self.xrefs[to_ad] = [from_ad]
 
 
-    def add_symbol(self, addr, name):
+    def add_symbol(self, ad, name):
         if name in self.binary.symbols:
             last = self.binary.symbols[name]
             del self.binary.reverse_symbols[last]
 
-        if addr in self.binary.reverse_symbols:
-            last = self.binary.reverse_symbols[addr]
+        if ad in self.binary.reverse_symbols:
+            last = self.binary.reverse_symbols[ad]
             del self.binary.symbols[last]
 
-        self.binary.symbols[name] = addr
-        self.binary.reverse_symbols[addr] = name
+        self.binary.symbols[name] = ad
+        self.binary.reverse_symbols[ad] = name
 
-        if not self.mem.exists(addr):
-            self.mem.add(addr, 1, MEM_UNK)
+        if not self.mem.exists(ad):
+            self.mem.add(ad, 1, MEM_UNK)
 
         return name
 
@@ -196,50 +196,15 @@ class Disassembler():
         return ARCH
 
 
-    def get_addr_from_string(self, opt_addr, raw=False):
-        if opt_addr is None:
-            if raw:
-                return 0
-            search = ["main", "_main"]
-        else:
-            if opt_addr[:4] in RESERVED_PREFIX:
-                try:
-                    return int(opt_addr[4:], 16)
-                except:
-                    raise ExcSymNotFound(search[0])
-
-            search = [opt_addr]
-
-        for s in search:
-            if s.startswith("0x"):
-                try:
-                    a = int(opt_addr, 16)
-                except:
-                    raise ExcSymNotFound(search[0])
-            else:
-                a = self.binary.symbols.get(s, -1)
-                if a == -1:
-                    a = self.binary.section_names.get(s, -1)
-
-            if a != -1:
-                return a
-
-        raise ExcSymNotFound(search[0])
-
-
     def dump_xrefs(self, ctx, ad):
         ARCH = self.load_arch_module()
-        ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
         o = ARCH_OUTPUT.Output(ctx)
         o._new_line()
-        o.mode_dump = True
         o.print_labels = False
 
-        ctx.dump = True
-
-        for x in ctx.dis.xrefs[ad]:
+        for x in ctx.gctx.dis.xrefs[ad]:
             s = self.binary.get_section(x)
 
             if self.mem.is_code(x):
@@ -288,13 +253,11 @@ class Disassembler():
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
-        from capstone import CS_OP_IMM
         ARCH = self.load_arch_module()
-        ARCH_UTILS = ARCH.utils
         ARCH_OUTPUT = ARCH.output
 
-        ad = ctx.entry_addr
-        s = self.binary.get_section(ctx.entry_addr)
+        ad = ctx.entry
+        s = self.binary.get_section(ad)
 
         if s is None:
             # until is != -1 only from the visual mode
@@ -417,24 +380,25 @@ class Disassembler():
 
     def dump_data_ascii(self, ctx, lines):
         N = 128 # read by block of 128 bytes
-        addr = ctx.entry_addr
+        ad = ctx.entry
 
-        s = self.binary.get_section(ctx.entry_addr)
+        s = self.binary.get_section(ad)
+        print(hex(ad))
         s.print_header()
 
         l = 0
         ascii_str = []
-        addr_str = -1
+        ad_str = -1
 
         while l < lines:
-            buf = s.read(addr, N)
+            buf = s.read(ad, N)
             if not buf:
                 break
 
             i = 0
             while i < len(buf):
 
-                if addr > s.end:
+                if ad > s.end:
                     return
 
                 j = i
@@ -442,33 +406,33 @@ class Disassembler():
                     c = buf[j]
                     if c not in BYTES_PRINTABLE_SET:
                         break
-                    if addr_str == -1:
-                        addr_str = addr
+                    if ad_str == -1:
+                        ad_str = ad
                     ascii_str.append(c)
                     j += 1
 
                 if c != 0 and j == len(buf):
-                    addr += j - i
+                    ad += j - i
                     break
 
                 if c == 0 and len(ascii_str) >= 2:
-                    if self.is_label(addr_str):
-                        print(color_symbol(self.get_symbol(addr_str)))
-                    print_no_end(color_addr(addr_str))
+                    if self.is_label(ad_str):
+                        print(color_symbol(self.get_symbol(ad_str)))
+                    print_no_end(color_addr(ad_str))
                     print_no_end(color_string(
                             "\"" + "".join(map(get_char, ascii_str)) + "\""))
                     print(", 0")
-                    addr += j - i
+                    ad += j - i
                     i = j
                 else:
-                    if self.is_label(addr):
-                        print(color_symbol(self.get_symbol(addr)))
-                    print_no_end(color_addr(addr))
+                    if self.is_label(ad):
+                        print(color_symbol(self.get_symbol(ad)))
+                    print_no_end(color_addr(ad))
                     print("0x%.2x " % buf[i])
-                    addr += 1
+                    ad += 1
                     i += 1
 
-                addr_str = -1
+                ad_str = -1
                 ascii_str = []
                 l += 1
                 if l >= lines:
@@ -476,12 +440,11 @@ class Disassembler():
 
 
     def dump_data(self, ctx, lines, size_word):
-        s = self.binary.get_section(ctx.entry_addr)
+        ad = ctx.entry
+        s = self.binary.get_section(ad)
         s.print_header()
 
-        ad = ctx.entry_addr
-
-        for w in self.read_array(ctx.entry_addr, lines, size_word, s):
+        for w in self.read_array(ad, lines, size_word, s):
             if self.is_label(ad):
                 print(color_symbol(self.get_symbol(ad)))
             print_no_end(color_addr(ad))
@@ -528,14 +491,14 @@ class Disassembler():
 
         # TODO: race condition with the analyzer ?
         for sy in list(self.binary.symbols):
-            addr = self.binary.symbols[sy]
+            ad = self.binary.symbols[sy]
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
                     (not invert_match and sym_filter in sy.lower()):
 
                 if sy:
-                    section = self.binary.get_section(addr)
-                    print_no_end(color_addr(addr) + " " + sy)
+                    section = self.binary.get_section(ad)
+                    print_no_end(color_addr(ad) + " " + sy)
                     if print_sections and section is not None:
                         print_no_end(" (" + color_section(section.name) + ")")
                     print()
@@ -544,16 +507,16 @@ class Disassembler():
         print("Total:", total)
 
 
-    def lazy_disasm(self, addr, stay_in_section=-1, s=None):
-        s = self.binary.get_section(addr)
+    def lazy_disasm(self, ad, stay_in_section=-1, s=None):
+        s = self.binary.get_section(ad)
         if s is None:
             return None
 
         # if stay_in_section != -1 and s.start != stay_in_section:
             # return None, s
 
-        if addr in self.capstone_inst:
-            return self.capstone_inst[addr]
+        if ad in self.capstone_inst:
+            return self.capstone_inst[ad]
 
         # TODO: remove when it's too big ?
         if len(self.capstone_inst) > CAPSTONE_CACHE_SIZE:
@@ -561,8 +524,8 @@ class Disassembler():
 
         # Disassemble by block of N bytes
         N = 128
-        d = s.read(addr, N)
-        gen = self.md.disasm(d, addr)
+        d = s.read(ad, N)
+        gen = self.md.disasm(d, ad)
 
         try:
             first = next(gen)

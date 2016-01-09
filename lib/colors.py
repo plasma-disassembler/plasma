@@ -17,10 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 from textwrap import dedent
 from pathlib import Path
-from lib.utils import die, error
 
 
 CURR_VERSION = 1.4
@@ -71,6 +69,7 @@ except:
     VERSION = 0
 
 
+gctx = None
 ctx = None
 
 
@@ -87,13 +86,13 @@ def pick_color(addr):
 
 
 def color(text, c): # type c == int
-    if not ctx.color:
+    if not gctx.color:
         return text
     return "\x1b[38;5;" + str(c) + "m" + text + "\x1b[0m"
 
 
 def color_class(text, c):
-    if not ctx.color:
+    if not gctx.color:
         return text
     if c.bold:
         return "\x1b[38;5;" + str(c.val) + "m" + bold(text) + "\x1b[0m"

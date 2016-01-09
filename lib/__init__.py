@@ -17,236 +17,305 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import os
-import json
 from argparse import ArgumentParser
 
+import lib.utils
+import lib.colors
 from lib.database import Database
-from lib.disassembler import Disassembler, Jmptable
-from lib.utils import die, error, warning, info, debug__
+from lib.disassembler import Disassembler, RESERVED_PREFIX, NB_LINES_TO_DISASM
+from lib.utils import die, error, debug__
 from lib.generate_ast import generate_ast
-from lib.ui.vim import generate_vim_syntax
-from lib.context import Context
-from lib.exceptions import (ExcSymNotFound, ExcArch, ExcFileFormat,
-       ExcIfelse, ExcPEFail)
+# from lib.context import Context
+from lib.exceptions import ExcArch, ExcFileFormat, ExcIfelse, ExcPEFail
 
 
-def parse_args():
-    # Parse arguments
-    parser = ArgumentParser(description=
-        'Reverse engineering for x86/ARM/MIPS binaries. Generation of pseudo-C. '
-        'Supported formats : ELF, PE. More commands available in the interactive'
-        ' mode.    https://github.com/joelpx/reverse')
-    parser.add_argument('filename', nargs='?', metavar='FILENAME')
-    parser.add_argument('-nc', '--nocolor', action='store_true')
-    parser.add_argument('-g', '--graph', action='store_true',
-            help='Generate a file graph.dot.')
-    parser.add_argument('--nocomment', action='store_true',
-            help="Don't print comments")
-    parser.add_argument('--noandif', action='store_true',
-            help="Print normal 'if' instead of 'andif'")
-    parser.add_argument('--datasize', type=int, default=30, metavar='N',
-            help='default 30, maximum of chars to display for strings or bytes array.')
-    parser.add_argument('-x', '--entry', metavar='SYMBOLNAME|0xXXXXX|EP',
-            help='Pseudo-decompilation, default is main. EP stands for entry point.')
-    parser.add_argument('--vim', action='store_true',
-            help='Generate syntax colors for vim')
-    parser.add_argument('-s', '--symbols', action='store_true',
-            help='Print all symbols')
-    parser.add_argument('--sections', action='store_true',
-            help='Print all sections')
-    parser.add_argument('--dump', action='store_true',
-            help='Dump asm without decompilation')
-    parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
-            help='Max lines used with --dump')
-    parser.add_argument('--bytes', action='store_true',
-            help='Print instruction bytes')
-    parser.add_argument('-i', '--interactive', action='store_true',
-            help='Interactive mode')
-    parser.add_argument('-d', '--opt_debug', action='store_true')
-    parser.add_argument('-ns', '--nosectionsname', action='store_true')
-    parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
-            help='Consider the input file as a raw binary')
-    parser.add_argument('--rawbase', metavar='0xXXXXX',
-            help='Set base address of a raw file (default=0)')
-    parser.add_argument('--rawbe', action='store_true',
-            help='If not set it\'s in little endian')
+#
+# The global context variable is always named as gctx
+#
+class GlobalContext():
+    def __init__(self):
+        # TODO : let globally ?
+        lib.utils.gctx  = self
+        lib.colors.gctx = self
 
-    args = parser.parse_args()
+        # For info() messages
+        self.quiet = False
 
-    ctx = Context()
-    ctx.debug           = args.opt_debug
-    ctx.print_andif     = not args.noandif
-    ctx.color           = not args.nocolor
-    ctx.comments        = not args.nocomment
-    ctx.sectionsname    = not args.nosectionsname
-    ctx.max_data_size   = args.datasize
-    ctx.filename        = args.filename
-    ctx.raw_type        = args.raw
-    ctx.raw_base        = args.rawbase
-    ctx.syms            = args.symbols
-    ctx.entry           = args.entry
-    ctx.dump            = args.dump
-    ctx.vim             = args.vim
-    ctx.interactive_mode = args.interactive
-    ctx.lines           = args.lines
-    ctx.graph           = args.graph
-    ctx.raw_big_endian  = args.rawbe
-    ctx.list_sections   = args.sections
-    ctx.print_bytes     = args.bytes
+        # Command line options
+        self.comments = True
+        self.sectionsname = False
+        self.print_andif = True
+        self.color = True
+        self.max_data_size = 30
+        self.filename = None
+        self.syms = False
+        self.calls_in_section = None
+        self.entry = None # string : symbol | EP | 0xNNNN
+        self.do_dump = False
+        self.vim = False
+        self.nb_lines = 30
+        self.graph = False # Print graph != gph -> object
+        self.interactive_mode = False
+        self.debug = False
+        self.raw_base = 0
+        self.raw_big_endian = False
+        self.list_sections = False
+        self.print_bytes = False
+        self.raw_type = None
+        self.print_data = False
 
-    if ctx.raw_base is not None:
-        if ctx.raw_base.startswith("0x"):
-            ctx.raw_base = int(ctx.raw_base, 16)
+        # Built objects
+        self.dis = None # Disassembler
+        self.libarch = None # module lib.arch.<BIN_ARCH>
+        self.db = None # Database
+
+
+    def parse_args(self):
+        parser = ArgumentParser(description=
+            'Reverse engineering for x86/ARM/MIPS binaries. Generation of pseudo-C. '
+            'Supported formats : ELF, PE. More commands available in the interactive'
+            ' mode.    https://github.com/joelpx/reverse')
+        parser.add_argument('filename', nargs='?', metavar='FILENAME')
+        parser.add_argument('-nc', '--nocolor', action='store_true')
+        parser.add_argument('-g', '--graph', action='store_true',
+                help='Generate a file graph.dot.')
+        parser.add_argument('--nocomment', action='store_true',
+                help="Don't print comments")
+        parser.add_argument('--noandif', action='store_true',
+                help="Print normal 'if' instead of 'andif'")
+        parser.add_argument('--datasize', type=int, default=30, metavar='N',
+                help='default 30, maximum of chars to display for strings or bytes array.')
+        parser.add_argument('-x', '--entry', metavar='SYMBOLNAME|0xXXXXX|EP',
+                help='Pseudo-decompilation, default is main. EP stands for entry point.')
+        parser.add_argument('--vim', action='store_true',
+                help='Generate syntax colors for vim')
+        parser.add_argument('-s', '--symbols', action='store_true',
+                help='Print all symbols')
+        parser.add_argument('--sections', action='store_true',
+                help='Print all sections')
+        parser.add_argument('--dump', action='store_true',
+                help='Dump asm without decompilation')
+        parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
+                help='Max lines used with --dump')
+        parser.add_argument('--bytes', action='store_true',
+                help='Print instruction bytes')
+        parser.add_argument('-i', '--interactive', action='store_true',
+                help='Interactive mode')
+        parser.add_argument('-d', '--opt_debug', action='store_true')
+        parser.add_argument('-ns', '--nosectionsname', action='store_true')
+        parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
+                help='Consider the input file as a raw binary')
+        parser.add_argument('--rawbase', metavar='0xXXXXX',
+                help='Set base address of a raw file (default=0)')
+        parser.add_argument('--rawbe', action='store_true',
+                help='If not set it\'s in little endian')
+
+        args = parser.parse_args()
+
+        self.debug           = args.opt_debug
+        self.print_andif     = not args.noandif
+        self.color           = not args.nocolor
+        self.comments        = not args.nocomment
+        self.sectionsname    = not args.nosectionsname
+        self.max_data_size   = args.datasize
+        self.filename        = args.filename
+        self.raw_type        = args.raw
+        self.raw_base        = args.rawbase
+        self.syms            = args.symbols
+        self.entry           = args.entry
+        self.do_dump         = args.dump
+        self.vim             = args.vim
+        self.interactive_mode = args.interactive
+        self.nb_lines        = args.lines
+        self.graph           = args.graph
+        self.raw_big_endian  = args.rawbe
+        self.list_sections   = args.sections
+        self.print_bytes     = args.bytes
+
+        if self.raw_base is not None:
+            try:
+                self.raw_base = int(self.raw_base, 16)
+            except:
+                error("--rawbase must be in hex format")
+                die()
         else:
-            error("--rawbase must in hex format")
+            self.raw_base = 0
+
+
+    def load_file(self, filename=None):
+        if filename is None:
+            filename = self.filename
+
+        if not os.path.exists(filename):
+            error("file {self.filename} doesn't exist".format(self=self))
+            if self.interactive_mode:
+               return False
             die()
-    else:
-        ctx.raw_base = 0
 
-    return ctx
+        if not os.path.isfile(filename):
+            error("this is not a file".format(self=self))
+            if self.interactive_mode:
+               return False
+            die()
 
+        self.db = Database()
+        self.db.load(filename)
 
-def load_file(ctx):
-    if not os.path.exists(ctx.filename):
-        error("file {ctx.filename} doesn't exist".format(ctx=ctx))
-        if ctx.interactive_mode:
-           return False
-        die()
-
-    if not os.path.isfile(ctx.filename):
-        error("this is not a file".format(ctx=ctx))
-        if ctx.interactive_mode:
-           return False
-        die()
-
-    ctx.db = Database()
-    ctx.db.load(ctx.filename)
-
-    try:
-        dis = Disassembler(ctx.filename, ctx.raw_type,
-                           ctx.raw_base, ctx.raw_big_endian,
-                           ctx.db)
-    except ExcArch as e:
-        error("arch %s is not supported" % e.arch)
-        if ctx.interactive_mode:
-            return False
-        die()
-    except ExcFileFormat:
-        error("the file is not PE or ELF binary")
-        if ctx.interactive_mode:
-            return False
-        die()
-    except ExcPEFail as e:
-        error(str(e.e))
-        error("it seems that there is a random bug in pefile, you shoul retry.")
-        error("please report here https://github.com/joelpx/reverse/issues/16")
-        if ctx.interactive_mode:
-            return False
-        die()
-
-    ctx.dis = dis
-    ctx.libarch = dis.load_arch_module()
-
-    return True
-
-
-def init_entry_addr(ctx):
-    if ctx.entry == "EP":
-        entry_addr = ctx.dis.binary.get_entry_point()
-
-    else:
         try:
-            entry_addr = ctx.dis.get_addr_from_string(ctx.entry, ctx.raw_type != None)
-
-            # An exception is raised if the symbol was not found
-            if ctx.entry is None:
-                ctx.entry = "main"
-        except ExcSymNotFound as e:
-            error("symbol %s not found" % e.symname)
-            if ctx.interactive_mode:
+            dis = Disassembler(filename, self.raw_type,
+                               self.raw_base, self.raw_big_endian,
+                               self.db)
+        except ExcArch as e:
+            error("arch %s is not supported" % e.arch)
+            if self.interactive_mode:
                 return False
-            error("You can see all symbols with -s (if resolution is done).")
-            error("Note: --dump need the option -x.")
+            die()
+        except ExcFileFormat:
+            error("the file is not PE or ELF binary")
+            if self.interactive_mode:
+                return False
+            die()
+        except ExcPEFail as e:
+            error(str(e.e))
+            error("it seems that there is a random bug in pefile, you shoul retry.")
+            error("please report here https://github.com/joelpx/reverse/issues/16")
+            if self.interactive_mode:
+                return False
             die()
 
-    s = ctx.dis.binary.get_section(entry_addr)
-    if s is None:
-        error("the address 0x%x was not found" % entry_addr)
-        if ctx.interactive_mode:
-            return False
-        die()
+        self.dis = dis
+        self.libarch = dis.load_arch_module()
 
-    ctx.entry_addr = entry_addr
-
-    return True
+        return True
 
 
-def disasm(ctx):
-    ctx.gph, pe_nb_new_syms = ctx.dis.get_graph(ctx.entry_addr)
-
-    if ctx.gph == None:
-        error("capstone can't disassemble here")
-        return None
-    ctx.gph.simplify()
-
-    if ctx.db.loaded and pe_nb_new_syms:
-        ctx.db.modified = True
-    
-    try:
-        ctx.gph.loop_detection(ctx, ctx.entry_addr)
-        ast, correctly_ended = generate_ast(ctx)
-        if not correctly_ended:
-            debug__("Second try...")
-            ctx.gph.loop_detection(ctx, ctx.entry_addr, True)
-            ast, _ = generate_ast(ctx)
-    except ExcIfelse as e:
-        error("can't have a ifelse here     %x" % e.addr)
-        if ctx.interactive_mode:
+    def get_addr_context(self, ad):
+        adctx = AddrContext(self)
+        if isinstance(ad, int):
+            adctx.entry= ad
+            return adctx
+        ret = adctx.init_address(ad)
+        if not ret:
             return None
-        die()
-
-    if ctx.graph:
-        ctx.gph.dot_graph(ctx.dis.jmptables)
-
-    if ctx.vim:
-        base = os.path.basename(ctx.filename) + "_" + ctx.entry
-        # re-assign if no colors
-        ctx.libarch.process_ast.assign_colors(ctx, ast)
-        ctx.color = False
-        generate_vim_syntax(ctx, base + ".vim")
-        sys.stdout = open(base + ".rev", "w+")
-
-    o = ctx.libarch.output.Output(ctx)
-    o._ast(ctx.entry_addr, ast)
-
-    if ctx.vim:
-        print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
-
-    return o
+        return adctx
 
 
-def reverse(ctx):
-    if not load_file(ctx):
-        die()
+#
+# This is a context for a disassembling at a specific address, it contains
+# the graph, the output... It's always named as "ctx"
+#
+class AddrContext():
+    def __init__(self, gctx):
+        # TODO : let globally ?
+        lib.colors.ctx = self
 
-    if ctx.list_sections:
-        for s in ctx.dis.binary.iter_sections():
-            s.print_header()
-        return
+        self.gctx = gctx # Global context
+        self.entry = 0
+        self.addr_color = {}
+        self.color_counter = 112
+        self.local_vars_idx = {}
+        self.local_vars_size = []
+        self.local_vars_name = []
+        self.vars_counter = 1
+        self.seen = set()
+        # If an address of an instruction cmp is here, it means that we
+        # have fused with an if, so don't print this instruction.
+        self.all_fused_inst = set()
+        self.is_dump = False
 
-    if ctx.syms:
-        ctx.dis.print_symbols(ctx.sectionsname)
-        return
 
-    init_entry_addr(ctx)
+    def init_address(self, entry):
+        if isinstance(entry, int):
+            self.entry = entry
+            return True
 
-    if ctx.dump:
-        if ctx.dump:
-            ctx.dis.dump_asm(ctx, ctx.lines).print()
-        return
+        if entry == "EP":
+            self.entry = self.gctx.dis.binary.get_entry_point()
+            return True
 
-    o = disasm(ctx)
-    if o is not None:
-        o.print()
+        if entry is None:
+            if self.gctx.raw_type is not None:
+                self.entry = 0
+                return True
+
+            self.entry = self.gctx.dis.binary.symbols.get("main", None) or \
+                         self.gctx.dis.binary.symbols.get("_main", None)
+
+            if self.entry is None:
+                error("symbol main or _main not found")
+                if self.gctx.interactive_mode:
+                    return False
+                die()
+            return True
+
+        is_hexa = entry.startswith("0x")
+
+        if not is_hexa and entry[:4] in RESERVED_PREFIX:
+            entry = entry[4:]
+            is_hexa = True
+
+        if is_hexa:
+            try:
+                self.entry = int(entry, 16)
+            except:
+                error("bad hexa string %s" % entry)
+                if self.gctx.interactive_mode:
+                    return False
+                die()
+            return True
+
+        self.entry = self.gctx.dis.binary.symbols.get(entry, None) or \
+                     self.gctx.dis.binary.section_names.get(entry, None)
+        if self.entry is None:
+            error("symbol %s not found" % entry)
+            if self.gctx.interactive_mode:
+                return False
+                die()
+
+        return True
+
+
+    def decompile(self):
+        self.is_dump = False
+        self.gph, pe_nb_new_syms = self.gctx.dis.get_graph(self.entry)
+
+        if self.gph is None:
+            error("capstone can't disassemble here")
+            return None
+        self.gph.simplify()
+
+        if self.gctx.db.loaded and pe_nb_new_syms:
+            self.gctx.db.modified = True
+        
+        try:
+            self.gph.loop_detection(self.entry)
+            ast, correctly_ended = generate_ast(self)
+            if not correctly_ended:
+                debug__("Second try...")
+                self.gph.loop_detection(self.entry, True)
+                ast, _ = generate_ast(self)
+        except ExcIfelse as e:
+            error("can't have a ifelse here     %x" % e.addr)
+            if self.gctx.interactive_mode:
+                return None
+            die()
+
+        o = self.gctx.libarch.output.Output(self)
+        o._ast(self.entry, ast)
+        self.output = o
+        return o
+
+
+    def dump_asm(self, lines=NB_LINES_TO_DISASM, until=-1):
+        self.is_dump = True
+        o = self.gctx.dis.dump_asm(self, lines, until=until)
+        self.output = o
+        return o
+
+
+    def dump_xrefs(self):
+        self.is_dump = True
+        o = self.gctx.dis.dump_xrefs(self, self.entry)
+        self.output = o
+        return o

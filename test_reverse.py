@@ -13,8 +13,7 @@ from nose.tools import assert_equal
 from pathlib import Path
 from io import StringIO
 
-from reverse import reverse
-from lib.context import Context
+from lib import GlobalContext
 
 TESTS = Path('tests')
 
@@ -39,24 +38,29 @@ def test_reverse():
             yield reverse_file, str(p), symbol, OPTIONS.get(p, [])
 
 def reverse_file(filename, symbol, options):
-    ctx = Context()
-    ctx.sectionsname = False
-    ctx.color = False
-    ctx.filename = filename
-    ctx.entry = symbol
-    ctx.quiet = True
+    gctx = GlobalContext()
+    gctx.sectionsname = False
+    gctx.color = False
+    gctx.filename = filename
+    gctx.entry = symbol
+    gctx.quiet = True
 
     for o in options:
         if o == "--raw x86":
-            ctx.raw_type = "x86"
+            gctx.raw_type = "x86"
         elif o == "--raw x64":
-            ctx.raw_type = "x64"
+            gctx.raw_type = "x64"
         elif o.startswith("--rawbase"):
-            ctx.raw_base = int(o.split(" ")[1], 16)
+            gctx.raw_base = int(o.split(" ")[1], 16)
+
+    if not gctx.load_file():
+        die()
 
     sio = StringIO()
     with redirect_stdout(sio):
-        reverse(ctx)
+        o = gctx.get_addr_context(gctx.entry).decompile()
+        if o is not None:
+            o.print()
     postfix = '{0}.rev'.format('' if symbol is None else '_' + symbol)
     with open(filename.replace('.bin', postfix)) as f:
         assert_equal(sio.getvalue(), f.read())

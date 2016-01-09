@@ -19,7 +19,7 @@
 
 import sys
 
-ctx = None
+gctx = None
 
 
 def print_no_end(text):
@@ -27,7 +27,7 @@ def print_no_end(text):
 
 
 def debug__(obj="", end="\n"):
-    if ctx.debug:
+    if gctx.debug:
         if isinstance(obj, str) or isinstance(obj, int):
             print(obj, end=end, file=sys.stderr)
         elif isinstance(obj, list):
@@ -84,17 +84,17 @@ def list_starts_with(l, prefix):
 
 
 def error(txt):
-    if not ctx.quiet:
+    if not gctx.quiet:
         print("error: " + txt, file=sys.stderr)
 
 
 def warning(txt):
-    if not ctx.quiet:
+    if not gctx.quiet:
         print("warning: " + txt, file=sys.stderr)
 
 
 def info(txt):
-    if not ctx.quiet:
+    if not gctx.quiet:
         print("info: " + txt, file=sys.stderr)
 
 

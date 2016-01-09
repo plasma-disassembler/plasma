@@ -63,7 +63,6 @@ class InlineEd(Window):
     def start_view(self, screen):
         self.screen = screen
         y = self.par.cursor_y
-        text_color = color_pair(self.color) | A_UNDERLINE
 
         self.par.cursor_x = self.xbegin
         if self.prefix:
@@ -77,7 +76,6 @@ class InlineEd(Window):
             if self.has_statusbar:
                 h -= 1 # status bar
 
-            x = self.xbegin
             self.screen.move(y, 0)
             self.screen.clrtoeol()
             self.print_line(w, y)
@@ -108,7 +106,6 @@ class InlineEd(Window):
 
 
     def print_line(self, w, y):
-        num_line = self.line
         is_current_line = True
         force_exit = False
         x = 0

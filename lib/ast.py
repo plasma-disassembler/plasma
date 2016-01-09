@@ -124,7 +124,7 @@ class Ast_Ifelse:
         self.expected_next_addr = expected_next_addr
 
     def dump(self, o, tab=0, print_else_keyword=False):
-        ARCH_UTILS = o.ctx.libarch.utils
+        ARCH_UTILS = o.gctx.libarch.utils
 
         #
         # if cond {
@@ -278,7 +278,7 @@ class Ast_Comment:
         self.nodes = []
 
     def dump(self, o, tab=0):
-        if o.ctx.comments:
+        if o.gctx.comments:
             o._tabs(tab)
             o._comment("# " + self.text)
             o._new_line()

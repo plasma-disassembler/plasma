@@ -20,8 +20,7 @@
 import threading
 from queue import Queue
 
-from lib.utils import debug__
-from lib.memory import Memory, MEM_CODE, MEM_FUNC, MEM_UNK
+from lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK
 
 # TODO: cleanup...
 
