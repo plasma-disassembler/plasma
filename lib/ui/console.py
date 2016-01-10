@@ -205,7 +205,7 @@ class Console():
                 "c       create code",
                 "p       create function",
                 "x       show xrefs",
-                "r       rename a label",
+                "r       rename",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -624,18 +624,26 @@ class Console():
 
 
     def push_analyze_symbols(self):
-        self.analyzer.set(self.gctx.dis, self.gctx.db)
+        self.analyzer.set(self.gctx)
 
+        # Analyze all imports (it checks if functions return or not)
+        for ad in self.gctx.db.imports:
+            if self.gctx.dis.mem.is_func(ad):
+                self.analyzer.msg.put((ad, True, None))
+
+        # Analyze entry point
         ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
             self.analyzer.msg.put((ep, False, None))
 
+        # Analyze static functions
         for ad in self.gctx.db.reverse_symbols:
-            if self.gctx.dis.mem.is_func(ad):
+            if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, None))
 
 
     def __exec_load(self, args):
+        # TODO: kill the thread analyzer before loading a new file
         if self.check_db_modified():
             return
         if len(args) != 2:

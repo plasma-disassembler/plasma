@@ -223,6 +223,8 @@ class AddrContext():
         # have fused with an if, so don't print this instruction.
         self.all_fused_inst = set()
         self.is_dump = False
+        self.gph = None
+        self.ast = None
 
 
     def init_address(self, entry):
@@ -295,6 +297,8 @@ class AddrContext():
                 debug__("Second try...")
                 self.gph.loop_detection(self.entry, True)
                 ast, _ = generate_ast(self)
+
+            self.ast = ast
         except ExcIfelse as e:
             error("can't have a ifelse here     %x" % e.addr)
             if self.gctx.interactive_mode:

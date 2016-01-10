@@ -172,8 +172,9 @@ class ELF:
 
                 name, ty = got_off[off]
                 if name in self.classbinary.symbols:
-                    name = self.classbinary.rename_sym(name)
+                    continue
 
+                self.classbinary.imports[plt_start] = True
                 self.classbinary.reverse_symbols[plt_start] = name
                 self.classbinary.symbols[name] = plt_start
 
@@ -186,7 +187,7 @@ class ELF:
             warning("opcode \\xff\\x25 was not found, please report")
 
 
-    def __resolve_symtab(self, rel, symtab):
+    def __resolve_symtab(self, rel, symtab, arch):
         # TODO: don't know why st_value is not 0 like x86
         # In some executables I've tested, it seems that st_value
         # is the address of the plt entry
@@ -200,9 +201,13 @@ class ELF:
             ad = sym.entry.st_value
             if ad != 0:
                 name = sym.name.decode()
-                if name in self.classbinary.symbols:
-                    name = self.classbinary.rename_sym(name)
+                if arch == "ARM":
+                    name += "@plt"
 
+                if name in self.classbinary.symbols:
+                    continue
+
+                self.classbinary.imports[ad] = True
                 self.classbinary.reverse_symbols[ad] = name
                 self.classbinary.symbols[name] = ad
 
@@ -224,7 +229,7 @@ class ELF:
 
         if arch == "ARM" or arch == "MIPS":
             for (rel, symtab) in self.__iter_reloc():
-                self.__resolve_symtab(rel, symtab)
+                self.__resolve_symtab(rel, symtab, arch)
             return
 
         # x86/x64

@@ -27,6 +27,7 @@ from lib.colors import (color_addr, color_symbol,
         color_section, color_string)
 from lib.exceptions import ExcArch
 from lib.memory import Memory, MEM_UNK, MEM_FUNC, MEM_CODE
+from lib.analyzer import FUNC_FLAG_NORETURN
 
 
 NB_LINES_TO_DISASM = 200 # without comments, ...
@@ -57,18 +58,11 @@ class Disassembler():
 
         self.binary = Binary(self.mem, filename, raw_type, raw_base, raw_big_endian)
 
+        self.binary.load_section_names()
         arch, mode = self.binary.get_arch()
 
         if arch is None or mode is None:
             raise ExcArch(self.binary.get_arch_string())
-
-        if database.loaded:
-            self.binary.symbols = database.symbols
-            self.binary.reverse_symbols = database.reverse_symbols
-        else:
-            self.binary.load_symbols()
-            database.symbols = self.binary.symbols
-            database.reverse_symbols = self.binary.reverse_symbols
 
         self.jmptables = database.jmptables
         self.user_inline_comments = database.user_inline_comments
@@ -83,7 +77,15 @@ class Disassembler():
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
-        self.binary.load_section_names()
+        if database.loaded:
+            self.binary.symbols = database.symbols
+            self.binary.reverse_symbols = database.reverse_symbols
+            self.binary.imports = database.imports
+        else:
+            self.binary.load_symbols()
+            database.symbols = self.binary.symbols
+            database.reverse_symbols = self.binary.reverse_symbols
+            database.imports = self.binary.imports
 
         self.capstone = CAPSTONE
         self.md = CAPSTONE.Cs(arch, mode)
@@ -94,6 +96,7 @@ class Disassembler():
         for s in self.binary.iter_sections():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
 
+            # TODO: useful ?
             if not database.loaded:
                 self.mem.add(s.start, s.end, MEM_UNK)
 
@@ -289,8 +292,12 @@ class Disassembler():
 
             while ((l < lines and until == -1) or (ad < until and until != -1)) \
                     and ad <= s.end:
-                if self.mem.is_code(ad):
-                    is_func = ad in self.functions
+
+                # A PE import should not be displayed as a subroutine
+                if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
+                        and self.mem.is_code(ad):
+
+                    is_func = ad in self.functions and self.functions[ad][0] != -1
 
                     if is_func:
                         if not o.is_last_2_line_empty():
@@ -301,9 +308,6 @@ class Disassembler():
                         o._dash()
 
                     i = self.lazy_disasm(ad, s.start)
-
-                    if self.binary.type == T_BIN_PE:
-                        self.binary.pe_reverse_stripped(self, i)
 
                     if not is_func and ad in self.xrefs and \
                                 not o.is_last_2_line_empty():
@@ -541,18 +545,27 @@ class Disassembler():
         return first
 
 
-    def __prefetch_inst(self, inst):
-        return self.lazy_disasm(inst.address + inst.size)
+    def __add_prefetch(self, addr_set, inst):
+        if self.arch == self.CS_ARCH_MIPS:
+            prefetch = self.lazy_disasm(inst.address + inst.size)
+            addr_set.add(prefetch.address)
+            return prefetch
+        return None
+
+
+    def is_noreturn(self, ad):
+        return self.functions[ad][1] & FUNC_FLAG_NORETURN
 
 
     # Generate a flow graph of the given function (addr)
-    def get_graph(self, entry_addr):
+    def get_graph(self, entry):
         from capstone import CS_OP_IMM, CS_ARCH_MIPS
 
+        self.CS_ARCH_MIPS = CS_ARCH_MIPS
         ARCH_UTILS = self.load_arch_module().utils
 
-        gph = Graph(self, entry_addr)
-        stack = [entry_addr]
+        gph = Graph(self, entry)
+        stack = [entry]
         start = time()
         prefetch = None
         addresses = set()
@@ -585,21 +598,24 @@ class Disassembler():
             addresses.add(ad)
 
             if ARCH_UTILS.is_ret(inst):
-                if self.arch == CS_ARCH_MIPS:
-                    prefetch = self.__prefetch_inst(inst)
-                    addresses.add(prefetch.address)
+                prefetch = self.__add_prefetch(addresses, inst)
                 gph.new_node(inst, prefetch, None)
 
             elif ARCH_UTILS.is_uncond_jump(inst):
-                if self.arch == CS_ARCH_MIPS:
-                    prefetch = self.__prefetch_inst(inst)
-                    addresses.add(prefetch.address)
+                prefetch = self.__add_prefetch(addresses, inst)
+
                 gph.uncond_jumps_set.add(ad)
                 op = inst.operands[-1]
+
                 if op.type == CS_OP_IMM:
                     nxt = op.value.imm
-                    stack.append(nxt)
-                    gph.new_node(inst, prefetch, [nxt])
+
+                    if nxt in self.functions:
+                        gph.new_node(inst, prefetch, None)
+                    else:
+                        stack.append(nxt)
+                        gph.new_node(inst, prefetch, [nxt])
+
                 else:
                     if inst.address in self.jmptables:
                         table = self.jmptables[inst.address].table
@@ -610,27 +626,39 @@ class Disassembler():
                         gph.new_node(inst, prefetch, None)
 
             elif ARCH_UTILS.is_cond_jump(inst):
-                if self.arch == CS_ARCH_MIPS:
-                    prefetch = self.__prefetch_inst(inst)
-                    addresses.add(prefetch.address)
+                prefetch = self.__add_prefetch(addresses, inst)
+
                 gph.cond_jumps_set.add(ad)
                 op = inst.operands[-1]
+
                 if op.type == CS_OP_IMM:
-                    if self.arch == CS_ARCH_MIPS:
-                        direct_nxt = prefetch.address + prefetch.size
-                    else:
+                    if prefetch is None:
                         direct_nxt = inst.address + inst.size
+                    else:
+                        direct_nxt = prefetch.address + prefetch.size
 
                     nxt_jmp = op.value.imm
-
                     stack.append(direct_nxt)
-                    stack.append(nxt_jmp)
-                    gph.new_node(inst, prefetch, [direct_nxt, nxt_jmp])
+
+                    if nxt_jmp in self.functions:
+                        gph.new_node(inst, prefetch, [direct_nxt])
+                    else:
+                        stack.append(nxt_jmp)
+                        gph.new_node(inst, prefetch, [direct_nxt, nxt_jmp])
                 else:
                     # Can't interpret jmp ADDR|reg
                     gph.new_node(inst, prefetch, None)
 
             else:
+                if ad != entry and ARCH_UTILS.is_call(inst):
+                    op = inst.operands[0]
+                    if op.type == CS_OP_IMM:
+                        imm = op.value.imm
+                        if imm in self.functions and self.is_noreturn(imm):
+                            prefetch = self.__add_prefetch(addresses, inst)
+                            gph.new_node(inst, prefetch, None)
+                            continue
+
                 nxt = inst.address + inst.size
                 stack.append(nxt)
                 gph.new_node(inst, None, [nxt])

@@ -650,7 +650,6 @@ class Visual(Window):
 
         if self.mode == MODE_DECOMPILE:
             func_id = self.dis.mem.get_func_id(ad)
-            nop
             if func_id == -1:
                 self.mode = MODE_DUMP
             else:

@@ -71,7 +71,6 @@ FIXME :
 * clean PE imports
 * xrefs with eip/rip + disp
 * re-run analyzer on the current function after definition of a jmptable + delete wrong labels
-* jmp FUNCTION -> don't continue to decompile
 
 ![reverse](/images/visual.png?raw=true)
 

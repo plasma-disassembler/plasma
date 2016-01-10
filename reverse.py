@@ -17,6 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import sys
 from lib import GlobalContext, AddrContext
 from lib.utils import info, die
@@ -70,12 +71,12 @@ if __name__ == '__main__':
             if gctx.vim:
                 base = os.path.basename(gctx.filename) + "_" + gctx.entry
                 # re-assign if no colors
-                gctx.libarch.process_ast.assign_colors(gctx, ast)
+                gctx.libarch.process_ast.assign_colors(ctx, ctx.ast)
                 gctx.color = False
-                generate_vim_syntax(gctx, base + ".vim")
+                generate_vim_syntax(ctx, base + ".vim")
                 sys.stdout = open(base + ".rev", "w+")
 
             o.print()
 
             if gctx.vim:
-                print("Run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)
+                print("run :  vim {0}.rev -S {0}.vim".format(base), file=sys.stderr)

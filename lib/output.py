@@ -24,6 +24,7 @@ from lib.colors import color, bold
 from custom_colors import *
 from lib.fileformat.binary import T_BIN_RAW
 from lib.memory import MEM_CODE, MEM_UNK, MEM_FUNC
+from lib.disassembler import FUNC_FLAG_NORETURN
 
 
 class OutputAbs():
@@ -173,8 +174,8 @@ class OutputAbs():
 
         ty = self._dis.mem.get_type(ad)
 
-        if ad in self.ctx.gctx.db.reverse_symbols:
-            l = str(self.ctx.gctx.db.reverse_symbols[ad])
+        if ad in self.gctx.db.reverse_symbols:
+            l = str(self.gctx.db.reverse_symbols[ad])
             col = COLOR_SYMBOL.val
             is_sym = True
         elif ad not in self._dis.xrefs and ty != MEM_FUNC:
@@ -228,6 +229,12 @@ class OutputAbs():
             self.curr_index += len(l)
         else:
             self._tabs(tab)
+
+            if ty == MEM_FUNC:
+                flags = self.gctx.dis.functions[ad][1]
+                if flags & FUNC_FLAG_NORETURN:
+                    self._comment("__noreturn__ ")
+
             self.token_lines[-1].append((l, col, False))
             self.lines[-1].append(l)
             self.curr_index += len(l)
@@ -300,7 +307,7 @@ class OutputAbs():
 
 
     def _comment_orig_inst(self, i, modified):
-        if modified and self.ctx.gctx.comments:
+        if modified and self.gctx.comments:
             self._add(" ")
             self._comment("# %s" % self.get_inst_str(i))
 
@@ -313,9 +320,9 @@ class OutputAbs():
 
 
     def _bytes(self, i, comment_this=False):
-        if self.ctx.gctx.print_bytes:
+        if self.gctx.print_bytes:
             if comment_this:
-                if self.ctx.gctx.comments:
+                if self.gctx.comments:
                     for c in i.bytes:
                         self._comment("%x " % c)
             else:
@@ -324,7 +331,7 @@ class OutputAbs():
 
 
     def _comment_fused(self, jump_inst, fused_inst, tab):
-        if self.ctx.gctx.comments:
+        if self.gctx.comments:
             if fused_inst != None:
                 self._asm_inst(fused_inst, tab, "# ")
             if jump_inst != None:
@@ -390,7 +397,7 @@ class OutputAbs():
 
         # For a raw file, if the raw base is 0 the immediate is considered
         # as an address only if it's in the symbols list.
-        raw_base_zero = self._binary.type == T_BIN_RAW and self.ctx.gctx.raw_base == 0
+        raw_base_zero = self._binary.type == T_BIN_RAW and self.gctx.raw_base == 0
 
         if section is not None and not raw_base_zero:
             if not label_printed:
@@ -399,7 +406,7 @@ class OutputAbs():
             if not force_dont_print_data and \
                     print_data and imm not in self._binary.reverse_symbols and \
                     section is not None and section.is_data:
-                s = self._binary.get_string(imm, self.ctx.gctx.max_data_size)
+                s = self._binary.get_string(imm, self.gctx.max_data_size)
                 if s != "\"\"":
                     self._add(" ")
                     self._string(s)

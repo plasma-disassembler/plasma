@@ -20,9 +20,26 @@
 import threading
 from queue import Queue
 
+from lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK
 
-# TODO: cleanup...
+
+FUNC_FLAG_NORETURN = 1
+
+
+NORETURN_ELF = {
+    "exit@plt", "_exit@plt", "__stack_chk_fail@plt",
+    "abort@plt", "__assert_fail@plt"
+}
+
+NORETURN_PE = {
+    "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort"
+}
+
+
+
+# TODO: generic way, some functions are copied or a bit
+# modified from lib.disassembler
 
 
 class Analyzer(threading.Thread):
@@ -31,30 +48,55 @@ class Analyzer(threading.Thread):
         self.msg = Queue()
 
 
-    def set(self, dis, db):
-        self.dis = dis
-        self.db = db
+    def set(self, gctx):
+        self.gctx = gctx
+        self.dis = gctx.dis
+        self.db = gctx.db
+        self.ARCH_UTILS = self.dis.load_arch_module().utils
 
 
-    def __prefetch_inst(self, inst):
-        return self.dis.lazy_disasm(inst.address + inst.size)
+    def __add_prefetch(self, addr_set, inst):
+        if self.dis.arch == self.CS_ARCH_MIPS:
+            prefetch = self.dis.lazy_disasm(inst.address + inst.size)
+            addr_set[prefetch.address] = prefetch.size
+            return prefetch
+        return None
+
+
+    def import_flags(self, ad):
+        # Check all known functions which never return
+        if ad not in self.dis.binary.imports:
+            return 0
+        name = self.dis.binary.reverse_symbols[ad]
+        if self.dis.binary.type == T_BIN_PE:
+            return FUNC_FLAG_NORETURN if name in NORETURN_PE else 0
+        elif self.dis.binary.type == T_BIN_ELF:
+            return FUNC_FLAG_NORETURN if name in NORETURN_ELF else 0
+        return 0
 
 
     def run(self):
-        from capstone import CS_OP_IMM, CS_OP_MEM
-
+        from capstone import CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS
         self.CS_OP_IMM = CS_OP_IMM
         self.CS_OP_MEM = CS_OP_MEM
+        self.CS_ARCH_MIPS = CS_ARCH_MIPS
 
         self.reset()
+
         while 1:
             item = self.msg.get()
+
             if isinstance(item, tuple):
                 if self.dis is not None:
+                    # Run analysis
                     (ad, entry_is_func, queue_response) = item
+                    self.pending = set() # prevent recursive loops
                     self.analyze_flow(ad, entry_is_func)
+
+                    # Send a notification
                     if queue_response is not None:
                         queue_response.put(1)
+
             elif isinstance(item, str):
                 if item == "exit":
                     break
@@ -75,121 +117,173 @@ class Analyzer(threading.Thread):
                     self.dis.mem.add(op.mem.disp, 1, MEM_UNK)
 
 
-    def analyze_flow(self, entry, entry_is_func):
-        from capstone import CS_OP_IMM, CS_ARCH_MIPS
-        ARCH_UTILS = self.dis.load_arch_module().utils
+    # inner_code : ad -> instruction size
+    def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
+        functions = self.dis.functions
 
-        func = [entry]
+        if entry_is_func:
+            e = max(inner_code) if inner_code else -1
+            func_id = self.db.func_id_counter
+            functions[entry] = [e, flags]
+
+            self.db.func_id[func_id] = entry
+            self.db.func_id_counter += 1
+
+            if e in self.dis.end_functions:
+                self.dis.end_functions[e].append(entry)
+            else:
+                self.dis.end_functions[e] = [entry]
+        else:
+            func_id = -1
+
+        for ad, size in inner_code.items():
+            if ad in functions:
+                mem.add(ad, size, MEM_FUNC, func_id)
+            else:
+                mem.add(ad, size, MEM_CODE, func_id)
+
+
+    def is_noreturn(self, ad, entry):
+        return ad !=entry and self.dis.functions[ad][1] & FUNC_FLAG_NORETURN
+
+
+    def analyze_flow(self, entry, entry_is_func):
+        if entry in self.pending:
+            return
+
+        if entry in self.dis.functions:
+            return
+
+        self.pending.add(entry)
+
+        mem = self.dis.mem
+        inner_code = {} # ad -> instruction size
+
+        is_pe_import = False
+
+        # Check if it's a jump to an imported symbol
+        # jmp *(IMPORT)
+        if self.dis.binary.type == T_BIN_PE:
+            if entry in self.dis.binary.imports:
+                is_pe_import = True
+                flags = self.import_flags(entry)
+            else:
+                inst = self.dis.lazy_disasm(entry)
+                if inst is not None:
+                    ptr = self.dis.binary.pe_reverse_stripped(self.dis, inst)
+                    if ptr != -1:
+                        inner_code[inst.address] = inst.size
+                        flags = self.import_flags(ptr)
+
+        if not is_pe_import and not inner_code:
+            flags = self.__sub_analyze_flow(entry, inner_code)
+
+        self.__add_analyzed_code(self.dis.mem, entry, inner_code,
+                                 entry_is_func, flags)
+
+        inner_code.clear()
+        self.pending.remove(entry)
+
+
+    def __sub_analyze_flow(self, entry, inner_code):
+        stack = [entry]
+        has_ret = False
 
         # cache
-        arch = self.dis.arch
-        is_ret = ARCH_UTILS.is_ret
-        is_uncond_jump = ARCH_UTILS.is_uncond_jump
-        is_cond_jump = ARCH_UTILS.is_cond_jump
-        is_call = ARCH_UTILS.is_call
+        is_ret = self.ARCH_UTILS.is_ret
+        is_uncond_jump = self.ARCH_UTILS.is_uncond_jump
+        is_cond_jump = self.ARCH_UTILS.is_cond_jump
+        is_call = self.ARCH_UTILS.is_call
         disasm = self.dis.lazy_disasm
         jmptables = self.dis.jmptables
-        mem = self.dis.mem
         functions = self.dis.functions
-        end_functions = self.dis.end_functions
 
-        inner_code = {} # ad -> instruction size
-        stack = []
+        while stack:
+            ad = stack.pop()
+            inst = disasm(ad)
 
-        while func:
-            fad = func.pop(-1)
-
-            if fad in functions:
+            if inst is None:
                 continue
 
-            stack.append(fad)
+            if ad in inner_code:
+                continue
 
-            while stack:
-                ad = stack.pop()
-                inst = disasm(ad)
+            self.analyze_operands(inst)
+            inner_code[ad] = inst.size
 
-                if inst is None:
-                    continue
+            if is_ret(inst):
+                self.__add_prefetch(inner_code, inst)
+                has_ret = True
 
-                if ad in inner_code:
-                    continue
+            elif is_uncond_jump(inst):
+                self.__add_prefetch(inner_code, inst)
 
-                self.analyze_operands(inst)
-                inner_code[ad] = inst.size
+                op = inst.operands[-1]
 
-                if is_ret(inst):
-                    if arch == CS_ARCH_MIPS:
-                        prefetch = self.__prefetch_inst(inst)
-                        inner_code[prefetch.address] = prefetch.size
-
-                elif is_uncond_jump(inst):
-                    if arch == CS_ARCH_MIPS:
-                        prefetch = self.__prefetch_inst(inst)
-                        inner_code[prefetch.address] = prefetch.size
-
-                    op = inst.operands[-1]
-                    if op.type == CS_OP_IMM:
-                        nxt = op.value.imm
+                if op.type == self.CS_OP_IMM:
+                    nxt = op.value.imm
+                    self.dis.add_xref(ad, nxt)
+                    if nxt in functions:
+                        has_ret = not self.is_noreturn(nxt, entry)
+                    else:
                         stack.append(nxt)
-                        self.dis.add_xref(ad, nxt)
+                else:
+                    if inst.address in jmptables:
+                        table = jmptables[inst.address].table
+                        stack += table
+                        self.dis.add_xref(ad, table)
                     else:
-                        if inst.address in jmptables:
-                            table = jmptables[inst.address].table
-                            stack += table
-                            self.dis.add_xref(ad, table)
+                        # TODO
+                        # This is a register or a memory access
+                        # we can't say if the function really returns
+                        has_ret = True
 
-                elif is_cond_jump(inst):
-                    if arch == CS_ARCH_MIPS:
-                        prefetch = self.__prefetch_inst(inst)
-                        inner_code[prefetch.address] = prefetch.size
+            elif is_cond_jump(inst):
+                prefetch = self.__add_prefetch(inner_code, inst)
 
-                    op = inst.operands[-1]
-                    if op.type == CS_OP_IMM:
-                        if arch == CS_ARCH_MIPS:
-                            direct_nxt = prefetch.address + prefetch.size
-                        else:
-                            direct_nxt = inst.address + inst.size
+                op = inst.operands[-1]
+                if op.type == self.CS_OP_IMM:
+                    if prefetch is None:
+                        direct_nxt = inst.address + inst.size
+                    else:
+                        direct_nxt = prefetch.address + prefetch.size
 
-                        nxt_jmp = op.value.imm
-                        stack.append(direct_nxt)
+                    nxt_jmp = op.value.imm
+                    self.dis.add_xref(ad, nxt_jmp)
+                    stack.append(direct_nxt)
+
+                    if nxt_jmp in functions:
+                        has_ret = not self.is_noreturn(nxt_jmp, entry)
+                    else:
                         stack.append(nxt_jmp)
-                        self.dis.add_xref(ad, nxt_jmp)
 
-                elif is_call(inst):
-                    op = inst.operands[-1]
-                    if op.type == CS_OP_IMM:
-                        if op.value.imm not in functions:
-                            func.append(op.value.imm)
-                        self.dis.add_xref(ad, op.value.imm)
-                    nxt = inst.address + inst.size
-                    stack.append(nxt)
+            elif is_call(inst):
+                op = inst.operands[-1]
+                if op.type == self.CS_OP_IMM:
+                    self.dis.add_xref(ad, op.value.imm)
+                    ad = op.value.imm
 
-                else:
-                    nxt = inst.address + inst.size
-                    stack.append(nxt)
+                    if ad not in functions:
+                        self.analyze_flow(ad, True)
 
-            if inner_code:
-                if entry_is_func:
-                    e = max(inner_code)
-                    func_id = self.db.func_id_counter
+                    if ad in functions and self.is_noreturn(ad, entry):
+                        self.__add_prefetch(inner_code, inst)
+                        continue
 
-                    functions[fad] = [e]
-                    self.db.func_id[func_id] = fad
-                    self.db.func_id_counter += 1
+                nxt = inst.address + inst.size
+                stack.append(nxt)
 
-                    if e in end_functions:
-                        end_functions[e].append(fad)
-                    else:
-                        end_functions[e] = [fad]
-                else:
-                    func_id = -1
+            else:
+                nxt = inst.address + inst.size
+                stack.append(nxt)
 
-                for ad, size in inner_code.items():
-                    if ad in functions:
-                        mem.add(ad, size, MEM_FUNC, func_id)
-                    else:
-                        mem.add(ad, size, MEM_CODE, func_id)
+        # for ELF
+        if entry in self.dis.binary.imports:
+            flags = self.import_flags(entry)
+        elif has_ret:
+            flags = 0
+        else:
+            flags = FUNC_FLAG_NORETURN
 
-                inner_code.clear()
+        return flags
 
-            entry_is_func = True

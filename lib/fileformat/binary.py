@@ -118,6 +118,7 @@ class Binary(object):
         self.reverse_symbols = {} # ad -> name
         self.symbols = {} # name -> ad
         self.section_names = {}
+        self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
         self.type = None
 
         self._abs_sections = {} # start section -> SectionAbs

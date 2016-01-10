@@ -25,7 +25,7 @@ from capstone.x86 import (X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM, X86_REG_RIP,
 from ctypes import sizeof
 
 from lib.exceptions import ExcPEFail
-from lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN
+from lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
 from lib.fileformat.binary import SectionAbs
 from lib.utils import warning
 from lib.memory import MEM_FUNC, MEM_UNK
@@ -127,10 +127,13 @@ class PE:
                 self.classbinary.reverse_symbols[ad] = name
                 self.classbinary.symbols[name] = ad
 
-                ty = MEM_FUNC if sym.type & PE_DT_FCN else MEM_UNK
+                if sym.type & PE_DT_FCN and not sym.type & PE_DT_PTR:
+                    ty = MEM_FUNC
+                else:
+                    ty = MEM_UNK
+
                 self.mem.add(ad, 1, ty)
 
-                
             if sym.numaux != 0:
                 off += sym.numaux * sizeof(SymbolEntry)
                 i += sym.numaux
@@ -155,14 +158,15 @@ class PE:
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
 
+                self.classbinary.imports[imp.address] = True
                 self.classbinary.reverse_symbols[imp.address] = name
                 self.classbinary.symbols[name] = imp.address
 
-                # TODO: always unk ?
-                self.mem.add(imp.address, 1, MEM_UNK)
+                # TODO: always a function ?
+                self.mem.add(imp.address, 1, MEM_FUNC)
 
 
-    def pe_reverse_stripped(self, dis, i):
+    def pe_reverse_stripped(self, dis, first_inst):
         # Now try to find the real call. For each SYMBOL address 
         # we have this :
         #
@@ -173,55 +177,42 @@ class PE:
         # we need to assign SYMBOL to ADDRESS, because in the code
         # we have "call ADDRESS" and not "call SYMBOL"
         #
-
-        # Search in the code every call which point to a "jmp SYMBOL"
+        # first_inst is the instruction at ADDRESS
+        #
 
         def inv(n):
             return n == X86_OP_INVALID
 
         ARCH_UTILS = dis.load_arch_module().utils
 
-        if ARCH_UTILS.is_call(i) and i.operands[0].type == X86_OP_IMM:
-            goto = i.operands[0].value.imm
+        if not ARCH_UTILS.is_uncond_jump(first_inst) or \
+                first_inst.operands[0].type != X86_OP_MEM:
+            return -1
 
-            if goto in self.classbinary.reverse_symbols:
-                if not self.classbinary.reverse_symbols[goto].startswith("sub_"):
-                    return False
-
-            nxt = dis.lazy_disasm(goto)
-
-            if nxt is None:
-                return False
-
-            if not ARCH_UTILS.is_uncond_jump(nxt) or \
-                    nxt.operands[0].type != X86_OP_MEM:
-                return False
-
-            mm = nxt.operands[0].mem
-            next_ip = nxt.address + nxt.size
-
-        else:
-            return False
+        mm = first_inst.operands[0].mem
+        next_ip = first_inst.address + first_inst.size
 
         ptr = mm.disp
         if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
             ptr += next_ip
 
-        if ptr in self.classbinary.reverse_symbols \
-                and inv(mm.segment) and inv(mm.index):
-            name = "_" + self.classbinary.reverse_symbols[ptr]
-            ty = self.mem.get_type(ptr)
+        if ptr not in self.classbinary.imports or not inv(mm.segment) or \
+                not inv(mm.index):
+            return -1
 
-            if name in self.classbinary.symbols:
-                name = self.classbinary.rename_sym(name)
+        name = "_" + self.classbinary.reverse_symbols[ptr]
+        ty = self.mem.get_type(ptr)
 
-            self.classbinary.reverse_symbols[goto] = name
-            self.classbinary.symbols[name] = goto
+        if name in self.classbinary.symbols:
+            name = self.classbinary.rename_sym(name)
 
-            if ty != -1:
-                self.mem.add(goto, 1, ty)
+        self.classbinary.reverse_symbols[first_inst.address] = name
+        self.classbinary.symbols[name] = first_inst.address
 
-        return True
+        if ty != -1:
+            self.mem.add(first_inst.address, 1, ty)
+
+        return ptr
 
 
     def __section_is_data(self, s):

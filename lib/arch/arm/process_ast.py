@@ -36,7 +36,8 @@ def assign_colors(ctx, ast):
     if isinstance(ast, Ast_Branch):
         for n in ast.nodes:
             if isinstance(n, list):
-                if is_uncond_jump(n[0]) and n[0].operands[0].type == ARM_OP_IMM:
+                if is_uncond_jump(n[0]) and n[0].operands[0].type == ARM_OP_IMM and \
+                        n[0].address in ctx.gph.link_out:
                     nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
                     pick_color(nxt)
             else: # ast

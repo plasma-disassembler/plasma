@@ -36,7 +36,7 @@ from lib.utils import info, warning
 from lib.memory import Memory
 
 
-VERSION = 1.6
+VERSION = 1.7
 
 
 class Database():
@@ -59,9 +59,10 @@ class Database():
         self.modified = False
         self.loaded = False
         self.mem = None
-        self.functions = {} # func address -> [end addr]
+        self.functions = {} # func address -> [end addr, flags]
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
+        self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
 
         # Computed variables
         self.func_id_counter = 0
@@ -100,6 +101,7 @@ class Database():
             self.__load_functions(data)
             self.__load_history(data)
             self.__load_xrefs(data)
+            self.__load_imports(data)
 
             if self.version <= 1.5:
                 self.__load_labels(data)
@@ -235,12 +237,23 @@ class Database():
             pass
 
 
+    def __load_imports(self, data):
+        try:
+            self.imports = data["imports"]
+        except:
+            # Not available in previous versions, this try will be
+            # removed in the future
+            pass
+
+
     def __load_functions(self, data):
         try:
             self.functions = data["functions"]
 
-            if self.version == -1:
+            if self.version <= 1.6:
                 for fad, value in self.functions.items():
+                    value.append(0) # flags
+
                     # end of the function
                     e = value[0]
                     if e in self.end_functions:

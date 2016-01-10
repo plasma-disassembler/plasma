@@ -131,7 +131,7 @@ def color_addr(addr, print_colon=True):
     s = hex(addr)
     if print_colon:
         s += ": "
-    if addr in ctx.addr_color:
+    if ctx is not None and addr in ctx.addr_color:
         return color(s, ctx.addr_color[addr])
     return color_class(s, COLOR_ADDR)
 
