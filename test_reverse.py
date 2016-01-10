@@ -13,7 +13,7 @@ from nose.tools import assert_equal
 from pathlib import Path
 from io import StringIO
 
-from lib import GlobalContext
+from reverse.lib import GlobalContext
 
 TESTS = Path('tests')
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         except AssertionError:
             print(color("F", 1), end="")
             failed.append(name)
-        except:
+        except Exception as e:
             print(color("E", 1), end="")
             failed.append(name)
 
