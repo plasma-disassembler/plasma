@@ -5,10 +5,10 @@ function main (.text) {
     int32_t var4
     int32_t var5
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 32 # sub rsp, 0x20
-    0x40050e: var1 = edi # mov dword ptr [rbp - 0x14], edi
-    0x400511: var2 = rsi # mov qword ptr [rbp - 0x20], rsi
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 32
+    0x40050e: var1 = edi
+    0x400511: var2 = rsi
     0x400515: jmp loop_0x400533
     loop {
         loop_0x400533:
@@ -20,12 +20,12 @@ function main (.text) {
             and if (var4 <= 9)
             goto 0x400517
         } else {
-            0x40053f: eax = var3 # mov eax, dword ptr [rbp - 4]
+            0x40053f: eax = var3
             # 0x400542: cmp eax, dword ptr [rbp - 0xc]
             # 0x400545: je 0x400517
             if (eax != var5)  goto ret_0x400547
         }
-        0x400517: edi = 0x4005d4 "1" # mov edi, 0x4005d4
+        0x400517: edi = 0x4005d4 "1"
         0x40051c: call puts@plt
         0x400521: jmp loop_0x40052d
         loop {
@@ -33,12 +33,12 @@ function main (.text) {
             # 0x40052d: cmp dword ptr [rbp - 0xc], 0x13
             # 0x400531: jle 0x400523
             if (var5 > 19)  goto loop_0x400533
-            0x400523: edi = 0x4005d6 "2" # mov edi, 0x4005d6
+            0x400523: edi = 0x4005d6 "2"
             0x400528: call puts@plt
         }
     }
     ret_0x400547:
-    0x400547: eax = 0 # mov eax, 0
+    0x400547: eax = 0
     0x40054c: leave
     0x40054d: ret
 }

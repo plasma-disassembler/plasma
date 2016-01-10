@@ -1,6 +1,6 @@
 function main (.text) {
     0x4004b6: push rbp
-    0x4004b7: rbp = rsp # mov rbp, rsp
+    0x4004b7: rbp = rsp
     for (;;) {
         next:
         0x4004ba: jmp next

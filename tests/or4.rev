@@ -1,13 +1,13 @@
 function main (.text) {
     int32_t var1
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 0
     # 0x400515: cmp dword ptr [rbp - 4], 0xc7
     # 0x40051c: jg 0x400544
     if (var1 <= 199) {
-        0x40051e: edi = 0x4005e4 "1" # mov edi, 0x4005e4
+        0x40051e: edi = 0x4005e4 "1"
         0x400523: call puts@plt
         # 0x400528: cmp dword ptr [rbp - 4], 1
         # 0x40052c: je 0x40053a
@@ -20,14 +20,14 @@ function main (.text) {
             and if (var1 != 3)
             goto ret_0x400544
         } else {
-            0x40053a: edi = 0x4005e6 "2" # mov edi, 0x4005e6
+            0x40053a: edi = 0x4005e6 "2"
             0x40053f: call puts@plt
         }
     }
     ret_0x400544:
-    0x400544: edi = 0x4005e8 "3" # mov edi, 0x4005e8
+    0x400544: edi = 0x4005e8 "3"
     0x400549: call puts@plt
-    0x40054e: eax = 0 # mov eax, 0
+    0x40054e: eax = 0
     0x400553: leave
     0x400554: ret
 }

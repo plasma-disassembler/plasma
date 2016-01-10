@@ -2,44 +2,44 @@ function main (.text) {
     int32_t var1
     int32_t var2
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 123
     # 0x400515: cmp dword ptr [rbp - 4], 0
     # 0x400519: jle 0x40055d
     if (var1 > 0) {
-        0x40051b: var1 = 0 # mov dword ptr [rbp - 4], 0
+        0x40051b: var1 = 0
         0x400522: jmp loop_0x40054d
         loop {
             loop_0x40054d:
             # 0x40054d: cmp dword ptr [rbp - 4], 9
             # 0x400551: jle 0x400524
             if (var1 > 9)  goto 0x400553
-            0x400524: var2 = 0 # mov dword ptr [rbp - 8], 0
+            0x400524: var2 = 0
             0x40052b: jmp loop_0x400543
             loop {
                 loop_0x400543:
                 # 0x400543: cmp dword ptr [rbp - 8], 4
                 # 0x400547: jle 0x40052d
                 if (var2 > 4)  goto 0x400549
-                0x40052d: eax = var1 # mov eax, dword ptr [rbp - 4]
+                0x40052d: eax = var1
                 # 0x400530: cmp eax, dword ptr [rbp - 8]
                 # 0x400533: jne 0x40053f
                 if (eax == var2) {
-                    0x400535: edi = 0x4005f4 "1" # mov edi, 0x4005f4
+                    0x400535: edi = 0x4005f4 "1"
                     0x40053a: call puts@plt
                 }
-                0x40053f: var2 += 1 # add dword ptr [rbp - 8], 1
+                0x40053f: var2 += 1
             }
-            0x400549: var1 += 1 # add dword ptr [rbp - 4], 1
+            0x400549: var1 += 1
         }
-        0x400553: edi = 0x4005f6 "2" # mov edi, 0x4005f6
+        0x400553: edi = 0x4005f6 "2"
         0x400558: call puts@plt
     }
     ret_0x40055d:
-    0x40055d: edi = 0x4005f8 "3" # mov edi, 0x4005f8
+    0x40055d: edi = 0x4005f8 "3"
     0x400562: call puts@plt
-    0x400567: eax = 0 # mov eax, 0
+    0x400567: eax = 0
     0x40056c: leave
     0x40056d: ret
 }

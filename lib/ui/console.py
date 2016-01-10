@@ -77,7 +77,6 @@ class Console():
             "x",
             "v",
             "display.print_section",
-            "display.print_comments",
             "xrefs",
         ]
 
@@ -206,6 +205,7 @@ class Console():
                 "p       create function",
                 "x       show xrefs",
                 "r       rename",
+                "I       switch to traditional instruction string output",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -341,16 +341,6 @@ class Console():
                 [
                 "",
                 "Print or not section when an address is found"
-                ]
-            ),
-
-            "display.print_comments": Command(
-                0,
-                self.__exec_display_print_comments,
-                None,
-                [
-                "",
-                "Print or not comments"
                 ]
             ),
 
@@ -864,15 +854,6 @@ class Console():
         else:
             print("now it's on")
             self.gctx.sectionsname = True
-
-
-    def __exec_display_print_comments(self, args):
-        if self.gctx.comments:
-            print("now it's off")
-            self.gctx.comments = False
-        else:
-            print("now it's on")
-            self.gctx.comments = True
 
 
     def __exec_save(self, args):

@@ -211,7 +211,7 @@ class Output(OutputAbs):
             if i.operands[-1].type != MIPS_OP_IMM:
                 self._operand(i, -1, force_dont_print_data=True)
                 self.inst_end_here()
-                if is_uncond_jump(i) and self.gctx.comments and not self.ctx.is_dump \
+                if is_uncond_jump(i) and not self.ctx.is_dump \
                         and not i.address in self._dis.jmptables:
                     self._add(" ")
                     self._comment("# STOPPED")
@@ -223,51 +223,52 @@ class Output(OutputAbs):
 
         modified = False
 
-        if i.id in LD_CHECK:
-            self._operand(i, 0)
-            self._add(" = (")
-            self._type(LD_TYPE[i.id])
-            self._add(") ")
-            self._operand(i, 1)
-            modified = True
-
-        elif i.id in ST_CHECK:
-            self._operand(i, 1)
-            self._add(" = (")
-            self._type(ST_TYPE[i.id])
-            self._add(") ")
-            self._operand(i, 0)
-            modified = True
-
-        elif i.id in INST_CHECK:
-            if i.id == MIPS_INS_LUI:
-                self._add("(load upper) ")
+        if self.gctx.capstone_string:
+            if i.id in LD_CHECK:
                 self._operand(i, 0)
-                self._add(" = ")
+                self._add(" = (")
+                self._type(LD_TYPE[i.id])
+                self._add(") ")
                 self._operand(i, 1)
+                modified = True
 
-            elif i.id == MIPS_INS_MOVE:
+            elif i.id in ST_CHECK:
+                self._operand(i, 1)
+                self._add(" = (")
+                self._type(ST_TYPE[i.id])
+                self._add(") ")
                 self._operand(i, 0)
-                self._add(" = ")
-                if i.operands[1].value.reg == MIPS_REG_ZERO:
-                    self._add("0")
-                else:
-                    self._operand(i, 1)
+                modified = True
 
-            else:
-                self._operand(i, 0)
-                if i.operands[0].type == i.operands[1].type == MIPS_OP_REG and \
-                    i.operands[0].value.reg == i.operands[1].value.reg:
-                    self._add(" " + inst_symbol(i) + "= ")
-                else:
+            elif i.id in INST_CHECK:
+                if i.id == MIPS_INS_LUI:
+                    self._add("(load upper) ")
+                    self._operand(i, 0)
                     self._add(" = ")
                     self._operand(i, 1)
-                    self._add(" " + inst_symbol(i) + " ")
-                self._operand(i, 2)
 
-            modified = True
+                elif i.id == MIPS_INS_MOVE:
+                    self._operand(i, 0)
+                    self._add(" = ")
+                    if i.operands[1].value.reg == MIPS_REG_ZERO:
+                        self._add("0")
+                    else:
+                        self._operand(i, 1)
 
-        else:
+                else:
+                    self._operand(i, 0)
+                    if i.operands[0].type == i.operands[1].type == MIPS_OP_REG and \
+                        i.operands[0].value.reg == i.operands[1].value.reg:
+                        self._add(" " + inst_symbol(i) + "= ")
+                    else:
+                        self._add(" = ")
+                        self._operand(i, 1)
+                        self._add(" " + inst_symbol(i) + " ")
+                    self._operand(i, 2)
+
+                modified = True
+
+        if not modified:
             self._add("%s " % i.mnemonic)
             if len(i.operands) > 0:
                 modified = self._operand(i, 0)

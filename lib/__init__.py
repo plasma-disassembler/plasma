@@ -39,11 +39,12 @@ class GlobalContext():
         lib.utils.gctx  = self
         lib.colors.gctx = self
 
+        self.comments = True # always True, will be removed
+
         # For info() messages
         self.quiet = False
 
         # Command line options
-        self.comments = True
         self.sectionsname = False
         self.print_andif = True
         self.color = True
@@ -64,6 +65,7 @@ class GlobalContext():
         self.print_bytes = False
         self.raw_type = None
         self.print_data = False
+        self.capstone_string = False
 
         # Built objects
         self.dis = None # Disassembler
@@ -80,8 +82,6 @@ class GlobalContext():
         parser.add_argument('-nc', '--nocolor', action='store_true')
         parser.add_argument('-g', '--graph', action='store_true',
                 help='Generate a file graph.dot.')
-        parser.add_argument('--nocomment', action='store_true',
-                help="Don't print comments")
         parser.add_argument('--noandif', action='store_true',
                 help="Print normal 'if' instead of 'andif'")
         parser.add_argument('--datasize', type=int, default=30, metavar='N',
@@ -116,7 +116,6 @@ class GlobalContext():
         self.debug           = args.opt_debug
         self.print_andif     = not args.noandif
         self.color           = not args.nocolor
-        self.comments        = not args.nocomment
         self.sectionsname    = not args.nosectionsname
         self.max_data_size   = args.datasize
         self.filename        = args.filename

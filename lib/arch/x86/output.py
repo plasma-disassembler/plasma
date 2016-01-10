@@ -266,7 +266,7 @@ class Output(OutputAbs):
             if i.operands[0].type != X86_OP_IMM:
                 self._operand(i, 0, force_dont_print_data=True)
                 self.inst_end_here()
-                if is_uncond_jump(i) and self.gctx.comments and not self.ctx.is_dump \
+                if is_uncond_jump(i) and not self.ctx.is_dump \
                         and not i.address in self._dis.jmptables:
                     self._add(" ")
                     self._comment("# STOPPED")
@@ -278,157 +278,158 @@ class Output(OutputAbs):
 
         modified = False
 
-        if i.id in INST_CHECK:
-            if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
-                    i.operands[1].value.imm == -1):
-                self._operand(i, 0)
-                self._add(" = -1")
+        if not self.gctx.capstone_string: 
+            if i.id in INST_CHECK:
+                if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
+                        i.operands[1].value.imm == -1):
+                    self._operand(i, 0)
+                    self._add(" = -1")
 
-            elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
-                    i.operands[1].value.imm == 0):
-                self._operand(i, 0)
-                self._add(" = 0")
+                elif (i.id == X86_INS_AND and i.operands[1].type == X86_OP_IMM and
+                        i.operands[1].value.imm == 0):
+                    self._operand(i, 0)
+                    self._add(" = 0")
 
-            elif (all(op.type == X86_OP_REG for op in i.operands) and
-                    len(set(op.value.reg for op in i.operands)) == 1 and
-                    i.id == X86_INS_XOR):
-                self._operand(i, 0)
-                self._add(" = 0")
+                elif (all(op.type == X86_OP_REG for op in i.operands) and
+                        len(set(op.value.reg for op in i.operands)) == 1 and
+                        i.id == X86_INS_XOR):
+                    self._operand(i, 0)
+                    self._add(" = 0")
 
-            elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
-                self._operand(i, 0)
-                self._add(inst_symbol(i))
+                elif i.id == X86_INS_INC or i.id == X86_INS_DEC:
+                    self._operand(i, 0)
+                    self._add(inst_symbol(i))
 
-            elif i.id == X86_INS_LEA:
-                self._operand(i, 0)
-                self._add(" = ")
-                self._operand(i, 1, show_deref=False)
-
-            elif i.id == X86_INS_MOVZX:
-                self._operand(i, 0)
-                self._add(" = (zero ext) ")
-                self._operand(i, 1)
-
-            elif i.id == X86_INS_IMUL:
-                if len(i.operands) == 3:
+                elif i.id == X86_INS_LEA:
                     self._operand(i, 0)
                     self._add(" = ")
+                    self._operand(i, 1, show_deref=False)
+
+                elif i.id == X86_INS_MOVZX:
+                    self._operand(i, 0)
+                    self._add(" = (zero ext) ")
                     self._operand(i, 1)
-                    self._add(" " + inst_symbol(i).rstrip('=') + " ")
-                    self._operand(i, 2)
-                elif len(i.operands) == 2:
+
+                elif i.id == X86_INS_IMUL:
+                    if len(i.operands) == 3:
+                        self._operand(i, 0)
+                        self._add(" = ")
+                        self._operand(i, 1)
+                        self._add(" " + inst_symbol(i).rstrip('=') + " ")
+                        self._operand(i, 2)
+                    elif len(i.operands) == 2:
+                        self._operand(i, 0)
+                        self._add(" " + inst_symbol(i) + " ")
+                        self._operand(i, 1)
+                    elif len(i.operands) == 1:
+                        sz = i.operands[0].size
+                        if sz == 1:
+                            self._add("ax = al * ")
+                        elif sz == 2:
+                            self._add("dx:ax = ax * ")
+                        elif sz == 4:
+                            self._add("edx:eax = eax * ")
+                        elif sz == 8:
+                            self._add("rdx:rax = rax * ")
+                        self._operand(i, 0)
+
+                else:
                     self._operand(i, 0)
                     self._add(" " + inst_symbol(i) + " ")
                     self._operand(i, 1)
-                elif len(i.operands) == 1:
-                    sz = i.operands[0].size
-                    if sz == 1:
-                        self._add("ax = al * ")
-                    elif sz == 2:
-                        self._add("dx:ax = ax * ")
-                    elif sz == 4:
-                        self._add("edx:eax = eax * ")
-                    elif sz == 8:
-                        self._add("rdx:rax = rax * ")
-                    self._operand(i, 0)
 
-            else:
+                modified = True
+
+            elif i.id == X86_INS_CDQE:
+                self._add("rax = eax")
+                modified = True
+
+            elif i.id == X86_INS_IDIV:
+                self._add('eax = edx:eax / ')
                 self._operand(i, 0)
-                self._add(" " + inst_symbol(i) + " ")
+                self._add('; edx = edx:eax % ')
+                self._operand(i, 0)
+                modified = True
+
+            elif i.id == X86_INS_MUL:
+                lut = {1: ("al", "ax"), 2: ("ax", "dx:ax"), 4: ("eax", "edx:eax"),
+                        8: ("rax", "rdx:rax")}
+                src, dst = lut[i.operands[0].size]
+                self._add('{0} = {1} * '.format(dst, src))
+                self._operand(i, 0)
+                modified = True
+
+            elif i.id == X86_INS_NOT:
+                self._operand(i, 0)
+                self._add(' ^= -1')
+                modified = True
+
+            elif i.id in INST_SCAS:
+                self._operand(i, 0)
+                self._add(" cmp ")
                 self._operand(i, 1)
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 1, show_deref=False)
+                self._add(" += D")
+                modified = True
 
-            modified = True
+            elif i.id in INST_STOS:
+                self._operand(i, 0)
+                self._add(" = ")
+                self._operand(i, 1)
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 0, show_deref=False)
+                self._add(" += D")
+                modified = True
 
-        elif i.id == X86_INS_CDQE:
-            self._add("rax = eax")
-            modified = True
+            elif i.id in INST_LODS:
+                self._operand(i, 0)
+                self._add(" = ")
+                self._operand(i, 1)
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 1, show_deref=False)
+                self._add(" += D")
+                modified = True
 
-        elif i.id == X86_INS_IDIV:
-            self._add('eax = edx:eax / ')
-            self._operand(i, 0)
-            self._add('; edx = edx:eax % ')
-            self._operand(i, 0)
-            modified = True
+            elif i.id in INST_CMPS:
+                self._operand(i, 0)
+                self._add(" cmp ")
+                self._operand(i, 1)
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 0, show_deref=False)
+                self._add(" += D")
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 1, show_deref=False)
+                self._add("' += D")
+                modified = True
 
-        elif i.id == X86_INS_MUL:
-            lut = {1: ("al", "ax"), 2: ("ax", "dx:ax"), 4: ("eax", "edx:eax"),
-                    8: ("rax", "rdx:rax")}
-            src, dst = lut[i.operands[0].size]
-            self._add('{0} = {1} * '.format(dst, src))
-            self._operand(i, 0)
-            modified = True
+            elif i.id in INST_MOVS:
+                self._operand(i, 0)
+                self._add(" = ")
+                self._operand(i, 1)
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 0, show_deref=False)
+                self._add(" += D")
+                self._new_line()
+                self._tabs(tab)
+                self._address(i.address)
+                self._operand(i, 1, show_deref=False)
+                self._add(" += D")
+                modified = True
 
-        elif i.id == X86_INS_NOT:
-            self._operand(i, 0)
-            self._add(' ^= -1')
-            modified = True
-
-        elif i.id in INST_SCAS:
-            self._operand(i, 0)
-            self._add(" cmp ")
-            self._operand(i, 1)
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 1, show_deref=False)
-            self._add(" += D")
-            modified = True
-
-        elif i.id in INST_STOS:
-            self._operand(i, 0)
-            self._add(" = ")
-            self._operand(i, 1)
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 0, show_deref=False)
-            self._add(" += D")
-            modified = True
-
-        elif i.id in INST_LODS:
-            self._operand(i, 0)
-            self._add(" = ")
-            self._operand(i, 1)
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 1, show_deref=False)
-            self._add(" += D")
-            modified = True
-
-        elif i.id in INST_CMPS:
-            self._operand(i, 0)
-            self._add(" cmp ")
-            self._operand(i, 1)
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 0, show_deref=False)
-            self._add(" += D")
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 1, show_deref=False)
-            self._add("' += D")
-            modified = True
-
-        elif i.id in INST_MOVS:
-            self._operand(i, 0)
-            self._add(" = ")
-            self._operand(i, 1)
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 0, show_deref=False)
-            self._add(" += D")
-            self._new_line()
-            self._tabs(tab)
-            self._address(i.address)
-            self._operand(i, 1, show_deref=False)
-            self._add(" += D")
-            modified = True
-
-        else:
+        if not modified:
             if len(i.operands) > 0:
                 self._add("%s " % i.mnemonic)
                 modified = self._operand(i, 0)

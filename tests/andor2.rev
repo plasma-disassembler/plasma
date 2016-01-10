@@ -5,10 +5,10 @@ function main (.text) {
     int32_t var4
     int32_t var5
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 32 # sub rsp, 0x20
-    0x40050e: var1 = edi # mov dword ptr [rbp - 0x14], edi
-    0x400511: var2 = rsi # mov qword ptr [rbp - 0x20], rsi
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 32
+    0x40050e: var1 = edi
+    0x400511: var2 = rsi
     0x400515: jmp loop_0x400559
     loop {
         loop_0x400559:
@@ -20,12 +20,12 @@ function main (.text) {
             and if (var4 <= 9)
             goto 0x400517
         } else {
-            0x400565: eax = var3 # mov eax, dword ptr [rbp - 4]
+            0x400565: eax = var3
             # 0x400568: cmp eax, dword ptr [rbp - 0xc]
             # 0x40056b: je 0x400517
             if (eax != var5)  goto ret_0x40056d
         }
-        0x400517: edi = 0x400604 "1" # mov edi, 0x400604
+        0x400517: edi = 0x400604 "1"
         0x40051c: call puts@plt
         0x400521: jmp loop_0x400549
         loop {
@@ -33,7 +33,7 @@ function main (.text) {
             # 0x400549: cmp dword ptr [rbp - 0xc], 0x13
             # 0x40054d: jle 0x400523
             if (var5 > 19)  goto 0x40054f
-            0x400523: edi = 0x400606 "2" # mov edi, 0x400606
+            0x400523: edi = 0x400606 "2"
             0x400528: call puts@plt
             0x40052d: jmp loop_0x400539
             loop {
@@ -41,17 +41,17 @@ function main (.text) {
                 # 0x400539: cmp dword ptr [rbp - 8], 0x13
                 # 0x40053d: jle 0x40052f
                 if (var4 > 19)  goto 0x40053f
-                0x40052f: edi = 0x400608 "3" # mov edi, 0x400608
+                0x40052f: edi = 0x400608 "3"
                 0x400534: call puts@plt
             }
-            0x40053f: edi = 0x40060a "4" # mov edi, 0x40060a
+            0x40053f: edi = 0x40060a "4"
             0x400544: call puts@plt
         }
-        0x40054f: edi = 0x40060c "5" # mov edi, 0x40060c
+        0x40054f: edi = 0x40060c "5"
         0x400554: call puts@plt
     }
     ret_0x40056d:
-    0x40056d: eax = 0 # mov eax, 0
+    0x40056d: eax = 0
     0x400572: leave
     0x400573: ret
 }

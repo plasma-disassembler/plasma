@@ -3,11 +3,11 @@ function main (.text) {
     int32_t var2
     int32_t var3
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
-    0x400515: var2 = 2 # mov dword ptr [rbp - 8], 2
-    0x40051c: var3 = 0 # mov dword ptr [rbp - 0xc], 0
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 0
+    0x400515: var2 = 2
+    0x40051c: var3 = 0
     0x400523: jmp loop_0x40058d
     loop {
         loop_0x40058d:
@@ -20,12 +20,12 @@ function main (.text) {
             # 0x40055d: cmp dword ptr [rbp - 4], 9
             # 0x400561: jg 0x40056d
             if (var1 > 9)  goto 0x40056d
-            0x400563: eax = var1 # mov eax, dword ptr [rbp - 4]
-            0x400566: eax += eax # add eax, eax
+            0x400563: eax = var1
+            0x400566: eax += eax
             # 0x400568: cmp eax, dword ptr [rbp - 8]
             # 0x40056b: jne 0x400527
             if (eax == var2)  goto 0x40056d
-            0x400527: edi = 0x400634 "1" # mov edi, 0x400634
+            0x400527: edi = 0x400634 "1"
             0x40052c: call puts@plt
             # 0x400531: cmp dword ptr [rbp - 4], 8
             # 0x400535: jne 0x400543
@@ -33,32 +33,32 @@ function main (.text) {
             # 0x400543: cmp dword ptr [rbp - 8], 5
             # 0x400547: jne 0x400555
             if (var2 == 5)  goto loop_0x400549
-            0x400555: var1 += 1 # add dword ptr [rbp - 4], 1
-            0x400559: var2 += 1 # add dword ptr [rbp - 8], 1
+            0x400555: var1 += 1
+            0x400559: var2 += 1
         }
-        0x400537: edi = 0x400636 "2" # mov edi, 0x400636
+        0x400537: edi = 0x400636 "2"
         0x40053c: call puts@plt
         0x400541: jmp 0x40056d
         # 0x40056d: cmp dword ptr [rbp - 0xc], 0xf
         # 0x400571: jne 0x40057f
         if (var3 == 15)  goto 0x400573
-        0x40057f: edi = 0x40063c "5" # mov edi, 0x40063c
+        0x40057f: edi = 0x40063c "5"
         0x400584: call puts@plt
-        0x400589: var3 += 1 # add dword ptr [rbp - 0xc], 1
+        0x400589: var3 += 1
     }
     for (;;) {
         loop_0x400549:
-        0x400549: edi = 0x400638 "3" # mov edi, 0x400638
+        0x400549: edi = 0x400638 "3"
         0x40054e: call puts@plt
         0x400553: jmp loop_0x400549
     }
-    0x400573: edi = 0x40063a "4" # mov edi, 0x40063a
+    0x400573: edi = 0x40063a "4"
     0x400578: call puts@plt
     0x40057d: jmp ret_0x400593
     ret_0x400593:
-    0x400593: edi = 0x40063e "6" # mov edi, 0x40063e
+    0x400593: edi = 0x40063e "6"
     0x400598: call puts@plt
-    0x40059d: eax = 0 # mov eax, 0
+    0x40059d: eax = 0
     0x4005a2: leave
     0x4005a3: ret
 }

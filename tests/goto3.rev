@@ -3,11 +3,11 @@ function main (.text) {
     int32_t var2
     int32_t var3
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 0 # mov dword ptr [rbp - 8], 0
-    0x400515: var2 = 0 # mov dword ptr [rbp - 4], 0
-    0x40051c: var3 = 0 # mov dword ptr [rbp - 0xc], 0
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 0
+    0x400515: var2 = 0
+    0x40051c: var3 = 0
     0x400523: jmp loop_0x400559
     loop {
         loop_0x400559:
@@ -20,21 +20,21 @@ function main (.text) {
             # 0x40052b: cmp dword ptr [rbp - 0xc], 5
             # 0x40052f: jne 0x400555
             if (var3 == 5) {
-                0x400531: edi = 0x4005f4 "1" # mov edi, 0x4005f4
+                0x400531: edi = 0x4005f4 "1"
                 0x400536: call puts@plt
                 0x40053b: jmp 0x400547
             }
         } else {
-            0x40053d: edi = 0x4005f6 "2" # mov edi, 0x4005f6
+            0x40053d: edi = 0x4005f6 "2"
             0x400542: call puts@plt
-            0x400547: edi = 0x4005f8 "3" # mov edi, 0x4005f8
+            0x400547: edi = 0x4005f8 "3"
             0x40054c: call puts@plt
-            0x400551: var2 += 1 # add dword ptr [rbp - 4], 1
+            0x400551: var2 += 1
         }
-        0x400555: var2 += 5 # add dword ptr [rbp - 4], 5
+        0x400555: var2 += 5
     }
     ret_0x40055f:
-    0x40055f: eax = 0 # mov eax, 0
+    0x40055f: eax = 0
     0x400564: leave
     0x400565: ret
 }

@@ -1,23 +1,23 @@
 function main (.text) {
     int32_t var1
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 123
     # 0x400515: cmp dword ptr [rbp - 4], 0
     # 0x400519: jle 0x400527
     if (var1 > 0) {
-        0x40051b: edi = 0x4005d4 "1" # mov edi, 0x4005d4
+        0x40051b: edi = 0x4005d4 "1"
         0x400520: call puts@plt
         0x400525: jmp ret_0x400531
     } else {
-        0x400527: edi = 0x4005d6 "2" # mov edi, 0x4005d6
+        0x400527: edi = 0x4005d6 "2"
         0x40052c: call puts@plt
     }
     ret_0x400531:
-    0x400531: edi = 0x4005d8 "3" # mov edi, 0x4005d8
+    0x400531: edi = 0x4005d8 "3"
     0x400536: call puts@plt
-    0x40053b: eax = 0 # mov eax, 0
+    0x40053b: eax = 0
     0x400540: leave
     0x400541: ret
 }

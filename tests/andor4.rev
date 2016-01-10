@@ -2,20 +2,20 @@ function main (.text) {
     int32_t var1
     int32_t var2
     0x4005d6: push rbp
-    0x4005d7: rbp = rsp # mov rbp, rsp
-    0x4005da: rsp -= 16 # sub rsp, 0x10
-    0x4005de: edi = 0 # mov edi, 0
+    0x4005d7: rbp = rsp
+    0x4005da: rsp -= 16
+    0x4005de: edi = 0
     0x4005e3: call time@plt
-    0x4005e8: edi = eax # mov edi, eax
+    0x4005e8: edi = eax
     0x4005ea: call srand@plt
     0x4005ef: call rand@plt
-    0x4005f4: var1 = eax # mov dword ptr [rbp - 4], eax
+    0x4005f4: var1 = eax
     0x4005f7: call rand@plt
-    0x4005fc: var2 = eax # mov dword ptr [rbp - 8], eax
+    0x4005fc: var2 = eax
     # 0x4005ff: cmp dword ptr [rbp - 4], 1
     # 0x400603: jne 0x400617
     if (var1 == 1) {
-        0x400605: edi = 0x4006c4 "2" # mov edi, 0x4006c4
+        0x400605: edi = 0x4006c4 "2"
         0x40060a: call puts@plt
         # 0x40060f: cmp dword ptr [rbp - 8], 2
         # 0x400613: jne 0x40062b
@@ -23,16 +23,16 @@ function main (.text) {
             0x400615: jmp 0x400621
         }
     } else {
-        0x400617: var2 -= 1 # sub dword ptr [rbp - 8], 1
+        0x400617: var2 -= 1
         # 0x40061b: cmp dword ptr [rbp - 8], 0
         # 0x40061f: jne 0x40062b
         if (var2 == 0) {
-            0x400621: edi = 0x4006c6 "1" # mov edi, 0x4006c6
+            0x400621: edi = 0x4006c6 "1"
             0x400626: call puts@plt
         }
     }
     ret_0x40062b:
-    0x40062b: eax = 0 # mov eax, 0
+    0x40062b: eax = 0
     0x400630: leave
     0x400631: ret
 }

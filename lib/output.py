@@ -306,12 +306,6 @@ class OutputAbs():
                     self._dis.internal_inline_comments[i.address])
 
 
-    def _comment_orig_inst(self, i, modified):
-        if modified and self.gctx.comments:
-            self._add(" ")
-            self._comment("# %s" % self.get_inst_str(i))
-
-
     # Only used when --nocomment is enabled and a jump point to this instruction
     def _address_if_needed(self, i, tab):
         if i.address in self.ctx.addr_color:
@@ -383,6 +377,9 @@ class OutputAbs():
     #
     def _imm(self, imm, op_size, hexa, section=None, print_data=True,
              force_dont_print_data=False):
+
+        if self.gctx.capstone_string:
+            hexa = True
 
         label_printed = self._label(imm, print_colon=False)
 
@@ -523,7 +520,6 @@ class OutputAbs():
         modified = self._sub_asm_inst(i, tab, prefix)
 
         self._inline_comment(i)
-        self._comment_orig_inst(i, modified)
         self._new_line()
 
 

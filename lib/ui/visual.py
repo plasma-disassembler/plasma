@@ -62,6 +62,7 @@ class Visual(Window):
             b"}": self.main_k_next_paragraph,
             b"x": self.main_cmd_xrefs,
             b"r": self.main_cmd_rename,
+            b"I": self.main_cmd_inst_output,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -174,6 +175,12 @@ class Visual(Window):
         self.reload_output(h)
         self.gctx.db.modified = True
 
+        return True
+
+
+    def main_cmd_inst_output(self, h, w):
+        self.gctx.capstone_string = not self.gctx.capstone_string
+        self.reload_output(h)
         return True
 
 

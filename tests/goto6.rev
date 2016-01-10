@@ -2,25 +2,25 @@ function main (.text) {
     int32_t var1
     int32_t var2
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
-    0x40050e: var1 = 0 # mov dword ptr [rbp - 4], 0
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
+    0x40050e: var1 = 0
     0x400515: jmp loop_0x40057a
     loop {
         loop_0x40057a:
         # 0x40057a: cmp dword ptr [rbp - 4], 0x13
         # 0x40057e: jle 0x400517
         if (var1 > 19)  goto 0x400580
-        0x400517: edi = 0x400634 "1" # mov edi, 0x400634
+        0x400517: edi = 0x400634 "1"
         0x40051c: call puts@plt
-        0x400521: var2 = 0 # mov dword ptr [rbp - 8], 0
+        0x400521: var2 = 0
         0x400528: jmp loop_0x400566
         loop {
             loop_0x400566:
             # 0x400566: cmp dword ptr [rbp - 8], 0x1d
             # 0x40056a: jle 0x40052a
             if (var2 > 29)  goto 0x40056c
-            0x40052a: edi = 0x400636 "3" # mov edi, 0x400636
+            0x40052a: edi = 0x400636 "3"
             0x40052f: call puts@plt
             # 0x400534: cmp dword ptr [rbp - 8], 2
             # 0x400538: jne 0x400546
@@ -28,28 +28,28 @@ function main (.text) {
             # 0x400546: cmp dword ptr [rbp - 8], 3
             # 0x40054a: jne 0x400558
             if (var2 == 3)  goto 0x40054c
-            0x400558: edi = 0x40063c "5" # mov edi, 0x40063c
+            0x400558: edi = 0x40063c "5"
             0x40055d: call puts@plt
-            0x400562: var2 += 1 # add dword ptr [rbp - 8], 1
+            0x400562: var2 += 1
         }
-        0x40056c: edi = 0x40063e "2" # mov edi, 0x40063e
+        0x40056c: edi = 0x40063e "2"
         0x400571: call puts@plt
-        0x400576: var1 += 1 # add dword ptr [rbp - 4], 1
+        0x400576: var1 += 1
     }
-    0x40054c: edi = 0x40063a "8" # mov edi, 0x40063a
+    0x40054c: edi = 0x40063a "8"
     0x400551: call puts@plt
     0x400556: jmp ret_0x400594
-    0x40053a: edi = 0x400638 "4" # mov edi, 0x400638
+    0x40053a: edi = 0x400638 "4"
     0x40053f: call puts@plt
     0x400544: jmp 0x40058a
-    0x400580: edi = 0x400640 "6" # mov edi, 0x400640
+    0x400580: edi = 0x400640 "6"
     0x400585: call puts@plt
-    0x40058a: edi = 0x400642 "7" # mov edi, 0x400642
+    0x40058a: edi = 0x400642 "7"
     0x40058f: call puts@plt
     ret_0x400594:
-    0x400594: edi = 0x400644 "9" # mov edi, 0x400644
+    0x400594: edi = 0x400644 "9"
     0x400599: call puts@plt
-    0x40059e: eax = 0 # mov eax, 0
+    0x40059e: eax = 0
     0x4005a3: leave
     0x4005a4: ret
 }

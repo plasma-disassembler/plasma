@@ -1,8 +1,8 @@
 function main (.text) {
     int32_t var1
     0x400506: push rbp
-    0x400507: rbp = rsp # mov rbp, rsp
-    0x40050a: rsp -= 16 # sub rsp, 0x10
+    0x400507: rbp = rsp
+    0x40050a: rsp -= 16
     # 0x40050e: cmp dword ptr [rbp - 4], 0x539
     # 0x400515: jne 0x40054b
     if (var1 == 1337) {
@@ -15,15 +15,15 @@ function main (.text) {
             # 0x400519: cmp dword ptr [rbp - 4], 2
             # 0x40051d: jne 0x40052b
             if (var1 == 2)  goto 0x40051f
-            0x40052b: var1 += 1 # add dword ptr [rbp - 4], 1
+            0x40052b: var1 += 1
         }
-        0x40051f: edi = 0x4005e4 "1" # mov edi, 0x4005e4
+        0x40051f: edi = 0x4005e4 "1"
         0x400524: call puts@plt
         0x400529: jmp 0x40053d
         0x400535: jmp loop_0x40054b
-        0x40053d: edi = 0x4005e6 "2" # mov edi, 0x4005e6
+        0x40053d: edi = 0x4005e6 "2"
         0x400542: call puts@plt
-        0x400547: var1 += 1 # add dword ptr [rbp - 4], 1
+        0x400547: var1 += 1
     }
     loop {
         loop_0x40054b:
@@ -38,7 +38,7 @@ function main (.text) {
         goto 0x400547
     }
     ret_0x400551:
-    0x400551: eax = 0 # mov eax, 0
+    0x400551: eax = 0
     0x400556: leave
     0x400557: ret
 }

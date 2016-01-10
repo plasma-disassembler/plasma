@@ -1,47 +1,47 @@
 function ___main (.text) {
     0x4018c0: push ebp
-    0x4018c1: ebp = esp # mov ebp, esp
+    0x4018c1: ebp = esp
     0x4018c3: push ebx
-    0x4018c4: esp -= 4 # sub esp, 4
-    0x4018c7: eax = *(0x404020) # mov eax, dword ptr [0x404020]
+    0x4018c4: esp -= 4
+    0x4018c7: eax = *(0x404020)
     # 0x4018cc: test eax, eax
     # 0x4018ce: jne 0x401906
     if (eax == 0) {
-        0x4018d0: eax = *(___CTOR_LIST__) # mov eax, dword ptr [0x401e90]
-        0x4018d5: ebx = 1 # mov ebx, 1
-        0x4018da: *(0x404020) = ebx # mov dword ptr [0x404020], ebx
+        0x4018d0: eax = *(___CTOR_LIST__)
+        0x4018d5: ebx = 1
+        0x4018da: *(0x404020) = ebx
         # 0x4018e0: cmp eax, 0xff
         # 0x4018e3: je 0x40190a
         if (eax == '\xff') {
-            0x40190a: ecx = *(0x401e94) # mov ecx, dword ptr [0x401e94]
-            0x401910: eax = 0 # xor eax, eax
+            0x40190a: ecx = *(0x401e94)
+            0x401910: eax = 0
             0x401912: test ecx, ecx
             0x401914: jmp loop_0x401920
             loop {
                 loop_0x401920:
                 # 0x401920: jne 0x401916
                 if ==  goto 0x401922
-                0x401916: eax++ # inc eax
-                0x401917: edx = *((eax*4) + 0x401e94) # mov edx, dword ptr [eax*4 + 0x401e94]
+                0x401916: eax++
+                0x401917: edx = *((eax*4) + 0x401e94)
                 0x40191e: test edx, edx
             }
             0x401922: jmp 0x4018e5
         }
         0x4018e5: test eax, eax
-        0x4018e7: ebx = eax # mov ebx, eax
+        0x4018e7: ebx = eax
         # 0x4018e9: je 0x4018fa
         if != {
             0x4018eb: nop
-            0x4018ec: esi = esi # lea esi, dword ptr [esi]
+            0x4018ec: esi = esi
             loop {
                 loop_0x4018f0:
                 0x4018f0: call *((ebx*4) + ___CTOR_LIST__)
-                0x4018f7: ebx-- # dec ebx
+                0x4018f7: ebx--
                 # 0x4018f8: jne 0x4018f0
                 if ==  goto 0x4018fa
             }
         }
-        0x4018fa: *(esp) = ___do_global_dtors # mov dword ptr [esp], 0x401820
+        0x4018fa: *(esp) = ___do_global_dtors
         0x401901: call _atexit
     }
     ret_0x401906:

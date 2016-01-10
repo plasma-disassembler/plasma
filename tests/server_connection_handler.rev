@@ -5,76 +5,76 @@ function connection_handler (.text) {
     int64_t var4
     int32_t var5
     0x400b1e: push rbp
-    0x400b1f: rbp = rsp # mov rbp, rsp
-    0x400b22: rsp -= 2048 # sub rsp, 0x800
-    0x400b29: var1 = rdi # mov qword ptr [rbp - 0x7f8], rdi
-    0x400b30: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
-    0x400b37: eax = *(rax) # mov eax, dword ptr [rax]
-    0x400b39: var2 = eax # mov dword ptr [rbp - 4], eax
-    0x400b3c: var3 = 0x400d60 "Greetings! I am your connectio..." # mov qword ptr [rbp - 0x10], 0x400d60
-    0x400b44: rax = var3 # mov rax, qword ptr [rbp - 0x10]
-    0x400b48: rdi = rax # mov rdi, rax
+    0x400b1f: rbp = rsp
+    0x400b22: rsp -= 2048
+    0x400b29: var1 = rdi
+    0x400b30: rax = var1
+    0x400b37: eax = *(rax)
+    0x400b39: var2 = eax
+    0x400b3c: var3 = 0x400d60 "Greetings! I am your connectio..."
+    0x400b44: rax = var3
+    0x400b48: rdi = rax
     0x400b4b: call strlen@plt
-    0x400b50: rdx = rax # mov rdx, rax
-    0x400b53: rcx = var3 # mov rcx, qword ptr [rbp - 0x10]
-    0x400b57: eax = var2 # mov eax, dword ptr [rbp - 4]
-    0x400b5a: rsi = rcx # mov rsi, rcx
-    0x400b5d: edi = eax # mov edi, eax
+    0x400b50: rdx = rax
+    0x400b53: rcx = var3
+    0x400b57: eax = var2
+    0x400b5a: rsi = rcx
+    0x400b5d: edi = eax
     0x400b5f: call write@plt
-    0x400b64: var3 = 0x400d90 "Now type something and i shall..." # mov qword ptr [rbp - 0x10], 0x400d90
-    0x400b6c: rax = var3 # mov rax, qword ptr [rbp - 0x10]
-    0x400b70: rdi = rax # mov rdi, rax
+    0x400b64: var3 = 0x400d90 "Now type something and i shall..."
+    0x400b6c: rax = var3
+    0x400b70: rdi = rax
     0x400b73: call strlen@plt
-    0x400b78: rdx = rax # mov rdx, rax
-    0x400b7b: rcx = var3 # mov rcx, qword ptr [rbp - 0x10]
-    0x400b7f: eax = var2 # mov eax, dword ptr [rbp - 4]
-    0x400b82: rsi = rcx # mov rsi, rcx
-    0x400b85: edi = eax # mov edi, eax
+    0x400b78: rdx = rax
+    0x400b7b: rcx = var3
+    0x400b7f: eax = var2
+    0x400b82: rsi = rcx
+    0x400b85: edi = eax
     0x400b87: call write@plt
     0x400b8c: jmp loop_0x400bb4
     loop {
         loop_0x400bb4:
-        0x400bb4: rsi = &(var4) # lea rsi, qword ptr [rbp - 0x7f0]
-        0x400bbb: eax = var2 # mov eax, dword ptr [rbp - 4]
-        0x400bbe: ecx = 0 # mov ecx, 0
-        0x400bc3: edx = 2000 # mov edx, 0x7d0
-        0x400bc8: edi = eax # mov edi, eax
+        0x400bb4: rsi = &(var4)
+        0x400bbb: eax = var2
+        0x400bbe: ecx = 0
+        0x400bc3: edx = 2000
+        0x400bc8: edi = eax
         0x400bca: call recv@plt
-        0x400bcf: var5 = eax # mov dword ptr [rbp - 0x14], eax
+        0x400bcf: var5 = eax
         # 0x400bd2: cmp dword ptr [rbp - 0x14], 0
         # 0x400bd6: jg 0x400b8e
         if (var5 <= 0)  goto 0x400bd8
-        0x400b8e: rax = &(var4) # lea rax, qword ptr [rbp - 0x7f0]
-        0x400b95: rdi = rax # mov rdi, rax
+        0x400b8e: rax = &(var4)
+        0x400b95: rdi = rax
         0x400b98: call strlen@plt
-        0x400b9d: rdx = rax # mov rdx, rax
-        0x400ba0: rcx = &(var4) # lea rcx, qword ptr [rbp - 0x7f0]
-        0x400ba7: eax = var2 # mov eax, dword ptr [rbp - 4]
-        0x400baa: rsi = rcx # mov rsi, rcx
-        0x400bad: edi = eax # mov edi, eax
+        0x400b9d: rdx = rax
+        0x400ba0: rcx = &(var4)
+        0x400ba7: eax = var2
+        0x400baa: rsi = rcx
+        0x400bad: edi = eax
         0x400baf: call write@plt
     }
     # 0x400bd8: cmp dword ptr [rbp - 0x14], 0
     # 0x400bdc: jne 0x400bf9
     if (var5 == 0) {
-        0x400bde: edi = 0x400dc6 "Client disconnected" # mov edi, 0x400dc6
+        0x400bde: edi = 0x400dc6 "Client disconnected"
         0x400be3: call puts@plt
-        0x400be8: rax = *(__TMC_END__) # mov rax, qword ptr [rip + 0x2006b9]
-        0x400bef: rdi = rax # mov rdi, rax
+        0x400be8: rax = *(__TMC_END__)
+        0x400bef: rdi = rax
         0x400bf2: call fflush@plt
         0x400bf7: jmp ret_0x400c09
     }
     # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
     # 0x400bfd: jne 0x400c09
     else if (var5 == -1) {
-        0x400bff: edi = 0x400dda "recv failed" # mov edi, 0x400dda
+        0x400bff: edi = 0x400dda "recv failed"
         0x400c04: call perror@plt
     }
     ret_0x400c09:
-    0x400c09: rax = var1 # mov rax, qword ptr [rbp - 0x7f8]
-    0x400c10: rdi = rax # mov rdi, rax
+    0x400c09: rax = var1
+    0x400c10: rdi = rax
     0x400c13: call free@plt
-    0x400c18: eax = 0 # mov eax, 0
+    0x400c18: eax = 0
     0x400c1d: leave
     0x400c1e: ret
 }

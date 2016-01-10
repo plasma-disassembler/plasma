@@ -2,15 +2,15 @@ function main (.text) {
     int32_t var1
     int32_t var2
     0x4004b6: push rbp
-    0x4004b7: rbp = rsp # mov rbp, rsp
-    0x4004ba: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
-    0x4004c1: var2 = 5 # mov dword ptr [rbp - 8], 5
+    0x4004b7: rbp = rsp
+    0x4004ba: var1 = 123
+    0x4004c1: var2 = 5
     loop {
         loop_0x4004c8:
-        0x4004c8: var1 += 1 # add dword ptr [rbp - 4], 1
+        0x4004c8: var1 += 1
         loop {
             loop_0x4004cc:
-            0x4004cc: var2 += 1 # add dword ptr [rbp - 8], 1
+            0x4004cc: var2 += 1
             # 0x4004d0: cmp dword ptr [rbp - 8], 4
             # 0x4004d4: jle 0x4004cc
             if (var2 > 4)  goto 0x4004d6
@@ -20,7 +20,7 @@ function main (.text) {
         if (var1 > 9)  goto ret_0x4004dc
     }
     ret_0x4004dc:
-    0x4004dc: eax = 0 # mov eax, 0
+    0x4004dc: eax = 0
     0x4004e1: pop rbp
     0x4004e2: ret
 }

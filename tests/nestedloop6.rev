@@ -3,9 +3,9 @@ function main (.text) {
     int32_t var2
     int32_t var3
     0x4004b6: push rbp
-    0x4004b7: rbp = rsp # mov rbp, rsp
-    0x4004ba: var1 = 123 # mov dword ptr [rbp - 4], 0x7b
-    0x4004c1: var2 = 5 # mov dword ptr [rbp - 8], 5
+    0x4004b7: rbp = rsp
+    0x4004ba: var1 = 123
+    0x4004c1: var2 = 5
     # 0x4004c8: cmp dword ptr [rbp - 4], 1
     # 0x4004cc: jne 0x400502
     if (var1 == 1) {
@@ -56,7 +56,7 @@ function main (.text) {
         }
     }
     ret_0x400502:
-    0x400502: eax = 0 # mov eax, 0
+    0x400502: eax = 0
     0x400507: pop rbp
     0x400508: ret
 }
