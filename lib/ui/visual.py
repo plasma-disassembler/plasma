@@ -445,17 +445,19 @@ class Visual(Window):
 
         topush = self.__compute_curr_position()
 
-        self.ctx = self.gctx.get_addr_context(word)
-        if not self.ctx:
+        ctx = self.gctx.get_addr_context(word)
+        if not ctx:
             return False
-        ad = self.ctx.entry
 
+        ad = ctx.entry
         self.cursor_x = 0
 
         if self.goto_address(ad, h, w):
             self.saved_stack.clear()
             self.stack.append(topush)
             return True
+
+        self.ctx = ctx
 
         if self.mode == MODE_DECOMPILE and not self.dis.mem.is_code(ad):
             self.mode = MODE_DUMP
@@ -475,13 +477,16 @@ class Visual(Window):
         self.cursor_x = x
 
         if mode == MODE_DECOMPILE:
-            self.win_y = offset_y[0]
-            self.cursor_y = offset_y[1]
+            line = offset_y[0] + offset_y[1]
+
             if self.mode == MODE_DECOMPILE and ad == self.ctx.entry:
+                self.goto_line(line, h)
+                self.cursor_x = x
                 return True
 
             self.mode = mode
             ret = self.exec_disasm(ad, h)
+            self.goto_line(line, h)
 
         else:
             if self.mode == MODE_DUMP and self.goto_address(ad, h, w):
@@ -517,6 +522,8 @@ class Visual(Window):
 
 
     def main_cmd_switch_mode(self, h, w):
+        self.stack.append(self.__compute_curr_position())
+
         # Get a line with an address: the cursor is maybe on a comment
         l = self.win_y + self.cursor_y
         while l not in self.output.line_addr and l <= len(self.token_lines):
@@ -533,15 +540,10 @@ class Visual(Window):
                 return False
 
             ad_disasm = self.dis.func_id[func_id]
-
-        else:
-            ad_disasm = ad
-
-        self.stack.append(self.__compute_curr_position())
-
-        if self.mode == MODE_DUMP:
             self.mode = MODE_DECOMPILE
+
         else:
+            ad_disasm = self.ctx.entry
             self.mode = MODE_DUMP
 
         ret = self.exec_disasm(ad_disasm, h)
