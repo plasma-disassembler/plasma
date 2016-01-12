@@ -52,13 +52,7 @@ def default_custom_file():
             """ % CURR_VERSION))
 
 
-try:
-    from reverse.lib.custom_colors import *
-except:
-    default_custom_file()
-    from reverse.lib.custom_colors import *
-    print("the file custom_colors.py has been created")
-    VERSION = CURR_VERSION
+from reverse.lib.custom_colors import *
 
 
 # Old versions of custom_colors.py
