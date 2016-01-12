@@ -36,7 +36,7 @@ __diff() {
 
 
     if [ -f "tests/${name}${suffix}.rev" ]; then
-        ./reverse.py "tests/${name}.bin" $more_opt $OPTIONS >$tmp 2>/dev/null
+        ./run_reverse.py "tests/${name}.bin" $more_opt $OPTIONS >$tmp 2>/dev/null
         if [ $? -eq 0 ]; then
             if [ $VERBOSE -eq 1 ]; then
                 diff $tmp "tests/${name}${suffix}.rev" 
