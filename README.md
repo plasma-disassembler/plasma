@@ -21,14 +21,18 @@ The `Makefile` is used only for checking tests.
 * [python-msgpack](https://github.com/msgpack/msgpack-python)
 * terminal with 256 colors (if not, use the option `--nocolor`)
 
-You can run `requirements.sh` which will retrieve all requirements.
+
+## Installation
+
+    ./requirements.sh
+    python3 setup.py install
 
 
 ## Pseudo-decompilation of functions
 
 Here the option `-x main` is optional because the binary contains the symbol main.
 
-    $ ./reverse.py tests/server.bin
+    $ reverse tests/server.bin
 
 ![reverse](/images/screenshot.png?raw=true)
 
@@ -80,7 +84,7 @@ FIXME :
 Switch statements which require a jump-table are not detected automatically.
 So we need to tell it which jump-table to use.
 
-    $ ./reverse.py -i tests/others/switch.bin
+    $ reverse -i tests/others/switch.bin
     >> x
     ...
     >> jmptable 0x400526 0x400620 11 8 
@@ -93,7 +97,7 @@ So we need to tell it which jump-table to use.
 
 For every `int 0x80`, the tool try to detect syscalls with parameters.
 
-    $ ./reverse.py --raw x86 tests/shellcode.bin
+    $ reverse --raw x86 tests/shellcode.bin
     function 0x0 {
         0x0: eax = 0 # xor eax, eax
         0x2: al = '\x0b' # mov al, 0xb
@@ -111,5 +115,5 @@ For every `int 0x80`, the tool try to detect syscalls with parameters.
 
 ## Edit with vim
 
-    $ ./reverse tests/dowhile1.bin --vim
+    $ reverse tests/dowhile1.bin --vim
     Run : vim dowhile1.bin.rev -S dowhile1.bin.vim

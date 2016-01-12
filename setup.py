@@ -18,7 +18,13 @@ setup(
     license="GPLv3",
 
     packages=['reverse',
-              'reverse.lib'],
+              'reverse.lib',
+              'reverse.lib.arch',
+              'reverse.lib.arch.x86',
+              'reverse.lib.arch.mips',
+              'reverse.lib.arch.arm',
+              'reverse.lib.ui',
+              'reverse.lib.fileformat'],
     package_dir={'reverse':'reverse'},
     install_requires=[
         'capstone',
