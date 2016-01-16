@@ -278,7 +278,7 @@ class Output(OutputAbs):
 
         modified = False
 
-        if not self.gctx.capstone_string: 
+        if self.gctx.capstone_string == 0:
             if i.id in INST_CHECK:
                 if (i.id == X86_INS_OR and i.operands[1].type == X86_OP_IMM and
                         i.operands[1].value.imm == -1):

@@ -223,7 +223,7 @@ class Output(OutputAbs):
 
         modified = False
 
-        if self.gctx.capstone_string:
+        if self.gctx.capstone_string == 0:
             if i.id in LD_CHECK:
                 self._operand(i, 0)
                 self._add(" = (")

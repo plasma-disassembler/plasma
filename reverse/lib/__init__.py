@@ -65,7 +65,7 @@ class GlobalContext():
         self.print_bytes = False
         self.raw_type = None
         self.print_data = False
-        self.capstone_string = False
+        self.capstone_string = 0 # See lib.ui.visual.main_cmd_inst_output
 
         # Built objects
         self.dis = None # Disassembler

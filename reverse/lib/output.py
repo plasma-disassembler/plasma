@@ -420,7 +420,7 @@ class OutputAbs():
     def _imm(self, imm, op_size, hexa, section=None, print_data=True,
              force_dont_print_data=False):
 
-        if self.gctx.capstone_string:
+        if self.gctx.capstone_string != 0:
             hexa = True
 
         label_printed = self._label(imm, print_colon=False)
@@ -561,7 +561,12 @@ class OutputAbs():
         # if i.address in self.ctx.gph.link_out:
             # self._add(hex(self.ctx.gph.link_out[i.address][BRANCH_NEXT]))
 
-        modified = self._sub_asm_inst(i, tab, prefix)
+        if self.gctx.capstone_string == 2:
+            self._add(i.mnemonic)
+            self._add(" ")
+            self._add(i.op_str)
+        else:
+            self._sub_asm_inst(i, tab, prefix)
 
         self._inline_comment(i)
         self._new_line()

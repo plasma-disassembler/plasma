@@ -184,7 +184,13 @@ class Visual(Window):
 
 
     def main_cmd_inst_output(self, h, w):
-        self.gctx.capstone_string = not self.gctx.capstone_string
+        # 0 : mnemonics are replaced by something more readdable
+        # 1 : print mnemonic but with analyzed oprerands
+        # 2 : original capstone string
+        if self.gctx.capstone_string == 2:
+            self.gctx.capstone_string = 0
+        else:
+            self.gctx.capstone_string += 1
         self.reload_output(h)
         return True
 
