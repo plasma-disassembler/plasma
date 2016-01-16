@@ -24,7 +24,8 @@ from reverse.lib.custom_colors import *
 from reverse.lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color, bold
 from reverse.lib.fileformat.binary import T_BIN_RAW
-from reverse.lib.memory import MEM_CODE, MEM_UNK, MEM_FUNC
+from reverse.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
+                                MEM_DWORD, MEM_QWORD, MEM_ASCII)
 from reverse.lib.disassembler import FUNC_FLAG_NORETURN
 
 
@@ -159,14 +160,33 @@ class OutputAbs():
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
-    def _db(self, by):
-        self._retcall(".db")
+    def _data(self, string):
+        self.token_lines[-1].append((string, COLOR_DATA.val, COLOR_DATA.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
+
+    def _word(self, by, size):
+        if size == 1:
+            self._retcall(".db")
+        elif size == 2:
+            self._data(".dw")
+        elif size == 4:
+            self._data(".dd")
+        elif size == 8:
+            self._data(".dq")
         if by is None:
             self._add(" ?")
         else:
             self._add(" %0.2x" % by)
-            if by in BYTES_PRINTABLE_SET:
-                self._string("  '%c'" % by)
+            if size == 1 and by in BYTES_PRINTABLE_SET:
+                if by == 9:
+                    self._string("  '\\t'")
+                if by == 13:
+                    self._string("  '\\r'")
+                if by == 10:
+                    self._string("  '\\n'")
+                else:
+                    self._string("  '%c'" % by)
 
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
@@ -175,12 +195,16 @@ class OutputAbs():
 
         ty = self._dis.mem.get_type(ad)
 
+        # TODO : fuse with disassembler.get_symbol
+
         if ad in self.gctx.db.reverse_symbols:
             l = str(self.gctx.db.reverse_symbols[ad])
             col = COLOR_SYMBOL.val
             is_sym = True
         elif ad not in self._dis.xrefs and ty != MEM_FUNC:
             return False
+
+        # If ad not in xrefs, don't print a symbol name
 
         if ty == MEM_FUNC:
             if l is None:
@@ -202,6 +226,20 @@ class OutputAbs():
                 l = "unk_%x" % ad
             col = COLOR_UNK.val
 
+        elif MEM_BYTE <= ty <= MEM_ASCII:
+            if l is None:
+                if ty == MEM_BYTE:
+                    l = "byte_%x" % ad
+                elif ty == MEM_WORD:
+                    l = "word_%x" % ad
+                elif ty == MEM_DWORD:
+                    l = "dword_%x" % ad
+                elif ty == MEM_QWORD:
+                    l = "qword_%x" % ad
+                elif ty == MEM_ASCII:
+                    l = "asc_%x" % ad
+            col = COLOR_DATA.val
+
         elif not is_sym:
             return False
 
@@ -218,8 +256,8 @@ class OutputAbs():
                         col = COLOR_ADDR.val
                     else:
                         col = COLOR_SYMBOL.val
-                else:
-                    col = 0
+                # else:
+                    # col = 0
                     
         if nocolor:
             col = 0
@@ -231,7 +269,7 @@ class OutputAbs():
         else:
             self._tabs(tab)
 
-            if ty == MEM_FUNC:
+            if ty == MEM_FUNC and ad in self.gctx.dis.functions:
                 flags = self.gctx.dis.functions[ad][1]
                 if flags & FUNC_FLAG_NORETURN:
                     self._comment("__noreturn__ ")
@@ -386,8 +424,10 @@ class OutputAbs():
 
         if label_printed:
             ty = self._dis.mem.get_type(imm)
-            # ty == -1 : from the terminal (with -x) there are no xrefs
-            if imm in self._dis.xrefs and ty != MEM_UNK or ty == -1:
+            # ty == -1 : from the terminal (with -x) there are no xrefs if
+            # the file was loaded without a database.
+            if imm in self._dis.xrefs and ty != MEM_UNK and \
+                    ty != MEM_ASCII or ty == -1:
                 return True
 
         if section is None:

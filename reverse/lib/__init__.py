@@ -24,7 +24,7 @@ import reverse.lib.utils
 import reverse.lib.colors
 from reverse import lib
 from reverse.lib.database import Database
-from reverse.lib.disassembler import Disassembler, RESERVED_PREFIX, NB_LINES_TO_DISASM
+from reverse.lib.disassembler import Disassembler, NB_LINES_TO_DISASM
 from reverse.lib.utils import die, error, debug__
 from reverse.lib.generate_ast import generate_ast
 from reverse.lib.exceptions import ExcArch, ExcFileFormat, ExcIfelse, ExcPEFail
@@ -252,8 +252,8 @@ class AddrContext():
 
         is_hexa = entry.startswith("0x")
 
-        if not is_hexa and entry[:4] in RESERVED_PREFIX:
-            entry = entry[4:]
+        if not is_hexa and self.gctx.dis.has_reserved_prefix(entry):
+            entry = entry[entry.index("_") + 1:]
             is_hexa = True
 
         if is_hexa:

@@ -202,6 +202,8 @@ class Console():
                 "Visual mode",
                 "Shortcuts:",
                 "c       create code",
+                "b/w/d/Q create byte/word/dword/qword",
+                "a       create ascii string",
                 "p       create function",
                 "x       show xrefs",
                 "r       rename",
@@ -209,7 +211,7 @@ class Console():
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
-                "q       quit",
+                "Q       quit",
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "%       goto next bracket",
                 "*       highlight current word (ctrl-k to clear)",
@@ -737,6 +739,9 @@ class Console():
 
         # Save new symbol
         try:
+            if self.gctx.dis.has_reserved_prefix(args[1]):
+                error("this is a reserved prefix")
+                return
             addr = int(args[2], 16)
             self.gctx.db.modified = True
             self.gctx.dis.add_symbol(addr, args[1])

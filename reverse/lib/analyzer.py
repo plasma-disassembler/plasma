@@ -22,7 +22,7 @@ from queue import Queue
 
 from reverse import lib
 from reverse.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
-from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK
+from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII
 
 
 FUNC_FLAG_NORETURN = 1
@@ -59,7 +59,7 @@ class Analyzer(threading.Thread):
     def __add_prefetch(self, addr_set, inst):
         if self.dis.arch == self.CS_ARCH_MIPS:
             prefetch = self.dis.lazy_disasm(inst.address + inst.size)
-            addr_set[prefetch.address] = prefetch.size
+            addr_set[prefetch.address] = prefetch
             return prefetch
         return None
 
@@ -77,10 +77,13 @@ class Analyzer(threading.Thread):
 
 
     def run(self):
-        from capstone import CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS
+        # TODO: find a better solution, globally ? The problem
+        # is that I want the --help fast as possible.
+        from capstone import CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS, CS_ARCH_X86
         self.CS_OP_IMM = CS_OP_IMM
         self.CS_OP_MEM = CS_OP_MEM
         self.CS_ARCH_MIPS = CS_ARCH_MIPS
+        self.CS_ARCH_X86 = CS_ARCH_X86
 
         self.reset()
 
@@ -105,20 +108,34 @@ class Analyzer(threading.Thread):
 
     def analyze_operands(self, i):
         b = self.dis.binary
+        has_op_size = self.dis.arch == self.CS_ARCH_X86
+        default_size = 4 # for ARM and MIPS
+
         for op in i.operands:
             if op.type == self.CS_OP_IMM and b.get_section(op.value.imm) is not None:
-                self.dis.add_xref(i.address, op.value.imm)
-                if not self.dis.mem.exists(op.value.imm):
-                    self.dis.mem.add(op.value.imm, 1, MEM_UNK)
-
+                val = op.value.imm
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0 and \
                     b.get_section(op.mem.disp) is not None:
-                self.dis.add_xref(i.address, op.mem.disp)
-                if not self.dis.mem.exists(op.mem.disp):
-                    self.dis.mem.add(op.mem.disp, 1, MEM_UNK)
+                val = op.mem.disp
+            else:
+                val = None
+            # TODO: analyze [rip + DISP]
+
+            if val is not None:
+                self.dis.add_xref(i.address, val)
+                if not self.dis.mem.exists(val):
+
+                    # Check if this is an address to a string
+                    sz = b.is_string(val)
+                    if sz != 0:
+                        ty = MEM_ASCII
+                    else:
+                        sz = op.size if has_op_size else default_size
+                        ty = self.dis.mem.find_type(sz)
+
+                    self.dis.mem.add(val, sz, ty)
 
 
-    # inner_code : ad -> instruction size
     def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
         functions = self.dis.functions
 
@@ -137,11 +154,12 @@ class Analyzer(threading.Thread):
         else:
             func_id = -1
 
-        for ad, size in inner_code.items():
+        for ad, inst in inner_code.items():
+            self.analyze_operands(inst)
             if ad in functions:
-                mem.add(ad, size, MEM_FUNC, func_id)
+                mem.add(ad, inst.size, MEM_FUNC, func_id)
             else:
-                mem.add(ad, size, MEM_CODE, func_id)
+                mem.add(ad, inst.size, MEM_CODE, func_id)
 
 
     def is_noreturn(self, ad, entry):
@@ -158,7 +176,7 @@ class Analyzer(threading.Thread):
         self.pending.add(entry)
 
         mem = self.dis.mem
-        inner_code = {} # ad -> instruction size
+        inner_code = {} # ad -> capstone instruction
 
         is_pe_import = False
 
@@ -173,7 +191,7 @@ class Analyzer(threading.Thread):
                 if inst is not None:
                     ptr = self.dis.binary.pe_reverse_stripped(self.dis, inst)
                     if ptr != -1:
-                        inner_code[inst.address] = inst.size
+                        inner_code[inst.address] = inst
                         flags = self.import_flags(ptr)
 
         if not is_pe_import and not inner_code:
@@ -209,8 +227,7 @@ class Analyzer(threading.Thread):
             if ad in inner_code:
                 continue
 
-            self.analyze_operands(inst)
-            inner_code[ad] = inst.size
+            inner_code[ad] = inst
 
             if is_ret(inst):
                 self.__add_prefetch(inner_code, inst)

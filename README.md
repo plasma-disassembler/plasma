@@ -55,7 +55,7 @@ This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
 
 It supports :
 
-* definition of code/functions
+* definition of code/functions/data/ascii
 * inline comments
 * xrefs
 * symbols renaming
@@ -64,7 +64,7 @@ TODO :
 
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
-* create data/arrays
+* arrays
 * stack variables
 * structure, enum
 * improve analyzer performances

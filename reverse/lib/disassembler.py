@@ -27,14 +27,16 @@ from reverse.lib.fileformat.binary import Binary, T_BIN_PE
 from reverse.lib.colors import (color_addr, color_symbol,
                                 color_section, color_string)
 from reverse.lib.exceptions import ExcArch
-from reverse.lib.memory import Memory, MEM_UNK, MEM_FUNC, MEM_CODE
+from reverse.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
+                                MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII)
 from reverse.lib.analyzer import FUNC_FLAG_NORETURN
 
 
 NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
-RESERVED_PREFIX = ["loc_", "sub_", "unk_"]
+RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
+                   "dword_", "qword_", "asc_"]
 
 
 class Jmptable():
@@ -136,6 +138,13 @@ class Disassembler():
                 self.xrefs[to_ad] = [from_ad]
 
 
+    def rm_xrefs_range(self, start, end):
+        while start < end:
+            if start in self.xrefs:
+                del self.xrefs[start]
+            start += 1
+
+
     def add_symbol(self, ad, name):
         if name in self.binary.symbols:
             last = self.binary.symbols[name]
@@ -152,6 +161,13 @@ class Disassembler():
             self.mem.add(ad, 1, MEM_UNK)
 
         return name
+
+
+    def has_reserved_prefix(self, name):
+        for n in RESERVED_PREFIX:
+            if name.startswith(n):
+                return True
+        return False
 
 
     # TODO: create a function in SectionAbs
@@ -251,8 +267,18 @@ class Disassembler():
                 return "sub_%x" % ad
             if ty == MEM_CODE:
                 return "loc_%x" % ad
+            if ty == MEM_DWORD:
+                return "dword_%x" % ad
+            if ty == MEM_BYTE:
+                return "byte_%x" % ad
+            if ty == MEM_QWORD:
+                return "qword_%x" % ad
             if ty == MEM_UNK:
                 return "unk_%x" % ad
+            if ty == MEM_WORD:
+                return "word_%x" % ad
+            if ty == MEM_ASCII:
+                return "asc_%x" % ad
         return s
 
 
@@ -294,9 +320,11 @@ class Disassembler():
             while ((l < lines and until == -1) or (ad < until and until != -1)) \
                     and ad <= s.end:
 
+                ty = self.mem.get_type(ad)
+
                 # A PE import should not be displayed as a subroutine
                 if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
-                        and self.mem.is_code(ad):
+                        and (ty == MEM_FUNC or ty == MEM_CODE):
 
                     is_func = ad in self.functions and self.functions[ad][0] != -1
 
@@ -325,12 +353,23 @@ class Disassembler():
 
                     ad += i.size
 
+                elif ty == MEM_ASCII:
+                    o._label_and_address(ad)
+                    o.set_line(ad)
+                    sz = self.mem.get_size(ad)
+                    buf = self.binary.get_string(ad, sz + 1)
+                    o._string(buf)
+                    o._add(", 0")
+                    o._new_line()
+                    ad += sz + 1
+
                 else:
                     o._label_and_address(ad)
                     o.set_line(ad)
-                    o._db(s.read_byte(ad))
+                    sz = self.mem.get_size_from_type(ty)
+                    o._word(s.read_int(ad, sz), sz)
                     o._new_line()
-                    ad += 1
+                    ad += sz
 
                 l += 1
 
@@ -365,7 +404,17 @@ class Disassembler():
         l = 0
         s = self.binary.get_section(ad)
 
-        while l < NB_LINES_TO_DISASM:
+        # TODO: because we don't know known addresses before, it will be
+        # necessary to add in memory.py an offset to tell that there is
+        # a known address at n previous bytes. It will allows to not set
+        # an offset on each byte (the database will increase too much).
+        #
+        # For example if we have a string with 1025 chars, this loop will
+        # not works because it will stop just after the known address, and the
+        # string will be not printed as a string : there will be 1024 lines
+        # instead of 1 line.
+
+        while l < 1024:
             if self.mem.is_code(ad):
                 size = self.mem.mm[ad][0]
                 l += 1

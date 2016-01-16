@@ -20,7 +20,7 @@
 import bisect
 from time import time
 
-from reverse.lib.utils import debug__, print_no_end, get_char
+from reverse.lib.utils import debug__, print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color_section
 from reverse.lib.exceptions import ExcFileFormat
 
@@ -245,10 +245,11 @@ class Binary(object):
 
         c = 0
         i = 0
-        while i < max_data_size and \
-              off < len(data):
+        while i < max_data_size and off < len(data):
             c = data[off]
             if c == 0:
+                break
+            if c not in BYTES_PRINTABLE_SET:
                 break
             txt.append(get_char(c))
             off += 1
@@ -258,6 +259,32 @@ class Binary(object):
             txt.append("...")
 
         return ''.join(txt) + '"'
+
+
+    def is_string(self, addr, min_bytes=2):
+        s = self.get_section(addr)
+        if s is None:
+            return ""
+
+        data = s.data
+        off = addr - s.start
+        n = 0
+        c = 0
+        while off < len(data):
+            c = data[off]
+            if c == 0:
+                break
+            if c in BYTES_PRINTABLE_SET:
+                n += 1
+            else:
+                break
+            off += 1
+
+        # consider this is a string when there are more than 2 chars
+        # with a null byte
+        if c == 0 and n >= min_bytes:
+            return n
+        return 0
 
 
     # Wrappers to the real class

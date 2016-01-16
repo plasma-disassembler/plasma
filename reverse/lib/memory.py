@@ -20,6 +20,11 @@
 MEM_UNK = 1
 MEM_CODE = 2
 MEM_FUNC = 3
+MEM_BYTE = 4
+MEM_WORD = 5
+MEM_DWORD = 6
+MEM_QWORD = 7
+MEM_ASCII = 8
 
 
 class Memory():
@@ -33,10 +38,39 @@ class Memory():
         #
 
         self.mm = {}
+        self.size_lookup = {
+            MEM_BYTE: 1,
+            MEM_WORD: 2,
+            MEM_DWORD: 4,
+            MEM_QWORD: 8,
+        }
+        self.rev_size_lookup = {
+            1: MEM_BYTE,
+            2: MEM_WORD,
+            4: MEM_DWORD,
+            8: MEM_QWORD,
+        }
 
 
     def add(self, ad, size, ty, val=0):
         self.mm[ad] = [size, ty, val]
+        if ty == MEM_UNK:
+            return
+        # don't call rm_range, add will be called many times
+        st = ad
+        end = ad + size
+        ad += 1
+        while ad < end:
+            if ad in self.mm:
+                del self.mm[ad]
+            ad += 1
+
+
+    def rm_range(self, ad, end):
+        while ad < end:
+            if ad in self.mm:
+                del self.mm[ad]
+            ad += 1
 
 
     def type(self, ad, ty):
@@ -62,6 +96,13 @@ class Memory():
         return False
 
 
+    def is_data(self, ad):
+        if ad in self.mm:
+            ty = self.mm[ad][1]
+            return MEM_BYTE <= ty <= MEM_QWORD
+        return False
+
+
     def get_func_id(self, ad):
         if not self.is_code(ad):
             return -1
@@ -76,3 +117,17 @@ class Memory():
 
     def exists(self, ad):
         return ad in self.mm
+
+
+    def get_size_from_type(self, ty):
+        return self.size_lookup.get(ty, 1)
+
+
+    def get_size(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][0]
+        return False
+
+
+    def find_type(self, sz):
+        return self.rev_size_lookup.get(sz, 1)

@@ -23,10 +23,9 @@ from queue import Queue
 import traceback
 
 from reverse.lib.custom_colors import *
-from reverse.lib.disassembler import RESERVED_PREFIX
-
 from reverse.lib.ui.window import *
 from reverse.lib.ui.inlineed import InlineEd
+from reverse.lib.memory import MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII
 
 
 class Visual(Window):
@@ -56,13 +55,19 @@ class Visual(Window):
             b"\n": self.main_cmd_enter,
             b"\x1b": self.main_cmd_escape,
             b"\t": self.main_cmd_switch_mode,
-            b"c": self.main_cmd_code,
-            b"p": self.main_cmd_set_function,
             b"{": self.main_k_prev_paragraph,
             b"}": self.main_k_next_paragraph,
             b"x": self.main_cmd_xrefs,
             b"r": self.main_cmd_rename,
             b"I": self.main_cmd_inst_output,
+
+            b"c": self.main_cmd_set_code,
+            b"p": self.main_cmd_set_function,
+            b"b": self.main_cmd_set_byte,
+            b"w": self.main_cmd_set_word,
+            b"d": self.main_cmd_set_dword,
+            b"Q": self.main_cmd_set_qword,
+            b"a": self.main_cmd_set_ascii,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -154,9 +159,9 @@ class Visual(Window):
 
         word = self.get_word_under_cursor()
 
-        if word[:4] in RESERVED_PREFIX:
+        if self.dis.has_reserved_prefix(word):
             try:
-                ad = int(word[4:], 16)
+                ad = int(word[word.index("_") + 1:], 16)
             except:
                 return True
             word = ""
@@ -167,7 +172,7 @@ class Visual(Window):
 
         text = w.open_textbox(scr, word)
 
-        if word == text or not text or text[:4] in RESERVED_PREFIX:
+        if word == text or not text or self.dis.has_reserved_prefix(text):
             return True
 
         self.dis.add_symbol(ad, text)
@@ -568,7 +573,7 @@ class Visual(Window):
         self.exec_disasm(self.first_addr, h, dump_until=self.last_addr)
 
 
-    def main_cmd_code(self, h, w):
+    def main_cmd_set_code(self, h, w):
         if self.mode == MODE_DECOMPILE:
             return False
 
@@ -583,6 +588,72 @@ class Visual(Window):
 
         self.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_byte(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        if ad in self.dis.xrefs:
+            self.dis.mem.add(ad, 4, MEM_BYTE)
+        else:
+            # remove byte, not useful to store it in the database
+            self.dis.mem.rm_range(ad, ad + 1)
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_word(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        self.dis.mem.add(ad, 2, MEM_WORD)
+        self.dis.rm_xrefs_range(ad + 1, ad + 2)
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_dword(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        self.dis.mem.add(ad, 4, MEM_DWORD)
+        self.dis.rm_xrefs_range(ad + 1, ad + 4)
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_qword(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        self.dis.mem.add(ad, 8, MEM_QWORD)
+        self.dis.rm_xrefs_range(ad + 1, ad + 8)
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_ascii(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        sz = self.dis.binary.is_string(ad, 1)
+        if not sz:
+            return False
+        self.dis.mem.add(ad, sz, MEM_ASCII)
+        self.dis.rm_xrefs_range(ad + 1, ad + sz)
         self.reload_output(h)
         self.gctx.db.modified = True
         return True

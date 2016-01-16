@@ -205,7 +205,6 @@ class Window():
 
             k = self.read_escape_keys()
 
-
             if k in self.mapping:
                 refr = self.mapping[k](h, w)
             elif k.startswith(b"\x1b[M"):
@@ -525,7 +524,7 @@ class Window():
 
     def open_textbox(self, screen, text):
         # TODO : cleanup !!!!!
-        from lib.ui.inlineed import InlineEd
+        from reverse.lib.ui.inlineed import InlineEd
         (h, w) = screen.getmaxyx()
 
         ed = InlineEd(self, h, w, 0, 0, 0, text,
