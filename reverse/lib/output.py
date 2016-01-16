@@ -177,16 +177,19 @@ class OutputAbs():
         if by is None:
             self._add(" ?")
         else:
-            self._add(" %0.2x" % by)
-            if size == 1 and by in BYTES_PRINTABLE_SET:
-                if by == 9:
-                    self._string("  '\\t'")
-                if by == 13:
-                    self._string("  '\\r'")
-                if by == 10:
-                    self._string("  '\\n'")
-                else:
-                    self._string("  '%c'" % by)
+            if size == 1:
+                self._add(" %0.2x" % by)
+                if by in BYTES_PRINTABLE_SET:
+                    if by == 9:
+                        self._string("  '\\t'")
+                    if by == 13:
+                        self._string("  '\\r'")
+                    if by == 10:
+                        self._string("  '\\n'")
+                    else:
+                        self._string("  '%c'" % by)
+            else:
+                self._add(" " + hex(by))
 
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
