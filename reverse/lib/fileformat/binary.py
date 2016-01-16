@@ -255,8 +255,11 @@ class Binary(object):
             off += 1
             i += 1
 
-        if c != 0 and off != len(data):
-            txt.append("...")
+        if i == max_data_size:
+            if c != 0:
+                txt.append("...")
+        elif c != 0:
+            return ""
 
         return ''.join(txt) + '"'
 

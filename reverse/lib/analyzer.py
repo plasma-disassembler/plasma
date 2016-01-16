@@ -55,9 +55,33 @@ class Analyzer(threading.Thread):
         self.db = gctx.db
         self.ARCH_UTILS = self.dis.load_arch_module().utils
 
+        # TODO: find a better solution, globally ? The problem
+        # is that I want the --help fast as possible.
+        from capstone import (CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS, CS_ARCH_X86,
+                              CS_MODE_32, CS_MODE_64, CS_ARCH_ARM)
+        self.CS_OP_IMM = CS_OP_IMM
+        self.CS_OP_MEM = CS_OP_MEM
+
+        self.is_mips = self.dis.arch == CS_ARCH_MIPS
+        self.is_x86 = self.dis.arch == CS_ARCH_X86
+        self.is_arm = self.dis.arch == CS_ARCH_ARM
+
+        if self.is_x86:
+            from capstone.x86 import X86_REG_EIP, X86_REG_RIP
+            self.X86_REG_EIP = X86_REG_EIP
+            self.X86_REG_RIP = X86_REG_RIP
+        elif self.is_mips:
+            from capstone.mips import MIPS_REG_GP
+            self.MIPS_REG_GP = MIPS_REG_GP
+        elif self.is_arm:
+            from capstone.arm import ARM_REG_PC
+            self.ARM_REG_PC = ARM_REG_PC
+
+        self.has_op_size = self.dis.arch == CS_ARCH_X86
+
 
     def __add_prefetch(self, addr_set, inst):
-        if self.dis.arch == self.CS_ARCH_MIPS:
+        if self.is_arm:
             prefetch = self.dis.lazy_disasm(inst.address + inst.size)
             addr_set[prefetch.address] = prefetch
             return prefetch
@@ -77,14 +101,6 @@ class Analyzer(threading.Thread):
 
 
     def run(self):
-        # TODO: find a better solution, globally ? The problem
-        # is that I want the --help fast as possible.
-        from capstone import CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS, CS_ARCH_X86
-        self.CS_OP_IMM = CS_OP_IMM
-        self.CS_OP_MEM = CS_OP_MEM
-        self.CS_ARCH_MIPS = CS_ARCH_MIPS
-        self.CS_ARCH_X86 = CS_ARCH_X86
-
         self.reset()
 
         while 1:
@@ -108,32 +124,55 @@ class Analyzer(threading.Thread):
 
     def analyze_operands(self, i):
         b = self.dis.binary
-        has_op_size = self.dis.arch == self.CS_ARCH_X86
         default_size = 4 # for ARM and MIPS
 
         for op in i.operands:
             if op.type == self.CS_OP_IMM and b.get_section(op.value.imm) is not None:
                 val = op.value.imm
-            elif op.type == self.CS_OP_MEM and op.mem.disp != 0 and \
-                    b.get_section(op.mem.disp) is not None:
-                val = op.mem.disp
+            elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
+
+                if self.is_x86:
+                    if op.mem.segment != 0 or op.mem.index != 0:
+                        continue
+                    if op.mem.base != 0:
+                        if op.mem.base != self.X86_REG_EIP and \
+                                op.mem.base != self.X86_REG_RIP:
+                            continue
+                        val = i.address + i.size + op.mem.disp
+                    else:
+                        val = op.mem.disp
+
+                elif self.is_arm:
+                    if op.mem.index != 0:
+                        continue
+                    if op.mem.base != 0:
+                        if op.mem.base != self.ARM_REG_PC:
+                            continue
+                        val = i.address + i.size * 2 + op.mem.disp
+                    else:
+                        val = op.mem.disp
+
+                elif self.is_mips:
+                    # TODO: with $gp, if $gp is set to another value we need to
+                    # make again an analysis.
+                    val = op.mem.disp
             else:
-                val = None
+                continue
+
             # TODO: analyze [rip + DISP]
 
-            if val is not None:
-                self.dis.add_xref(i.address, val)
-                if not self.dis.mem.exists(val):
+            self.dis.add_xref(i.address, val)
+            if not self.dis.mem.exists(val):
 
-                    # Check if this is an address to a string
-                    sz = b.is_string(val)
-                    if sz != 0:
-                        ty = MEM_ASCII
-                    else:
-                        sz = op.size if has_op_size else default_size
-                        ty = self.dis.mem.find_type(sz)
+                # Check if this is an address to a string
+                sz = b.is_string(val)
+                if sz != 0:
+                    ty = MEM_ASCII
+                else:
+                    sz = op.size if self.has_op_size else default_size
+                    ty = self.dis.mem.find_type(sz)
 
-                    self.dis.mem.add(val, sz, ty)
+                self.dis.mem.add(val, sz, ty)
 
 
     def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
