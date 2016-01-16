@@ -25,7 +25,7 @@ from reverse.lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color, bold
 from reverse.lib.fileformat.binary import T_BIN_RAW
 from reverse.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
-                                MEM_DWORD, MEM_QWORD, MEM_ASCII)
+                                MEM_DWORD, MEM_QWORD, MEM_ASCII, MEM_OFFSET)
 from reverse.lib.disassembler import FUNC_FLAG_NORETURN
 
 
@@ -165,7 +165,15 @@ class OutputAbs():
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
-    def _word(self, by, size):
+    def _off_not_found(self, off):
+        s = hex(off)
+        self.token_lines[-1].append((s, COLOR_OFFSET_NOT_FOUND.val,
+                                     COLOR_OFFSET_NOT_FOUND.bold))
+        self.lines[-1].append(s)
+        self.curr_index += len(s)
+
+
+    def _data_prefix(self, size):
         if size == 1:
             self._retcall(".db")
         elif size == 2:
@@ -174,6 +182,10 @@ class OutputAbs():
             self._data(".dd")
         elif size == 8:
             self._data(".dq")
+
+
+    def _word(self, by, size):
+        self._data_prefix(size)
         if by is None:
             self._add(" ?")
         else:
@@ -229,7 +241,7 @@ class OutputAbs():
                 l = "unk_%x" % ad
             col = COLOR_UNK.val
 
-        elif MEM_BYTE <= ty <= MEM_ASCII:
+        elif MEM_BYTE <= ty <= MEM_OFFSET:
             if l is None:
                 if ty == MEM_BYTE:
                     l = "byte_%x" % ad
@@ -241,6 +253,8 @@ class OutputAbs():
                     l = "qword_%x" % ad
                 elif ty == MEM_ASCII:
                     l = "asc_%x" % ad
+                elif ty == MEM_OFFSET:
+                    l = "off_%x" % ad
             col = COLOR_DATA.val
 
         elif not is_sym:

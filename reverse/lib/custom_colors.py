@@ -1,4 +1,4 @@
-VERSION = 1.4
+VERSION = 1.5
 
 class COLOR:
     def __init__(self, val, bold):
@@ -20,3 +20,4 @@ COLOR_UNK            = COLOR(154, False)
 COLOR_DATA           = COLOR(230, False)
 # COLOR_STRING         = COLOR(144, False)
 COLOR_STRING         = COLOR(154, False)
+COLOR_OFFSET_NOT_FOUND = COLOR(196, False)

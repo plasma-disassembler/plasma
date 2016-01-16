@@ -28,7 +28,8 @@ from reverse.lib.colors import (color_addr, color_symbol,
                                 color_section, color_string)
 from reverse.lib.exceptions import ExcArch
 from reverse.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
-                                MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII)
+                                MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII,
+                                MEM_OFFSET)
 from reverse.lib.analyzer import FUNC_FLAG_NORETURN
 
 
@@ -36,7 +37,7 @@ NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_"]
+                   "dword_", "qword_", "asc_", "off_"]
 
 
 class Jmptable():
@@ -227,7 +228,12 @@ class Disassembler():
         for x in ctx.gctx.dis.xrefs[ad]:
             s = self.binary.get_section(x)
 
-            if self.mem.is_code(x):
+            ty = self.mem.get_type(x)
+
+            # A PE import should not be displayed as a subroutine
+            if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
+                   and (ty == MEM_FUNC or ty == MEM_CODE):
+
                 func_id = self.mem.get_func_id(x)
                 if func_id != -1:
                     fad = self.func_id[func_id]
@@ -242,8 +248,29 @@ class Disassembler():
 
                 i = self.lazy_disasm(x, s.start)
                 o._asm_inst(i)
+
+            elif ty == MEM_OFFSET:
+                o._address(x)
+                o.set_line(x)
+                sz = self.mem.get_size(x)
+                off = s.read_int(x, sz)
+                if off is None:
+                    continue
+                off_sect = self.binary.get_section(off)
+                o._data_prefix(sz)
+                o._add(" ")
+                if off_sect is None:
+                    o._off_not_found(off)
+                else:
+                    o._imm(off, sz, True, section=off_sect, print_data=False,
+                           force_dont_print_data=True)
+                o._new_line()
+
             else:
                 o._address(x)
+                o.set_line(x)
+                sz = self.mem.get_size_from_type(ty)
+                o._word(s.read_int(x, sz), sz)
                 o._new_line()
 
         # remove the last empty line
@@ -279,6 +306,8 @@ class Disassembler():
                 return "word_%x" % ad
             if ty == MEM_ASCII:
                 return "asc_%x" % ad
+            if ty == MEM_OFFSET:
+                return "off_%x" % ad
         return s
 
 
@@ -352,6 +381,24 @@ class Disassembler():
                         o._new_line()
 
                     ad += i.size
+
+                elif ty == MEM_OFFSET:
+                    o._label_and_address(ad)
+                    o.set_line(ad)
+                    sz = self.mem.get_size(ad)
+                    off = s.read_int(ad, sz)
+                    if off is None:
+                        continue
+                    off_sect = self.binary.get_section(off)
+                    o._data_prefix(sz)
+                    o._add(" ")
+                    if off_sect is None:
+                        o._off_not_found(off)
+                    else:
+                        o._imm(off, sz, True, section=off_sect, print_data=False,
+                               force_dont_print_data=True)
+                    o._new_line()
+                    ad += sz
 
                 elif ty == MEM_ASCII:
                     o._label_and_address(ad)

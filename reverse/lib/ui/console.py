@@ -205,6 +205,7 @@ class Console():
                 "b/w/d/Q create byte/word/dword/qword",
                 "a       create ascii string",
                 "p       create function",
+                "o       set [d|q]word as an offset",
                 "x       show xrefs",
                 "r       rename",
                 "I       switch to traditional instruction string output",

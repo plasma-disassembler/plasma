@@ -25,7 +25,8 @@ import traceback
 from reverse.lib.custom_colors import *
 from reverse.lib.ui.window import *
 from reverse.lib.ui.inlineed import InlineEd
-from reverse.lib.memory import MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII
+from reverse.lib.memory import (MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD,
+                                MEM_ASCII, MEM_OFFSET, MEM_UNK)
 
 
 class Visual(Window):
@@ -68,6 +69,7 @@ class Visual(Window):
             b"d": self.main_cmd_set_dword,
             b"Q": self.main_cmd_set_qword,
             b"a": self.main_cmd_set_ascii,
+            b"o": self.main_cmd_set_offset,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -660,6 +662,36 @@ class Visual(Window):
             return False
         self.dis.mem.add(ad, sz, MEM_ASCII)
         self.dis.rm_xrefs_range(ad + 1, ad + sz)
+        self.reload_output(h)
+        self.gctx.db.modified = True
+        return True
+
+
+    def main_cmd_set_offset(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+
+        ty = self.dis.mem.get_type(ad)
+        if ty == -1 or ty < MEM_WORD or ty > MEM_QWORD:
+            return False
+
+        sz = self.dis.mem.get_size(ad)
+
+        s = self.dis.binary.get_section(ad)
+        off = s.read_int(ad, sz)
+        if off is None:
+            return False
+
+        s = self.dis.binary.get_section(off)
+        if s is not None:
+            self.dis.add_xref(ad, off)
+            if not self.dis.mem.exists(off):
+                self.dis.mem.add(off, 1, MEM_UNK)
+
+        self.dis.mem.add(ad, sz, MEM_OFFSET)
+
         self.reload_output(h)
         self.gctx.db.modified = True
         return True

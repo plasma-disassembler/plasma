@@ -25,6 +25,7 @@ MEM_WORD = 5
 MEM_DWORD = 6
 MEM_QWORD = 7
 MEM_ASCII = 8
+MEM_OFFSET = 9
 
 
 class Memory():
