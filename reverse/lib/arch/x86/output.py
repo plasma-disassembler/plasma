@@ -110,12 +110,12 @@ class Output(OutputAbs):
                     ad = i.address + i.size + mm.disp
                     section = self._binary.get_section(ad)
 
-                    if section is not None:
-                        val = section.read_int(ad, op.size)
-                        if self.is_label(val):
-                            self._imm(val, 0, True, section=section,
-                                      force_dont_print_data=force_dont_print_data)
-                            return True
+                    # if section is not None:
+                        # val = section.read_int(ad, op.size)
+                        # if self.is_label(val):
+                            # self._imm(val, 0, True, section=section,
+                                      # force_dont_print_data=force_dont_print_data)
+                            # return True
 
                     if show_deref:
                         self._add("*(")
