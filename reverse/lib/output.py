@@ -194,9 +194,9 @@ class OutputAbs():
                 if by in BYTES_PRINTABLE_SET:
                     if by == 9:
                         self._string("  '\\t'")
-                    if by == 13:
+                    elif by == 13:
                         self._string("  '\\r'")
-                    if by == 10:
+                    elif by == 10:
                         self._string("  '\\n'")
                     else:
                         self._string("  '%c'" % by)
