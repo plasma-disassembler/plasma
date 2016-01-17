@@ -129,6 +129,7 @@ class Analyzer(threading.Thread):
         for op in i.operands:
             if op.type == self.CS_OP_IMM and b.get_section(op.value.imm) is not None:
                 val = op.value.imm
+
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
 
                 if self.is_x86:
@@ -159,8 +160,6 @@ class Analyzer(threading.Thread):
             else:
                 continue
 
-            # TODO: analyze [rip + DISP]
-
             self.dis.add_xref(i.address, val)
             if not self.dis.mem.exists(val):
 
@@ -170,7 +169,10 @@ class Analyzer(threading.Thread):
                     ty = MEM_ASCII
                 else:
                     sz = op.size if self.has_op_size else default_size
-                    ty = self.dis.mem.find_type(sz)
+                    if op.type == self.CS_OP_MEM:
+                        ty = self.dis.mem.find_type(sz)
+                    else:
+                        ty = MEM_UNK
 
                 self.dis.mem.add(val, sz, ty)
 
