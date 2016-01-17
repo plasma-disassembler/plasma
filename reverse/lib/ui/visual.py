@@ -708,9 +708,12 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
 
-        # TODO: check if the address is not already in a function
-
         ad = self.output.line_addr[line]
+
+        if self.gctx.dis.mem.get_func_id(ad) != -1:
+            self.status_bar("error: already in a function", h, True)
+            return False
+
         self.analyzer.msg.put((ad, True, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
         self.reload_output(h)
