@@ -127,7 +127,7 @@ class Analyzer(threading.Thread):
         default_size = 4 # for ARM and MIPS
 
         for op in i.operands:
-            if op.type == self.CS_OP_IMM and b.get_section(op.value.imm) is not None:
+            if op.type == self.CS_OP_IMM:
                 val = op.value.imm
 
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
@@ -152,6 +152,9 @@ class Analyzer(threading.Thread):
                     # make again an analysis.
                     val = op.mem.disp
             else:
+                continue
+
+            if b.get_section(val) is None:
                 continue
 
             self.dis.add_xref(i.address, val)
