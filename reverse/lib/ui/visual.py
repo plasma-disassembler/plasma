@@ -549,6 +549,9 @@ class Visual(Window):
         while l not in self.output.line_addr and l <= len(self.token_lines):
             l += 1
 
+        if l not in self.output.line_addr:
+            return False
+
         ad = self.output.line_addr[l]
 
         if self.mode == MODE_DUMP:
