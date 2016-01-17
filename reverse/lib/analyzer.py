@@ -133,22 +133,16 @@ class Analyzer(threading.Thread):
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
 
                 if self.is_x86:
-                    if op.mem.segment != 0 or op.mem.index != 0:
+                    if op.mem.segment != 0:
                         continue
-                    if op.mem.base != 0:
-                        if op.mem.base != self.X86_REG_EIP and \
-                                op.mem.base != self.X86_REG_RIP:
-                            continue
+                    if op.mem.index == 0 and (op.mem.base == self.X86_REG_EIP or \
+                            op.mem.base == self.X86_REG_RIP):
                         val = i.address + i.size + op.mem.disp
                     else:
                         val = op.mem.disp
 
                 elif self.is_arm:
-                    if op.mem.index != 0:
-                        continue
-                    if op.mem.base != 0:
-                        if op.mem.base != self.ARM_REG_PC:
-                            continue
+                    if op.mem.index == 0 and op.mem.base == self.ARM_REG_PC:
                         val = i.address + i.size * 2 + op.mem.disp
                     else:
                         val = op.mem.disp
