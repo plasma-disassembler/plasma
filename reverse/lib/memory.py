@@ -58,7 +58,6 @@ class Memory():
         if ty == MEM_UNK:
             return
         # don't call rm_range, add will be called many times
-        st = ad
         end = ad + size
         ad += 1
         while ad < end:

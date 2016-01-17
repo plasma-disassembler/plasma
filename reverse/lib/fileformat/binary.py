@@ -267,7 +267,7 @@ class Binary(object):
     def is_string(self, addr, min_bytes=2):
         s = self.get_section(addr)
         if s is None:
-            return ""
+            return 0
 
         data = s.data
         off = addr - s.start
