@@ -109,9 +109,9 @@ class Analyzer(threading.Thread):
             if isinstance(item, tuple):
                 if self.dis is not None:
                     # Run analysis
-                    (ad, entry_is_func, queue_response) = item
+                    (ad, entry_is_func, force, queue_response) = item
                     self.pending = set() # prevent recursive loops
-                    self.analyze_flow(ad, entry_is_func)
+                    self.analyze_flow(ad, entry_is_func, force)
 
                     # Send a notification
                     if queue_response is not None:
@@ -181,6 +181,13 @@ class Analyzer(threading.Thread):
         functions = self.dis.functions
 
         if entry_is_func:
+
+            if entry in functions:
+                last_end = functions[entry][0]
+                self.dis.end_functions[last_end].remove(entry)
+                if not self.dis.end_functions[last_end]:
+                    del self.dis.end_functions[last_end]
+
             e = max(inner_code) if inner_code else -1
             func_id = self.db.func_id_counter
             functions[entry] = [e, flags]
@@ -202,16 +209,21 @@ class Analyzer(threading.Thread):
             else:
                 mem.add(ad, inst.size, MEM_CODE, func_id)
 
+            if ad in self.dis.binary.reverse_symbols:
+                name = self.dis.binary.reverse_symbols[ad]
+                if name.startswith("ret_") or name.startswith("loop_"):
+                    self.dis.rm_symbol(ad)
+
 
     def is_noreturn(self, ad, entry):
         return ad !=entry and self.dis.functions[ad][1] & FUNC_FLAG_NORETURN
 
 
-    def analyze_flow(self, entry, entry_is_func):
+    def analyze_flow(self, entry, entry_is_func, force):
         if entry in self.pending:
             return
 
-        if entry in self.dis.functions:
+        if not force and entry in self.dis.functions:
             return
 
         self.pending.add(entry)
@@ -323,7 +335,7 @@ class Analyzer(threading.Thread):
                     ad = op.value.imm
 
                     if ad not in functions:
-                        self.analyze_flow(ad, True)
+                        self.analyze_flow(ad, True, False)
 
                     if ad in functions and self.is_noreturn(ad, entry):
                         self.__add_prefetch(inner_code, inst)

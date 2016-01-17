@@ -22,6 +22,7 @@ import sys
 import shlex
 import code
 import traceback
+from queue import Queue
 
 from reverse.lib.colors import color
 from reverse.lib.utils import error, print_no_end
@@ -622,17 +623,17 @@ class Console():
         # Analyze all imports (it checks if functions return or not)
         for ad in self.gctx.db.imports:
             if self.gctx.dis.mem.is_func(ad):
-                self.analyzer.msg.put((ad, True, None))
+                self.analyzer.msg.put((ad, True, True, None))
 
         # Analyze entry point
         ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
-            self.analyzer.msg.put((ep, False, None))
+            self.analyzer.msg.put((ep, False, True, None))
 
         # Analyze static functions
         for ad in self.gctx.db.reverse_symbols:
             if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
-                self.analyzer.msg.put((ad, True, None))
+                self.analyzer.msg.put((ad, True, True, None))
 
 
     def __exec_load(self, args):
@@ -891,10 +892,17 @@ class Console():
         self.gctx.db.modified = True
         self.gctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
 
-        # TODO: it will be better to start from the beginning of the function
-        # end-function may differ.
+        queue_wait_analyzer = Queue()
+
         # Re-run the analyzer
-        self.analyzer.msg.put((inst_addr, False, None))
+        func_id = self.gctx.dis.mem.get_func_id(inst_addr)
+        if func_id == -1:
+            self.analyzer.msg.put((inst_addr, False, True, queue_wait_analyzer))
+        else:
+            ad = self.gctx.dis.func_id[func_id]
+            self.analyzer.msg.put((ad, True, True, queue_wait_analyzer))
+
+        queue_wait_analyzer.get()
 
 
     def __exec_py(self, args):

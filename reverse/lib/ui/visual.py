@@ -594,7 +594,7 @@ class Visual(Window):
         if self.dis.mem.is_code(ad):
             return False
 
-        self.analyzer.msg.put((ad, False, self.queue_wait_analyzer))
+        self.analyzer.msg.put((ad, False, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
         self.reload_output(h)
         self.gctx.db.modified = True
@@ -708,7 +708,7 @@ class Visual(Window):
         # TODO: check if the address is not already in a function
 
         ad = self.output.line_addr[line]
-        self.analyzer.msg.put((ad, True, self.queue_wait_analyzer))
+        self.analyzer.msg.put((ad, True, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
         self.reload_output(h)
         self.gctx.db.modified = True

@@ -73,7 +73,6 @@ TODO :
 FIXME :
 
 * clean PE imports
-* re-run analyzer on the current function after definition of a jmptable + delete wrong labels
 
 ![reverse](/images/visual.png?raw=true)
 

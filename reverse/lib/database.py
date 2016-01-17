@@ -50,7 +50,7 @@ class Database():
 
     def __init_vars(self):
         self.history = []
-        self.symbols = {} # name -> [addr, type]
+        self.symbols = {} # name -> addr
         self.user_inline_comments = {}
         self.internal_inline_comments = {}
         self.user_previous_comments = {}
@@ -68,7 +68,7 @@ class Database():
         # Computed variables
         self.func_id_counter = 0
         self.end_functions = {}
-        self.reverse_symbols = {} # addr -> [name, type]
+        self.reverse_symbols = {} # addr -> name
         self.version = VERSION
 
 

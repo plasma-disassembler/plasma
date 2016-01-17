@@ -37,7 +37,7 @@ NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_", "off_"]
+                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_"]
 
 
 class Jmptable():
@@ -162,6 +162,15 @@ class Disassembler():
             self.mem.add(ad, 1, MEM_UNK)
 
         return name
+
+
+    def rm_symbol(self, ad):
+        if ad in self.binary.reverse_symbols:
+            name = self.binary.reverse_symbols[ad]
+            del self.binary.reverse_symbols[ad]
+
+        if name in self.binary.symbols:
+            del self.binary.symbols[name]
 
 
     def has_reserved_prefix(self, name):
