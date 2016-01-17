@@ -414,7 +414,8 @@ class Disassembler():
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
                     buf = self.binary.get_string(ad, sz + 1)
-                    o._string(buf)
+                    if buf is not None:
+                        o._string(buf)
                     o._add(", 0")
                     o._new_line()
                     ad += sz + 1

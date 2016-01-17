@@ -447,6 +447,10 @@ class OutputAbs():
                     ty != MEM_ASCII or ty == -1:
                 return True
 
+            if ty == MEM_ASCII:
+                print_data = True
+                force_dont_print_data = False
+
         if section is None:
             section = self._binary.get_section(imm)
 
@@ -458,11 +462,9 @@ class OutputAbs():
             if not label_printed:
                 self._address(imm, print_colon=False, notprefix=True)
 
-            if not force_dont_print_data and \
-                    print_data and imm not in self._binary.reverse_symbols and \
-                    section is not None and section.is_data:
+            if not force_dont_print_data and print_data:
                 s = self._binary.get_string(imm, self.gctx.max_data_size)
-                if s != "\"\"":
+                if s is not None:
                     self._add(" ")
                     self._string(s)
 

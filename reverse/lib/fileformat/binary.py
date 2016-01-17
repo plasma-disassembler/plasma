@@ -237,7 +237,7 @@ class Binary(object):
     def get_string(self, addr, max_data_size):
         s = self.get_section(addr)
         if s is None:
-            return ""
+            return None
 
         data = s.data
         off = addr - s.start
@@ -258,8 +258,8 @@ class Binary(object):
         if i == max_data_size:
             if c != 0:
                 txt.append("...")
-        elif c != 0:
-            return ""
+        elif c != 0 or i == 0:
+            return None
 
         return ''.join(txt) + '"'
 
