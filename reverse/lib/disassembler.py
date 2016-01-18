@@ -321,8 +321,11 @@ class Disassembler():
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
+        from capstone import CS_OP_IMM
+
         ARCH = self.load_arch_module()
         ARCH_OUTPUT = ARCH.output
+        ARCH_UTILS = ARCH.utils
 
         ad = ctx.entry
         s = self.binary.get_section(ad)
@@ -377,8 +380,8 @@ class Disassembler():
                     i = self.lazy_disasm(ad, s.start)
 
                     if not is_func and ad in self.xrefs and \
-                                not o.is_last_2_line_empty():
-                            o._new_line()
+                            not o.is_last_2_line_empty():
+                        o._new_line()
 
                     o._asm_inst(i)
 
@@ -388,6 +391,16 @@ class Disassembler():
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
+
+                    elif ARCH_UTILS.is_uncond_jump(i) or ARCH_UTILS.is_ret(i):
+                        o._new_line()
+
+                    elif ARCH_UTILS.is_call(i):
+                        op = i.operands[0]
+                        if op.type == CS_OP_IMM and \
+                                op.value.imm in self.functions and \
+                                self.is_noreturn(op.value.imm):
+                            o._new_line()
 
                     ad += i.size
 
