@@ -620,6 +620,10 @@ class Console():
     def push_analyze_symbols(self):
         self.analyzer.set(self.gctx)
 
+        # It means that the first analysis was already done
+        if len(self.gctx.db.functions) == 0:
+            return
+
         # Analyze all imports (it checks if functions return or not)
         for ad in self.gctx.db.imports:
             if self.gctx.dis.mem.is_func(ad):
