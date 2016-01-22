@@ -411,6 +411,10 @@ class OutputAbs():
             self._tabs(tabs)
             self._type("void * ") # TODO type
             self._variable(self.__get_var_name(func_addr, off))
+            if off < 0:
+                self._add(" = -0x%x" % (-off))
+            else:
+                self._add(" = 0x%x" % off)
             self._new_line()
 
 
