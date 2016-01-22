@@ -1,19 +1,4 @@
 function _main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
-    int32_t var4
-    int32_t var5
-    int32_t var6
-    int32_t var7
-    int32_t var8
-    int32_t var9
-    int8_t var10
-    int32_t var11
-    int32_t var12
-    int32_t var13
-    int8_t var14
-    int32_t var15
     0x401290: push ebp
     0x401291: ebp = esp
     0x401293: esp -= 216
@@ -23,15 +8,15 @@ function _main (.text) {
     0x4012a4: eax += 15
     0x4012a7: eax >>= 4
     0x4012aa: eax <<= 4
-    0x4012ad: var1 = eax
-    0x4012b3: eax = var1
+    0x4012ad: *(ebp - 188) = eax
+    0x4012b3: eax = *(ebp - 188)
     0x4012b9: call __alloca
     0x4012be: call ___main
-    0x4012c3: var2 = 10
-    0x4012ca: var3 = 10
-    0x4012d1: var4 = 0
-    0x4012d8: var5 = 0
-    0x4012df: var6 = 0
+    0x4012c3: *(ebp - 12) = 10
+    0x4012ca: *(ebp - 16) = 10
+    0x4012d1: *(ebp - 24) = 0
+    0x4012d8: *(ebp - 48) = 0
+    0x4012df: *(ebp - 44) = 0
     loop {
         loop_0x4012e6:
         0x4012e6: *(esp) = 0x403000 "\n\n              ----------PEND..."
@@ -40,7 +25,7 @@ function _main (.text) {
         0x4012f9: call _printf
         0x4012fe: *(esp) = 0x403062 "\n\t\t? "
         0x401305: call _printf
-        0x40130a: eax = &(var7)
+        0x40130a: eax = ebp - 20
         0x40130d: *(esp + 4) = eax
         0x401311: *(esp) = 0x403068 "%ld"
         0x401318: call _scanf
@@ -48,70 +33,70 @@ function _main (.text) {
         0x401324: call _printf
         # 0x401329: cmp dword ptr [ebp - 0x14], 0
         # 0x40132d: jle 0x4012e6
-        if (var7 > 0) {
+        if (*(ebp - 20) > 0) {
             # 0x40132f: cmp dword ptr [ebp - 0x14], 3
             # 0x401333: jg 0x4012e6
-            and if (var7 <= 3)
+            and if (*(ebp - 20) <= 3)
             # 0x401335: cmp dword ptr [ebp - 0x14], 1
             # 0x401339: jne 0x401508
-            if (var7 == 1) {
-                0x40133f: var8 = 0
-                0x401346: eax = &(var9)
+            if (*(ebp - 20) == 1) {
+                0x40133f: *(ebp - 36) = 0
+                0x401346: eax = ebp - 168
                 0x40134c: *(esp) = eax
                 0x40134f: call _motAleatoire
-                0x401354: var10 = al
-                0x401357: eax = &(var9)
+                0x401354: *(ebp - 68) = al
+                0x401357: eax = ebp - 168
                 0x40135d: *(esp) = eax
                 0x401360: call _strlen
-                0x401365: var11 = eax
-                0x401368: eax = var11
+                0x401365: *(ebp - 28) = eax
+                0x401368: eax = *(ebp - 28)
                 0x40136b: eax <<= 2
                 0x40136e: *(esp) = eax
                 0x401371: call _malloc
-                0x401376: var4 = eax
-                0x401379: var12 = 0
+                0x401376: *(ebp - 24) = eax
+                0x401379: *(ebp - 32) = 0
                 loop {
                     loop_0x401380:
-                    0x401380: eax = var12
+                    0x401380: eax = *(ebp - 32)
                     # 0x401383: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x401386: jge 0x4013a3
-                    if (eax >= var11)  goto 0x4013a3
-                    0x401388: eax = var12
+                    if (eax >= *(ebp - 28))  goto 0x4013a3
+                    0x401388: eax = *(ebp - 32)
                     0x40138b: edx = (eax*4)
-                    0x401392: eax = var4
+                    0x401392: eax = *(ebp - 24)
                     0x401395: *(edx + eax) = 0
-                    0x40139c: eax = &(var12)
+                    0x40139c: eax = ebp - 32
                     0x40139f: *(eax)++
                     0x4013a1: jmp loop_0x401380
                 }
-                0x4013a3: eax = var3
-                0x4013a6: var2 = eax
+                0x4013a3: eax = *(ebp - 16)
+                0x4013a6: *(ebp - 12) = eax
                 loop {
                     loop_0x4013a9:
-                    0x4013a9: eax = var8
+                    0x4013a9: eax = *(ebp - 36)
                     # 0x4013ac: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x4013af: jge 0x4014ba
-                    if (eax >= var11)  goto 0x4014ba
+                    if (eax >= *(ebp - 28))  goto 0x4014ba
                     # 0x4013b5: cmp dword ptr [ebp - 0xc], 0
                     # 0x4013b9: jle 0x4014ba
-                    if (var2 <= 0)  goto 0x4014ba
+                    if (*(ebp - 12) <= 0)  goto 0x4014ba
                     0x4013bf: *(esp) = 0x40306f "Mot secret : "
                     0x4013c6: call _printf
-                    0x4013cb: var12 = 0
+                    0x4013cb: *(ebp - 32) = 0
                     loop {
                         loop_0x4013d2:
-                        0x4013d2: eax = var12
+                        0x4013d2: eax = *(ebp - 32)
                         # 0x4013d5: cmp eax, dword ptr [ebp - 0x1c]
                         # 0x4013d8: jge 0x401420
-                        if (eax >= var11)  goto 0x401420
-                        0x4013da: eax = var12
+                        if (eax >= *(ebp - 28))  goto 0x401420
+                        0x4013da: eax = *(ebp - 32)
                         0x4013dd: edx = (eax*4)
-                        0x4013e4: eax = var4
+                        0x4013e4: eax = *(ebp - 24)
                         # 0x4013e7: cmp dword ptr [edx + eax], 1
                         # 0x4013eb: jne 0x40140d
                         if (*(edx + eax) == 1) {
-                            0x4013ed: eax = &(var13)
-                            0x4013f0: eax += var12
+                            0x4013ed: eax = ebp - 8
+                            0x4013f0: eax += *(ebp - 32)
                             0x4013f3: eax -= 160
                             0x4013f8: eax = *(eax)
                             0x4013fb: *(esp + 4) = eax
@@ -122,11 +107,11 @@ function _main (.text) {
                             0x40140d: *(esp) = 0x403080 "="
                             0x401414: call _printf
                         }
-                        0x401419: eax = &(var12)
+                        0x401419: eax = ebp - 32
                         0x40141c: *(eax)++
                         0x40141e: jmp loop_0x4013d2
                     }
-                    0x401420: eax = var2
+                    0x401420: eax = *(ebp - 12)
                     0x401423: *(esp + 4) = eax
                     0x401427: *(esp) = 0x403082 "\nChance(s) : %ld"
                     0x40142e: call _printf
@@ -135,85 +120,85 @@ function _main (.text) {
                     loop {
                         loop_0x40143f:
                         0x40143f: call _getchar
-                        0x401444: var14 = al
-                        0x40144a: eax = var14
+                        0x401444: *(ebp - 169) = al
+                        0x40144a: eax = *(ebp - 169)
                         0x401451: *(esp) = eax
                         0x401454: call _maj
-                        0x401459: var14 = al
+                        0x401459: *(ebp - 169) = al
                         # 0x40145f: cmp byte ptr [ebp - 0xa9], 0xa
                         # 0x401466: jne 0x40146a
-                        if (var14 != '\n')  goto 0x40146a
+                        if (*(ebp - 169) != '\n')  goto 0x40146a
                         0x401468: jmp loop_0x40143f
                     }
                     0x40146a: *(esp) = 0x40309e "\n"
                     0x401471: call _printf
-                    0x401476: eax = var8
-                    0x401479: var6 = eax
-                    0x40147c: eax = var2
-                    0x40147f: var15 = eax
-                    0x401482: eax = &(var5)
+                    0x401476: eax = *(ebp - 36)
+                    0x401479: *(ebp - 44) = eax
+                    0x40147c: eax = *(ebp - 12)
+                    0x40147f: *(ebp - 40) = eax
+                    0x401482: eax = ebp - 48
                     0x401485: *(esp + 12) = eax
-                    0x401489: eax = var4
+                    0x401489: eax = *(ebp - 24)
                     0x40148c: *(esp + 8) = eax
-                    0x401490: eax = &(var9)
+                    0x401490: eax = ebp - 168
                     0x401496: *(esp + 4) = eax
-                    0x40149a: eax = var14
+                    0x40149a: eax = *(ebp - 169)
                     0x4014a1: *(esp) = eax
                     0x4014a4: call _verification
-                    0x4014a9: eax = var6
-                    0x4014ac: var8 = eax
-                    0x4014af: eax = var15
-                    0x4014b2: var2 = eax
+                    0x4014a9: eax = *(ebp - 44)
+                    0x4014ac: *(ebp - 36) = eax
+                    0x4014af: eax = *(ebp - 40)
+                    0x4014b2: *(ebp - 12) = eax
                     0x4014b5: jmp loop_0x4013a9
                 }
-                0x4014ba: eax = var8
+                0x4014ba: eax = *(ebp - 36)
                 # 0x4014bd: cmp eax, dword ptr [ebp - 0x1c]
                 # 0x4014c0: jne 0x4014de
-                if (eax == var11) {
-                    0x4014c2: eax = &(var9)
+                if (eax == *(ebp - 28)) {
+                    0x4014c2: eax = ebp - 168
                     0x4014c8: *(esp + 4) = eax
                     0x4014cc: *(esp) = 0x4030a0 "\nVous avez GAGNE :D !!!!!\nLe m..."
                     0x4014d3: call _printf
-                    0x4014d8: eax = var3
-                    0x4014db: var2 = eax
+                    0x4014d8: eax = *(ebp - 16)
+                    0x4014db: *(ebp - 12) = eax
                 }
                 # 0x4014de: cmp dword ptr [ebp - 0xc], 0
                 # 0x4014e2: jne 0x401508
-                if (var2 == 0) {
-                    0x4014e4: eax = var8
+                if (*(ebp - 12) == 0) {
+                    0x4014e4: eax = *(ebp - 36)
                     # 0x4014e7: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x4014ea: je 0x401508
-                    and if (eax != var11)
-                    0x4014ec: eax = &(var9)
+                    and if (eax != *(ebp - 28))
+                    0x4014ec: eax = ebp - 168
                     0x4014f2: *(esp + 4) = eax
                     0x4014f6: *(esp) = 0x4030d4 "\nVous avez PERDU  :(\nLe mot et..."
                     0x4014fd: call _printf
-                    0x401502: eax = var3
-                    0x401505: var2 = eax
+                    0x401502: eax = *(ebp - 16)
+                    0x401505: *(ebp - 12) = eax
                 }
             }
             # 0x401508: cmp dword ptr [ebp - 0x14], 2
             # 0x40150c: jne 0x40153b
-            if (var7 == 2) {
+            if (*(ebp - 20) == 2) {
                 loop {
                     loop_0x40150e:
                     0x40150e: *(esp) = 0x403100 "\nNombre de chance (defaut : 10..."
                     0x401515: call _printf
-                    0x40151a: eax = &(var2)
+                    0x40151a: eax = ebp - 12
                     0x40151d: *(esp + 4) = eax
                     0x401521: *(esp) = 0x403068 "%ld"
                     0x401528: call _scanf
                     # 0x40152d: cmp dword ptr [ebp - 0xc], 0
                     # 0x401531: jg 0x401535
-                    if (var2 > 0)  goto 0x401535
+                    if (*(ebp - 12) > 0)  goto 0x401535
                     0x401533: jmp loop_0x40150e
                 }
-                0x401535: eax = var2
-                0x401538: var3 = eax
+                0x401535: eax = *(ebp - 12)
+                0x401538: *(ebp - 16) = eax
             }
             # 0x40153b: cmp dword ptr [ebp - 0x14], 3
             # 0x40153f: je 0x401546
-            if (var7 == 3)  goto ret_0x401546
+            if (*(ebp - 20) == 3)  goto ret_0x401546
             0x401541: jmp loop_0x4012e6
         }
     }

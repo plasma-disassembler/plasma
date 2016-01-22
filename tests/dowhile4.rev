@@ -1,37 +1,35 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 123
-    0x400515: var1 = 0
+    0x40050e: *(rbp - 4) = 123
+    0x400515: *(rbp - 4) = 0
     0x40051c: jmp loop_0x400551
     loop {
         loop_0x400551:
         # 0x400551: cmp dword ptr [rbp - 4], 9
         # 0x400555: jle 0x40051e
-        if (var1 > 9)  goto ret_0x400557
-        0x40051e: var2 = 0
+        if (*(rbp - 4) > 9)  goto ret_0x400557
+        0x40051e: *(rbp - 8) = 0
         loop {
             loop_0x400525:
             0x400525: edi = 0x4005f4 "1"
             0x40052a: call puts@plt
-            0x40052f: var2 += 1
+            0x40052f: *(rbp - 8) += 1
             # 0x400533: cmp dword ptr [rbp - 8], 9
             # 0x400537: jle 0x400525
-            if (var2 > 9)  goto loop_0x400539
+            if (*(rbp - 8) > 9)  goto loop_0x400539
         }
         loop {
             loop_0x400539:
             0x400539: edi = 0x4005f6 "2"
             0x40053e: call puts@plt
-            0x400543: var2 += 1
+            0x400543: *(rbp - 8) += 1
             # 0x400547: cmp dword ptr [rbp - 8], 0x13
             # 0x40054b: jle 0x400539
-            if (var2 > 19)  goto 0x40054d
+            if (*(rbp - 8) > 19)  goto 0x40054d
         }
-        0x40054d: var1 += 1
+        0x40054d: *(rbp - 4) += 1
     }
     ret_0x400557:
     0x400557: edi = 0x4005f8 "3"

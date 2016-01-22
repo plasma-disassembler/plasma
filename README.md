@@ -59,13 +59,14 @@ It supports :
 * inline comments
 * xrefs
 * symbols renaming
+* stack variables (currently only for x86)
 
 TODO :
 
+* stack variables renaming
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
 * arrays
-* stack variables
 * structure, enum
 * improve analyzer performances
 * ...
@@ -73,6 +74,10 @@ TODO :
 FIXME :
 
 * clean PE imports
+* stack variables referenced with rsp (not rbp)
+* detect if rbp is modified in the function
+* re add stack variables type detection
+* re add detection of the canary
 
 ![reverse](/images/visual.png?raw=true)
 

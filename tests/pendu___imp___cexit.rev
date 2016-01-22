@@ -1,19 +1,17 @@
 function __imp___cexit (.text) {
-    int32_t var1
-    int32_t var2
     0x401100: push ebp
     0x401101: ebp = esp
     0x401103: push ebx
     __imp___iob:
     0x401104: esp -= 36
-    0x401107: ebx = &(var1)
+    0x401107: ebx = ebp - 8
     0x40110a: *(esp) = ___crt_xt_end__
     0x401111: call _SetUnhandledExceptionFilter@4
     0x401116: esp -= 4
     0x401119: call __fpreset
-    0x40111e: var1 = 0
+    0x40111e: *(ebp - 8) = 0
     0x401125: eax = 0x404000
-    0x40112a: edx = &(var2)
+    0x40112a: edx = ebp - 12
     0x40112d: *(esp + 16) = ebx
     0x401131: ecx = *(__section_alignment__)
     0x401137: *(esp + 4) = eax

@@ -1,36 +1,34 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 123
-    0x400515: var2 = 5
+    0x40050e: *(rbp - 4) = 123
+    0x400515: *(rbp - 8) = 5
     for (;;) {
         loop_0x40051c:
         # 0x40051c: cmp dword ptr [rbp - 4], 0
         # 0x400520: je 0x40053a
-        if (var1 != 0) {
+        if (*(rbp - 4) != 0) {
             # 0x400522: cmp dword ptr [rbp - 8], 9
             # 0x400526: jg 0x40053a
-            and if (var2 <= 9)
-            0x400528: eax = var1
+            and if (*(rbp - 8) <= 9)
+            0x400528: eax = *(rbp - 4)
             # 0x40052b: cmp eax, dword ptr [rbp - 8]
             # 0x40052e: je 0x40053a
-            and if (eax != var2)
+            and if (eax != *(rbp - 8))
             0x400530: edi = 0x4005e4 "1"
             0x400535: call puts@plt
         }
         0x40053a: edi = 0x4005e6 "2"
         0x40053f: call puts@plt
-        0x400544: var1 += 1
+        0x400544: *(rbp - 4) += 1
         # 0x400548: cmp dword ptr [rbp - 4], 0
         # 0x40054c: jne 0x400558
-        if (var1 == 0) {
+        if (*(rbp - 4) == 0) {
             0x40054e: edi = 0x4005e8 "3"
             0x400553: call puts@plt
         }
-        0x400558: var2 += 1
+        0x400558: *(rbp - 8) += 1
         0x40055c: jmp loop_0x40051c
     }
 }

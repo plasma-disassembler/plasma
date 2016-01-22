@@ -1,26 +1,23 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
     # 0x40050e: cmp dword ptr [rbp - 4], 0x2a
     # 0x400512: jne 0x40053c
-    if (var1 == 42) {
+    if (*(rbp - 4) == 42) {
         # 0x400514: cmp dword ptr [rbp - 8], 0xa
         # 0x400518: jne 0x400524
-        if (var2 == 10) {
+        if (*(rbp - 8) == 10) {
             0x40051a: edi = 0x4005d4 "1"
             0x40051f: call puts@plt
         }
         # 0x400524: cmp dword ptr [rbp - 0xc], 0xc
         # 0x400528: jne 0x40053c
-        if (var3 == 12) {
-            0x40052a: eax = var2
+        if (*(rbp - 12) == 12) {
+            0x40052a: eax = *(rbp - 8)
             # 0x40052d: cmp eax, dword ptr [rbp - 0xc]
             # 0x400530: je 0x40053c
-            and if (eax != var3)
+            and if (eax != *(rbp - 12))
             0x400532: edi = 0x4005d6 "2"
             0x400537: call puts@plt
         }

@@ -26,7 +26,7 @@ from reverse.lib.colors import color, bold
 from reverse.lib.fileformat.binary import T_BIN_RAW
 from reverse.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
                                 MEM_DWORD, MEM_QWORD, MEM_ASCII, MEM_OFFSET)
-from reverse.lib.disassembler import FUNC_FLAG_NORETURN
+from reverse.lib.analyzer import FUNC_VARS, VAR_TYPE, VAR_NAME, FUNC_FLAG_NORETURN
 
 
 class OutputAbs():
@@ -310,6 +310,11 @@ class OutputAbs():
 
         if not is_first and self._label(ad, tab, print_colon):
             self._new_line()
+
+            # Print stack variables
+            if self._dis.mem.is_func(ad):
+                self._all_vars(ad)
+
             if tab != -1:
                 self._tabs(tab)
             if with_comment:
@@ -394,15 +399,19 @@ class OutputAbs():
                 self._address_if_needed(jump_inst, tab)
 
 
-    def _all_vars(self):
-        idx = 0
-        for sz in self.ctx.local_vars_size:
-            name = self.ctx.local_vars_name[idx]
-            self._tabs(1)
-            self._type("int%d_t " % (sz*8))
-            self._variable(name)
+    def _all_vars(self, func_addr):
+        if func_addr not in self._dis.functions:
+            return
+
+        tabs = 0 if self.ctx.is_dump else 1
+        lst = list(self._dis.functions[func_addr][FUNC_VARS].keys())
+        lst.sort()
+
+        for off in lst:
+            self._tabs(tabs)
+            self._type("void * ") # TODO type
+            self._variable(self.__get_var_name(func_addr, off))
             self._new_line()
-            idx += 1
 
 
     def _asm_block(self, blk, tab):
@@ -509,12 +518,28 @@ class OutputAbs():
 
 
     def var_name_exists(self, i, op_num):
-        return i.operands[op_num].mem.disp in self.ctx.local_vars_idx
+        if self._dis.mem.is_code(i.address):
+            func_id  = self._dis.mem.get_func_id(i.address)
+            if func_id != -1:
+                func_addr = self._dis.func_id[func_id]
+                v = i.operands[op_num].mem.disp
+                return v in self._dis.functions[func_addr][FUNC_VARS]
+        return False
 
 
     def get_var_name(self, i, op_num):
-        idx = self.ctx.local_vars_idx[i.operands[op_num].mem.disp]
-        return self.ctx.local_vars_name[idx]
+        func_id  = self._dis.mem.get_func_id(i.address)
+        func_addr = self._dis.func_id[func_id]
+        return self.__get_var_name(func_addr, i.operands[op_num].mem.disp)
+
+
+    def __get_var_name(self, func_addr, off):
+        name = self._dis.functions[func_addr][FUNC_VARS][off][VAR_NAME]
+        if name is None:
+            if off < 0:
+                return "var_%x" % (-off)
+            return "arg_%x" % off
+        return name
 
 
     def _ast(self, entry, ast):
@@ -534,7 +559,7 @@ class OutputAbs():
             self._add(" {")
 
         self._new_line()
-        self._all_vars()
+        self._all_vars(entry)
         ast.dump(self, 1)
         self._add("}")
         self.join_lines()

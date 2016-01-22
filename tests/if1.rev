@@ -1,12 +1,11 @@
 function main (.text) {
-    int32_t var1
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 123
+    0x40050e: *(rbp - 4) = 123
     # 0x400515: cmp dword ptr [rbp - 4], 0
     # 0x400519: jle 0x400527
-    if (var1 > 0) {
+    if (*(rbp - 4) > 0) {
         0x40051b: edi = 0x4005d4 "1"
         0x400520: call puts@plt
         0x400525: jmp ret_0x400531

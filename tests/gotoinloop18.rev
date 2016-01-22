@@ -1,17 +1,14 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 0
+    0x40050e: *(rbp - 4) = 0
     0x400515: jmp loop_0x40058d
     loop {
         loop_0x40058d:
         # 0x40058d: cmp dword ptr [rbp - 4], 0x63
         # 0x400591: jle 0x400517
-        if (var1 > 99)  goto ret_0x400593
+        if (*(rbp - 4) > 99)  goto ret_0x400593
         0x400517: edi = 0x400624 "1"
         0x40051c: call puts@plt
         0x400521: jmp loop_0x40054a
@@ -19,7 +16,7 @@ function main (.text) {
             loop_0x40054a:
             # 0x40054a: cmp dword ptr [rbp - 8], 0x13
             # 0x40054e: jle 0x400523
-            if (var2 > 19) {
+            if (*(rbp - 8) > 19) {
                 0x400550: edi = 0x40062a "4"
                 0x400555: call puts@plt
                 0x40055a: jmp loop_0x400583
@@ -27,44 +24,44 @@ function main (.text) {
                     loop_0x400583:
                     # 0x400583: cmp dword ptr [rbp - 0xc], 0x1d
                     # 0x400587: jle 0x40055c
-                    if (var3 > 29)  goto 0x400589
+                    if (*(rbp - 12) > 29)  goto 0x400589
                     0x40055c: edi = 0x40062c "5"
                     0x400561: call puts@plt
                     # 0x400566: cmp dword ptr [rbp - 0xc], 0x14
                     # 0x40056a: jne 0x400579
-                    if (var3 == 20) {
+                    if (*(rbp - 12) == 20) {
                         0x40056c: jmp 0x40056f
                     }
                     loop {
                         loop_0x400579:
                         # 0x400579: cmp dword ptr [rbp - 0xc], 0x19
                         # 0x40057d: je 0x400535
-                        if (var3 != 25)  goto 0x40057f
+                        if (*(rbp - 12) != 25)  goto 0x40057f
                         0x400535: nop
                         0x400536: edi = 0x400628 "3"
                         0x40053b: call puts@plt
                         # 0x400540: cmp dword ptr [rbp - 8], 0xf
                         # 0x400544: je 0x40056e
-                        if (var2 != 15)  goto 0x400546
+                        if (*(rbp - 8) != 15)  goto 0x400546
                         0x40056e: nop
                         0x40056f: edi = 0x40062e "6"
                         0x400574: call puts@plt
                     }
-                    0x40057f: var3 += 1
+                    0x40057f: *(rbp - 12) += 1
                 }
-                0x400546: var2 += 1
+                0x400546: *(rbp - 8) += 1
                 goto loop_0x40054a
             }
             0x400523: edi = 0x400626 "2"
             0x400528: call puts@plt
             # 0x40052d: cmp dword ptr [rbp - 8], 0xa
             # 0x400531: jne 0x400540
-            if (var2 == 10) {
+            if (*(rbp - 8) == 10) {
                 0x400533: jmp 0x400536
             }
             goto 0x400540
         }
-        0x400589: var1 += 1
+        0x400589: *(rbp - 4) += 1
     }
     ret_0x400593:
     0x400593: eax = 0

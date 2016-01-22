@@ -1,31 +1,30 @@
 function main (.text) {
-    int32_t var1
     0x400546: push rbp
     0x400547: rbp = rsp
     0x40054a: rsp -= 16
     0x40054e: edi = 0
     0x400553: eax = 0
     0x400558: call time@plt
-    0x40055d: var1 = eax
+    0x40055d: *(rbp - 4) = eax
     0x400560: jmp loop_0x400570
     loop {
         loop_0x400570:
         # 0x400570: cmp dword ptr [rbp - 4], 0x63
         # 0x400574: jle 0x400562
-        if (var1 > 99) {
+        if (*(rbp - 4) > 99) {
             # 0x400576: cmp dword ptr [rbp - 4], 0x13
             # 0x40057a: jle 0x400562
-            and if (var1 > 19)
+            and if (*(rbp - 4) > 19)
             # 0x40057c: cmp dword ptr [rbp - 4], 9
             # 0x400580: jle 0x400562
-            and if (var1 > 9)
+            and if (*(rbp - 4) > 9)
             # 0x400582: cmp dword ptr [rbp - 4], 4
             # 0x400586: jle 0x400562
-            if (var1 > 4)  goto ret_0x400588
+            if (*(rbp - 4) > 4)  goto ret_0x400588
         }
         0x400562: edi = 0x400624 "1"
         0x400567: call puts@plt
-        0x40056c: var1 += 1
+        0x40056c: *(rbp - 4) += 1
     }
     ret_0x400588:
     0x400588: edi = 0x400626 "2"

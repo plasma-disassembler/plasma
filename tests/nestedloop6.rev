@@ -1,52 +1,49 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
     0x4004b6: push rbp
     0x4004b7: rbp = rsp
-    0x4004ba: var1 = 123
-    0x4004c1: var2 = 5
+    0x4004ba: *(rbp - 4) = 123
+    0x4004c1: *(rbp - 8) = 5
     # 0x4004c8: cmp dword ptr [rbp - 4], 1
     # 0x4004cc: jne 0x400502
-    if (var1 == 1) {
+    if (*(rbp - 4) == 1) {
         0x4004ce: jmp loop_0x4004fc
         loop {
             loop_0x4004fc:
             # 0x4004fc: cmp dword ptr [rbp - 4], 2
             # 0x400500: jle 0x4004d0
-            if (var1 > 2)  goto ret_0x400502
+            if (*(rbp - 4) > 2)  goto ret_0x400502
             0x4004d0: jmp loop_0x4004f6
             loop {
                 loop_0x4004f6:
                 # 0x4004f6: cmp dword ptr [rbp - 8], 3
                 # 0x4004fa: jle 0x4004d2
-                if (var2 > 3)  goto loop_0x4004fc
+                if (*(rbp - 8) > 3)  goto loop_0x4004fc
                 0x4004d2: jmp loop_0x4004f0
                 loop {
                     loop_0x4004f0:
                     # 0x4004f0: cmp dword ptr [rbp - 0xc], 4
                     # 0x4004f4: jle 0x4004d4
-                    if (var3 > 4)  goto loop_0x4004f6
+                    if (*(rbp - 12) > 4)  goto loop_0x4004f6
                     # 0x4004d4: cmp dword ptr [rbp - 4], 5
                     # 0x4004d8: jne 0x4004f0
-                    if (var1 == 5) {
+                    if (*(rbp - 4) == 5) {
                         0x4004da: jmp loop_0x4004ea
                         loop {
                             loop_0x4004ea:
                             # 0x4004ea: cmp dword ptr [rbp - 4], 6
                             # 0x4004ee: jle 0x4004dc
-                            if (var1 > 6)  goto loop_0x4004f0
+                            if (*(rbp - 4) > 6)  goto loop_0x4004f0
                             0x4004dc: jmp loop_0x4004e4
                             loop {
                                 loop_0x4004e4:
                                 # 0x4004e4: cmp dword ptr [rbp - 8], 7
                                 # 0x4004e8: jle 0x4004de
-                                if (var2 > 7)  goto loop_0x4004ea
+                                if (*(rbp - 8) > 7)  goto loop_0x4004ea
                                 loop {
                                     loop_0x4004de:
                                     # 0x4004de: cmp dword ptr [rbp - 0xc], 8
                                     # 0x4004e2: jle 0x4004de
-                                    if (var3 > 8)  goto loop_0x4004e4
+                                    if (*(rbp - 12) > 8)  goto loop_0x4004e4
                                 }
                             }
                         }

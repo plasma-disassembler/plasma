@@ -1,32 +1,29 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
     0x4004b6: push rbp
     0x4004b7: rbp = rsp
-    0x4004ba: var1 = 123
-    0x4004c1: var2 = 5
-    0x4004c8: var3 = 1
+    0x4004ba: *(rbp - 4) = 123
+    0x4004c1: *(rbp - 8) = 5
+    0x4004c8: *(rbp - 12) = 1
     loop {
         loop_0x4004cf:
-        0x4004cf: var1 += 1
+        0x4004cf: *(rbp - 4) += 1
         loop {
             loop_0x4004d3:
-            0x4004d3: var2 += 1
+            0x4004d3: *(rbp - 8) += 1
             loop {
                 loop_0x4004d7:
-                0x4004d7: var3 += 1
+                0x4004d7: *(rbp - 12) += 1
                 # 0x4004db: cmp dword ptr [rbp - 0xc], 3
                 # 0x4004df: jle 0x4004d7
-                if (var3 > 3)  goto 0x4004e1
+                if (*(rbp - 12) > 3)  goto 0x4004e1
             }
             # 0x4004e1: cmp dword ptr [rbp - 8], 1
             # 0x4004e5: jle 0x4004d3
-            if (var2 > 1)  goto 0x4004e7
+            if (*(rbp - 8) > 1)  goto 0x4004e7
         }
         # 0x4004e7: cmp dword ptr [rbp - 4], 4
         # 0x4004eb: jle 0x4004cf
-        if (var1 > 4)  goto ret_0x4004ed
+        if (*(rbp - 4) > 4)  goto ret_0x4004ed
     }
     ret_0x4004ed:
     0x4004ed: eax = 0

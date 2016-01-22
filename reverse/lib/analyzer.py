@@ -24,6 +24,13 @@ from reverse import lib
 from reverse.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII
 
+# database.functions[ADDR] contains a list, here are the indexes
+FUNC_END = 0
+FUNC_FLAGS = 1
+FUNC_VARS = 2
+
+VAR_TYPE = 0
+VAR_NAME = 1
 
 FUNC_FLAG_NORETURN = 1
 
@@ -67,9 +74,12 @@ class Analyzer(threading.Thread):
         self.is_arm = self.dis.arch == CS_ARCH_ARM
 
         if self.is_x86:
-            from capstone.x86 import X86_REG_EIP, X86_REG_RIP
+            from capstone.x86 import (X86_REG_EIP, X86_REG_RIP,
+                                      X86_REG_EBP, X86_REG_RBP)
             self.X86_REG_EIP = X86_REG_EIP
             self.X86_REG_RIP = X86_REG_RIP
+            self.X86_REG_RBP = X86_REG_RBP
+            self.X86_REG_EBP = X86_REG_EBP
         elif self.is_mips:
             from capstone.mips import MIPS_REG_GP
             self.MIPS_REG_GP = MIPS_REG_GP
@@ -122,7 +132,7 @@ class Analyzer(threading.Thread):
                     break
 
 
-    def analyze_operands(self, i):
+    def analyze_operands(self, i, func_obj):
         b = self.dis.binary
         default_size = 4 # for ARM and MIPS
 
@@ -135,11 +145,28 @@ class Analyzer(threading.Thread):
                 if self.is_x86:
                     if op.mem.segment != 0:
                         continue
-                    if op.mem.index == 0 and (op.mem.base == self.X86_REG_EIP or \
+                    if op.mem.index == 0:
+                        # Compute the rip register
+                        if (op.mem.base == self.X86_REG_EIP or \
                             op.mem.base == self.X86_REG_RIP):
-                        val = i.address + i.size + op.mem.disp
+                            val = i.address + i.size + op.mem.disp
+
+                        # Check if it's a stack variable
+                        elif (op.mem.base == self.X86_REG_EBP or \
+                              op.mem.base == self.X86_REG_RBP):
+
+                            if func_obj is not None:
+                                # TODO: set the type
+                                func_obj[FUNC_VARS][op.mem.disp] = [MEM_UNK, None]
+
+                            # Continue the loop !!
+                            continue
+
+                        val = op.mem.disp
                     else:
                         val = op.mem.disp
+
+                # TODO: stack variables for arm/mips
 
                 elif self.is_arm:
                     if op.mem.index == 0 and op.mem.base == self.ARM_REG_PC:
@@ -180,14 +207,15 @@ class Analyzer(threading.Thread):
         if entry_is_func:
 
             if entry in functions:
-                last_end = functions[entry][0]
+                last_end = functions[entry][FUNC_END]
                 self.dis.end_functions[last_end].remove(entry)
                 if not self.dis.end_functions[last_end]:
                     del self.dis.end_functions[last_end]
 
             e = max(inner_code) if inner_code else -1
             func_id = self.db.func_id_counter
-            functions[entry] = [e, flags]
+            functions[entry] = [e, flags, {}]
+            func_obj = functions[entry]
 
             self.db.func_id[func_id] = entry
             self.db.func_id_counter += 1
@@ -196,11 +224,14 @@ class Analyzer(threading.Thread):
                 self.dis.end_functions[e].append(entry)
             else:
                 self.dis.end_functions[e] = [entry]
+
         else:
             func_id = -1
+            func_obj = None
 
         for ad, inst in inner_code.items():
-            self.analyze_operands(inst)
+            self.analyze_operands(inst, func_obj)
+
             if ad in functions:
                 mem.add(ad, inst.size, MEM_FUNC, func_id)
             else:
@@ -213,7 +244,7 @@ class Analyzer(threading.Thread):
 
 
     def is_noreturn(self, ad, entry):
-        return ad !=entry and self.dis.functions[ad][1] & FUNC_FLAG_NORETURN
+        return ad !=entry and self.dis.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
     def analyze_flow(self, entry, entry_is_func, force):

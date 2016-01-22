@@ -1,21 +1,20 @@
 function main (.text) {
-    int32_t var1
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 123
+    0x40050e: *(rbp - 4) = 123
     # 0x400515: cmp dword ptr [rbp - 4], 0
     # 0x400519: jle 0x400534
-    if (var1 > 0) {
+    if (*(rbp - 4) > 0) {
         for (;;) {
             loop_0x40051b:
             # 0x40051b: cmp dword ptr [rbp - 4], 0x1c8
             # 0x400522: jne 0x40052e
-            if (var1 == 456) {
+            if (*(rbp - 4) == 456) {
                 0x400524: edi = 0x4005d4 "1"
                 0x400529: call puts@plt
             }
-            0x40052e: var1 += 1
+            0x40052e: *(rbp - 4) += 1
             0x400532: jmp loop_0x40051b
         }
     }

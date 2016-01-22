@@ -1,47 +1,45 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
-    0x40050e: var1 = 0
-    0x400515: var2 = 2
+    0x40050e: *(rbp - 4) = 0
+    0x400515: *(rbp - 8) = 2
     0x40051c: jmp loop_0x400560
     loop {
         loop_0x400560:
         # 0x400560: cmp dword ptr [rbp - 4], 9
         # 0x400564: jg 0x400570
-        if (var1 > 9)  goto ret_0x400570
-        0x400566: eax = var1
+        if (*(rbp - 4) > 9)  goto ret_0x400570
+        0x400566: eax = *(rbp - 4)
         0x400569: eax += eax
         # 0x40056b: cmp eax, dword ptr [rbp - 8]
         # 0x40056e: jne 0x40051e
-        if (eax == var2)  goto ret_0x400570
+        if (eax == *(rbp - 8))  goto ret_0x400570
         0x40051e: edi = 0x400614 "1"
         0x400523: call puts@plt
         # 0x400528: cmp dword ptr [rbp - 4], 8
         # 0x40052c: jne 0x400558
-        if (var1 == 8)  goto 0x40052e
-        0x400558: var1 += 1
-        0x40055c: var2 += 1
+        if (*(rbp - 4) == 8)  goto 0x40052e
+        0x400558: *(rbp - 4) += 1
+        0x40055c: *(rbp - 8) += 1
     }
     0x40052e: jmp loop_0x400543
     loop {
         loop_0x400543:
         # 0x400543: cmp dword ptr [rbp - 8], 3
         # 0x400547: jle 0x400530
-        if (var2 > 3)  goto 0x400549
-        0x400530: eax = var1
+        if (*(rbp - 8) > 3)  goto 0x400549
+        0x400530: eax = *(rbp - 4)
         0x400533: eax += 10
-        0x400536: var2 += eax
+        0x400536: *(rbp - 8) += eax
         0x400539: edi = 0x400616 "2"
         0x40053e: call puts@plt
     }
-    0x400549: edx = var1
+    0x400549: edx = *(rbp - 4)
     0x40054c: eax = edx
     0x40054e: eax <<= 3
     0x400551: eax += edx
-    0x400553: var2 += eax
+    0x400553: *(rbp - 8) += eax
     0x400556: jmp ret_0x400570
     ret_0x400570:
     0x400570: edi = 0x400618 "3"

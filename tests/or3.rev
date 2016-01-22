@@ -1,35 +1,34 @@
 function main (.text) {
-    int32_t var1
     0x400546: push rbp
     0x400547: rbp = rsp
     0x40054a: rsp -= 16
     0x40054e: edi = 0
     0x400553: eax = 0
     0x400558: call time@plt
-    0x40055d: var1 = eax
+    0x40055d: *(rbp - 4) = eax
     0x400560: jmp loop_0x400584
     loop {
         loop_0x400584:
         # 0x400584: cmp dword ptr [rbp - 4], 0x63
         # 0x400588: jle 0x400562
-        if (var1 > 99) {
+        if (*(rbp - 4) > 99) {
             # 0x40058a: cmp dword ptr [rbp - 4], 0x13
             # 0x40058e: jle 0x400562
-            and if (var1 > 19)
+            and if (*(rbp - 4) > 19)
             # 0x400590: cmp dword ptr [rbp - 4], 9
             # 0x400594: jle 0x400562
-            and if (var1 > 9)
+            and if (*(rbp - 4) > 9)
             # 0x400596: cmp dword ptr [rbp - 4], 4
             # 0x40059a: jle 0x400562
-            if (var1 > 4)  goto ret_0x40059c
+            if (*(rbp - 4) > 4)  goto ret_0x40059c
         }
         # 0x400562: cmp dword ptr [rbp - 4], 0x37
         # 0x400566: jne 0x400574
-        if (var1 != 55)  goto 0x400574
+        if (*(rbp - 4) != 55)  goto 0x400574
         0x400568: edi = 0x400634 "1"
         0x40056d: call puts@plt
         0x400572: jmp 0x400580
-        0x400580: var1 += 1
+        0x400580: *(rbp - 4) += 1
     }
     0x400574: edi = 0x400636 "2"
     0x400579: call puts@plt

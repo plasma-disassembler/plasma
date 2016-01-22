@@ -621,7 +621,7 @@ class Console():
         self.analyzer.set(self.gctx)
 
         # It means that the first analysis was already done
-        if len(self.gctx.db.functions) == 0:
+        if len(self.gctx.db.functions) != 0:
             return
 
         # Analyze all imports (it checks if functions return or not)

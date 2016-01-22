@@ -1,25 +1,23 @@
 function main (.text) {
-    int64_t var1_canary
-    int32_t var2
     0x400526: push rbp
     0x400527: rbp = rsp
     0x40052a: rsp -= 160
     0x400531: rax = *(fs + 40)
-    0x40053a: var1_canary = rax
+    0x40053a: *(rbp - 8) = rax
     0x40053e: eax = 0
-    0x400540: var2 = 0
+    0x400540: *(rbp - 148) = 0
     0x40054a: jmp loop_0x40055c
     loop {
         loop_0x40055c:
         # 0x40055c: cmp dword ptr [rbp - 0x94], 0x63
         # 0x400563: jle 0x40054c
-        if (var2 > 99)  goto 0x400565
-        0x40054c: eax = var2
+        if (*(rbp - 148) > 99)  goto 0x400565
+        0x40054c: eax = *(rbp - 148)
         0x400552: rax = eax
         0x400554: *(rbp + rax - 144) = 'a'
     }
     0x400565: eax = 0
-    0x40056a: rdx = var1_canary
+    0x40056a: rdx = *(rbp - 8)
     # 0x40056e: xor rdx, qword ptr fs:[0x28]
     # 0x400577: je 0x40057e
     if ((rdx ^= *(fs + 40)) != 0) {

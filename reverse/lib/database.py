@@ -37,7 +37,7 @@ from reverse.lib.utils import info, warning
 from reverse.lib.memory import Memory
 
 
-VERSION = 1.7
+VERSION = 1.8
 
 
 class Database():
@@ -60,7 +60,7 @@ class Database():
         self.modified = False
         self.loaded = False
         self.mem = None
-        self.functions = {} # func address -> [end addr, flags]
+        self.functions = {} # func address -> [end addr, flags, dict var_off -> [type, name]]
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
@@ -254,6 +254,7 @@ class Database():
             if self.version <= 1.6:
                 for fad, value in self.functions.items():
                     value.append(0) # flags
+                    value.append({}) # dict vars
 
                     # end of the function
                     e = value[0]
@@ -267,6 +268,10 @@ class Database():
                     self.func_id[id] = fad
 
             else:
+                if self.version <= 1.7:
+                    for fad, value in self.functions.items():
+                        value.append({}) # dict vars
+
                 for fad, value in self.functions.items():
                     # end of the function
                     e = value[0]

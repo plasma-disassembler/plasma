@@ -30,7 +30,7 @@ from reverse.lib.exceptions import ExcArch
 from reverse.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
                                 MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII,
                                 MEM_OFFSET)
-from reverse.lib.analyzer import FUNC_FLAG_NORETURN
+from reverse.lib.analyzer import FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS
 
 
 NB_LINES_TO_DISASM = 200 # without comments, ...
@@ -367,7 +367,8 @@ class Disassembler():
                 if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
                         and (ty == MEM_FUNC or ty == MEM_CODE):
 
-                    is_func = ad in self.functions and self.functions[ad][0] != -1
+                    is_func = ad in self.functions and \
+                              self.functions[ad][FUNC_END] != -1
 
                     if is_func:
                         if not o.is_last_2_line_empty():
@@ -674,7 +675,7 @@ class Disassembler():
 
 
     def is_noreturn(self, ad):
-        return self.functions[ad][1] & FUNC_FLAG_NORETURN
+        return self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
     # Generate a flow graph of the given function (addr)

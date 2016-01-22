@@ -1,13 +1,10 @@
 function main (.text) {
-    int32_t var1
-    int32_t var2
-    int32_t var3
     0x400506: push rbp
     0x400507: rbp = rsp
     0x40050a: rsp -= 16
     # 0x40050e: cmp dword ptr [rbp - 4], 1
     # 0x400512: jne 0x400520
-    if (var1 == 1) {
+    if (*(rbp - 4) == 1) {
         0x400514: edi = 0x400614 "1"
         0x400519: call puts@plt
         0x40051e: jmp 0x400534
@@ -19,37 +16,37 @@ function main (.text) {
         loop_0x400582:
         # 0x400582: cmp dword ptr [rbp - 4], 0x7a
         # 0x400586: jle 0x400579
-        if (var1 > 122)  goto ret_0x400588
+        if (*(rbp - 4) > 122)  goto ret_0x400588
         loop {
             loop_0x400579:
             # 0x400579: cmp dword ptr [rbp - 0xc], 0x1c7
             # 0x400580: jle 0x400570
-            if (var2 > 455)  goto loop_0x400582
+            if (*(rbp - 12) > 455)  goto loop_0x400582
             loop {
                 loop_0x400570:
                 # 0x400570: cmp dword ptr [rbp - 8], 0x314
                 # 0x400577: jle 0x40052c
-                if (var3 > 788)  goto loop_0x400579
-                0x40052c: eax = var1
+                if (*(rbp - 8) > 788)  goto loop_0x400579
+                0x40052c: eax = *(rbp - 4)
                 # 0x40052f: cmp eax, dword ptr [rbp - 0xc]
                 # 0x400532: jne 0x400540
-                if (eax == var2) {
+                if (eax == *(rbp - 12)) {
                     0x400534: edi = 0x400618 "3"
                     0x400539: call puts@plt
                     0x40053e: jmp 0x400566
                 } else {
-                    0x400540: eax = var2
+                    0x400540: eax = *(rbp - 12)
                     # 0x400543: cmp eax, dword ptr [rbp - 8]
                     # 0x400546: jne 0x400554
-                    if (eax == var3) {
+                    if (eax == *(rbp - 8)) {
                         0x400548: edi = 0x40061a "4"
                         0x40054d: call puts@plt
                         0x400552: jmp 0x400566
                     } else {
-                        0x400554: eax = var1
+                        0x400554: eax = *(rbp - 4)
                         # 0x400557: cmp eax, dword ptr [rbp - 8]
                         # 0x40055a: jne 0x400566
-                        if (eax == var3) {
+                        if (eax == *(rbp - 8)) {
                             0x40055c: edi = 0x40061c "5"
                             0x400561: call puts@plt
                         }
