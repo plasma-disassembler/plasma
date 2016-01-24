@@ -156,6 +156,7 @@ class PE:
 
                 name = imp.name
                 if name in self.classbinary.symbols:
+                    continue
                     name = self.classbinary.rename_sym(name)
 
                 self.classbinary.imports[imp.address] = True
@@ -202,9 +203,6 @@ class PE:
 
         name = "_" + self.classbinary.reverse_symbols[ptr]
         ty = self.mem.get_type(ptr)
-
-        if name in self.classbinary.symbols:
-            name = self.classbinary.rename_sym(name)
 
         self.classbinary.reverse_symbols[first_inst.address] = name
         self.classbinary.symbols[name] = first_inst.address
