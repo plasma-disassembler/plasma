@@ -147,22 +147,20 @@ class Analyzer(threading.Thread):
                         continue
                     if op.mem.index == 0:
                         # Compute the rip register
-                        if (op.mem.base == self.X86_REG_EIP or \
-                            op.mem.base == self.X86_REG_RIP):
+                        if op.mem.base == self.X86_REG_EIP or \
+                            op.mem.base == self.X86_REG_RIP:
                             val = i.address + i.size + op.mem.disp
 
                         # Check if it's a stack variable
                         elif (op.mem.base == self.X86_REG_EBP or \
                               op.mem.base == self.X86_REG_RBP):
-
                             if func_obj is not None:
                                 # TODO: set the type
                                 func_obj[FUNC_VARS][op.mem.disp] = [MEM_UNK, None]
-
                             # Continue the loop !!
                             continue
-
-                        val = op.mem.disp
+                        else:
+                            val = op.mem.disp
                     else:
                         val = op.mem.disp
 
