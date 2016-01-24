@@ -76,7 +76,6 @@ FIXME :
 * clean PE imports
 * stack variables referenced with rsp (not rbp)
 * detect if rbp is modified in the function
-* re add stack variables type detection
 * re add detection of the canary
 
 ![reverse](/images/visual.png?raw=true)

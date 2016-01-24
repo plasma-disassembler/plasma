@@ -155,8 +155,9 @@ class Analyzer(threading.Thread):
                         elif (op.mem.base == self.X86_REG_EBP or \
                               op.mem.base == self.X86_REG_RBP):
                             if func_obj is not None:
-                                # TODO: set the type
-                                func_obj[FUNC_VARS][op.mem.disp] = [MEM_UNK, None]
+                                sz = op.size if self.has_op_size else default_size
+                                ty = self.dis.mem.find_type(sz)
+                                func_obj[FUNC_VARS][op.mem.disp] = [ty, None]
                             # Continue the loop !!
                             continue
                         else:

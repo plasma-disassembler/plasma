@@ -407,15 +407,21 @@ class OutputAbs():
         lst = list(self._dis.functions[func_addr][FUNC_VARS].keys())
         lst.sort()
 
+        self._new_line()
+
         for off in lst:
             self._tabs(tabs)
-            self._type("void * ") # TODO type
+            self._type(self.__get_var_type(func_addr, off))
+            self._pad_width(11 + tabs * 4)
             self._variable(self.__get_var_name(func_addr, off))
+            self._pad_width(20 + tabs * 4)
             if off < 0:
                 self._add(" = -0x%x" % (-off))
             else:
                 self._add(" = 0x%x" % off)
             self._new_line()
+
+        self._new_line()
 
 
     def _asm_block(self, blk, tab):
@@ -544,6 +550,21 @@ class OutputAbs():
                 return "var_%x" % (-off)
             return "arg_%x" % off
         return name
+
+
+    def __get_var_type(self, func_addr, off):
+        ty = self._dis.functions[func_addr][FUNC_VARS][off][VAR_TYPE]
+        if ty == MEM_BYTE:
+            t = "char"
+        elif ty == MEM_WORD:
+            t = "short"
+        elif ty == MEM_DWORD:
+            t = "int"
+        elif ty == MEM_QWORD:
+            t = "long int"
+        else:
+            t = "void *"
+        return t
 
 
     def _ast(self, entry, ast):
