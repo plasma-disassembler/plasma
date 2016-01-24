@@ -7,7 +7,12 @@ class COLOR:
 
 COLOR_SECTION        = COLOR(81, False)
 COLOR_KEYWORD        = COLOR(161, True)
+
+# Don't reuse this color for other tokens
+# COLOR_VAR is also used to detect if a token has the type VAR
+# FIXME: lib.ui.window.get_tok_type_under_cursor
 COLOR_VAR            = COLOR(214, False)
+
 COLOR_TYPE           = COLOR(81, False)
 COLOR_COMMENT        = COLOR(242, False)
 COLOR_ADDR           = COLOR(242, False)

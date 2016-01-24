@@ -77,6 +77,7 @@ FIXME :
 * stack variables referenced with rsp (not rbp)
 * detect if rbp is modified in the function
 * re add detection of the canary
+* check if a stack variable already exists before renaming it
 
 ![reverse](/images/visual.png?raw=true)
 

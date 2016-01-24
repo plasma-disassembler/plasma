@@ -405,8 +405,11 @@ class OutputAbs():
 
         tabs = 0 if self.ctx.is_dump else 1
         lst = list(self._dis.functions[func_addr][FUNC_VARS].keys())
-        lst.sort()
 
+        if not lst:
+            return
+
+        lst.sort()
         self._new_line()
 
         for off in lst:

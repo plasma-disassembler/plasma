@@ -103,6 +103,23 @@ class Window():
         return bytes(seq)
 
 
+    def is_tok_var(self):
+        num_line = self.win_y + self.cursor_y
+        tokens = self.output.token_lines[num_line]
+
+        x = self.cursor_x
+        if x >= len(self.output.lines[num_line]):
+            return None
+
+        i = 0
+        for (s, col, _) in tokens:
+            i += len(s)
+            if x < i:
+                return col == COLOR_VAR.val
+
+        return False
+
+
     def get_word_under_cursor(self):
         num_line = self.win_y + self.cursor_y
         line = self.output.lines[num_line]

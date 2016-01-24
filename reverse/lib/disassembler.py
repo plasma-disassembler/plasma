@@ -30,14 +30,16 @@ from reverse.lib.exceptions import ExcArch
 from reverse.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
                                 MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII,
                                 MEM_OFFSET)
-from reverse.lib.analyzer import FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS
+from reverse.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
+                                  FUNC_VARS, VAR_NAME)
 
 
 NB_LINES_TO_DISASM = 200 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_"]
+                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_",
+                   "var_"]
 
 
 class Jmptable():
@@ -178,6 +180,21 @@ class Disassembler():
             if name.startswith(n):
                 return True
         return False
+
+
+    # `func_ad` is the function address where the variable `name`
+    # is supposed to be.
+    def var_get_offset(self, func_ad, name):
+        if func_ad in self.functions:
+            for off, val in self.functions[func_ad][FUNC_VARS].items():
+                if val[VAR_NAME] == name:
+                    return off
+        return None
+
+
+    def var_rename(self, func_ad, off, name):
+        if func_ad in self.functions:
+            self.functions[func_ad][FUNC_VARS][off][VAR_NAME] = name
 
 
     # TODO: create a function in SectionAbs
@@ -351,7 +368,6 @@ class Disassembler():
 
         while 1:
             if ad == s.start:
-                o._new_line()
                 o._dash()
                 o._section(s.name)
                 o._add("  0x%x -> 0x%x" % (s.start, s.end))
@@ -449,6 +465,8 @@ class Disassembler():
 
             s = self.binary.get_section(ad)
             if s is None:
+                o._new_line()
+
                 # Get the next section, it's not mandatory that sections
                 # are consecutives !
                 s = self.binary.get_next_section(ad)
@@ -459,7 +477,7 @@ class Disassembler():
                     break
             o.curr_section = s
 
-        if until in self.functions:
+        if until == ad and not o.is_last_2_line_empty():
             o._new_line()
 
         # remove the last empty line

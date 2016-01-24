@@ -160,24 +160,58 @@ class Visual(Window):
         w.print_curr_line = False
 
         word = self.get_word_under_cursor()
+        is_var = self.is_tok_var()
 
-        if self.dis.has_reserved_prefix(word):
-            try:
-                ad = int(word[word.index("_") + 1:], 16)
-            except:
-                return True
-            word = ""
+        if is_var:
+            # Rename a stack variable
+
+            line = self.win_y + self.cursor_y
+            while line not in self.output.line_addr:
+                line += 1
+
+            fid = self.dis.mem.get_func_id(self.output.line_addr[line])
+            func_ad = self.dis.func_id[fid]
+
+            if word.startswith("var_"):
+                try:
+                    off = - int(word[word.index("_") + 1:], 16)
+                except:
+                    return True
+                word = ""
+            elif word.startswith("arg_"):
+                try:
+                    off = int(word[word.index("_") + 1:], 16)
+                except:
+                    return True
+                word = ""
+            else:
+                # Check if word was a renamed variable and get the offset value
+                off = self.dis.var_get_offset(func_ad, word)
+                if off is None:
+                    return True
         else:
-            if word not in self.dis.binary.symbols:
-                return True
-            ad = self.dis.binary.symbols[word]
+            # Rename a symbol
+
+            if self.dis.has_reserved_prefix(word):
+                try:
+                    ad = int(word[word.index("_") + 1:], 16)
+                except:
+                    return True
+                word = ""
+            else:
+                if word not in self.dis.binary.symbols:
+                    return True
+                ad = self.dis.binary.symbols[word]
 
         text = w.open_textbox(scr, word)
 
         if word == text or not text or self.dis.has_reserved_prefix(text):
             return True
 
-        self.dis.add_symbol(ad, text)
+        if is_var:
+            self.dis.var_rename(func_ad, off, text)
+        else:
+            self.dis.add_symbol(ad, text)
 
         self.reload_output(h)
         self.gctx.db.modified = True
