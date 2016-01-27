@@ -22,7 +22,6 @@ from argparse import ArgumentParser
 
 import reverse.lib.utils
 import reverse.lib.colors
-from reverse import lib
 from reverse.lib.database import Database
 from reverse.lib.disassembler import Disassembler, NB_LINES_TO_DISASM
 from reverse.lib.utils import die, error, debug__
@@ -36,8 +35,8 @@ from reverse.lib.exceptions import ExcArch, ExcFileFormat, ExcIfelse, ExcPEFail
 class GlobalContext():
     def __init__(self):
         # TODO : let globally ?
-        lib.utils.gctx  = self
-        lib.colors.gctx = self
+        reverse.lib.utils.gctx  = self
+        reverse.lib.colors.gctx = self
 
         self.comments = True # always True, will be removed
 
@@ -207,7 +206,7 @@ class GlobalContext():
 class AddrContext():
     def __init__(self, gctx):
         # TODO : let globally ?
-        lib.colors.ctx = self
+        reverse.lib.colors.ctx = self
 
         self.gctx = gctx # Global context
         self.entry = 0

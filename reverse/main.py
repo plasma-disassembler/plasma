@@ -19,7 +19,6 @@
 
 import os
 import sys
-from reverse import lib
 from reverse.lib import GlobalContext, AddrContext
 from reverse.lib.utils import info, die
 from reverse.lib.ui.vim import generate_vim_syntax
@@ -31,7 +30,7 @@ def console_entry():
     gctx = GlobalContext()
     gctx.parse_args()
 
-    if gctx.color and lib.colors.VERSION < lib.colors.CURR_VERSION:
+    if gctx.color and reverse.lib.colors.VERSION < reverse.lib.colors.CURR_VERSION:
         info("There is a new version of custom_colors.py. If you did any")
         info("modifications you can delete it. Otherwise you can copy it")
         info("somewhere, run again your command then merge the file at hand.")
