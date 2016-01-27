@@ -19,7 +19,6 @@
 
 from time import time
 
-from reverse import lib
 from reverse.lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__, list_starts_with
 
 # For the loop's analysis

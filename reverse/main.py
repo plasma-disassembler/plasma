@@ -19,6 +19,7 @@
 
 import os
 import sys
+import reverse
 from reverse.lib import GlobalContext, AddrContext
 from reverse.lib.utils import info, die
 from reverse.lib.ui.vim import generate_vim_syntax

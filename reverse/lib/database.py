@@ -31,7 +31,6 @@ except:
 
 import json
 
-from reverse import lib
 from reverse.lib.disassembler import Jmptable
 from reverse.lib.utils import info, warning
 from reverse.lib.memory import Memory

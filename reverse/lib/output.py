@@ -19,7 +19,6 @@
 
 import struct
 
-from reverse import lib
 from reverse.lib.custom_colors import *
 from reverse.lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color, bold

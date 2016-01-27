@@ -20,7 +20,6 @@
 import sys
 from time import time
 
-from reverse import lib
 from reverse.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
                              Ast_IfGoto, Ast_Ifelse, Ast_AndIf, Ast_Comment)
 from reverse.lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__

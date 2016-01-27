@@ -20,6 +20,7 @@
 import os
 from argparse import ArgumentParser
 
+import reverse
 import reverse.lib.utils
 import reverse.lib.colors
 from reverse.lib.database import Database

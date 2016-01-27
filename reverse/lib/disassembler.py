@@ -20,7 +20,6 @@
 import struct
 from time import time
 
-from reverse import lib
 from reverse.lib.graph import Graph
 from reverse.lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
 from reverse.lib.fileformat.binary import Binary, T_BIN_PE

@@ -20,7 +20,6 @@
 import threading
 from queue import Queue
 
-from reverse import lib
 from reverse.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII
 
