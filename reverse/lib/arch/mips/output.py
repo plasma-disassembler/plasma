@@ -87,12 +87,12 @@ class Output(OutputAbs):
                 ad = self._dis.mips_gp + mm.disp
                 section = self._binary.get_section(ad)
 
-                # if section is not None:
-                    # val = section.read_int(ad, 4)
-                    # if self.is_label(val):
-                        # self._imm(val, 0, True, print_data=False,
-                                  # force_dont_print_data=force_dont_print_data)
-                        # return True
+                if section is not None:
+                    if self.is_offset(ad):
+                        val = section.read_int(ad, 4)
+                        self._imm(val, 0, True, print_data=False,
+                                  force_dont_print_data=force_dont_print_data)
+                        return True
 
                 if show_deref:
                     self._add("*(")

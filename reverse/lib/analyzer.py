@@ -21,7 +21,7 @@ import threading
 from queue import Queue
 
 from reverse.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
-from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII
+from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII, MEM_OFFSET
 
 # database.functions[ADDR] contains a list, here are the indexes
 FUNC_END = 0
@@ -182,22 +182,28 @@ class Analyzer(threading.Thread):
             else:
                 continue
 
-            if b.get_section(val) is None:
+            s = b.get_section(val)
+            if s is None:
                 continue
 
             self.dis.add_xref(i.address, val)
-            if not self.dis.mem.exists(val):
 
-                # Check if this is an address to a string
-                sz = b.is_string(val)
-                if sz != 0:
-                    ty = MEM_ASCII
+            if not self.dis.mem.exists(val):
+                sz = op.size if self.has_op_size else default_size
+                deref = s.read_int(val, sz)
+                if deref is not None and b.get_section(deref) is not None:
+                    ty = MEM_OFFSET
                 else:
-                    sz = op.size if self.has_op_size else default_size
-                    if op.type == self.CS_OP_MEM:
-                        ty = self.dis.mem.find_type(sz)
+                    # Check if this is an address to a string
+                    sz = b.is_string(val)
+                    if sz != 0:
+                        ty = MEM_ASCII
                     else:
-                        ty = MEM_UNK
+                        sz = op.size if self.has_op_size else default_size
+                        if op.type == self.CS_OP_MEM:
+                            ty = self.dis.mem.find_type(sz)
+                        else:
+                            ty = MEM_UNK
 
                 self.dis.mem.add(val, sz, ty)
 

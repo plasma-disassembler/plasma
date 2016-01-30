@@ -535,6 +535,10 @@ class OutputAbs():
                ad in self._dis.xrefs
 
 
+    def is_offset(self, ad):
+        return self._dis.mem.get_type(ad) == MEM_OFFSET
+
+
     def var_name_exists(self, i, op_num):
         if self._dis.mem.is_code(i.address):
             func_id  = self._dis.mem.get_func_id(i.address)

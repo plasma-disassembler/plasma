@@ -130,6 +130,7 @@ class Output(OutputAbs):
 
             if not inv(mm.base) and mm.disp != 0 and inv(mm.index):
 
+                # TODO
                 # if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
                        # self.var_name_exists(i, num_op):
                     # print_no_end(color_var(self.get_var_name(i, num_op)))
@@ -138,13 +139,13 @@ class Output(OutputAbs):
                     ad = i.address + i.size * 2 + mm.disp
                     section = self._binary.get_section(ad)
 
-                    # if section is not None:
-                        # val = section.read_int(ad, 4)
-                        # if self.is_label(val):
-                            # self._imm(val, 0, True,
-                                      # section=section, print_data=False,
-                                      # force_dont_print_data=force_dont_print_data)
-                            # return True
+                    if section is not None:
+                        if self.is_offset(ad):
+                            val = section.read_int(ad, 4)
+                            self._imm(val, 0, True,
+                                      section=section, print_data=False,
+                                      force_dont_print_data=force_dont_print_data)
+                            return True
 
                     if show_deref:
                         self._add("*(")
