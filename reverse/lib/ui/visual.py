@@ -142,8 +142,10 @@ class Visual(Window):
 
 
     def main_cmd_rename(self, h, w):
-        if self.cursor_x >= w:
-            self.cursor_x = w - 1
+        num_line = self.win_y + self.cursor_y
+        line = self.output.lines[num_line]
+        if self.cursor_x >= len(line):
+            self.cursor_x = len(line) - 1
 
         h2 = 1
         w2 = int(w*6/7)
@@ -504,8 +506,10 @@ class Visual(Window):
 
 
     def main_cmd_enter(self, h, w):
-        if self.cursor_x >= w:
-            self.cursor_x = w - 1
+        num_line = self.win_y + self.cursor_y
+        line = self.output.lines[num_line]
+        if self.cursor_x >= len(line):
+            self.cursor_x = len(line) - 1
 
         word = self.get_word_under_cursor()
         if word is None:
