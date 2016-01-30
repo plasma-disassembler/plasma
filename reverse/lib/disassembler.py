@@ -376,6 +376,8 @@ class Disassembler():
 
         while 1:
             if ad == s.start:
+                if not o.is_last_2_line_empty():
+                    o._new_line()
                 o._dash()
                 o._section(s.name)
                 o._add("  0x%x -> 0x%x" % (s.start, s.end))
@@ -391,8 +393,7 @@ class Disassembler():
                 if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
                         and (ty == MEM_FUNC or ty == MEM_CODE):
 
-                    is_func = ad in self.functions and \
-                              self.functions[ad][FUNC_END] != -1
+                    is_func = ad in self.functions
 
                     if is_func:
                         if not o.is_last_2_line_empty():
@@ -468,9 +469,6 @@ class Disassembler():
 
                 l += 1
 
-            if (l >= lines and until == -1) or (ad >= until and until != -1):
-                break
-
             s = self.binary.get_section(ad)
             if s is None:
                 o._new_line()
@@ -483,10 +481,16 @@ class Disassembler():
                 ad = s.start
                 if until != -1 and ad >= until:
                     break
+
+            if (l >= lines and until == -1) or (ad >= until and until != -1):
+                break
+
             o.curr_section = s
 
-        if until == ad and not o.is_last_2_line_empty():
-            o._new_line()
+        if until == ad:
+            if self.mem.is_code(ad) and ad in self.xrefs or ad == s.start:
+                if not o.is_last_2_line_empty():
+                    o._new_line()
 
         # remove the last empty line
         o.lines.pop(-1)
