@@ -27,6 +27,7 @@ from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII
 FUNC_END = 0
 FUNC_FLAGS = 1
 FUNC_VARS = 2
+FUNC_ID = 3
 
 VAR_TYPE = 0
 VAR_NAME = 1
@@ -50,7 +51,7 @@ NORETURN_PE = {
 
 
 class Analyzer(threading.Thread):
-    def reset(self):
+    def init(self):
         self.dis = None
         self.msg = Queue()
 
@@ -110,8 +111,6 @@ class Analyzer(threading.Thread):
 
 
     def run(self):
-        self.reset()
-
         while 1:
             item = self.msg.get()
 
@@ -120,6 +119,7 @@ class Analyzer(threading.Thread):
                     # Run analysis
                     (ad, entry_is_func, force, queue_response) = item
                     self.pending = set() # prevent recursive loops
+
                     self.analyze_flow(ad, entry_is_func, force)
 
                     # Send a notification
@@ -173,9 +173,12 @@ class Analyzer(threading.Thread):
                         val = op.mem.disp
 
                 elif self.is_mips:
-                    # TODO: with $gp, if $gp is set to another value we need to
-                    # make again an analysis.
-                    val = op.mem.disp
+                    if op.mem.base == self.MIPS_REG_GP:
+                        if self.dis.mips_gp == -1:
+                            continue
+                        val = op.mem.disp + self.dis.mips_gp
+                    else:
+                        val = op.mem.disp
             else:
                 continue
 
@@ -203,7 +206,6 @@ class Analyzer(threading.Thread):
         functions = self.dis.functions
 
         if entry_is_func:
-
             if entry in functions:
                 last_end = functions[entry][FUNC_END]
                 self.dis.end_functions[last_end].remove(entry)
@@ -212,7 +214,7 @@ class Analyzer(threading.Thread):
 
             e = max(inner_code) if inner_code else -1
             func_id = self.db.func_id_counter
-            functions[entry] = [e, flags, {}]
+            functions[entry] = [e, flags, {}, func_id]
             func_obj = functions[entry]
 
             self.db.func_id[func_id] = entry

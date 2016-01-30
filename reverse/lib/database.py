@@ -259,34 +259,21 @@ class Database():
         try:
             self.functions = data["functions"]
 
-            if self.version <= 1.6:
+            if self.version <= 1.7:
                 for fad, value in self.functions.items():
-                    value.append(0) # flags
                     value.append({}) # dict vars
 
-                    # end of the function
-                    e = value[0]
-                    if e in self.end_functions:
-                        self.end_functions[e].append(fad)
-                    else:
-                        self.end_functions[e] = [fad]
-
-                    # function id
-                    id = value[1]
-                    self.func_id[id] = fad
-
-            else:
-                if self.version <= 1.7:
-                    for fad, value in self.functions.items():
-                        value.append({}) # dict vars
-
+            if self.version <= 1.9:
                 for fad, value in self.functions.items():
-                    # end of the function
-                    e = value[0]
-                    if e in self.end_functions:
-                        self.end_functions[e].append(fad)
-                    else:
-                        self.end_functions[e] = [fad]
+                    value.append(0) # func_id, will fail if we redefine a function...
+
+            for fad, value in self.functions.items():
+                # end of the function
+                e = value[0]
+                if e in self.end_functions:
+                    self.end_functions[e].append(fad)
+                else:
+                    self.end_functions[e] = [fad]
 
                 self.func_id = data["func_id"]
 

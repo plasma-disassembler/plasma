@@ -56,8 +56,8 @@ class Memory():
     def add(self, ad, size, ty, val=0):
         self.mm[ad] = [size, ty, val]
         if ty == MEM_UNK:
+            # don't call rm_range, add will be called many times
             return
-        # don't call rm_range, add will be called many times
         end = ad + size
         ad += 1
         while ad < end:

@@ -22,6 +22,7 @@ import curses
 from queue import Queue
 import traceback
 
+from reverse.lib.analyzer import FUNC_END, FUNC_ID
 from reverse.lib.custom_colors import *
 from reverse.lib.ui.window import *
 from reverse.lib.ui.inlineed import InlineEd
@@ -631,6 +632,16 @@ class Visual(Window):
         self.exec_disasm(self.first_addr, h, dump_until=self.last_addr)
 
 
+    def __undefine(self, ad, end_range):
+        # TODO : check if instructions contains an address with xrefs
+        if ad in self.dis.functions:
+            # TODO : undefine all func_id of each instructions
+            content = self.dis.functions[ad]
+            del self.dis.end_functions[content[FUNC_END]]
+            del self.dis.func_id[content[FUNC_ID]]
+            del self.dis.functions[ad]
+
+
     def main_cmd_set_code(self, h, w):
         if self.mode == MODE_DECOMPILE:
             return False
@@ -656,11 +667,15 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
+
+        self.__undefine(ad, 1)
+
         if ad in self.dis.xrefs:
-            self.dis.mem.add(ad, 4, MEM_BYTE)
+            self.dis.mem.add(ad, 1, MEM_BYTE)
         else:
-            # remove byte, not useful to store it in the database
+            # not usefule to store it in the database
             self.dis.mem.rm_range(ad, ad + 1)
+
         self.reload_output(h)
         self.gctx.db.modified = True
         return True
@@ -671,8 +686,8 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
+        self.__undefine(ad, 2)
         self.dis.mem.add(ad, 2, MEM_WORD)
-        self.dis.rm_xrefs_range(ad + 1, ad + 2)
         self.reload_output(h)
         self.gctx.db.modified = True
         return True
@@ -683,8 +698,8 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
+        self.__undefine(ad, 4)
         self.dis.mem.add(ad, 4, MEM_DWORD)
-        self.dis.rm_xrefs_range(ad + 1, ad + 4)
         self.reload_output(h)
         self.gctx.db.modified = True
         return True
@@ -695,8 +710,8 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
+        self.__undefine(ad, 8)
         self.dis.mem.add(ad, 8, MEM_QWORD)
-        self.dis.rm_xrefs_range(ad + 1, ad + 8)
         self.reload_output(h)
         self.gctx.db.modified = True
         return True
@@ -710,8 +725,8 @@ class Visual(Window):
         sz = self.dis.binary.is_string(ad, 1)
         if not sz:
             return False
+        self.__undefine(ad, sz)
         self.dis.mem.add(ad, sz, MEM_ASCII)
-        self.dis.rm_xrefs_range(ad + 1, ad + sz)
         self.reload_output(h)
         self.gctx.db.modified = True
         return True
@@ -740,6 +755,7 @@ class Visual(Window):
             if not self.dis.mem.exists(off):
                 self.dis.mem.add(off, 1, MEM_UNK)
 
+        self.__undefine(ad, sz)
         self.dis.mem.add(ad, sz, MEM_OFFSET)
 
         self.reload_output(h)

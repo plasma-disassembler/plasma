@@ -72,6 +72,7 @@ class Console():
             "lrawx64",
             "mips_set_gp",
             "py",
+            "push_analyze_symbols",
             "save",
             "sections",
             "sym",
@@ -91,6 +92,17 @@ class Console():
                 "Analyzer information",
                 ]
             ),
+
+            "push_analyze_symbols": Command(
+                0,
+                self.push_analyze_symbols,
+                None,
+                [
+                "",
+                "Force to reanalyze all symbols",
+                ]
+            ),
+
 
             "help": Command(
                 0,
@@ -402,6 +414,7 @@ class Console():
         }
 
         self.analyzer = Analyzer()
+        self.analyzer.init()
         self.analyzer.start()
 
         rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
@@ -624,13 +637,7 @@ class Console():
                 self.gctx.dis.dump_data(ctx, nb_lines, 8)
 
 
-    def push_analyze_symbols(self):
-        self.analyzer.set(self.gctx)
-
-        # It means that the first analysis was already done
-        if len(self.gctx.db.functions) != 0:
-            return
-
+    def push_analyze_symbols(self, args):
         # Analyze all imports (it checks if functions return or not)
         for ad in self.gctx.db.imports:
             if self.gctx.dis.mem.is_func(ad):
@@ -640,6 +647,11 @@ class Console():
         ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
             self.analyzer.msg.put((ep, False, True, None))
+
+        # Re push defined functions
+        for ad in self.gctx.db.functions:
+            if ad not in self.gctx.db.imports:
+                self.analyzer.msg.put((ad, False, True, None))
 
         # Analyze static functions
         for ad in self.gctx.db.reverse_symbols:
@@ -657,7 +669,20 @@ class Console():
         self.gctx.raw_type = None
         if self.gctx.load_file(args[1]):
             self.rl.history = self.gctx.db.history
-            self.push_analyze_symbols()
+
+            self.analyzer.set(self.gctx)
+
+            if self.gctx.dis.binary.get_arch_string() == "MIPS" and \
+                    self.gctx.dis.mips_gp == -1:
+                print("please run first these command :")
+                print("mips_set_gp 0xADDRESS")
+                print("push_analyze_symbols")
+            else:
+                # It means that the first analysis was already done
+                if len(self.gctx.db.functions) != 0:
+                    return
+
+                self.push_analyze_symbols(None)
 
 
     def __exec_lrawx86(self, args):

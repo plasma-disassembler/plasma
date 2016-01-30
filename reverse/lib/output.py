@@ -538,7 +538,7 @@ class OutputAbs():
     def var_name_exists(self, i, op_num):
         if self._dis.mem.is_code(i.address):
             func_id  = self._dis.mem.get_func_id(i.address)
-            if func_id != -1:
+            if func_id != -1 and func_id in self._dis.func_id:
                 func_addr = self._dis.func_id[func_id]
                 v = i.operands[op_num].mem.disp
                 return v in self._dis.functions[func_addr][FUNC_VARS]
