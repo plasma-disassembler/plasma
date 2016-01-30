@@ -98,9 +98,10 @@ class Output(OutputAbs):
                     sz = self.get_offset_size(ad)
                     if sz != -1:
                         val = section.read_int(ad, sz)
-                        self._imm(val, 0, True, print_data=False,
-                                  force_dont_print_data=force_dont_print_data)
-                        return True
+                        if val in self._binary.reverse_symbols:
+                            self._imm(val, 0, True, print_data=False,
+                                      force_dont_print_data=force_dont_print_data)
+                            return True
 
                 if show_deref:
                     self._add("*(")
