@@ -193,6 +193,9 @@ class Analyzer(threading.Thread):
                 deref = s.read_int(val, sz)
                 if deref is not None and b.get_section(deref) is not None:
                     ty = MEM_OFFSET
+                    self.dis.add_xref(val, deref)
+                    if not self.dis.mem.exists(deref):
+                        self.dis.mem.add(deref, 1, MEM_UNK)
                 else:
                     # Check if this is an address to a string
                     sz = b.is_string(val)
