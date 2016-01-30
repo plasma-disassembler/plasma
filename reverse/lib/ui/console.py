@@ -674,7 +674,7 @@ class Console():
 
             if self.gctx.dis.binary.get_arch_string() == "MIPS" and \
                     self.gctx.dis.mips_gp == -1:
-                print("please run first these command :")
+                print("please run first these commands :")
                 print("mips_set_gp 0xADDRESS")
                 print("push_analyze_symbols")
             else:

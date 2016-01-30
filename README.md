@@ -19,6 +19,7 @@ The `Makefile` is used only for checking tests.
 * [python-pyelftools](https://github.com/eliben/pyelftools)
 * [pefile](https://github.com/mlaferrera/python3-pefile)
 * [python-msgpack](https://github.com/msgpack/msgpack-python)
+* `c++filt` (available in the binutils Linux package)
 * terminal with 256 colors (if not, use the option `--nocolor`)
 
 
