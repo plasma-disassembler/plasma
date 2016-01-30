@@ -19,15 +19,15 @@ function main (.text) {
         0x40054c: *(rbp - 4) += 1
     }
     0x40053b: edi = 0x4005f6 "2"
-    0x400540: call puts@plt
+    0x400540: call puts
     0x400545: eax = 2
     0x40054a: jmp ret_0x400565
     0x400524: edi = 0x4005f4 "1"
-    0x400529: call puts@plt
+    0x400529: call puts
     0x40052e: eax = 1
     0x400533: jmp ret_0x400565
     0x400556: edi = 0x4005f8 "3"
-    0x40055b: call puts@plt
+    0x40055b: call puts
     0x400560: eax = 0
     ret_0x400565:
     0x400565: leave

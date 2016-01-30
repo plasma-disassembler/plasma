@@ -10,12 +10,12 @@ function main (.text) {
         # 0x4005d7: jle 0x40051a
         if (*(rbp - 4) > 19)  goto ret_0x4005dd
         0x40051a: edi = 0x400674 "1"
-        0x40051f: call puts@plt
+        0x40051f: call puts
         # 0x400524: cmp dword ptr [rbp - 4], 0xf
         # 0x400528: jne 0x40059f
         if (*(rbp - 4) == 15) {
             0x40052a: edi = 0x400676 "2"
-            0x40052f: call puts@plt
+            0x40052f: call puts
             0x400534: *(rbp - 8) = 0
             0x40053b: jmp loop_0x40058f
             loop {
@@ -24,47 +24,47 @@ function main (.text) {
                 # 0x400593: jle 0x40053d
                 if (*(rbp - 8) > 9)  goto 0x400595
                 0x40053d: edi = 0x400678 "3"
-                0x400542: call puts@plt
+                0x400542: call puts
                 # 0x400547: cmp dword ptr [rbp - 8], 5
                 # 0x40054b: jne 0x40057f
                 if (*(rbp - 8) != 5)  goto 0x40057f
                 0x40054d: edi = 0x40067a "4"
-                0x400552: call puts@plt
+                0x400552: call puts
                 # 0x400557: cmp dword ptr [rbp - 4], 2
                 # 0x40055b: jne 0x400569
                 if (*(rbp - 4) == 2) {
                     0x40055d: edi = 0x40067c "foo"
-                    0x400562: call puts@plt
+                    0x400562: call puts
                     0x400567: jmp 0x400573
                 } else {
                     0x400569: edi = 0x400680 "bar"
-                    0x40056e: call puts@plt
+                    0x40056e: call puts
                 }
                 0x400573: edi = 0x400684 "11"
-                0x400578: call puts@plt
+                0x400578: call puts
                 0x40057d: jmp 0x40058b
                 0x40058b: *(rbp - 8) += 1
             }
             0x40057f: edi = 0x400687 "5"
-            0x400584: call puts@plt
+            0x400584: call puts
             0x400589: jmp 0x40059f
             0x400595: edi = 0x400689 "6"
-            0x40059a: call puts@plt
+            0x40059a: call puts
         }
         0x40059f: edi = 0x40068b "7"
-        0x4005a4: call puts@plt
+        0x4005a4: call puts
         # 0x4005a9: cmp dword ptr [rbp - 4], 0x10
         # 0x4005ad: jne 0x4005bb
         if (*(rbp - 4) == 16) {
             0x4005af: edi = 0x40068d "8"
-            0x4005b4: call puts@plt
+            0x4005b4: call puts
             0x4005b9: jmp 0x4005c5
         } else {
             0x4005bb: edi = 0x40068f "9"
-            0x4005c0: call puts@plt
+            0x4005c0: call puts
         }
         0x4005c5: edi = 0x400691 "10"
-        0x4005ca: call puts@plt
+        0x4005ca: call puts
         0x4005cf: *(rbp - 4) += 1
     }
     ret_0x4005dd:

@@ -211,10 +211,16 @@ class OutputAbs():
 
         # TODO : fuse with disassembler.get_symbol
 
-        if ad in self.gctx.db.reverse_symbols:
+        if self.gctx.show_mangling and ad in self.gctx.db.reverse_demangled:
+            l = str(self.gctx.db.reverse_demangled[ad])
+            col = COLOR_SYMBOL.val
+            is_sym = True
+
+        elif ad in self.gctx.db.reverse_symbols:
             l = str(self.gctx.db.reverse_symbols[ad])
             col = COLOR_SYMBOL.val
             is_sym = True
+
         elif ad not in self._dis.xrefs and ty != MEM_FUNC:
             return False
 

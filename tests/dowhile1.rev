@@ -9,7 +9,7 @@ function main (.text) {
         0x400518: esi = eax
         0x40051a: edi = 0x4005c4 "%x\n"
         0x40051f: eax = 0
-        0x400524: call printf@plt
+        0x400524: call printf
         0x400529: *(rbp - 4) += 1
         # 0x40052d: cmp dword ptr [rbp - 4], 9
         # 0x400531: jle 0x400515

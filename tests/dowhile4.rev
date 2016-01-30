@@ -14,7 +14,7 @@ function main (.text) {
         loop {
             loop_0x400525:
             0x400525: edi = 0x4005f4 "1"
-            0x40052a: call puts@plt
+            0x40052a: call puts
             0x40052f: *(rbp - 8) += 1
             # 0x400533: cmp dword ptr [rbp - 8], 9
             # 0x400537: jle 0x400525
@@ -23,7 +23,7 @@ function main (.text) {
         loop {
             loop_0x400539:
             0x400539: edi = 0x4005f6 "2"
-            0x40053e: call puts@plt
+            0x40053e: call puts
             0x400543: *(rbp - 8) += 1
             # 0x400547: cmp dword ptr [rbp - 8], 0x13
             # 0x40054b: jle 0x400539
@@ -33,7 +33,7 @@ function main (.text) {
     }
     ret_0x400557:
     0x400557: edi = 0x4005f8 "3"
-    0x40055c: call puts@plt
+    0x40055c: call puts
     0x400561: eax = 0
     0x400566: leave
     0x400567: ret

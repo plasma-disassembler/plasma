@@ -11,26 +11,26 @@ function main (.text) {
         # 0x4005f0: jle 0x400561
         if (*(rbp - 4) > 999)  goto ret_0x4005f6
         0x400561: edi = 0x400694 "1"
-        0x400566: call puts@plt
-        0x40056b: call rand@plt
+        0x400566: call puts
+        0x40056b: call rand
         0x400570: *(rbp - 8) = eax
         # 0x400573: cmp dword ptr [rbp - 8], 1
         # 0x400577: jne 0x4005db
         if (*(rbp - 8) == 1)  goto 0x400579
         0x4005db: edi = 0x4006ab "5"
-        0x4005e0: call puts@plt
+        0x4005e0: call puts
         0x4005e5: *(rbp - 4) += 1
     }
     # 0x400579: cmp dword ptr [rbp - 4], 0x1f3
     # 0x400580: jg 0x4005cf
     if (*(rbp - 4) <= 499) {
         0x400582: edi = 0x400696 "2"
-        0x400587: call puts@plt
+        0x400587: call puts
         # 0x40058c: cmp dword ptr [rbp - 4], 0xc7
         # 0x400593: jg 0x4005bd
         if (*(rbp - 4) <= 199) {
             0x400595: edi = 0x400698 "3"
-            0x40059a: call puts@plt
+            0x40059a: call puts
             # 0x40059f: cmp dword ptr [rbp - 4], 1
             # 0x4005a3: je 0x4005b1
             if (*(rbp - 4) != 1) {
@@ -43,7 +43,7 @@ function main (.text) {
                 goto 0x4005cf
             } else {
                 0x4005b1: edi = 0x40069a "4"
-                0x4005b6: call puts@plt
+                0x4005b6: call puts
                 0x4005bb: jmp 0x4005cf
             }
         }
@@ -53,17 +53,17 @@ function main (.text) {
             for (;;) {
                 loop_0x4005c3:
                 0x4005c3: edi = 0x40069c "loooop!"
-                0x4005c8: call puts@plt
+                0x4005c8: call puts
                 0x4005cd: jmp loop_0x4005c3
             }
         }
     }
     0x4005cf: edi = 0x4006a4 "break!"
-    0x4005d4: call puts@plt
+    0x4005d4: call puts
     0x4005d9: jmp ret_0x4005f6
     ret_0x4005f6:
     0x4005f6: edi = 0x4006ad "6"
-    0x4005fb: call puts@plt
+    0x4005fb: call puts
     0x400600: eax = 0
     0x400605: leave
     0x400606: ret

@@ -210,6 +210,7 @@ class Console():
                 "x       show xrefs",
                 "r       rename",
                 "I       switch to traditional instruction string output",
+                "M       show mangling or not",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -543,6 +544,12 @@ class Console():
                 if i == self.MAX_PRINT_COMPLETE:
                     return None
         for sym in self.gctx.dis.binary.symbols:
+            if sym.startswith(last_tok):
+                comp.append((sym + " ")[len(last_tok):])
+                i += 1
+                if i == self.MAX_PRINT_COMPLETE:
+                    return None
+        for sym in self.gctx.dis.binary.demangled:
             if sym.startswith(last_tok):
                 comp.append((sym + " ")[len(last_tok):])
                 i += 1

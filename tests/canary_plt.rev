@@ -21,7 +21,7 @@ function main (.text) {
     # 0x40056e: xor rdx, qword ptr fs:[0x28]
     # 0x400577: je 0x40057e
     if ((rdx ^= *(fs + 40)) != 0) {
-        0x400579: call __stack_chk_fail@plt
+        0x400579: call __stack_chk_fail
     }
     ret_0x40057e:
     0x40057e: leave

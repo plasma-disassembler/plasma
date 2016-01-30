@@ -66,6 +66,7 @@ class GlobalContext():
         self.raw_type = None
         self.print_data = False
         self.capstone_string = 0 # See lib.ui.visual.main_cmd_inst_output
+        self.show_mangling = True
 
         # Built objects
         self.dis = None # Disassembler
@@ -262,8 +263,10 @@ class AddrContext():
                 die()
             return True
 
-        self.entry = self.gctx.dis.binary.symbols.get(entry, None) or \
+        self.entry = self.gctx.dis.binary.demangled.get(entry, None) or \
+                     self.gctx.dis.binary.symbols.get(entry, None) or \
                      self.gctx.dis.binary.section_names.get(entry, None)
+
         if self.entry is None:
             error("symbol %s not found" % entry)
             if self.gctx.interactive_mode:

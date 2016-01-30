@@ -59,16 +59,16 @@ class InlineEd(Window):
         self.do_nothing = do_nothing
         self.prefix = prefix
 
+        self.par.cursor_x = self.xbegin
+        if self.prefix:
+            self.par.cursor_x += len(self.prefix) + 1
+
 
     def start_view(self, screen):
         self.screen = screen
         y = self.par.cursor_y
 
-        self.par.cursor_x = self.xbegin
-        if self.prefix:
-            self.par.cursor_x += len(self.prefix) + 1
-
-        i = 0 # index of the cursor in self.text
+        i = self.par.cursor_x # index of the cursor in self.text
 
         while 1:
             (h, w) = screen.getmaxyx()

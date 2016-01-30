@@ -18,7 +18,7 @@ function main (.text) {
                 # 0x400538: jl 0x400524
                 if (eax >= *(rbp - 4))  goto 0x40053a
                 0x400524: edi = 0x4005e4 "1"
-                0x400529: call puts@plt
+                0x400529: call puts
                 0x40052e: *(rbp - 4) += 1
             }
         }
@@ -26,7 +26,7 @@ function main (.text) {
         # 0x40053e: jne 0x40054a
         if (*(rbp - 8) == 2) {
             0x400540: edi = 0x4005e6 "2"
-            0x400545: call puts@plt
+            0x400545: call puts
         }
         # 0x40054a: cmp dword ptr [rbp - 8], 3
         # 0x40054e: jne 0x400515

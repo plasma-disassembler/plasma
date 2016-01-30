@@ -9,33 +9,33 @@ function main (.text) {
         # 0x40053a: jle 0x400510
         if (*(rbp - 4) > 29)  goto 0x40053c
         0x400510: edi = 0x400604 "1"
-        0x400515: call puts@plt
+        0x400515: call puts
         # 0x40051a: cmp dword ptr [rbp - 8], 0xf
         # 0x40051e: jne 0x40052c
         if (*(rbp - 8) == 15)  goto 0x400520
         0x40052c: edi = 0x400608 "3"
-        0x400531: call puts@plt
+        0x400531: call puts
     }
     0x400520: edi = 0x400606 "2"
-    0x400525: call puts@plt
+    0x400525: call puts
     0x40052a: jmp 0x400558
     # 0x40053c: cmp dword ptr [rbp - 4], 0x7b
     # 0x400540: jne 0x40054e
     if (*(rbp - 4) == 123) {
         0x400542: edi = 0x40060a "4"
-        0x400547: call puts@plt
+        0x400547: call puts
         0x40054c: jmp ret_0x400562
     } else {
         0x40054e: edi = 0x40060c "5"
-        0x400553: call puts@plt
+        0x400553: call puts
         goto 0x400558
     }
     goto ret_0x400562
     0x400558: edi = 0x40060e "end"
-    0x40055d: call puts@plt
+    0x40055d: call puts
     ret_0x400562:
     0x400562: edi = 0x400612 "finish"
-    0x400567: call puts@plt
+    0x400567: call puts
     0x40056c: eax = 0
     0x400571: leave
     0x400572: ret

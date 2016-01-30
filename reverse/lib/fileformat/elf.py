@@ -142,7 +142,7 @@ class ELF:
             ad = r.entry.r_offset
             if name and ad:
                 ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
-                got_off[ad] = [name + "@plt", ty]
+                got_off[ad] = [name, ty]
 
         data = got_plt.data()
 
@@ -201,8 +201,6 @@ class ELF:
             ad = sym.entry.st_value
             if ad != 0:
                 name = sym.name.decode()
-                if arch == "ARM":
-                    name += "@plt"
 
                 if name in self.classbinary.symbols:
                     continue
@@ -216,12 +214,12 @@ class ELF:
 
 
     def __iter_reloc(self):
-        for rel in self.elf.iter_sections():
-            if rel.header.sh_type in ["SHT_RELA", "SHT_REL"]:
-                symtab = self.elf.get_section(rel.header.sh_link)
+        for s in self.elf.iter_sections():
+            if s.header.sh_type in ["SHT_RELA", "SHT_REL"]:
+                symtab = self.elf.get_section(s.header.sh_link)
                 if symtab is None:
                     continue
-                yield (rel, symtab)
+                yield (s, symtab)
 
 
     def load_dyn_sym(self):

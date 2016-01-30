@@ -36,7 +36,7 @@ from reverse.lib.utils import info, warning
 from reverse.lib.memory import Memory
 
 
-VERSION = 1.8
+VERSION = 1.9
 
 
 class Database():
@@ -50,6 +50,7 @@ class Database():
     def __init_vars(self):
         self.history = []
         self.symbols = {} # name -> addr
+        self.demangled = {} # name -> addr
         self.user_inline_comments = {}
         self.internal_inline_comments = {}
         self.user_previous_comments = {}
@@ -68,6 +69,7 @@ class Database():
         self.func_id_counter = 0
         self.end_functions = {}
         self.reverse_symbols = {} # addr -> name
+        self.reverse_demangled = {} # addr -> name
         self.version = VERSION
 
 
@@ -118,6 +120,7 @@ class Database():
         data = {
             "version": VERSION,
             "symbols": self.symbols,
+            "demangled": self.demangled,
             "history": history,
             "user_inline_comments": self.user_inline_comments,
             "internal_inline_comments": self.internal_inline_comments,
@@ -148,6 +151,12 @@ class Database():
 
     def __load_symbols(self, data):
         self.symbols = data["symbols"]
+
+        if self.version >= 1.9:
+            self.demangled = data["demangled"]
+
+            for name, ad in self.demangled.items():
+                self.reverse_demangled[ad] = name
 
         if self.version <= 1.4 and self.version != -1:
             for name, a in self.symbols.items():

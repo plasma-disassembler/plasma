@@ -3,12 +3,12 @@ function main (.text) {
     0x4004e1: push rbx
     0x4004e2: edi = 0
     0x4004e4: rsp -= 8
-    0x4004e8: call time@plt
+    0x4004e8: call time
     0x4004ed: edi = eax
-    0x4004ef: call srand@plt
-    0x4004f4: call rand@plt
+    0x4004ef: call srand
+    0x4004f4: call rand
     0x4004f9: ebx = eax
-    0x4004fb: call rand@plt
+    0x4004fb: call rand
     0x400500: ebx cmp '\x01'
     0x400503: ebp = eax
     # 0x400505: je 0x400515
@@ -20,12 +20,12 @@ function main (.text) {
         }
     } else {
         0x400515: edi = 0x4006b4 "2"
-        0x40051a: call puts@plt
+        0x40051a: call puts
         # 0x40051f: cmp ebp, 2
         # 0x400522: jne 0x40050c
         if (ebp == '\x02') {
             0x400524: edi = 0x4006b6 "1"
-            0x400529: call puts@plt
+            0x400529: call puts
             0x40052e: jmp ret_0x40050c
         }
     }

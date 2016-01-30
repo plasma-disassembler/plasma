@@ -14,10 +14,10 @@ function main (.text) {
             # 0x40052b: jle 0x40051d
             if (*(rbp - 8) > 9)  goto 0x40052d
             0x40051d: edi = 0x4005e4 "1"
-            0x400522: call puts@plt
+            0x400522: call puts
         }
         0x40052d: edi = 0x4005e6 "2"
-        0x400532: call puts@plt
+        0x400532: call puts
     }
     # 0x400537: cmp dword ptr [rbp - 4], 2
     # 0x40053b: jne 0x40054d
@@ -25,7 +25,7 @@ function main (.text) {
         loop {
             loop_0x40053d:
             0x40053d: edi = 0x4005e8 "3"
-            0x400542: call puts@plt
+            0x400542: call puts
             # 0x400547: cmp dword ptr [rbp - 0xc], 0xe
             # 0x40054b: jle 0x40053d
             if (*(rbp - 12) > 14)  goto ret_0x40054d

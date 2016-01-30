@@ -7,45 +7,45 @@ function main (.text) {
     0x4009d5: edx = 0
     0x4009da: esi = 1
     0x4009df: edi = 2
-    0x4009e4: call socket@plt
+    0x4009e4: call socket
     0x4009e9: *(rbp - 4) = eax
     # 0x4009ec: cmp dword ptr [rbp - 4], -1
     # 0x4009f0: jne 0x400a06
     if (*(rbp - 4) == -1) {
         0x4009f2: edi = 0x400ca8 "Could not create socket"
-        0x4009f7: call perror@plt
+        0x4009f7: call perror
         0x4009fc: eax = 1
         0x400a01: jmp ret_0x400b1c
     } else {
         0x400a06: edi = 0x400cc0 "Socket created"
-        0x400a0b: call puts@plt
+        0x400a0b: call puts
         0x400a10: *(rbp - 48) = 2
         0x400a16: *(rbp - 44) = 0
         0x400a1d: edi = 8888
-        0x400a22: call htons@plt
+        0x400a22: call htons
         0x400a27: *(rbp - 46) = ax
         0x400a2b: rcx = rbp - 48
         0x400a2f: eax = *(rbp - 4)
         0x400a32: edx = 16
         0x400a37: rsi = rcx
         0x400a3a: edi = eax
-        0x400a3c: call bind@plt
+        0x400a3c: call bind
         # 0x400a41: test eax, eax
         # 0x400a43: jns 0x400a59
         if (eax < 0) {
             0x400a45: edi = 0x400ccf "bind failed. Error"
-            0x400a4a: call perror@plt
+            0x400a4a: call perror
             0x400a4f: eax = 1
             0x400a54: jmp ret_0x400b1c
         } else {
             0x400a59: edi = 0x400ce2 "bind done"
-            0x400a5e: call puts@plt
+            0x400a5e: call puts
             0x400a63: eax = *(rbp - 4)
             0x400a66: esi = 3
             0x400a6b: edi = eax
-            0x400a6d: call listen@plt
+            0x400a6d: call listen
             0x400a72: edi = 0x400cf0 "Waiting for incoming connectio..."
-            0x400a77: call puts@plt
+            0x400a77: call puts
             0x400a7c: *(rbp - 20) = 16
             0x400a83: jmp loop_0x400ae2
             loop {
@@ -55,15 +55,15 @@ function main (.text) {
                 0x400aea: eax = *(rbp - 4)
                 0x400aed: rsi = rcx
                 0x400af0: edi = eax
-                0x400af2: call accept@plt
+                0x400af2: call accept
                 0x400af7: *(rbp - 8) = eax
                 # 0x400afa: cmp dword ptr [rbp - 8], 0
                 # 0x400afe: jne 0x400a85
                 if (*(rbp - 8) == 0)  goto 0x400b00
                 0x400a85: edi = 0x400d14 "Connection accepted"
-                0x400a8a: call puts@plt
+                0x400a8a: call puts
                 0x400a8f: edi = 1
-                0x400a94: call malloc@plt
+                0x400a94: call malloc
                 0x400a99: *(rbp - 16) = rax
                 0x400a9d: rax = *(rbp - 16)
                 0x400aa1: edx = *(rbp - 8)
@@ -74,22 +74,22 @@ function main (.text) {
                 0x400ab1: edx = connection_handler
                 0x400ab6: esi = 0
                 0x400abb: rdi = rax
-                0x400abe: call pthread_create@plt
+                0x400abe: call pthread_create
                 # 0x400ac3: test eax, eax
                 # 0x400ac5: jns 0x400ad8
                 if (eax < 0)  goto 0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned"
-                0x400add: call puts@plt
+                0x400add: call puts
             }
             0x400ac7: edi = 0x400d28 "could not create thread"
-            0x400acc: call perror@plt
+            0x400acc: call perror
             0x400ad1: eax = 1
             0x400ad6: jmp ret_0x400b1c
             # 0x400b00: cmp dword ptr [rbp - 8], 0
             # 0x400b04: jns 0x400b17
             if (*(rbp - 8) < 0) {
                 0x400b06: edi = 0x400d51 "accept failed"
-                0x400b0b: call perror@plt
+                0x400b0b: call perror
                 0x400b10: eax = 1
                 0x400b15: jmp ret_0x400b1c
             } else {

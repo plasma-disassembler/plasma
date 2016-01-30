@@ -6,34 +6,34 @@ function main (.text) {
     # 0x400512: jne 0x400520
     if (*(rbp - 4) == 1) {
         0x400514: edi = 0x400604 "1"
-        0x400519: call puts@plt
+        0x400519: call puts
         0x40051e: jmp 0x400550
     }
     0x400520: edi = 0x400606 "2"
-    0x400525: call puts@plt
+    0x400525: call puts
     for (;;) {
         loop_0x40052a:
         0x40052a: edi = 0x400608 "loop"
-        0x40052f: call puts@plt
+        0x40052f: call puts
         # 0x400534: cmp dword ptr [rbp - 8], 6
         # 0x400538: jne 0x400546
         if (*(rbp - 8) == 6) {
             0x40053a: edi = 0x40060d "3"
-            0x40053f: call puts@plt
+            0x40053f: call puts
             0x400544: jmp 0x400550
         } else {
             0x400546: edi = 0x40060f "4"
-            0x40054b: call puts@plt
+            0x40054b: call puts
         }
         # 0x400550: cmp dword ptr [rbp - 8], 5
         # 0x400554: jne 0x400562
         if (*(rbp - 8) == 5) {
             0x400556: edi = 0x400611 "5"
-            0x40055b: call puts@plt
+            0x40055b: call puts
             0x400560: jmp 0x40056c
         } else {
             0x400562: edi = 0x400613 "6"
-            0x400567: call puts@plt
+            0x400567: call puts
         }
         0x40056c: *(rbp - 4) += 1
         0x400570: jmp loop_0x40052a

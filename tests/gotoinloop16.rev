@@ -17,11 +17,11 @@ function main (.text) {
             0x40052b: *(rbp - 4) += 1
         }
         0x40051f: edi = 0x4005e4 "1"
-        0x400524: call puts@plt
+        0x400524: call puts
         0x400529: jmp 0x400537
         0x400535: jmp loop_0x400545
         0x400537: edi = 0x4005e6 "2"
-        0x40053c: call puts@plt
+        0x40053c: call puts
         0x400541: *(rbp - 4) += 1
     }
     loop {

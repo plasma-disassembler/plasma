@@ -23,7 +23,7 @@ from time import time
 from reverse.lib.graph import Graph
 from reverse.lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
 from reverse.lib.fileformat.binary import Binary, T_BIN_PE
-from reverse.lib.colors import (color_addr, color_symbol,
+from reverse.lib.colors import (color_addr, color_symbol, color_comment,
                                 color_section, color_string)
 from reverse.lib.exceptions import ExcArch
 from reverse.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
@@ -85,11 +85,15 @@ class Disassembler():
         if database.loaded:
             self.binary.symbols = database.symbols
             self.binary.reverse_symbols = database.reverse_symbols
+            self.binary.demangled = database.demangled
+            self.binary.reverse_demangled = database.reverse_demangled
             self.binary.imports = database.imports
         else:
             self.binary.load_symbols()
             database.symbols = self.binary.symbols
             database.reverse_symbols = self.binary.reverse_symbols
+            database.demangled = self.binary.demangled
+            database.reverse_demangled = self.binary.reverse_demangled
             database.imports = self.binary.imports
 
         self.capstone = CAPSTONE
@@ -311,7 +315,12 @@ class Disassembler():
         return ad in self.binary.reverse_symbols or ad in self.xrefs
 
 
-    def get_symbol(self, ad):
+    def get_symbol(self, ad, gctx=None):
+        if gctx is not None and gctx.show_mangling:
+            s = self.binary.reverse_demangled.get(ad, None)
+            if s is not None:
+                return s
+
         s = self.binary.reverse_symbols.get(ad, None)
         if s is None:
             ty = self.mem.get_type(ad)
@@ -403,7 +412,7 @@ class Disassembler():
 
                     if ad in self.end_functions:
                         for fad in self.end_functions[ad]:
-                            sy = self.get_symbol(fad)
+                            sy = self.get_symbol(fad, ctx.gctx)
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
@@ -609,9 +618,21 @@ class Disassembler():
     def print_functions(self):
         total = 0
 
+        lst = list(self.functions)
+        lst.sort()
+
         # TODO: race condition with the analyzer ?
-        for ad in list(self.functions):
-            print(color_addr(ad) + " " + self.get_symbol(ad))
+        for ad in lst:
+            print_no_end(color_addr(ad))
+            sy = self.get_symbol(ad)
+
+            if ad in self.binary.reverse_demangled:
+                print_no_end(" %s (%s) " % (self.binary.reverse_demangled[ad],
+                                           color_comment(sy)))
+            else:
+                print_no_end(" " + sy)
+            print()
+
             total += 1
 
         print("Total:", total)
@@ -634,13 +655,30 @@ class Disassembler():
         # TODO: race condition with the analyzer ?
         for sy in list(self.binary.symbols):
             ad = self.binary.symbols[sy]
+
+            if ad in self.binary.reverse_demangled:
+                dem = self.binary.reverse_demangled[ad]
+            else:
+                dem = None
+
+            print_sym = True
+
             if sym_filter is None or \
                     (invert_match and sym_filter not in sy.lower()) or \
-                    (not invert_match and sym_filter in sy.lower()):
+                    (not invert_match and sym_filter in sy.lower()) or \
+                    (dem is not None and
+                     ((invert_match and sym_filter not in dem.lower()) or \
+                      (not invert_match and sym_filter in dem.lower()))):
 
                 if sy:
+                    print_no_end(color_addr(ad))
+
+                    if dem is not None:
+                        print_no_end(" %s (%s) " % (dem, color_comment(sy)))
+                    else:
+                        print_no_end(" " + sy)
+
                     section = self.binary.get_section(ad)
-                    print_no_end(color_addr(ad) + " " + sy)
                     if print_sections and section is not None:
                         print_no_end(" (" + color_section(section.name) + ")")
                     print()

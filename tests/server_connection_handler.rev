@@ -9,23 +9,23 @@ function connection_handler (.text) {
     0x400b3c: *(rbp - 16) = 0x400d60 "Greetings! I am your connectio..."
     0x400b44: rax = *(rbp - 16)
     0x400b48: rdi = rax
-    0x400b4b: call strlen@plt
+    0x400b4b: call strlen
     0x400b50: rdx = rax
     0x400b53: rcx = *(rbp - 16)
     0x400b57: eax = *(rbp - 4)
     0x400b5a: rsi = rcx
     0x400b5d: edi = eax
-    0x400b5f: call write@plt
+    0x400b5f: call write
     0x400b64: *(rbp - 16) = 0x400d90 "Now type something and i shall..."
     0x400b6c: rax = *(rbp - 16)
     0x400b70: rdi = rax
-    0x400b73: call strlen@plt
+    0x400b73: call strlen
     0x400b78: rdx = rax
     0x400b7b: rcx = *(rbp - 16)
     0x400b7f: eax = *(rbp - 4)
     0x400b82: rsi = rcx
     0x400b85: edi = eax
-    0x400b87: call write@plt
+    0x400b87: call write
     0x400b8c: jmp loop_0x400bb4
     loop {
         loop_0x400bb4:
@@ -34,41 +34,41 @@ function connection_handler (.text) {
         0x400bbe: ecx = 0
         0x400bc3: edx = 2000
         0x400bc8: edi = eax
-        0x400bca: call recv@plt
+        0x400bca: call recv
         0x400bcf: *(rbp - 20) = eax
         # 0x400bd2: cmp dword ptr [rbp - 0x14], 0
         # 0x400bd6: jg 0x400b8e
         if (*(rbp - 20) <= 0)  goto 0x400bd8
         0x400b8e: rax = rbp - 2032
         0x400b95: rdi = rax
-        0x400b98: call strlen@plt
+        0x400b98: call strlen
         0x400b9d: rdx = rax
         0x400ba0: rcx = rbp - 2032
         0x400ba7: eax = *(rbp - 4)
         0x400baa: rsi = rcx
         0x400bad: edi = eax
-        0x400baf: call write@plt
+        0x400baf: call write
     }
     # 0x400bd8: cmp dword ptr [rbp - 0x14], 0
     # 0x400bdc: jne 0x400bf9
     if (*(rbp - 20) == 0) {
         0x400bde: edi = 0x400dc6 "Client disconnected"
-        0x400be3: call puts@plt
+        0x400be3: call puts
         0x400be8: rax = *(__TMC_END__)
         0x400bef: rdi = rax
-        0x400bf2: call fflush@plt
+        0x400bf2: call fflush
         0x400bf7: jmp ret_0x400c09
     }
     # 0x400bf9: cmp dword ptr [rbp - 0x14], -1
     # 0x400bfd: jne 0x400c09
     else if (*(rbp - 20) == -1) {
         0x400bff: edi = 0x400dda "recv failed"
-        0x400c04: call perror@plt
+        0x400c04: call perror
     }
     ret_0x400c09:
     0x400c09: rax = *(rbp - 2040)
     0x400c10: rdi = rax
-    0x400c13: call free@plt
+    0x400c13: call free
     0x400c18: eax = 0
     0x400c1d: leave
     0x400c1e: ret

@@ -6,18 +6,18 @@ function main (.text) {
     # 0x400512: jne 0x400520
     if (*(rbp - 4) == 1) {
         0x400514: edi = 0x400644 "1"
-        0x400519: call puts@plt
+        0x400519: call puts
         0x40051e: jmp 0x400564
     }
     # 0x400520: cmp dword ptr [rbp - 4], 2
     # 0x400524: jne 0x400532
     if (*(rbp - 4) == 2) {
         0x400526: edi = 0x400646 "2"
-        0x40052b: call puts@plt
+        0x40052b: call puts
         0x400530: jmp 0x400583
     }
     0x400532: edi = 0x400648 "3"
-    0x400537: call puts@plt
+    0x400537: call puts
     0x40053c: jmp loop_0x4005a6
     loop {
         loop_0x4005a6:
@@ -25,36 +25,36 @@ function main (.text) {
         # 0x4005aa: jle 0x40053e
         if (*(rbp - 4) > 9)  goto ret_0x4005ac
         0x40053e: edi = 0x40064a "loop"
-        0x400543: call puts@plt
+        0x400543: call puts
         # 0x400548: cmp dword ptr [rbp - 8], 0x6f
         # 0x40054c: jne 0x40055a
         if (*(rbp - 8) == 111) {
             0x40054e: edi = 0x400648 "3"
-            0x400553: call puts@plt
+            0x400553: call puts
             0x400558: jmp 0x400564
         } else {
             0x40055a: edi = 0x40064f "4"
-            0x40055f: call puts@plt
+            0x40055f: call puts
         }
         # 0x400564: cmp dword ptr [rbp - 8], 0xde
         # 0x40056b: jne 0x400579
         if (*(rbp - 8) == 222) {
             0x40056d: edi = 0x400651 "5"
-            0x400572: call puts@plt
+            0x400572: call puts
             0x400577: jmp 0x400583
         } else {
             0x400579: edi = 0x400653 "6"
-            0x40057e: call puts@plt
+            0x40057e: call puts
         }
         # 0x400583: cmp dword ptr [rbp - 8], 0x14d
         # 0x40058a: jne 0x400598
         if (*(rbp - 8) == 333) {
             0x40058c: edi = 0x400655 "7"
-            0x400591: call puts@plt
+            0x400591: call puts
             0x400596: jmp 0x4005a2
         } else {
             0x400598: edi = 0x400657 "8"
-            0x40059d: call puts@plt
+            0x40059d: call puts
         }
         0x4005a2: *(rbp - 4) += 1
     }

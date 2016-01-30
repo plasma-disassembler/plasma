@@ -3,18 +3,18 @@ function main (.text) {
     0x4005d7: rbp = rsp
     0x4005da: rsp -= 16
     0x4005de: edi = 0
-    0x4005e3: call time@plt
+    0x4005e3: call time
     0x4005e8: edi = eax
-    0x4005ea: call srand@plt
-    0x4005ef: call rand@plt
+    0x4005ea: call srand
+    0x4005ef: call rand
     0x4005f4: *(rbp - 4) = eax
-    0x4005f7: call rand@plt
+    0x4005f7: call rand
     0x4005fc: *(rbp - 8) = eax
     # 0x4005ff: cmp dword ptr [rbp - 4], 1
     # 0x400603: jne 0x400617
     if (*(rbp - 4) == 1) {
         0x400605: edi = 0x4006c4 "2"
-        0x40060a: call puts@plt
+        0x40060a: call puts
         # 0x40060f: cmp dword ptr [rbp - 8], 2
         # 0x400613: jne 0x40062b
         if (*(rbp - 8) == 2) {
@@ -26,7 +26,7 @@ function main (.text) {
         # 0x40061f: jne 0x40062b
         if (*(rbp - 8) == 0) {
             0x400621: edi = 0x4006c6 "1"
-            0x400626: call puts@plt
+            0x400626: call puts
         }
     }
     ret_0x40062b:

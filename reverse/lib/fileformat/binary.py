@@ -19,6 +19,7 @@
 
 import bisect
 from time import time
+import subprocess
 
 from reverse.lib.utils import debug__, print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color_section
@@ -118,6 +119,8 @@ class Binary(object):
         self.reverse_symbols = {} # ad -> name
         self.symbols = {} # name -> ad
         self.section_names = {}
+        self.demangled = {} # name -> ad
+        self.reverse_demangled = {} # ad -> name
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
         self.type = None
 
@@ -297,9 +300,37 @@ class Binary(object):
         start = time()
         self.__binary.load_static_sym()
         self.__binary.load_dyn_sym()
+        self.__demangle_symbols()
         elapsed = time()
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+
+
+    def __demangle_symbols(self):
+        addr = []
+        lookup_names = []
+        for n, ad in self.symbols.items():
+            if n.startswith("_Z") or n.startswith("__Z"):
+                addr.append(ad)
+                lookup_names.append(n.split("@@")[0])
+
+        # http://stackoverflow.com/questions/6526500/c-name-mangling-library-for-python
+        args = ['c++filt']
+        args.extend(lookup_names)
+        pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        stdout, _ = pipe.communicate()
+        demangled = stdout.split(b"\n")[:-1]
+
+        self.reverse_demangled = dict(zip(addr, demangled))
+
+        for ad, n in self.reverse_demangled.items():
+            n = n.decode()
+            i = n.find("(")
+            # remove the protoype
+            if i != -1:
+                n = n[:i]
+            self.reverse_demangled[ad] = n
+            self.demangled[n] = ad
 
 
     def load_section_names(self):

@@ -10,7 +10,7 @@ function main (.text) {
         # 0x400591: jle 0x400517
         if (*(rbp - 4) > 99)  goto ret_0x400593
         0x400517: edi = 0x400624 "1"
-        0x40051c: call puts@plt
+        0x40051c: call puts
         0x400521: jmp loop_0x40054a
         loop {
             loop_0x40054a:
@@ -18,7 +18,7 @@ function main (.text) {
             # 0x40054e: jle 0x400523
             if (*(rbp - 8) > 19) {
                 0x400550: edi = 0x40062a "4"
-                0x400555: call puts@plt
+                0x400555: call puts
                 0x40055a: jmp loop_0x400583
                 loop {
                     loop_0x400583:
@@ -26,7 +26,7 @@ function main (.text) {
                     # 0x400587: jle 0x40055c
                     if (*(rbp - 12) > 29)  goto 0x400589
                     0x40055c: edi = 0x40062c "5"
-                    0x400561: call puts@plt
+                    0x400561: call puts
                     # 0x400566: cmp dword ptr [rbp - 0xc], 0x14
                     # 0x40056a: jne 0x400579
                     if (*(rbp - 12) == 20) {
@@ -39,13 +39,13 @@ function main (.text) {
                         if (*(rbp - 12) != 25)  goto 0x40057f
                         0x400535: nop
                         0x400536: edi = 0x400628 "3"
-                        0x40053b: call puts@plt
+                        0x40053b: call puts
                         # 0x400540: cmp dword ptr [rbp - 8], 0xf
                         # 0x400544: je 0x40056e
                         if (*(rbp - 8) != 15)  goto 0x400546
                         0x40056e: nop
                         0x40056f: edi = 0x40062e "6"
-                        0x400574: call puts@plt
+                        0x400574: call puts
                     }
                     0x40057f: *(rbp - 12) += 1
                 }
@@ -53,7 +53,7 @@ function main (.text) {
                 goto loop_0x40054a
             }
             0x400523: edi = 0x400626 "2"
-            0x400528: call puts@plt
+            0x400528: call puts
             # 0x40052d: cmp dword ptr [rbp - 8], 0xa
             # 0x400531: jne 0x400540
             if (*(rbp - 8) == 10) {

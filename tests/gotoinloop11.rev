@@ -12,11 +12,11 @@ function main (.text) {
         # 0x400517: jne 0x400525
         if (*(rbp - 8) == 1) {
             0x400519: edi = 0x400644 "1"
-            0x40051e: call puts@plt
+            0x40051e: call puts
             0x400523: jmp 0x400539
         }
         0x400525: edi = 0x400646 "2"
-        0x40052a: call puts@plt
+        0x40052a: call puts
         0x40052f: jmp loop_0x40059b
         loop {
             loop_0x40059b:
@@ -38,7 +38,7 @@ function main (.text) {
                     # 0x400537: jne 0x400545
                     if (eax == *(rbp - 16)) {
                         0x400539: edi = 0x400648 "3"
-                        0x40053e: call puts@plt
+                        0x40053e: call puts
                         0x400543: jmp 0x40056b
                     } else {
                         0x400545: eax = *(rbp - 16)
@@ -46,7 +46,7 @@ function main (.text) {
                         # 0x40054b: jne 0x400559
                         if (eax == *(rbp - 12)) {
                             0x40054d: edi = 0x40064a "4"
-                            0x400552: call puts@plt
+                            0x400552: call puts
                             0x400557: jmp 0x40056b
                         } else {
                             0x400559: eax = *(rbp - 8)
@@ -54,21 +54,21 @@ function main (.text) {
                             # 0x40055f: jne 0x40056b
                             if (eax == *(rbp - 12)) {
                                 0x400561: edi = 0x40064c "5"
-                                0x400566: call puts@plt
+                                0x400566: call puts
                             }
                         }
                     }
                     0x40056b: edi = 0x40064e "6"
-                    0x400570: call puts@plt
+                    0x400570: call puts
                 }
                 0x40057e: edi = 0x400650 "7"
-                0x400583: call puts@plt
+                0x400583: call puts
             }
             0x400591: edi = 0x400652 "8"
-            0x400596: call puts@plt
+            0x400596: call puts
         }
         0x4005a1: edi = 0x400654 "9"
-        0x4005a6: call puts@plt
+        0x4005a6: call puts
     }
     ret_0x4005b8:
     0x4005b8: eax = 0

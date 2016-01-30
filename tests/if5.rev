@@ -9,7 +9,7 @@ function main (.text) {
         # 0x400518: jne 0x400524
         if (*(rbp - 8) == 10) {
             0x40051a: edi = 0x4005d4 "1"
-            0x40051f: call puts@plt
+            0x40051f: call puts
         }
         # 0x400524: cmp dword ptr [rbp - 0xc], 0xc
         # 0x400528: jne 0x40053c
@@ -19,7 +19,7 @@ function main (.text) {
             # 0x400530: je 0x40053c
             and if (eax != *(rbp - 12))
             0x400532: edi = 0x4005d6 "2"
-            0x400537: call puts@plt
+            0x400537: call puts
         }
     }
     ret_0x40053c:

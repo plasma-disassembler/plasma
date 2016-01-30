@@ -61,6 +61,7 @@ class Visual(Window):
             b"x": self.main_cmd_xrefs,
             b"r": self.main_cmd_rename,
             b"I": self.main_cmd_inst_output,
+            b"M": self.main_cmd_show_mangling,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -140,6 +141,9 @@ class Visual(Window):
 
 
     def main_cmd_rename(self, h, w):
+        if self.cursor_x >= w:
+            self.cursor_x = w - 1
+
         h2 = 1
         w2 = int(w*6/7)
 
@@ -227,6 +231,12 @@ class Visual(Window):
             self.gctx.capstone_string = 0
         else:
             self.gctx.capstone_string += 1
+        self.reload_output(h)
+        return True
+
+
+    def main_cmd_show_mangling(self, h, w):
+        self.gctx.show_mangling = not self.gctx.show_mangling
         self.reload_output(h)
         return True
 
@@ -493,6 +503,9 @@ class Visual(Window):
 
 
     def main_cmd_enter(self, h, w):
+        if self.cursor_x >= w:
+            self.cursor_x = w - 1
+
         word = self.get_word_under_cursor()
         if word is None:
             return False

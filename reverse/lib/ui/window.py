@@ -47,7 +47,7 @@ class Window():
         self.has_statusbar = has_statusbar
 
         self.search = None
-        self.word_accepted_chars = ["_", "@", ".", "$"]
+        self.word_accepted_chars = ["_", "@", ".", "$", ":"]
 
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
         self.set_key_timeout = True
@@ -143,6 +143,10 @@ class Window():
                 line[x] in self.word_accepted_chars):
             curr.append(line[x])
             x += 1
+
+        if curr[-1] == ":":
+            return "".join(curr[:-1])
+
         if curr:
             return "".join(curr)
         return None
@@ -540,12 +544,17 @@ class Window():
 
 
     def open_textbox(self, screen, text):
-        # TODO : cleanup !!!!!
         from reverse.lib.ui.inlineed import InlineEd
         (h, w) = screen.getmaxyx()
 
         ed = InlineEd(self, h, w, 0, 0, 0, text,
                       True, 0, [], do_nothing=True)
+
+        # TODO: fix self.cursor_x >= w
+        self.cursor_x = len(text)
+        if self.cursor_x >= w:
+            self.cursor_x = w - 1
+
         ed.print_curr_line = False
         ret = ed.start_view(screen)
         if not ret:

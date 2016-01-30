@@ -21,7 +21,7 @@ function main (.text) {
             if (eax != *(rbp - 12))  goto ret_0x40056d
         }
         0x400517: edi = 0x400604 "1"
-        0x40051c: call puts@plt
+        0x40051c: call puts
         0x400521: jmp loop_0x400549
         loop {
             loop_0x400549:
@@ -29,7 +29,7 @@ function main (.text) {
             # 0x40054d: jle 0x400523
             if (*(rbp - 12) > 19)  goto 0x40054f
             0x400523: edi = 0x400606 "2"
-            0x400528: call puts@plt
+            0x400528: call puts
             0x40052d: jmp loop_0x400539
             loop {
                 loop_0x400539:
@@ -37,13 +37,13 @@ function main (.text) {
                 # 0x40053d: jle 0x40052f
                 if (*(rbp - 8) > 19)  goto 0x40053f
                 0x40052f: edi = 0x400608 "3"
-                0x400534: call puts@plt
+                0x400534: call puts
             }
             0x40053f: edi = 0x40060a "4"
-            0x400544: call puts@plt
+            0x400544: call puts
         }
         0x40054f: edi = 0x40060c "5"
-        0x400554: call puts@plt
+        0x400554: call puts
     }
     ret_0x40056d:
     0x40056d: eax = 0

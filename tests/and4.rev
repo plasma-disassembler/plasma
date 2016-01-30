@@ -23,13 +23,13 @@ function main (.text) {
         # 0x400522: jne 0x40052e
         if (*(rbp - 4) == 5) {
             0x400524: edi = 0x4005e4 "1"
-            0x400529: call puts@plt
+            0x400529: call puts
         }
         0x40052e: *(rbp - 4) += 1
     }
     ret_0x40054a:
     0x40054a: edi = 0x4005e6 "2"
-    0x40054f: call puts@plt
+    0x40054f: call puts
     0x400554: eax = 0
     0x400559: leave
     0x40055a: ret

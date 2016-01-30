@@ -12,7 +12,7 @@ function main (.text) {
             # 0x400522: jne 0x40052e
             if (*(rbp - 4) == 456) {
                 0x400524: edi = 0x4005d4 "1"
-                0x400529: call puts@plt
+                0x400529: call puts
             }
             0x40052e: *(rbp - 4) += 1
             0x400532: jmp loop_0x40051b
@@ -20,7 +20,7 @@ function main (.text) {
     }
     ret_0x400534:
     0x400534: edi = 0x4005d6 "2"
-    0x400539: call puts@plt
+    0x400539: call puts
     0x40053e: eax = 0
     0x400543: leave
     0x400544: ret
