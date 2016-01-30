@@ -535,8 +535,10 @@ class OutputAbs():
                ad in self._dis.xrefs
 
 
-    def is_offset(self, ad):
-        return self._dis.mem.get_type(ad) == MEM_OFFSET
+    def get_offset_size(self, ad):
+        if self._dis.mem.is_offset(ad):
+            return self._dis.mem.get_size(ad)
+        return -1
 
 
     def var_name_exists(self, i, op_num):

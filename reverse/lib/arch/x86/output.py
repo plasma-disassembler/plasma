@@ -111,8 +111,10 @@ class Output(OutputAbs):
                     section = self._binary.get_section(ad)
 
                     if section is not None:
-                        if self.is_offset(ad):
-                            val = section.read_int(ad, op.size)
+                        # if ad is set as an "offset"
+                        sz = self.get_offset_size(ad)
+                        if sz != -1:
+                            val = section.read_int(ad, sz)
                             self._imm(val, 0, True, section=section,
                                       force_dont_print_data=force_dont_print_data)
                             return True

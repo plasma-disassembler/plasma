@@ -83,9 +83,14 @@ class Analyzer(threading.Thread):
         elif self.is_mips:
             from capstone.mips import MIPS_REG_GP
             self.MIPS_REG_GP = MIPS_REG_GP
+            if self.dis.mode & CS_MODE_32:
+                self.default_size = 4
+            else:
+                self.default_size = 8
         elif self.is_arm:
             from capstone.arm import ARM_REG_PC
             self.ARM_REG_PC = ARM_REG_PC
+            self.default_size = 4
 
         self.has_op_size = self.dis.arch == CS_ARCH_X86
 
@@ -133,7 +138,6 @@ class Analyzer(threading.Thread):
 
     def analyze_operands(self, i, func_obj):
         b = self.dis.binary
-        default_size = 4 # for ARM and MIPS
 
         for op in i.operands:
             if op.type == self.CS_OP_IMM:
@@ -154,8 +158,7 @@ class Analyzer(threading.Thread):
                         elif (op.mem.base == self.X86_REG_EBP or \
                               op.mem.base == self.X86_REG_RBP):
                             if func_obj is not None:
-                                sz = op.size if self.has_op_size else default_size
-                                ty = self.dis.mem.find_type(sz)
+                                ty = self.dis.mem.find_type(op.size)
                                 func_obj[FUNC_VARS][op.mem.disp] = [ty, None]
                             # Continue the loop !!
                             continue
@@ -189,7 +192,7 @@ class Analyzer(threading.Thread):
             self.dis.add_xref(i.address, val)
 
             if not self.dis.mem.exists(val):
-                sz = op.size if self.has_op_size else default_size
+                sz = op.size if self.has_op_size else self.default_size
                 deref = s.read_int(val, sz)
                 if deref is not None and b.get_section(deref) is not None:
                     ty = MEM_OFFSET
@@ -202,7 +205,7 @@ class Analyzer(threading.Thread):
                     if sz != 0:
                         ty = MEM_ASCII
                     else:
-                        sz = op.size if self.has_op_size else default_size
+                        sz = op.size if self.has_op_size else self.default_size
                         if op.type == self.CS_OP_MEM:
                             ty = self.dis.mem.find_type(sz)
                         else:

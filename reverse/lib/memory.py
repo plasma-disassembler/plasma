@@ -96,6 +96,12 @@ class Memory():
         return False
 
 
+    def is_offset(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][1] == MEM_OFFSET
+        return False
+
+
     def is_data(self, ad):
         if ad in self.mm:
             ty = self.mm[ad][1]

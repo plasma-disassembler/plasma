@@ -17,6 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+from capstone import CS_MODE_32
 from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_OP_INVALID, MIPS_INS_LW, MIPS_INS_SW, MIPS_INS_AND,
         MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
@@ -69,8 +70,13 @@ class Output(OutputAbs):
 
         op = i.operands[num_op]
 
+        if self.gctx.dis.mode & CS_MODE_32:
+            op_size = 4
+        else:
+            op_size = 8
+
         if op.type == MIPS_OP_IMM:
-            return self._imm(op.value.imm, 4, hexa,
+            return self._imm(op.value.imm, op_size, hexa,
                              force_dont_print_data=force_dont_print_data)
 
         elif op.type == MIPS_OP_REG:
@@ -88,8 +94,10 @@ class Output(OutputAbs):
                 section = self._binary.get_section(ad)
 
                 if section is not None:
-                    if self.is_offset(ad):
-                        val = section.read_int(ad, 4)
+                    # if ad is set as an "offset"
+                    sz = self.get_offset_size(ad)
+                    if sz != -1:
+                        val = section.read_int(ad, sz)
                         self._imm(val, 0, True, print_data=False,
                                   force_dont_print_data=force_dont_print_data)
                         return True
