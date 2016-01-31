@@ -497,7 +497,10 @@ class OutputAbs():
 
             return True
 
-        elif op_size == 1:
+        if label_printed:
+            return True
+
+        if op_size == 1:
             self._string("'%s'" % get_char(imm))
         elif hexa:
             self._add(hex(imm))
