@@ -37,14 +37,17 @@ def console_entry():
         info("somewhere, run again your command then merge the file at hand.")
         die()
 
+    if gctx.filename is None:
+        die()
+
+    if not gctx.load_file():
+        die()
+
     if gctx.interactive_mode:
         from reverse.lib.ui.console import Console
         i = Console(gctx)
 
-    elif gctx.filename is not None:
-        if not gctx.load_file():
-            die()
-
+    else:
         if gctx.list_sections:
             for s in gctx.dis.binary.iter_sections():
                 s.print_header()

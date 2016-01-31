@@ -162,6 +162,20 @@ class GlobalContext():
         self.db = Database()
         self.db.load(filename)
 
+        if self.raw_base != 0:
+            self.db.raw_base = self.raw_base
+
+        if self.raw_type is not None:
+            self.db.raw_type = self.raw_type
+
+        if self.raw_big_endian is not None:
+            self.db.raw_is_big_endian = self.raw_big_endian
+
+        if self.db.loaded:
+            self.raw_base = self.db.raw_base
+            self.raw_type = self.db.raw_type
+            self.raw_big_endian = self.db.raw_is_big_endian
+
         try:
             dis = Disassembler(filename, self.raw_type,
                                self.raw_base, self.raw_big_endian,

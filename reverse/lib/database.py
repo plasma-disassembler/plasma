@@ -36,7 +36,7 @@ from reverse.lib.utils import info, warning
 from reverse.lib.memory import Memory
 
 
-VERSION = 1.9
+VERSION = 2.0
 
 
 class Database():
@@ -64,6 +64,9 @@ class Database():
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
+        self.raw_base = 0
+        self.raw_type = None
+        self.raw_is_big_endian = None
 
         # Computed variables
         self.func_id_counter = 0
@@ -75,8 +78,6 @@ class Database():
 
     def load(self, filename):
         gc.disable()
-
-        self.__init_vars()
 
         dirname = os.path.dirname(filename)
         self.path = dirname + "/" if dirname != "" else ""
@@ -132,6 +133,9 @@ class Database():
             "functions": self.functions,
             "func_id": self.func_id,
             "xrefs": self.xrefs,
+            "raw_base": self.raw_base,
+            "raw_type": self.raw_type,
+            "raw_is_big_endian": self.raw_is_big_endian,
         }
 
         for j in self.jmptables.values():
@@ -214,6 +218,11 @@ class Database():
             # removed in the future
             self.version = -1
             pass
+
+        if self.version >= 1.10:
+            self.raw_base = data["raw_base"]
+            self.raw_type = data["raw_type"]
+            self.raw_is_big_endian = data["raw_is_big_endian"]
 
 
     def __load_memory(self, data):

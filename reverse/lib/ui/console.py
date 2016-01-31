@@ -64,12 +64,6 @@ class Console():
             "history",
             "info",
             "jmptable",
-            "load",
-            "lrawarm",
-            "lrawmips",
-            "lrawmips64",
-            "lrawx86",
-            "lrawx64",
             "mips_set_gp",
             "py",
             "push_analyze_symbols",
@@ -131,66 +125,6 @@ class Console():
                 [
                 "",
                 "Save the database (only symbols and history currently).",
-                ]
-            ),
-
-            "load": Command(
-                1,
-                self.__exec_load,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a new binary file.",
-                ]
-            ),
-
-            "lrawx86": Command(
-                1,
-                self.__exec_lrawx86,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a x86 raw file.",
-                ]
-            ),
-
-            "lrawx64": Command(
-                1,
-                self.__exec_lrawx64,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a x64 raw file.",
-                ]
-            ),
-
-            "lrawarm": Command(
-                1,
-                self.__exec_lrawarm,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a ARM raw file.",
-                ]
-            ),
-
-            "lrawmips": Command(
-                1,
-                self.__exec_lrawmips,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a MIPS raw file.",
-                ]
-            ),
-
-            "lrawmips64": Command(
-                1,
-                self.__exec_lrawmips64,
-                self.__complete_load,
-                [
-                "filename",
-                "Load a MIPS64 raw file.",
                 ]
             ),
 
@@ -413,15 +347,24 @@ class Console():
             ),
         }
 
+        rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
+        self.rl = rl
+        self.rl.history = gctx.db.history
+
         self.analyzer = Analyzer()
         self.analyzer.init()
         self.analyzer.start()
+        self.analyzer.set(gctx)
 
-        rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
-        self.rl = rl
-
-        if gctx.filename is not None:
-            self.__exec_load(["", gctx.filename])
+        if gctx.dis.binary.get_arch_string() == "MIPS" and \
+                gctx.dis.mips_gp == -1:
+            print("please run first these commands :")
+            print("mips_set_gp 0xADDRESS")
+            print("push_analyze_symbols")
+        else:
+            # It means that the first analysis was already done
+            if len(gctx.db.functions) == 0:
+                self.push_analyze_symbols(None)
 
         rl.reload_cursor_line()
 
@@ -657,90 +600,6 @@ class Console():
         for ad in self.gctx.db.reverse_symbols:
             if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, True, None))
-
-
-    def __exec_load(self, args):
-        # TODO: kill the thread analyzer before loading a new file
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = None
-        if self.gctx.load_file(args[1]):
-            self.rl.history = self.gctx.db.history
-
-            self.analyzer.set(self.gctx)
-
-            if self.gctx.dis.binary.get_arch_string() == "MIPS" and \
-                    self.gctx.dis.mips_gp == -1:
-                print("please run first these commands :")
-                print("mips_set_gp 0xADDRESS")
-                print("push_analyze_symbols")
-            else:
-                # It means that the first analysis was already done
-                if len(self.gctx.db.functions) != 0:
-                    return
-
-                self.push_analyze_symbols(None)
-
-
-    def __exec_lrawx86(self, args):
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = "x86"
-        self.gctx.raw_big_endian = False
-        if self.gctx.load_file(args[1]):
-            self.analyzer.set(self.gctx.dis, self.gctx.db)
-
-
-    def __exec_lrawx64(self, args):
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = "x64"
-        self.gctx.raw_big_endian = False
-        self.gctx.filename = args[1]
-        if self.gctx.load_file(args[1]):
-            self.analyzer.set(self.gctx.dis, self.gctx.db)
-
-
-    def __exec_lrawarm(self, args):
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = "arm"
-        if self.gctx.load_file(args[1]):
-            self.analyzer.set(self.gctx.dis, self.gctx.db)
-
-
-    def __exec_lrawmips(self, args):
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = "mips"
-        if self.gctx.load_file(args[1]):
-            self.analyzer.set(self.gctx.dis, self.gctx.db)
-
-
-    def __exec_lrawmips64(self, args):
-        if self.check_db_modified():
-            return
-        if len(args) != 2:
-            error("filename required")
-            return
-        self.gctx.raw_type = "mips64"
-        if self.gctx.load_file(args[1]):
-            self.analyzer.set(self.gctx.dis, self.gctx.db)
 
 
     def __exec_sym(self, args):
