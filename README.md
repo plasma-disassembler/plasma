@@ -56,15 +56,16 @@ This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
 
 It supports :
 
-* definition of code/functions/data/ascii
+* definition of code/functions/data/ascii/offset
 * inline comments
 * xrefs
 * symbols renaming
 * stack variables (currently only for x86)
+* demangling symbols
 
 TODO :
 
-* stack variables renaming
+* run the analyzer on "offset" values
 * reload automatically if the analyzer has modified the content
 * multi-lines comments
 * arrays
@@ -115,6 +116,48 @@ For every `int 0x80`, the tool try to detect syscalls with parameters.
         0x14: ecx = esp # mov ecx, esp
         0x16: int 128 ; execve(ebx, ecx, edx) # int 0x80
     }
+
+
+## How to read MIPS binaries ?
+
+The value of the `$gp` register is not computed automatically, you must set it
+first. The analyzer is "disabled" when you open a MIPS file.
+
+Example :
+
+    $ reverse mips_elf_file -i
+    >> v EP  
+    # press c to create code, and exit
+
+    >> dump EP
+    .text 0x4002b0: $zero = $ra
+    .text 0x4002b4: bal (.text) sub_4002bc
+
+    .text 0x4002b8: .db 00
+    .text 0x4002b9: .db 00
+    .text 0x4002ba: .db 00
+    .text 0x4002bb: .db 00
+
+    ; ---------------------------------------------------------------------
+    ; SUBROUTINE
+    ; ---------------------------------------------------------------------
+    __noreturn__ sub_4002bc:
+    .text 0x4002bc: (load upper) $gp = 25
+    .text 0x4002c0: $gp += -25564
+    .text 0x4002c4: $gp += $ra
+    .text 0x4002c8: $ra = 0
+    ...
+
+    >> x sub_4002bc
+    function sub_4002bc (.text) {
+        # 0x4002bc: lui $gp, 0x19
+        # 0x4002c0: addiu $gp, $gp, -0x63dc
+        0x4002bc: li $gp, 0x189c24
+        0x4002c4: $gp += $ra
+    ...
+
+    >> mips_set_gp 0x589ee0  # 0x189c24 + 0x4002bc
+    >> push_analyze_symbols
 
 
 ## Edit with vim
