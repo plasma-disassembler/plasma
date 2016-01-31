@@ -21,6 +21,7 @@ import struct
 import bisect
 
 from elftools.elf.elffile import ELFFile
+from elftools.elf.sections import NullSection
 from elftools.elf.constants import SH_FLAGS
 
 from reverse.lib.utils import warning
@@ -248,6 +249,8 @@ class ELF:
             return
 
         for (rel, symtab) in self.__iter_reloc():
+            if isinstance(symtab, NullSection):
+                continue
             self.__x86_resolve_reloc(rel, symtab, plt, got_plt, addr_size)
 
 
