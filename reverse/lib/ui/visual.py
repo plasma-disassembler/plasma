@@ -206,9 +206,9 @@ class Visual(Window):
                     return True
                 word = ""
             else:
-                if word not in self.dis.binary.symbols:
+                if word not in self.gctx.db.symbols:
                     return True
-                ad = self.dis.binary.symbols[word]
+                ad = self.gctx.db.symbols[word]
 
         text = w.open_textbox(scr, word)
 

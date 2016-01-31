@@ -107,7 +107,7 @@ class Analyzer(threading.Thread):
         # Check all known functions which never return
         if ad not in self.dis.binary.imports:
             return 0
-        name = self.dis.binary.reverse_symbols[ad]
+        name = self.db.reverse_symbols[ad]
         if self.dis.binary.type == T_BIN_PE:
             return FUNC_FLAG_NORETURN if name in NORETURN_PE else 0
         elif self.dis.binary.type == T_BIN_ELF:
@@ -249,8 +249,8 @@ class Analyzer(threading.Thread):
             else:
                 mem.add(ad, inst.size, MEM_CODE, func_id)
 
-            if ad in self.dis.binary.reverse_symbols:
-                name = self.dis.binary.reverse_symbols[ad]
+            if ad in self.db.reverse_symbols:
+                name = self.db.reverse_symbols[ad]
                 if name.startswith("ret_") or name.startswith("loop_"):
                     self.dis.rm_symbol(ad)
 

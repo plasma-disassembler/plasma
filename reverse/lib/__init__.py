@@ -251,8 +251,8 @@ class AddrContext():
                 self.entry = 0
                 return True
 
-            self.entry = self.gctx.dis.binary.symbols.get("main", None) or \
-                         self.gctx.dis.binary.symbols.get("_main", None)
+            self.entry = self.gctx.db.symbols.get("main", None) or \
+                         self.gctx.db.symbols.get("_main", None)
 
             if self.entry is None:
                 error("symbol main or _main not found")
@@ -277,8 +277,8 @@ class AddrContext():
                 die()
             return True
 
-        self.entry = self.gctx.dis.binary.demangled.get(entry, None) or \
-                     self.gctx.dis.binary.symbols.get(entry, None) or \
+        self.entry = self.gctx.db.demangled.get(entry, None) or \
+                     self.gctx.db.symbols.get(entry, None) or \
                      self.gctx.dis.binary.section_names.get(entry, None)
 
         if self.entry is None:

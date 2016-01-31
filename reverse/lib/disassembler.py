@@ -54,6 +54,7 @@ class Disassembler():
         import capstone as CAPSTONE
 
         self.capstone_inst = {} # capstone instruction cache
+        self.db = database
 
         if database.loaded:
             self.mem = database.mem
@@ -82,13 +83,7 @@ class Disassembler():
         # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
-        if database.loaded:
-            self.binary.symbols = database.symbols
-            self.binary.reverse_symbols = database.reverse_symbols
-            self.binary.demangled = database.demangled
-            self.binary.reverse_demangled = database.reverse_demangled
-            self.binary.imports = database.imports
-        else:
+        if not database.loaded:
             self.binary.load_symbols()
             database.symbols = self.binary.symbols
             database.reverse_symbols = self.binary.reverse_symbols
@@ -152,16 +147,16 @@ class Disassembler():
 
 
     def add_symbol(self, ad, name):
-        if name in self.binary.symbols:
-            last = self.binary.symbols[name]
-            del self.binary.reverse_symbols[last]
+        if name in self.db.symbols:
+            last = self.db.symbols[name]
+            del self.db.reverse_symbols[last]
 
-        if ad in self.binary.reverse_symbols:
-            last = self.binary.reverse_symbols[ad]
-            del self.binary.symbols[last]
+        if ad in self.db.reverse_symbols:
+            last = self.db.reverse_symbols[ad]
+            del self.db.symbols[last]
 
-        self.binary.symbols[name] = ad
-        self.binary.reverse_symbols[ad] = name
+        self.db.symbols[name] = ad
+        self.db.reverse_symbols[ad] = name
 
         if not self.mem.exists(ad):
             self.mem.add(ad, 1, MEM_UNK)
@@ -170,12 +165,12 @@ class Disassembler():
 
 
     def rm_symbol(self, ad):
-        if ad in self.binary.reverse_symbols:
-            name = self.binary.reverse_symbols[ad]
-            del self.binary.reverse_symbols[ad]
+        if ad in self.db.reverse_symbols:
+            name = self.db.reverse_symbols[ad]
+            del self.db.reverse_symbols[ad]
 
-        if name in self.binary.symbols:
-            del self.binary.symbols[name]
+        if name in self.db.symbols:
+            del self.db.symbols[name]
 
 
     def has_reserved_prefix(self, name):
@@ -312,16 +307,16 @@ class Disassembler():
 
 
     def is_label(self, ad):
-        return ad in self.binary.reverse_symbols or ad in self.xrefs
+        return ad in self.db.reverse_symbols or ad in self.xrefs
 
 
     def get_symbol(self, ad, gctx=None):
         if gctx is not None and gctx.show_mangling:
-            s = self.binary.reverse_demangled.get(ad, None)
+            s = self.db.reverse_demangled.get(ad, None)
             if s is not None:
                 return s
 
-        s = self.binary.reverse_symbols.get(ad, None)
+        s = self.db.reverse_symbols.get(ad, None)
         if s is None:
             ty = self.mem.get_type(ad)
             if ty == MEM_FUNC:
@@ -630,8 +625,8 @@ class Disassembler():
             print_no_end(color_addr(ad))
             sy = self.get_symbol(ad)
 
-            if ad in self.binary.reverse_demangled:
-                print_no_end(" %s (%s) " % (self.binary.reverse_demangled[ad],
+            if ad in self.db.reverse_demangled:
+                print_no_end(" %s (%s) " % (self.db.reverse_demangled[ad],
                                            color_comment(sy)))
             else:
                 print_no_end(" " + sy)
@@ -657,11 +652,11 @@ class Disassembler():
         total = 0
 
         # TODO: race condition with the analyzer ?
-        for sy in list(self.binary.symbols):
-            ad = self.binary.symbols[sy]
+        for sy in list(self.db.symbols):
+            ad = self.db.symbols[sy]
 
-            if ad in self.binary.reverse_demangled:
-                dem = self.binary.reverse_demangled[ad]
+            if ad in self.db.reverse_demangled:
+                dem = self.db.reverse_demangled[ad]
             else:
                 dem = None
 

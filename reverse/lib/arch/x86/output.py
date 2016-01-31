@@ -115,7 +115,7 @@ class Output(OutputAbs):
                         sz = self.get_offset_size(ad)
                         if sz != -1:
                             val = section.read_int(ad, sz)
-                            if val in self._binary.reverse_symbols:
+                            if val in self.gctx.db.reverse_symbols:
                                 self._imm(val, 0, True, section=section,
                                           force_dont_print_data=force_dont_print_data)
                                 return True
