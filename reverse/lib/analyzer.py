@@ -290,14 +290,18 @@ class Analyzer(threading.Thread):
         if not is_pe_import and not inner_code:
             flags = self.__sub_analyze_flow(entry, inner_code)
 
-        self.__add_analyzed_code(self.dis.mem, entry, inner_code,
-                                 entry_is_func, flags)
+        if inner_code:
+            self.__add_analyzed_code(self.dis.mem, entry, inner_code,
+                                     entry_is_func, flags)
 
         inner_code.clear()
         self.pending.remove(entry)
 
 
     def __sub_analyze_flow(self, entry, inner_code):
+        if self.dis.binary.get_section(entry) is None:
+            return 0
+
         stack = [entry]
         has_ret = False
 

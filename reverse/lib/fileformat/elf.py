@@ -124,6 +124,7 @@ class ELF:
             ad = sy.entry.st_value
             if ad != 0 and sy.name != b"":
                 name = sy.name.decode()
+
                 if name in self.classbinary.symbols:
                     name = self.classbinary.rename_sym(name)
 
