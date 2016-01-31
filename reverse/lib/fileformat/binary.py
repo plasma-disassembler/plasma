@@ -314,6 +314,9 @@ class Binary(object):
                 addr.append(ad)
                 lookup_names.append(n.split("@@")[0])
 
+        if not addr:
+            return
+
         # http://stackoverflow.com/questions/6526500/c-name-mangling-library-for-python
         args = ['c++filt']
         args.extend(lookup_names)

@@ -19,6 +19,7 @@
 
 import struct
 from time import time
+from ctypes import c_char, POINTER, cast, c_voidp
 
 from reverse.lib.graph import Graph
 from reverse.lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
@@ -311,33 +312,32 @@ class Disassembler():
 
 
     def get_symbol(self, ad, gctx=None):
-        if gctx is not None and gctx.show_mangling:
-            s = self.db.reverse_demangled.get(ad, None)
-            if s is not None:
-                return s
+        if ad in self.db.reverse_symbols:
+            if gctx is not None and gctx.show_mangling:
+                s = self.db.reverse_demangled.get(ad, None)
+                if s is not None:
+                    return s
+            return self.db.reverse_symbols[ad]
 
-        s = self.db.reverse_symbols.get(ad, None)
-        if s is None:
-            ty = self.mem.get_type(ad)
-            if ty == MEM_FUNC:
-                return "sub_%x" % ad
-            if ty == MEM_CODE:
-                return "loc_%x" % ad
-            if ty == MEM_DWORD:
-                return "dword_%x" % ad
-            if ty == MEM_BYTE:
-                return "byte_%x" % ad
-            if ty == MEM_QWORD:
-                return "qword_%x" % ad
-            if ty == MEM_UNK:
-                return "unk_%x" % ad
-            if ty == MEM_WORD:
-                return "word_%x" % ad
-            if ty == MEM_ASCII:
-                return "asc_%x" % ad
-            if ty == MEM_OFFSET:
-                return "off_%x" % ad
-        return s
+        ty = self.mem.get_type(ad)
+        if ty == MEM_FUNC:
+            return "sub_%x" % ad
+        if ty == MEM_CODE:
+            return "loc_%x" % ad
+        if ty == MEM_DWORD:
+            return "dword_%x" % ad
+        if ty == MEM_BYTE:
+            return "byte_%x" % ad
+        if ty == MEM_QWORD:
+            return "qword_%x" % ad
+        if ty == MEM_UNK:
+            return "unk_%x" % ad
+        if ty == MEM_WORD:
+            return "word_%x" % ad
+        if ty == MEM_ASCII:
+            return "asc_%x" % ad
+        if ty == MEM_OFFSET:
+            return "off_%x" % ad
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
