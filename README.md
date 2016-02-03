@@ -11,6 +11,8 @@ It supports :
 
 The `Makefile` is used only for checking tests.
 
+More documentation on the [wiki](https://github.com/joelpx/reverse/wiki)
+
 
 ## Requirements
 
@@ -31,136 +33,11 @@ The `Makefile` is used only for checking tests.
 
 ## Pseudo-decompilation of functions
 
-Here the option `-x main` is optional because the binary contains the symbol main.
-
-    $ reverse tests/server.bin
+    $ reverse -i tests/server.bin
+    >> v main
+    # then press tab
 
 ![reverse](/images/screenshot.png?raw=true)
 
-
-## Interactive mode (`-i`)
-
-More commands are available in this mode (`da`, `db`, ...). See `help`
-for a full list.
-
-TODO :
-
-* add commands : setbe/setle (endianness of raw files), rawbase
-* load raw file if the file given from the shell is raw
-
-
-## Visual mode
-
-From the interactive mode, use the command `v` to enter in the visual mode.
-This mode requires `ncurses`. Use `tab` to switch between dump/decompilation.
-
-It supports :
-
-* definition of code/functions/data/ascii/offset
-* inline comments
-* xrefs
-* symbols renaming
-* stack variables (currently only for x86)
-* demangling symbols
-
-TODO :
-
-* run the analyzer on "offset" values
-* reload automatically if the analyzer has modified the content
-* multi-lines comments
-* arrays
-* structure, enum
-* improve analyzer performances
-* ...
-
-FIXME :
-
-* clean PE imports
-* stack variables referenced with rsp (not rbp)
-* detect if rbp is modified in the function
-* re add detection of the canary
-* check if a stack variable already exists before renaming it
-
 ![reverse](/images/visual.png?raw=true)
 
-
-## Switch jump-tables example
-
-Switch statements which require a jump-table are not detected automatically.
-So we need to tell it which jump-table to use.
-
-    $ reverse -i tests/others/switch.bin
-    >> x
-    ...
-    >> jmptable 0x400526 0x400620 11 8 
-    # A jump-table at 0x400620 is set with 11 entries, an address is on 8 bytes.
-    >> x
-    # Decompilation with switch
-
-
-## Analyze shellcodes
-
-For every `int 0x80`, the tool try to detect syscalls with parameters.
-
-    $ reverse --raw x86 tests/shellcode.bin
-    function 0x0 {
-        0x0: eax = 0 # xor eax, eax
-        0x2: al = '\x0b' # mov al, 0xb
-        0x4: cdq
-        0x5: push edx
-        0x6: push 1752379246 "n/sh"
-        0xb: push 1768042287 "//bi"
-        0x10: ebx = esp # mov ebx, esp
-        0x12: push edx
-        0x13: push ebx
-        0x14: ecx = esp # mov ecx, esp
-        0x16: int 128 ; execve(ebx, ecx, edx) # int 0x80
-    }
-
-
-## How to read MIPS binaries ?
-
-The value of the `$gp` register is not computed automatically, you must set it
-first. The analyzer is "disabled" when you open a MIPS file.
-
-Example :
-
-    $ reverse mips_elf_file -i
-    >> v EP  
-    # press c to create code, and exit
-
-    >> dump EP
-    .text 0x4002b0: $zero = $ra
-    .text 0x4002b4: bal (.text) sub_4002bc
-
-    .text 0x4002b8: .db 00
-    .text 0x4002b9: .db 00
-    .text 0x4002ba: .db 00
-    .text 0x4002bb: .db 00
-
-    ; ---------------------------------------------------------------------
-    ; SUBROUTINE
-    ; ---------------------------------------------------------------------
-    __noreturn__ sub_4002bc:
-    .text 0x4002bc: (load upper) $gp = 25
-    .text 0x4002c0: $gp += -25564
-    .text 0x4002c4: $gp += $ra
-    .text 0x4002c8: $ra = 0
-    ...
-
-    >> x sub_4002bc
-    function sub_4002bc (.text) {
-        # 0x4002bc: lui $gp, 0x19
-        # 0x4002c0: addiu $gp, $gp, -0x63dc
-        0x4002bc: li $gp, 0x189c24
-        0x4002c4: $gp += $ra
-    ...
-
-    >> mips_set_gp 0x589ee0  # 0x189c24 + 0x4002bc
-    >> push_analyze_symbols
-
-
-## Edit with vim
-
-    $ reverse tests/dowhile1.bin --vim
-    Run : vim dowhile1.bin.rev -S dowhile1.bin.vim
