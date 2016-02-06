@@ -754,10 +754,13 @@ class Visual(Window):
             return False
 
         s = self.dis.binary.get_section(off)
-        if s is not None:
-            self.dis.add_xref(ad, off)
-            if not self.dis.mem.exists(off):
-                self.dis.mem.add(off, 1, MEM_UNK)
+        if s is None:
+            self.status_bar("not an address", h, True) 
+            return False
+
+        self.dis.add_xref(ad, off)
+        if not self.dis.mem.exists(off):
+            self.dis.mem.add(off, 1, MEM_UNK)
 
         self.__undefine(ad, sz)
         self.dis.mem.add(ad, sz, MEM_OFFSET)

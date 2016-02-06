@@ -281,14 +281,9 @@ class Disassembler():
                 off = s.read_int(x, sz)
                 if off is None:
                     continue
-                off_sect = self.binary.get_section(off)
                 o._data_prefix(sz)
                 o._add(" ")
-                if off_sect is None:
-                    o._off_not_found(off)
-                else:
-                    o._imm(off, sz, True, section=off_sect, print_data=False,
-                           force_dont_print_data=True)
+                o._imm(off, sz, True, print_data=False, force_dont_print_data=True)
                 o._new_line()
 
             else:
@@ -432,14 +427,9 @@ class Disassembler():
                     off = s.read_int(ad, sz)
                     if off is None:
                         continue
-                    off_sect = self.binary.get_section(off)
                     o._data_prefix(sz)
                     o._add(" ")
-                    if off_sect is None:
-                        o._off_not_found(off)
-                    else:
-                        o._imm(off, sz, True, section=off_sect, print_data=False,
-                               force_dont_print_data=True)
+                    o._imm(off, sz, True, print_data=False, force_dont_print_data=True)
                     o._new_line()
                     ad += sz
 

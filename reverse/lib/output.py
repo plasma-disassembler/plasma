@@ -164,14 +164,6 @@ class OutputAbs():
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
-    def _off_not_found(self, off):
-        s = hex(off)
-        self.token_lines[-1].append((s, COLOR_OFFSET_NOT_FOUND.val,
-                                     COLOR_OFFSET_NOT_FOUND.bold))
-        self.lines[-1].append(s)
-        self.curr_index += len(s)
-
-
     def _data_prefix(self, size):
         if size == 1:
             self._retcall(".db")
