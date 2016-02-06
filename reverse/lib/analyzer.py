@@ -36,8 +36,8 @@ FUNC_FLAG_NORETURN = 1
 
 
 NORETURN_ELF = {
-    "exit@plt", "_exit@plt", "__stack_chk_fail@plt",
-    "abort@plt", "__assert_fail@plt"
+    "exit", "_exit", "__stack_chk_fail",
+    "abort", "__assert_fail"
 }
 
 NORETURN_PE = {
