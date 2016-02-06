@@ -96,7 +96,7 @@ class Analyzer(threading.Thread):
 
 
     def __add_prefetch(self, addr_set, inst):
-        if self.is_arm:
+        if self.is_mips:
             prefetch = self.dis.lazy_disasm(inst.address + inst.size)
             addr_set[prefetch.address] = prefetch
             return prefetch
