@@ -429,9 +429,10 @@ class Visual(Window):
 
         if self.mode == MODE_DUMP:
             bottom = self.dis.binary.get_last_addr()
+
             if self.last_addr != bottom:
-                ad = self.dis.find_addr_before(bottom)
-                self.exec_disasm(ad, h)
+                self.exec_disasm(bottom, h)
+                self.dump_update_up(self.win_y, h)
                 self.win_y = 0
                 self.cursor_y = 0
 

@@ -34,7 +34,7 @@ from reverse.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
                                   FUNC_VARS, VAR_NAME)
 
 
-NB_LINES_TO_DISASM = 200 # without comments, ...
+NB_LINES_TO_DISASM = 256 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
@@ -100,10 +100,6 @@ class Disassembler():
 
         for s in self.binary.iter_sections():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
-
-            # TODO: useful ?
-            if not database.loaded:
-                self.mem.add(s.start, s.end, MEM_UNK)
 
 
     def get_unpack_str(self, size_word):
@@ -456,13 +452,12 @@ class Disassembler():
 
             s = self.binary.get_section(ad)
             if s is None:
-                o._new_line()
-
                 # Get the next section, it's not mandatory that sections
                 # are consecutives !
                 s = self.binary.get_next_section(ad)
                 if s is None:
                     break
+                o._new_line()
                 ad = s.start
                 if until != -1 and ad >= until:
                     break
@@ -490,17 +485,12 @@ class Disassembler():
         l = 0
         s = self.binary.get_section(ad)
 
-        # TODO: because we don't know known addresses before, it will be
+        # TODO: because we don't know addresses before, it will be
         # necessary to add in memory.py an offset to tell that there is
         # a known address at n previous bytes. It will allows to not set
         # an offset on each byte (the database will increase too much).
-        #
-        # For example if we have a string with 1025 chars, this loop will
-        # not works because it will stop just after the known address, and the
-        # string will be not printed as a string : there will be 1024 lines
-        # instead of 1 line.
 
-        while l < 1024:
+        while l < NB_LINES_TO_DISASM:
             if self.mem.is_code(ad):
                 size = self.mem.mm[ad][0]
                 l += 1
