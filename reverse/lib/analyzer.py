@@ -54,6 +54,8 @@ class Analyzer(threading.Thread):
     def init(self):
         self.dis = None
         self.msg = Queue()
+        self.pending = set() # prevent recursive call
+        self.pending_not_curr = set() # prevent big stack
 
 
     def set(self, gctx):
@@ -122,10 +124,9 @@ class Analyzer(threading.Thread):
             if isinstance(item, tuple):
                 if self.dis is not None:
                     # Run analysis
-                    (ad, entry_is_func, force, queue_response) = item
-                    self.pending = set() # prevent recursive loops
+                    (ad, entry_is_func, force, add_if_code, queue_response) = item
 
-                    self.analyze_flow(ad, entry_is_func, force)
+                    self.analyze_flow(ad, entry_is_func, force, add_if_code)
 
                     # Send a notification
                     if queue_response is not None:
@@ -134,6 +135,15 @@ class Analyzer(threading.Thread):
             elif isinstance(item, str):
                 if item == "exit":
                     break
+
+
+    def first_inst_are_code(self, ad):
+        for i in range(5):
+            inst = self.dis.lazy_disasm(ad)
+            if inst is None:
+                return False
+            ad += inst.size
+        return True
 
 
     def analyze_operands(self, i, func_obj):
@@ -194,11 +204,19 @@ class Analyzer(threading.Thread):
             if not self.dis.mem.exists(val):
                 sz = op.size if self.has_op_size else self.default_size
                 deref = s.read_int(val, sz)
+
+                # If (*val) is an address
                 if deref is not None and b.get_section(deref) is not None:
                     ty = MEM_OFFSET
                     self.dis.add_xref(val, deref)
+
                     if not self.dis.mem.exists(deref):
                         self.dis.mem.add(deref, 1, MEM_UNK)
+                        if deref not in self.pending and \
+                                deref not in self.pending_not_curr and \
+                                self.first_inst_are_code(deref):
+                            self.pending_not_curr.add(deref)
+                            self.msg.put((deref, False, False, True, None))
                 else:
                     # Check if this is an address to a string
                     sz = b.is_string(val)
@@ -212,6 +230,15 @@ class Analyzer(threading.Thread):
                             ty = MEM_UNK
 
                 self.dis.mem.add(val, sz, ty)
+
+                if ty == MEM_UNK:
+                    # do an analysis on this value, if this is not code
+                    # nothing will be done.
+                    if val not in self.pending and \
+                            val not in self.pending_not_curr and \
+                            self.first_inst_are_code(val):
+                        self.pending_not_curr.add(val)
+                        self.msg.put((val, False, False, True, None))
 
 
     def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
@@ -259,11 +286,24 @@ class Analyzer(threading.Thread):
         return ad !=entry and self.dis.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
-    def analyze_flow(self, entry, entry_is_func, force):
+    #
+    # analyze_flow:
+    # entry             address of the code to analyze.
+    # entry_is_func     if true a function will be created, otherwise
+    #                   instructions will be set only as "code".
+    # force             if true and entry is already functions, the analysis
+    #                   is forced.
+    # add_if_code       if true and if entry seems to have a correct control
+    #                   flow with any bad instructions.
+    #
+    def analyze_flow(self, entry, entry_is_func, force, add_if_code):
+        if entry in self.pending_not_curr:
+            self.pending_not_curr.remove(entry)
+
         if entry in self.pending:
             return
 
-        if not force and entry in self.dis.functions:
+        if not force and self.dis.mem.is_code(entry):
             return
 
         self.pending.add(entry)
@@ -288,9 +328,9 @@ class Analyzer(threading.Thread):
                         flags = self.import_flags(ptr)
 
         if not is_pe_import and not inner_code:
-            flags = self.__sub_analyze_flow(entry, inner_code)
+            flags = self.__sub_analyze_flow(entry, inner_code, add_if_code)
 
-        if inner_code:
+        if inner_code and flags != -1:
             self.__add_analyzed_code(self.dis.mem, entry, inner_code,
                                      entry_is_func, flags)
 
@@ -298,9 +338,9 @@ class Analyzer(threading.Thread):
         self.pending.remove(entry)
 
 
-    def __sub_analyze_flow(self, entry, inner_code):
+    def __sub_analyze_flow(self, entry, inner_code, add_if_code):
         if self.dis.binary.get_section(entry) is None:
-            return 0
+            return -1
 
         stack = [entry]
         has_ret = False
@@ -314,11 +354,19 @@ class Analyzer(threading.Thread):
         jmptables = self.dis.jmptables
         functions = self.dis.functions
 
+        # If entry is not "code", we have to rollback added xrefs
+        has_bad_inst = False
+        if add_if_code:
+            added_xrefs = []
+
         while stack:
             ad = stack.pop()
             inst = disasm(ad)
 
             if inst is None:
+                has_bad_inst = True
+                if add_if_code:
+                    break
                 continue
 
             if ad in inner_code:
@@ -342,11 +390,15 @@ class Analyzer(threading.Thread):
                         has_ret = not self.is_noreturn(nxt, entry)
                     else:
                         stack.append(nxt)
+                    if add_if_code:
+                        added_xrefs.append((ad, nxt))
                 else:
                     if inst.address in jmptables:
                         table = jmptables[inst.address].table
                         stack += table
                         self.dis.add_xref(ad, table)
+                        if add_if_code:
+                            added_xrefs.append((ad, table))
                     else:
                         # TODO
                         # This is a register or a memory access
@@ -367,6 +419,9 @@ class Analyzer(threading.Thread):
                     self.dis.add_xref(ad, nxt_jmp)
                     stack.append(direct_nxt)
 
+                    if add_if_code:
+                        added_xrefs.append((ad, nxt_jmp))
+
                     if nxt_jmp in functions:
                         has_ret = not self.is_noreturn(nxt_jmp, entry)
                     else:
@@ -378,8 +433,11 @@ class Analyzer(threading.Thread):
                     self.dis.add_xref(ad, op.value.imm)
                     ad = op.value.imm
 
+                    if add_if_code:
+                        added_xrefs.append((ad, op.value.imm))
+
                     if ad not in functions:
-                        self.analyze_flow(ad, True, False)
+                        self.analyze_flow(ad, True, False, add_if_code)
 
                     if ad in functions and self.is_noreturn(ad, entry):
                         self.__add_prefetch(inner_code, inst)
@@ -391,6 +449,11 @@ class Analyzer(threading.Thread):
             else:
                 nxt = inst.address + inst.size
                 stack.append(nxt)
+
+        if add_if_code and has_bad_inst:
+            for from_ad, to_ad in added_xrefs:
+                self.dis.rm_xrefs(from_ad, to_ad)
+            return -1
 
         # for ELF
         if entry in self.dis.binary.imports:

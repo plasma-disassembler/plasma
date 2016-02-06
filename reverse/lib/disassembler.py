@@ -136,6 +136,20 @@ class Disassembler():
                 self.xrefs[to_ad] = [from_ad]
 
 
+    def rm_xrefs(self, from_ad, to_ad):
+        if isinstance(to_ad, list):
+            for x in to_ad:
+                if from_ad in self.xrefs[x]:
+                    self.xrefs[x].remove(from_ad)
+                if not self.xrefs[x]:
+                    del self.xrefs[x]
+        else:
+            if from_ad in self.xrefs[to_ad]:
+                self.xrefs[to_ad].remove(from_ad)
+            if not self.xrefs[to_ad]:
+                del self.xrefs[to_ad]
+
+
     def rm_xrefs_range(self, start, end):
         while start < end:
             if start in self.xrefs:

@@ -584,22 +584,22 @@ class Console():
         # Analyze all imports (it checks if functions return or not)
         for ad in self.gctx.db.imports:
             if self.gctx.dis.mem.is_func(ad):
-                self.analyzer.msg.put((ad, True, True, None))
+                self.analyzer.msg.put((ad, True, True, False, None))
 
         # Analyze entry point
         ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
-            self.analyzer.msg.put((ep, False, True, None))
+            self.analyzer.msg.put((ep, False, True, False, None))
 
         # Re push defined functions
         for ad in self.gctx.db.functions:
             if ad not in self.gctx.db.imports:
-                self.analyzer.msg.put((ad, False, True, None))
+                self.analyzer.msg.put((ad, False, True, False, None))
 
         # Analyze static functions
         for ad in self.gctx.db.reverse_symbols:
             if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
-                self.analyzer.msg.put((ad, True, True, None))
+                self.analyzer.msg.put((ad, True, True, False, None))
 
 
     def __exec_sym(self, args):
