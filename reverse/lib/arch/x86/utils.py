@@ -28,6 +28,11 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_INS_OR, X86_INS_MOVSX)
 
 
+PROLOGS = [
+    [b"\x55", b"\xe5\x89"], # push ebp; mov ebp, esp
+]
+
+
 def is_cmp(i):
     return i.id == X86_INS_CMP
 

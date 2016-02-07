@@ -67,13 +67,16 @@ class Analyzer(threading.Thread):
         # TODO: find a better solution, globally ? The problem
         # is that I want the --help fast as possible.
         from capstone import (CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS, CS_ARCH_X86,
-                              CS_MODE_32, CS_MODE_64, CS_ARCH_ARM)
+                              CS_MODE_32, CS_MODE_64, CS_ARCH_ARM,
+                              CS_MODE_BIG_ENDIAN)
         self.CS_OP_IMM = CS_OP_IMM
         self.CS_OP_MEM = CS_OP_MEM
 
         self.is_mips = self.dis.arch == CS_ARCH_MIPS
         self.is_x86 = self.dis.arch == CS_ARCH_X86
         self.is_arm = self.dis.arch == CS_ARCH_ARM
+
+        self.is_big_endian = self.dis.mode & CS_MODE_BIG_ENDIAN
 
         if self.is_x86:
             from capstone.x86 import (X86_REG_EIP, X86_REG_RIP,
@@ -95,6 +98,17 @@ class Analyzer(threading.Thread):
             self.default_size = 4
 
         self.has_op_size = self.dis.arch == CS_ARCH_X86
+
+        # cache
+        self.is_ret = self.ARCH_UTILS.is_ret
+        self.is_jump = self.ARCH_UTILS.is_jump
+        self.is_uncond_jump = self.ARCH_UTILS.is_uncond_jump
+        self.is_cond_jump = self.ARCH_UTILS.is_cond_jump
+        self.is_call = self.ARCH_UTILS.is_call
+        self.disasm = self.dis.lazy_disasm
+        self.jmptables = self.dis.jmptables
+        self.functions = self.dis.functions
+        self.prologs = self.ARCH_UTILS.PROLOGS
 
 
     def __add_prefetch(self, addr_set, inst):
@@ -145,6 +159,25 @@ class Analyzer(threading.Thread):
                 return False
             ad += inst.size
         return True
+
+
+    def has_prolog(self, ad):
+        inst1 = self.dis.lazy_disasm(ad)
+        inst2 = self.dis.lazy_disasm(ad + inst1.size)
+
+        if self.is_big_endian:
+            bufs = [inst1.bytes, inst2.bytes]
+        else:
+            bufs = [bytes(reversed(inst1.bytes)), bytes(reversed(inst2.bytes))]
+
+        for lst in self.prologs:
+            i = 0
+            for p in lst:
+                if bufs[i].startswith(p):
+                    return True
+                i += 1
+
+        return False
 
 
     def analyze_operands(self, i, func_obj):
@@ -213,11 +246,16 @@ class Analyzer(threading.Thread):
 
                     if not self.dis.mem.exists(deref):
                         self.dis.mem.add(deref, 1, MEM_UNK)
+
+                        # Do an anlysis on this value.
                         if deref not in self.pending and \
+                                not (self.is_jump(i) or self.is_call(i)) and \
                                 deref not in self.pending_not_curr and \
                                 self.first_inst_are_code(deref):
+
                             self.pending_not_curr.add(deref)
-                            self.msg.put((deref, False, False, True, None))
+                            self.msg.put(
+                                (deref, self.has_prolog(deref), False, True, None))
                 else:
                     # Check if this is an address to a string
                     sz = b.is_string(val)
@@ -233,29 +271,31 @@ class Analyzer(threading.Thread):
                 self.dis.mem.add(val, sz, ty)
 
                 if ty == MEM_UNK:
-                    # do an analysis on this value, if this is not code
+                    # Do an analysis on this value, if this is not code
                     # nothing will be done.
+                    # jumps and calls are already analyzed in analyze_flow.
                     if val not in self.pending and \
+                            not (self.is_jump(i) or self.is_call(i)) and \
                             val not in self.pending_not_curr and \
                             self.first_inst_are_code(val):
+
                         self.pending_not_curr.add(val)
-                        self.msg.put((val, False, False, True, None))
+                        self.msg.put(
+                            (val, self.has_prolog(val), False, True, None))
 
 
     def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
-        functions = self.dis.functions
-
         if entry_is_func:
-            if entry in functions:
-                last_end = functions[entry][FUNC_END]
+            if entry in self.functions:
+                last_end = self.functions[entry][FUNC_END]
                 self.dis.end_functions[last_end].remove(entry)
                 if not self.dis.end_functions[last_end]:
                     del self.dis.end_functions[last_end]
 
             e = max(inner_code) if inner_code else -1
             func_id = self.db.func_id_counter
-            functions[entry] = [e, flags, {}, func_id]
-            func_obj = functions[entry]
+            self.functions[entry] = [e, flags, {}, func_id]
+            func_obj = self.functions[entry]
 
             self.db.func_id[func_id] = entry
             self.db.func_id_counter += 1
@@ -272,7 +312,7 @@ class Analyzer(threading.Thread):
         for ad, inst in inner_code.items():
             self.analyze_operands(inst, func_obj)
 
-            if ad in functions:
+            if ad in self.functions:
                 mem.add(ad, inst.size, MEM_FUNC, func_id)
             else:
                 mem.add(ad, inst.size, MEM_CODE, func_id)
@@ -284,7 +324,7 @@ class Analyzer(threading.Thread):
 
 
     def is_noreturn(self, ad, entry):
-        return ad !=entry and self.dis.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
+        return ad !=entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
     #
@@ -295,7 +335,8 @@ class Analyzer(threading.Thread):
     # force             if true and entry is already functions, the analysis
     #                   is forced.
     # add_if_code       if true and if entry seems to have a correct control
-    #                   flow with any bad instructions.
+    #                   flow with any bad instructions, instructions are set
+    #                   as code.
     #
     def analyze_flow(self, entry, entry_is_func, force, add_if_code):
         if entry in self.pending_not_curr:
@@ -304,8 +345,10 @@ class Analyzer(threading.Thread):
         if entry in self.pending:
             return
 
-        if not force and self.dis.mem.is_code(entry):
-            return
+        if not force:
+            if not entry_is_func and self.dis.mem.is_loc(entry) or \
+                    entry_is_func and self.dis.mem.is_func(entry):
+                return
 
         self.pending.add(entry)
 
@@ -346,15 +389,6 @@ class Analyzer(threading.Thread):
         stack = [entry]
         has_ret = False
 
-        # cache
-        is_ret = self.ARCH_UTILS.is_ret
-        is_uncond_jump = self.ARCH_UTILS.is_uncond_jump
-        is_cond_jump = self.ARCH_UTILS.is_cond_jump
-        is_call = self.ARCH_UTILS.is_call
-        disasm = self.dis.lazy_disasm
-        jmptables = self.dis.jmptables
-        functions = self.dis.functions
-
         # If entry is not "code", we have to rollback added xrefs
         has_bad_inst = False
         if add_if_code:
@@ -362,7 +396,7 @@ class Analyzer(threading.Thread):
 
         while stack:
             ad = stack.pop()
-            inst = disasm(ad)
+            inst = self.disasm(ad)
 
             if inst is None:
                 has_bad_inst = True
@@ -375,11 +409,11 @@ class Analyzer(threading.Thread):
 
             inner_code[ad] = inst
 
-            if is_ret(inst):
+            if self.is_ret(inst):
                 self.__add_prefetch(inner_code, inst)
                 has_ret = True
 
-            elif is_uncond_jump(inst):
+            elif self.is_uncond_jump(inst):
                 self.__add_prefetch(inner_code, inst)
 
                 op = inst.operands[-1]
@@ -387,15 +421,15 @@ class Analyzer(threading.Thread):
                 if op.type == self.CS_OP_IMM:
                     nxt = op.value.imm
                     self.dis.add_xref(ad, nxt)
-                    if nxt in functions:
+                    if nxt in self.functions:
                         has_ret = not self.is_noreturn(nxt, entry)
                     else:
                         stack.append(nxt)
                     if add_if_code:
                         added_xrefs.append((ad, nxt))
                 else:
-                    if inst.address in jmptables:
-                        table = jmptables[inst.address].table
+                    if inst.address in self.jmptables:
+                        table = self.jmptables[inst.address].table
                         stack += table
                         self.dis.add_xref(ad, table)
                         if add_if_code:
@@ -406,7 +440,7 @@ class Analyzer(threading.Thread):
                         # we can't say if the function really returns
                         has_ret = True
 
-            elif is_cond_jump(inst):
+            elif self.is_cond_jump(inst):
                 prefetch = self.__add_prefetch(inner_code, inst)
 
                 op = inst.operands[-1]
@@ -423,12 +457,12 @@ class Analyzer(threading.Thread):
                     if add_if_code:
                         added_xrefs.append((ad, nxt_jmp))
 
-                    if nxt_jmp in functions:
+                    if nxt_jmp in self.functions:
                         has_ret = not self.is_noreturn(nxt_jmp, entry)
                     else:
                         stack.append(nxt_jmp)
 
-            elif is_call(inst):
+            elif self.is_call(inst):
                 op = inst.operands[-1]
                 if op.type == self.CS_OP_IMM:
                     self.dis.add_xref(ad, op.value.imm)
@@ -437,10 +471,10 @@ class Analyzer(threading.Thread):
                     if add_if_code:
                         added_xrefs.append((ad, op.value.imm))
 
-                    if ad not in functions:
+                    if ad not in self.functions:
                         self.analyze_flow(ad, True, False, add_if_code)
 
-                    if ad in functions and self.is_noreturn(ad, entry):
+                    if ad in self.functions and self.is_noreturn(ad, entry):
                         self.__add_prefetch(inner_code, inst)
                         continue
 
@@ -465,4 +499,3 @@ class Analyzer(threading.Thread):
             flags = FUNC_FLAG_NORETURN
 
         return flags
-

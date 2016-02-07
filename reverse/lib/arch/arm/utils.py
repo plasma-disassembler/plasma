@@ -30,6 +30,10 @@ JUMPS = {ARM_INS_B, ARM_INS_BX}
 JUMPS_LINK = {ARM_INS_BL, ARM_INS_BLX}
 
 
+PROLOGS = [
+    [b"\xe9\x2d"], # push registers
+]
+
 
 def is_cmp(i):
     return i.id == ARM_INS_CMP

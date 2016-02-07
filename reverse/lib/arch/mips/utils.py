@@ -23,7 +23,8 @@ from capstone.mips import (MIPS_INS_BEQ, MIPS_INS_BNE, MIPS_INS_BGTZ,
         MIPS_INS_JAL, MIPS_INS_JALR, MIPS_INS_JR, MIPS_REG_RA,
         MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
         MIPS_INS_SLL, MIPS_INS_SRL, MIPS_INS_SRA, MIPS_INS_BLTZAL,
-        MIPS_INS_XOR, MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU)
+        MIPS_INS_XOR, MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU,
+        MIPS_INS_LD, MIPS_INS_LW, MIPS_REG_T9)
 
 # TODO
 # MIPS_INS_BEQC, MIPS_INS_BEQL, MIPS_INS_BEQZALC, MIPS_INS_BEQZC, MIPS_INS_BGEC,
@@ -44,6 +45,14 @@ JUMPS_COND = {MIPS_INS_BEQ, MIPS_INS_BNE, MIPS_INS_BGTZ, MIPS_INS_BGEZ,
 JUMPS_UNCOND = {MIPS_INS_B, MIPS_INS_J}
 JUMPS_LINK = {MIPS_INS_BAL, MIPS_INS_JAL, MIPS_INS_JALR, MIPS_INS_BLTZAL}
 CMP = {}
+
+
+PROLOGS = [
+    [b"\x27\xbd", b"\xaf\xbf"], # addiu $sp, $sp, VALUE; sw $ra, VALUE
+    [b"\x3c\x1c", b"\x27\x9c"], # lw $gp, VALUE
+    [b"\x67\xbd", b"\xff\xbc"], # daddiu $sp, $sp, VALUE; sd $gp, VALUE
+    [b"\x67\xbd", b"\xff\xbf"], # daddiu $sp, $sp, VALUE; sd $ra, VALUE
+]
 
 
 def is_cmp(i):
