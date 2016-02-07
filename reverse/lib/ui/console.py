@@ -840,7 +840,7 @@ class Console():
     def __exec_analyzer(self, args):
         print("addresses remaining to analyze:", self.analyzer.msg.qsize())
 
-        if self.analyzer.running_detect_unk_data:
-            print("analyze the whole memory...")
+        if self.analyzer.running_second_pass:
+            print("scan the whole memory...")
             ad = self.analyzer.where
             print("  -> %s: 0x%x" % (self.gctx.dis.binary.get_section(ad).name, ad))

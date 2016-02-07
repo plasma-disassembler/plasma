@@ -37,7 +37,7 @@ FUNC_FLAG_NORETURN = 1
 
 NORETURN_ELF = {
     "exit", "_exit", "__stack_chk_fail",
-    "abort", "__assert_fail"
+    "abort", "__assert_fail", "__libc_start_main",
 }
 
 NORETURN_PE = {
@@ -57,7 +57,7 @@ class Analyzer(threading.Thread):
         self.pending = set() # prevent recursive call
         self.pending_not_curr = set() # prevent big stack
 
-        self.running_detect_unk_data = False
+        self.running_second_pass = False
         self.where = 0 # cursor when parsing memory
         self.second_pass_done = False
 
@@ -148,17 +148,10 @@ class Analyzer(threading.Thread):
         while 1:
             item = self.msg.get()
 
-            if not self.second_pass_done and self.msg.qsize() == 0:
-                self.second_pass_done = True
-                self.running_detect_unk_data = True
-                self.pass_detect_unk_data()
-                self.running_detect_unk_data = False
-
             if isinstance(item, tuple):
                 if self.dis is not None:
                     # Run analysis
                     (ad, entry_is_func, force, add_if_code, queue_response) = item
-
                     self.analyze_flow(ad, entry_is_func, force, add_if_code)
 
                     # Send a notification
@@ -169,29 +162,27 @@ class Analyzer(threading.Thread):
                 if item == "exit":
                     break
 
+            if not self.second_pass_done and self.msg.qsize() == 0:
+                self.second_pass_done = True
+                self.running_second_pass = True
+                self.pass_detect_unk_data()
+                self.pass_detect_functions()
+                self.running_second_pass = False
+
 
     def pass_detect_unk_data(self):
         b = self.dis.binary
         mem = self.dis.mem
 
         for s in b.iter_sections():
-            if not s.is_data:
-                continue
-
             ad = s.start
+            end = ad + s.real_size
 
-            while ad <= s.end:
+            while ad < end:
                 self.where = ad
 
                 if not mem.is_unk(ad):
                     ad += mem.get_size(ad)
-                    continue
-
-                # Detect if it's a string
-                n = b.is_string(ad, s=s)
-                if n != 0:
-                    self.dis.mem.add(ad, n, MEM_ASCII)
-                    ad += n
                     continue
 
                 val = s.read_int(ad, self.default_size)
@@ -202,10 +193,11 @@ class Analyzer(threading.Thread):
                     self.dis.mem.add(ad, self.default_size, MEM_OFFSET)
                     ad += self.default_size
 
+
                     if not self.dis.mem.exists(val):
                         self.dis.mem.add(val, self.default_size, MEM_UNK)
 
-                        # Do an anlysis on this value.
+                        # Do an analysis on this value.
                         if val not in self.pending and \
                                 val not in self.pending_not_curr and \
                                 self.first_inst_are_code(val):
@@ -216,33 +208,91 @@ class Analyzer(threading.Thread):
 
                     continue
 
+                # Detect if it's a string
+                n = b.is_string(ad, s=s)
+                if n != 0:
+                    self.dis.mem.add(ad, n, MEM_ASCII)
+                    ad += n
+                    continue
+
                 ad += 1
 
 
+    def pass_detect_functions(self):
+        b = self.dis.binary
+        mem = self.dis.mem
+
+        for s in b.iter_sections():
+            if not s.is_exec:
+                continue
+
+            ad = s.start
+            end = ad + s.real_size
+
+            while ad < end:
+                self.where = ad
+
+                if not mem.is_unk(ad):
+                    ad += mem.get_size(ad)
+                    continue
+
+                # Do an analysis on this value.
+                # Don't run first_inst_are_code, it's too slow on big sections.
+                if ad not in self.pending and self.has_prolog(ad):
+                    # Don't push, run directly the analyzer. Otherwise
+                    # we will re-analyze next instructions.
+                    self.analyze_flow(ad, True, True, True)
+
+                ad += 1
+
+
+    # Check if the five first instructions can be disassembled.
+    # Each instruction must be different of null bytes.
     def first_inst_are_code(self, ad):
         for i in range(5):
             inst = self.dis.lazy_disasm(ad)
             if inst is None:
                 return False
+            if inst.bytes.count(0) == len(inst.bytes):
+                return False
             ad += inst.size
         return True
 
 
+    # This function tries to optimize calls to lazy_disasm.
     def has_prolog(self, ad):
-        inst1 = self.dis.lazy_disasm(ad)
-        inst2 = self.dis.lazy_disasm(ad + inst1.size)
+        match = False
+        buf = self.dis.binary.read(ad, 4)
 
-        if self.is_big_endian:
-            bufs = [inst1.bytes, inst2.bytes]
-        else:
-            bufs = [bytes(reversed(inst1.bytes)), bytes(reversed(inst2.bytes))]
+        if buf is None:
+            return False
+
+        if not self.is_x86 and not self.is_big_endian:
+            buf = bytes(reversed(buf))
 
         for lst in self.prologs:
-            i = 0
             for p in lst:
-                if bufs[i].startswith(p):
+                if buf.startswith(p):
+                    match = True
+                    break
+
+        if not match:
+            return False
+
+        inst = self.dis.lazy_disasm(ad)
+        if inst is None:
+            return False
+
+        # Don't disassemble the second instruction, just get a copy of bytes.
+        buf = self.dis.binary.read(ad + inst.size, 4)
+
+        if not self.is_x86 and not self.is_big_endian:
+            buf = bytes(reversed(buf))
+
+        for lst in self.prologs:
+            for p in lst:
+                if buf.startswith(p):
                     return True
-                i += 1
 
         return False
 

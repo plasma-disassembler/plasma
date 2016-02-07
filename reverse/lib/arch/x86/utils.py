@@ -28,8 +28,10 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_INS_OR, X86_INS_MOVSX)
 
 
+# Warning: before adding new prolog check in lib.analyzer.has_prolog
 PROLOGS = [
-    [b"\x55", b"\xe5\x89"], # push ebp; mov ebp, esp
+    [b"\x55\x89\xe5"], # push ebp; mov ebp, esp
+    [b"\x55\x48\x89\xe5"], # push rbp; mov rbp, rsp
 ]
 
 

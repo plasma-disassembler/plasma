@@ -47,6 +47,7 @@ JUMPS_LINK = {MIPS_INS_BAL, MIPS_INS_JAL, MIPS_INS_JALR, MIPS_INS_BLTZAL}
 CMP = {}
 
 
+# Warning: before adding new prolog check in lib.analyzer.has_prolog
 PROLOGS = [
     [b"\x27\xbd", b"\xaf\xbf"], # addiu $sp, $sp, VALUE; sw $ra, VALUE
     [b"\x3c\x1c", b"\x27\x9c"], # lw $gp, VALUE

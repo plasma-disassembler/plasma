@@ -30,6 +30,7 @@ JUMPS = {ARM_INS_B, ARM_INS_BX}
 JUMPS_LINK = {ARM_INS_BL, ARM_INS_BLX}
 
 
+# Warning: before adding new prolog check in lib.analyzer.has_prolog
 PROLOGS = [
     [b"\xe9\x2d"], # push registers
 ]
