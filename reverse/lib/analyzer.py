@@ -249,7 +249,6 @@ class Analyzer(threading.Thread):
 
                         # Do an anlysis on this value.
                         if deref not in self.pending and \
-                                not (self.is_jump(i) or self.is_call(i)) and \
                                 deref not in self.pending_not_curr and \
                                 self.first_inst_are_code(deref):
 
