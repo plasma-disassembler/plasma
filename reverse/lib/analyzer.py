@@ -57,6 +57,10 @@ class Analyzer(threading.Thread):
         self.pending = set() # prevent recursive call
         self.pending_not_curr = set() # prevent big stack
 
+        self.running_detect_unk_data = False
+        self.where = 0 # cursor when parsing memory
+        self.second_pass_done = False
+
 
     def set(self, gctx):
         self.gctx = gctx
@@ -85,13 +89,21 @@ class Analyzer(threading.Thread):
             self.X86_REG_RIP = X86_REG_RIP
             self.X86_REG_RBP = X86_REG_RBP
             self.X86_REG_EBP = X86_REG_EBP
-        elif self.is_mips:
-            from capstone.mips import MIPS_REG_GP
-            self.MIPS_REG_GP = MIPS_REG_GP
+
             if self.dis.mode & CS_MODE_32:
                 self.default_size = 4
             else:
                 self.default_size = 8
+
+        elif self.is_mips:
+            from capstone.mips import MIPS_REG_GP
+            self.MIPS_REG_GP = MIPS_REG_GP
+
+            if self.dis.mode & CS_MODE_32:
+                self.default_size = 4
+            else:
+                self.default_size = 8
+
         elif self.is_arm:
             from capstone.arm import ARM_REG_PC
             self.ARM_REG_PC = ARM_REG_PC
@@ -136,6 +148,12 @@ class Analyzer(threading.Thread):
         while 1:
             item = self.msg.get()
 
+            if not self.second_pass_done and self.msg.qsize() == 0:
+                self.second_pass_done = True
+                self.running_detect_unk_data = True
+                self.pass_detect_unk_data()
+                self.running_detect_unk_data = False
+
             if isinstance(item, tuple):
                 if self.dis is not None:
                     # Run analysis
@@ -150,6 +168,55 @@ class Analyzer(threading.Thread):
             elif isinstance(item, str):
                 if item == "exit":
                     break
+
+
+    def pass_detect_unk_data(self):
+        b = self.dis.binary
+        mem = self.dis.mem
+
+        for s in b.iter_sections():
+            if not s.is_data:
+                continue
+
+            ad = s.start
+
+            while ad <= s.end:
+                self.where = ad
+
+                if not mem.is_unk(ad):
+                    ad += mem.get_size(ad)
+                    continue
+
+                # Detect if it's a string
+                n = b.is_string(ad, s=s)
+                if n != 0:
+                    self.dis.mem.add(ad, n, MEM_ASCII)
+                    ad += n
+                    continue
+
+                val = s.read_int(ad, self.default_size)
+
+                # Detect if it's an address
+                if val is not None and b.get_section(val) is not None:
+                    self.dis.add_xref(ad, val)
+                    self.dis.mem.add(ad, self.default_size, MEM_OFFSET)
+                    ad += self.default_size
+
+                    if not self.dis.mem.exists(val):
+                        self.dis.mem.add(val, self.default_size, MEM_UNK)
+
+                        # Do an anlysis on this value.
+                        if val not in self.pending and \
+                                val not in self.pending_not_curr and \
+                                self.first_inst_are_code(val):
+
+                            self.pending_not_curr.add(val)
+                            self.msg.put(
+                                (val, self.has_prolog(val), False, True, None))
+
+                    continue
+
+                ad += 1
 
 
     def first_inst_are_code(self, ad):

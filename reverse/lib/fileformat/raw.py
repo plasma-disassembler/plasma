@@ -53,7 +53,7 @@ class Raw:
                 len(self.raw),
                 len(self.raw),
                 True,
-                False,
+                True,
                 self.raw)
 
 

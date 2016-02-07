@@ -267,10 +267,11 @@ class Binary(object):
         return ''.join(txt) + '"'
 
 
-    def is_string(self, addr, min_bytes=2):
-        s = self.get_section(addr)
+    def is_string(self, addr, min_bytes=3, s=None):
         if s is None:
-            return 0
+            s = self.get_section(addr)
+            if s is None:
+                return 0
 
         data = s.data
         off = addr - s.start
@@ -279,6 +280,7 @@ class Binary(object):
         while off < len(data):
             c = data[off]
             if c == 0:
+                n += 1
                 break
             if c in BYTES_PRINTABLE_SET:
                 n += 1

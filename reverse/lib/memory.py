@@ -109,6 +109,12 @@ class Memory():
         return False
 
 
+    def is_unk(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][1] == MEM_UNK
+        return True
+
+
     def get_func_id(self, ad):
         if not self.is_code(ad):
             return -1
@@ -132,7 +138,7 @@ class Memory():
     def get_size(self, ad):
         if ad in self.mm:
             return self.mm[ad][0]
-        return False
+        return 1
 
 
     def find_type(self, sz):
