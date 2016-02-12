@@ -476,6 +476,9 @@ class OutputAbs():
         if section is None:
             section = self._binary.get_section(imm)
 
+        if section is not None and section.start == 0:
+            section = None
+
         # For a raw file, if the raw base is 0 the immediate is considered
         # as an address only if it's in the symbols list.
         raw_base_zero = self._binary.type == T_BIN_RAW and self.gctx.raw_base == 0

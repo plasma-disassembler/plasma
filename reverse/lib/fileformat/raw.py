@@ -69,10 +69,6 @@ class Raw:
         return
 
 
-    def is_address(self, imm):
-        return None, False
-
-
     def section_stream_read(self, addr, size):
         ad = addr - self.raw_base
         if ad >= len(self.raw) or ad < 0:

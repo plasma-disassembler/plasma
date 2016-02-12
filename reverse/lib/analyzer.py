@@ -351,7 +351,7 @@ class Analyzer(threading.Thread):
                 continue
 
             s = b.get_section(val)
-            if s is None:
+            if s is None or s.start == 0:
                 continue
 
             self.dis.add_xref(i.address, val)
@@ -361,7 +361,7 @@ class Analyzer(threading.Thread):
                 deref = s.read_int(val, sz)
 
                 # If (*val) is an address
-                if deref is not None and b.get_section(deref) is not None:
+                if deref is not None and b.is_address(deref):
                     ty = MEM_OFFSET
                     self.dis.add_xref(val, deref)
 

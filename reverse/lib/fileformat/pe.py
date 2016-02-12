@@ -121,18 +121,19 @@ class PE:
 
                 ad = sym.value + base
 
-                if name in self.classbinary.symbols:
-                    name = self.classbinary.rename_sym(name)
+                if self.classbinary.is_address(ad):
+                    if name in self.classbinary.symbols:
+                        name = self.classbinary.rename_sym(name)
 
-                self.classbinary.reverse_symbols[ad] = name
-                self.classbinary.symbols[name] = ad
+                    self.classbinary.reverse_symbols[ad] = name
+                    self.classbinary.symbols[name] = ad
 
-                if sym.type & PE_DT_FCN and not sym.type & PE_DT_PTR:
-                    ty = MEM_FUNC
-                else:
-                    ty = MEM_UNK
+                    if sym.type & PE_DT_FCN and not sym.type & PE_DT_PTR:
+                        ty = MEM_FUNC
+                    else:
+                        ty = MEM_UNK
 
-                self.mem.add(ad, 1, ty)
+                    self.mem.add(ad, 1, ty)
 
             if sym.numaux != 0:
                 off += sym.numaux * sizeof(SymbolEntry)

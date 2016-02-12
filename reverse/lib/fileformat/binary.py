@@ -172,6 +172,11 @@ class Binary(object):
         return None
 
 
+    def is_address(self, ad):
+        s = self.get_section(ad)
+        return s is not None and s.start != 0
+
+
     def get_next_section(self, ad):
         i = bisect.bisect_right(self._sorted_sections, ad)
         if i >= len(self._sorted_sections):

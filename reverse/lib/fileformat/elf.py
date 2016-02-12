@@ -125,14 +125,15 @@ class ELF:
             if ad != 0 and sy.name != b"":
                 name = sy.name.decode()
 
-                if name in self.classbinary.symbols:
-                    name = self.classbinary.rename_sym(name)
+                if self.classbinary.is_address(ad):
+                    if name in self.classbinary.symbols:
+                        name = self.classbinary.rename_sym(name)
 
-                self.classbinary.reverse_symbols[ad] = name
-                self.classbinary.symbols[name] = ad
+                    self.classbinary.reverse_symbols[ad] = name
+                    self.classbinary.symbols[name] = ad
 
-                ty = self.sym_type_lookup.get(sy.entry.st_info.type, MEM_UNK)
-                self.mem.add(ad, 1, ty)
+                    ty = self.sym_type_lookup.get(sy.entry.st_info.type, MEM_UNK)
+                    self.mem.add(ad, 1, ty)
 
 
     def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
@@ -165,22 +166,24 @@ class ELF:
         for jump_in_plt in got_values:
             if off in got_off:
                 plt_start = jump_in_plt - 6
-                plt_off = plt_start - plt.header.sh_addr
 
-                # Check "jmp *(ADDR)" opcode.
-                if plt_data[plt_off:plt_off+2] not in opcode_jmp:
-                    wrong_jump_opcode = True
-                    continue
+                if self.classbinary.is_address(ad):
+                    plt_off = plt_start - plt.header.sh_addr
 
-                name, ty = got_off[off]
-                if name in self.classbinary.symbols:
-                    continue
+                    # Check "jmp *(ADDR)" opcode.
+                    if plt_data[plt_off:plt_off+2] not in opcode_jmp:
+                        wrong_jump_opcode = True
+                        continue
 
-                self.classbinary.imports[plt_start] = True
-                self.classbinary.reverse_symbols[plt_start] = name
-                self.classbinary.symbols[name] = plt_start
+                    name, ty = got_off[off]
+                    if name in self.classbinary.symbols:
+                        continue
 
-                self.mem.add(plt_start, 1, ty)
+                    self.classbinary.imports[plt_start] = True
+                    self.classbinary.reverse_symbols[plt_start] = name
+                    self.classbinary.symbols[name] = plt_start
+
+                    self.mem.add(plt_start, 1, ty)
 
             off += addr_size
 
@@ -207,12 +210,13 @@ class ELF:
                 if name in self.classbinary.symbols:
                     continue
 
-                self.classbinary.imports[ad] = True
-                self.classbinary.reverse_symbols[ad] = name
-                self.classbinary.symbols[name] = ad
+                if self.classbinary.is_address(ad):
+                    self.classbinary.imports[ad] = True
+                    self.classbinary.reverse_symbols[ad] = name
+                    self.classbinary.symbols[name] = ad
 
-                ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
-                self.mem.add(ad, 1, ty)
+                    ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
+                    self.mem.add(ad, 1, ty)
 
 
     def __iter_reloc(self):
