@@ -657,7 +657,7 @@ class Visual(Window):
 
         ad = self.output.line_addr[line]
 
-        if self.dis.mem.is_code(ad):
+        if self.dis.mem.is_loc(ad) or ad in self.gctx.db.functions:
             return False
 
         self.analyzer.msg.put((ad, False, False, False, self.queue_wait_analyzer))
