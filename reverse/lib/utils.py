@@ -22,6 +22,14 @@ import sys
 gctx = None
 
 
+if sys.maxsize == 0x7fffffffffffffff:
+    def unsigned(n):
+        return n & 0xffffffffffffffff
+else:
+    def unsigned(n):
+        return n & 0xffffffff
+
+
 def print_no_end(text):
     print(text, end="")
 

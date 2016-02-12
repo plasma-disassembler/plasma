@@ -22,7 +22,8 @@ from time import time
 from ctypes import c_char, POINTER, cast, c_voidp
 
 from reverse.lib.graph import Graph
-from reverse.lib.utils import debug__, BYTES_PRINTABLE_SET, get_char, print_no_end
+from reverse.lib.utils import (unsigned, debug__, BYTES_PRINTABLE_SET,
+                               get_char, print_no_end)
 from reverse.lib.fileformat.binary import Binary, T_BIN_PE
 from reverse.lib.colors import (color_addr, color_symbol, color_comment,
                                 color_section, color_string)
@@ -423,10 +424,10 @@ class Disassembler():
 
                     elif ARCH_UTILS.is_call(i):
                         op = i.operands[0]
-                        if op.type == CS_OP_IMM and \
-                                op.value.imm in self.functions and \
-                                self.is_noreturn(op.value.imm):
-                            o._new_line()
+                        if op.type == CS_OP_IMM:
+                            imm = unsigned(op.value.imm)
+                            if imm in self.functions and self.is_noreturn(imm):
+                                o._new_line()
 
                     ad += i.size
 
@@ -778,7 +779,7 @@ class Disassembler():
                 op = inst.operands[-1]
 
                 if op.type == CS_OP_IMM:
-                    nxt = op.value.imm
+                    nxt = unsigned(op.value.imm)
 
                     if nxt in self.functions:
                         gph.new_node(inst, prefetch, None)
@@ -807,7 +808,7 @@ class Disassembler():
                     else:
                         direct_nxt = prefetch.address + prefetch.size
 
-                    nxt_jmp = op.value.imm
+                    nxt_jmp = unsigned(op.value.imm)
                     stack.append(direct_nxt)
 
                     if nxt_jmp in self.functions:
@@ -823,7 +824,7 @@ class Disassembler():
                 if ad != entry and ARCH_UTILS.is_call(inst):
                     op = inst.operands[0]
                     if op.type == CS_OP_IMM:
-                        imm = op.value.imm
+                        imm = unsigned(op.value.imm)
                         if imm in self.functions and self.is_noreturn(imm):
                             prefetch = self.__add_prefetch(addresses, inst)
                             gph.new_node(inst, prefetch, None)

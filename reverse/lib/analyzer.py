@@ -20,6 +20,7 @@
 import threading
 from queue import Queue
 
+from reverse.lib.utils import unsigned
 from reverse.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from reverse.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII, MEM_OFFSET
 
@@ -305,7 +306,7 @@ class Analyzer(threading.Thread):
 
         for op in i.operands:
             if op.type == self.CS_OP_IMM:
-                val = op.value.imm
+                val = unsigned(op.value.imm)
 
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
 
@@ -316,7 +317,7 @@ class Analyzer(threading.Thread):
                         # Compute the rip register
                         if op.mem.base == self.X86_REG_EIP or \
                             op.mem.base == self.X86_REG_RIP:
-                            val = i.address + i.size + op.mem.disp
+                            val = i.address + i.size + unsigned(op.mem.disp)
 
                         # Check if it's a stack variable
                         elif (op.mem.base == self.X86_REG_EBP or \
@@ -327,9 +328,9 @@ class Analyzer(threading.Thread):
                             # Continue the loop !!
                             continue
                         else:
-                            val = op.mem.disp
+                            val = unsigned(op.mem.disp)
                     else:
-                        val = op.mem.disp
+                        val = unsigned(op.mem.disp)
 
                 # TODO: stack variables for arm/mips
 
@@ -538,7 +539,7 @@ class Analyzer(threading.Thread):
                 op = inst.operands[-1]
 
                 if op.type == self.CS_OP_IMM:
-                    nxt = op.value.imm
+                    nxt = unsigned(op.value.imm)
                     self.dis.add_xref(ad, nxt)
                     if nxt in self.functions:
                         has_ret = not self.is_noreturn(nxt, entry)
@@ -569,7 +570,7 @@ class Analyzer(threading.Thread):
                     else:
                         direct_nxt = prefetch.address + prefetch.size
 
-                    nxt_jmp = op.value.imm
+                    nxt_jmp = unsigned(unsigned(op.value.imm))
                     self.dis.add_xref(ad, nxt_jmp)
                     stack.append(direct_nxt)
 
@@ -584,16 +585,16 @@ class Analyzer(threading.Thread):
             elif self.is_call(inst):
                 op = inst.operands[-1]
                 if op.type == self.CS_OP_IMM:
-                    self.dis.add_xref(ad, op.value.imm)
-                    ad = op.value.imm
+                    imm = unsigned(op.value.imm)
+                    self.dis.add_xref(ad, imm)
 
                     if add_if_code:
-                        added_xrefs.append((ad, op.value.imm))
+                        added_xrefs.append((ad, imm))
 
-                    if ad not in self.functions:
-                        self.analyze_flow(ad, True, False, add_if_code)
+                    if imm not in self.functions:
+                        self.analyze_flow(imm, True, False, add_if_code)
 
-                    if ad in self.functions and self.is_noreturn(ad, entry):
+                    if imm in self.functions and self.is_noreturn(imm, entry):
                         self.__add_prefetch(inner_code, inst)
                         continue
 

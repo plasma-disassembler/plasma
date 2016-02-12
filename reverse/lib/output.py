@@ -20,7 +20,7 @@
 import struct
 
 from reverse.lib.custom_colors import *
-from reverse.lib.utils import print_no_end, get_char, BYTES_PRINTABLE_SET
+from reverse.lib.utils import unsigned, print_no_end, get_char, BYTES_PRINTABLE_SET
 from reverse.lib.colors import color, bold
 from reverse.lib.fileformat.binary import T_BIN_RAW
 from reverse.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
@@ -455,6 +455,9 @@ class OutputAbs():
 
         if self.gctx.capstone_string != 0:
             hexa = True
+
+        if hexa:
+            imm = unsigned(imm)
 
         label_printed = self._label(imm, print_colon=False)
 
