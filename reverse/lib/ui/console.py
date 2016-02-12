@@ -93,7 +93,7 @@ class Console():
                 None,
                 [
                 "",
-                "Force to reanalyze all symbols",
+                "Force to analyze the entry point, symbols and a memory scan will be done.",
                 ]
             ),
 
@@ -363,7 +363,7 @@ class Console():
             print("push_analyze_symbols")
         else:
             # It means that the first analysis was already done
-            if len(gctx.db.functions) == 0:
+            if gctx.autoanalyzer and len(gctx.db.functions) == 0:
                 self.push_analyze_symbols(None)
 
         rl.reload_cursor_line()
@@ -600,6 +600,8 @@ class Console():
         for ad in self.gctx.db.reverse_symbols:
             if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
                 self.analyzer.msg.put((ad, True, True, False, None))
+
+        self.analyzer.msg.put("pass_scan_mem")
 
 
     def __exec_sym(self, args):

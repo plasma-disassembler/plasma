@@ -162,12 +162,15 @@ class Analyzer(threading.Thread):
                 if item == "exit":
                     break
 
-            if not self.second_pass_done and self.msg.qsize() == 0:
-                self.second_pass_done = True
-                self.running_second_pass = True
-                self.pass_detect_unk_data()
-                self.pass_detect_functions()
-                self.running_second_pass = False
+                if item == "pass_scan_mem":
+                    if not self.second_pass_done and self.msg.qsize() == 0:
+                        self.second_pass_done = True
+                        self.running_second_pass = True
+                        self.pass_detect_unk_data()
+                        self.pass_detect_functions()
+                        self.running_second_pass = False
+                    else:
+                        self.msg.put(item)
 
 
     def pass_detect_unk_data(self):

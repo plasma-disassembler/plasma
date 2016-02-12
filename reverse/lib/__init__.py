@@ -67,6 +67,7 @@ class GlobalContext():
         self.print_data = False
         self.capstone_string = 0 # See lib.ui.visual.main_cmd_inst_output
         self.show_mangling = True
+        self.autoanalyzer = True
 
         # Built objects
         self.dis = None # Disassembler
@@ -111,6 +112,8 @@ class GlobalContext():
                 help='Set base address of a raw file (default=0)')
         parser.add_argument('--rawbe', action='store_true',
                 help='If not set it\'s in little endian')
+        parser.add_argument('-na', '--noautoanalyzer', action='store_true',
+                help='Disable analysis on the entry point / symbols and don\'t scan memmory. You can force it with the command push_analyze_symbols.')
 
         args = parser.parse_args()
 
@@ -132,6 +135,7 @@ class GlobalContext():
         self.raw_big_endian  = args.rawbe
         self.list_sections   = args.sections
         self.print_bytes     = args.bytes
+        self.autoanalyzer    = not args.noautoanalyzer
 
         if self.raw_base is not None:
             try:
