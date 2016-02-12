@@ -389,12 +389,11 @@ class Disassembler():
                     and ad <= s.end:
 
                 ty = self.mem.get_type(ad)
+                is_func = ad in self.functions
 
                 # A PE import should not be displayed as a subroutine
                 if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
-                        and (ty == MEM_FUNC or ty == MEM_CODE):
-
-                    is_func = ad in self.functions
+                        and (ty == MEM_FUNC and is_func or ty == MEM_CODE):
 
                     if is_func:
                         if not o.is_last_2_line_empty():

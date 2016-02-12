@@ -781,7 +781,7 @@ class Visual(Window):
 
         ad = self.output.line_addr[line]
 
-        if self.gctx.dis.mem.get_func_id(ad) != -1:
+        if ad in self.gctx.dis.functions != -1:
             self.status_bar("error: already in a function", h, True)
             return False
 
