@@ -448,7 +448,7 @@ class Disassembler():
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
                     # less the null byte
-                    buf = self.binary.get_string(ad, sz - 1)
+                    buf = self.binary.get_string(ad, sz)
                     if buf is not None:
                         o._string(buf)
                     o._add(", 0")
