@@ -63,6 +63,7 @@ class Visual(Window):
             b"r": self.main_cmd_rename,
             b"I": self.main_cmd_inst_output,
             b"M": self.main_cmd_show_mangling,
+            b"B": self.main_cmd_show_bytes,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -234,6 +235,12 @@ class Visual(Window):
             self.gctx.capstone_string = 0
         else:
             self.gctx.capstone_string += 1
+        self.reload_output(h)
+        return True
+
+
+    def main_cmd_show_bytes(self, h, w):
+        self.gctx.print_bytes = not self.gctx.print_bytes
         self.reload_output(h)
         return True
 

@@ -346,7 +346,7 @@ class OutputAbs():
     def _commented_inst(self, i, tab):
         self._label_and_address(i.address, tab, with_comment=True)
         self.set_line(i.address)
-        self._bytes(i, True)
+        self._bytes(i.bytes)
         self._comment(self.get_inst_str(i))
         self._inline_comment(i)
         self._new_line()
@@ -371,15 +371,19 @@ class OutputAbs():
             self._address(i.address)
 
 
-    def _bytes(self, i, comment_this=False):
+    def _bytes(self, by):
         if self.gctx.print_bytes:
-            if comment_this:
-                if self.gctx.comments:
-                    for c in i.bytes:
-                        self._comment("%x " % c)
-            else:
-                for c in i.bytes:
-                    self._comment("%.2x " % c)
+            i = 0
+            for c in by:
+                i += 1
+                self._comment("%.2x " % c)
+                if i == self.gctx.nbytes:
+                    break
+
+            if i != self.gctx.nbytes:
+                self._add("   " * (self.gctx.nbytes - i))
+
+            self._add("   ")
 
 
     def _comment_fused(self, jump_inst, fused_inst, tab):
@@ -630,7 +634,7 @@ class OutputAbs():
 
         if self.print_labels:
             self._label_and_address(i.address, tab)
-            self._bytes(i)
+            self._bytes(i.bytes)
         else:
             self._tabs(tab)
             self._address(i.address)

@@ -100,8 +100,8 @@ class GlobalContext():
                 help='Dump asm without decompilation')
         parser.add_argument('-l', '--lines', type=int, default=30, metavar='N',
                 help='Max lines used with --dump')
-        parser.add_argument('--bytes', action='store_true',
-                help='Print instruction bytes')
+        parser.add_argument('--nbytes', type=int, default=0, metavar='N',
+                help='Print n bytes.')
         parser.add_argument('-i', '--interactive', action='store_true',
                 help='Interactive mode')
         parser.add_argument('-d', '--opt_debug', action='store_true')
@@ -134,8 +134,14 @@ class GlobalContext():
         self.graph           = args.graph
         self.raw_big_endian  = args.rawbe
         self.list_sections   = args.sections
-        self.print_bytes     = args.bytes
         self.autoanalyzer    = not args.noautoanalyzer
+
+        if args.nbytes == 0:
+            self.nbytes = 4
+            self.print_bytes = False
+        else:
+            self.nbytes = int(args.nbytes)
+            self.print_bytes = True
 
         if self.raw_base is not None:
             try:

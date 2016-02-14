@@ -33,6 +33,33 @@ from reverse.lib.disassembler import NB_LINES_TO_DISASM
 from reverse.lib.analyzer import Analyzer
 
 
+COMMANDS_ALPHA = [
+    "analyzer",
+    "da",
+    "db",
+    "dd",
+    "dw",
+    "dq",
+    "dump",
+    "exit",
+    "functions",
+    "help",
+    "history",
+    "info",
+    "jmptable",
+    "mips_set_gp",
+    "py",
+    "push_analyze_symbols",
+    "save",
+    "sections",
+    "sym",
+    "x",
+    "v",
+    "display.print_section",
+    "xrefs",
+]
+
+
 class Command():
     def __init__(self, max_args, callback_exec, callback_complete, desc):
         self.max_args = max_args
@@ -50,31 +77,6 @@ class Console():
         self.gctx = gctx
         gctx.vim = False
 
-        self.COMMANDS_ALPHA = [
-            "analyzer",
-            "da",
-            "db",
-            "dd",
-            "dw",
-            "dq",
-            "dump",
-            "exit",
-            "functions",
-            "help",
-            "history",
-            "info",
-            "jmptable",
-            "mips_set_gp",
-            "py",
-            "push_analyze_symbols",
-            "save",
-            "sections",
-            "sym",
-            "x",
-            "v",
-            "display.print_section",
-            "xrefs",
-        ]
 
         self.COMMANDS = {
             "analyzer": Command(
@@ -156,7 +158,8 @@ class Console():
                 "x       show xrefs",
                 "r       rename",
                 "I       switch to traditional instruction string output",
-                "M       show mangling or not",
+                "M       show/hide mangling",
+                "B       show/hide bytes",
                 "g       top",
                 "G       bottom",
                 "z       set current line on the middle",
@@ -409,7 +412,7 @@ class Console():
         # Complete a command name
         if len(tokens) == 1:
             i = 0
-            for cmd in self.COMMANDS_ALPHA:
+            for cmd in COMMANDS_ALPHA:
                 if cmd.startswith(last_tok):
                     # To keep spaces
                     comp.append(cmd[len(last_tok):] + " ")
@@ -676,7 +679,7 @@ class Console():
 
 
     def __exec_help(self, args):
-        for name in self.COMMANDS_ALPHA:
+        for name in COMMANDS_ALPHA:
             cmd = self.COMMANDS[name]
             if cmd.callback_exec is not None:
                 self.rl.print(color(name, 2))

@@ -437,6 +437,8 @@ class Disassembler():
                     off = s.read_int(ad, sz)
                     if off is None:
                         continue
+                    if ctx.gctx.print_bytes:
+                        o._bytes(s.read(ad, sz))
                     o._data_prefix(sz)
                     o._add(" ")
                     o._imm(off, sz, True, print_data=False, force_dont_print_data=True)
@@ -447,9 +449,10 @@ class Disassembler():
                     o._label_and_address(ad)
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
-                    # less the null byte
                     buf = self.binary.get_string(ad, sz)
                     if buf is not None:
+                        if ctx.gctx.print_bytes:
+                            o._bytes(s.read(ad, sz))
                         o._string(buf)
                     o._add(", 0")
                     o._new_line()
@@ -459,6 +462,8 @@ class Disassembler():
                     o._label_and_address(ad)
                     o.set_line(ad)
                     sz = self.mem.get_size_from_type(ty)
+                    if ctx.gctx.print_bytes:
+                        o._bytes(s.read(ad, sz))
                     o._word(s.read_int(ad, sz), sz)
                     o._new_line()
                     ad += sz
