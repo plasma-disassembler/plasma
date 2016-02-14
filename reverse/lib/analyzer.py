@@ -467,7 +467,7 @@ class Analyzer(threading.Thread):
 
         if not force:
             if not entry_is_func and self.dis.mem.is_loc(entry) or \
-                    entry_is_func and self.dis.mem.is_func(entry):
+                    entry_is_func and entry in self.functions:
                 return
 
         self.pending.add(entry)
