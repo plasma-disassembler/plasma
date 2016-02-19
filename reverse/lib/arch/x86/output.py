@@ -94,9 +94,7 @@ class Output(OutputAbs):
         elif op.type == X86_OP_MEM:
             mm = op.mem
 
-            if not inv(mm.base) and mm.disp != 0 \
-                and inv(mm.segment) and inv(mm.index):
-
+            if inv(mm.segment) and inv(mm.index) and mm.disp != 0:
                 if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
                        self.var_name_exists(i, num_op):
                     if i.id == X86_INS_LEA:
@@ -108,18 +106,9 @@ class Output(OutputAbs):
 
                 elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                     ad = i.address + i.size + mm.disp
-                    section = self._binary.get_section(ad)
 
-                    if section is not None and i.id != X86_INS_LEA:
-                        # if ad is set as an "offset"
-                        sz = self.get_offset_size(ad)
-                        if sz != -1:
-                            val = section.read_int(ad, sz)
-                            if self.gctx.capstone_string == 0:
-                                self._add("=")
-                                self._imm(val, 0, True, section=section,
-                                          force_dont_print_data=force_dont_print_data)
-                                return True
+                    if i.id != X86_INS_LEA and self.deref_if_offset(ad):
+                        return True
 
                     if show_deref:
                         self._add("*(")
@@ -128,6 +117,10 @@ class Output(OutputAbs):
                     if show_deref:
                         self._add(")")
                     return True
+
+                elif inv(mm.base):
+                    if i.id != X86_INS_LEA and self.deref_if_offset(mm.disp):
+                        return True
 
             printed = False
             if show_deref:

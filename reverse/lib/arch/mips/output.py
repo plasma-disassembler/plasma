@@ -91,18 +91,9 @@ class Output(OutputAbs):
 
             if mm.base == MIPS_REG_GP and self._dis.mips_gp != -1:
                 ad = self._dis.mips_gp + mm.disp
-                section = self._binary.get_section(ad)
 
-                if section is not None:
-                    # if ad is set as an "offset"
-                    sz = self.get_offset_size(ad)
-                    if sz != -1:
-                        val = section.read_int(ad, sz)
-                        if self.gctx.capstone_string == 0:
-                            self._add("=")
-                            self._imm(val, 0, True, print_data=False,
-                                      force_dont_print_data=force_dont_print_data)
-                            return True
+                if self.deref_if_offset(ad):
+                    return True
 
                 if show_deref:
                     self._add("*(")

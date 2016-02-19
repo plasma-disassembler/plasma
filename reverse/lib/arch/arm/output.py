@@ -129,27 +129,11 @@ class Output(OutputAbs):
             mm = op.mem
 
             if not inv(mm.base) and mm.disp != 0 and inv(mm.index):
-
-                # TODO
-                # if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
-                       # self.var_name_exists(i, num_op):
-                    # print_no_end(color_var(self.get_var_name(i, num_op)))
-                    # return True
                 if mm.base == ARM_REG_PC:
                     ad = i.address + i.size * 2 + mm.disp
-                    section = self._binary.get_section(ad)
 
-                    if section is not None:
-                        # if ad is set as an "offset"
-                        sz = self.get_offset_size(ad)
-                        if sz != -1:
-                            val = section.read_int(ad, sz)
-                            if self.gctx.capstone_string == 0:
-                                self._add("=")
-                                self._imm(val, 0, True,
-                                          section=section, print_data=False,
-                                          force_dont_print_data=force_dont_print_data)
-                                return True
+                    if self.deref_if_offset(ad):
+                        return True
 
                     if show_deref:
                         self._add("*(")

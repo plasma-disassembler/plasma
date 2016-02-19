@@ -444,6 +444,22 @@ class OutputAbs():
         self._user_comment("; ---------------------------------------------------------------------")
         self._new_line()
 
+
+    def deref_if_offset(self, ad):
+        section = self._binary.get_section(ad)
+        if section is not None:
+            # if ad is set as an "offset"
+            sz = self.get_offset_size(ad)
+            if sz != -1:
+                val = section.read_int(ad, sz)
+                if self.gctx.capstone_string == 0:
+                    self._add("=")
+                    self._imm(val, 0, True, section=section,
+                              force_dont_print_data=True)
+                    return True
+        return False
+
+
     #
     # Print an immediate value
     # imm         the immediate to print
