@@ -670,6 +670,7 @@ class Visual(Window):
         self.analyzer.msg.put((ad, False, False, False, self.queue_wait_analyzer))
         self.queue_wait_analyzer.get()
         self.reload_output(h)
+        self.goto_address(ad, h, w)
         self.gctx.db.modified = True
         return True
 
