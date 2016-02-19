@@ -147,6 +147,8 @@ class ELF:
                 ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
                 got_off[ad] = [name, ty]
 
+        # .got.plt is an array of addresses to the .plt
+
         data = got_plt.data()
 
         unpack_str = "<" if self.elf.little_endian else ">"
@@ -156,19 +158,21 @@ class ELF:
         got_values = struct.unpack(unpack_str, data)
         plt_data = plt.data()
         wrong_jump_opcode = False
-        off = got_plt.header.sh_addr
+        opcode_jmp = [b"\xff\x25", b"\xff\xa3"]
 
         # Read the .got.plt and for each address in the plt, substract 6
         # to go at the begining of the plt entry.
 
-        opcode_jmp = [b"\xff\x25", b"\xff\xa3"]
+        off = got_plt.header.sh_addr - addr_size
 
         for jump_in_plt in got_values:
+            off += addr_size
+
             if off in got_off:
-                plt_start = jump_in_plt - 6
+                plt_entry_start = jump_in_plt - 6
 
                 if self.classbinary.is_address(ad):
-                    plt_off = plt_start - plt.header.sh_addr
+                    plt_off = plt_entry_start - plt.header.sh_addr
 
                     # Check "jmp *(ADDR)" opcode.
                     if plt_data[plt_off:plt_off+2] not in opcode_jmp:
@@ -179,13 +183,11 @@ class ELF:
                     if name in self.classbinary.symbols:
                         continue
 
-                    self.classbinary.imports[plt_start] = True
-                    self.classbinary.reverse_symbols[plt_start] = name
-                    self.classbinary.symbols[name] = plt_start
+                    self.classbinary.imports[plt_entry_start] = True
+                    self.classbinary.reverse_symbols[plt_entry_start] = name
+                    self.classbinary.symbols[name] = plt_entry_start
 
-                    self.mem.add(plt_start, 1, ty)
-
-            off += addr_size
+                    self.mem.add(plt_entry_start, 1, ty)
 
         if wrong_jump_opcode:
             warning("I'm expecting to see a jmp *(ADDR) on each plt entry")
