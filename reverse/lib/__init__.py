@@ -214,14 +214,32 @@ class GlobalContext():
         return True
 
 
+    def set_head_addr(self, ad):
+        # Now check if need to go backward (maybe we are inside an instruction
+        # or a string) : if should disassemble at the first address.
+        # For the moment we will check 128 bytes before : see issue #49
+
+        saved_ad = ad
+
+        for i in range(128):
+            if not self.db.mem.is_unk(ad):
+                sz = self.db.mem.get_size(ad)
+                if ad + sz > saved_ad:
+                    return ad
+            ad -= 1
+
+        return saved_ad
+
+
     def get_addr_context(self, ad):
         adctx = AddrContext(self)
         if isinstance(ad, int):
-            adctx.entry= ad
+            adctx.entry = self.set_head_addr(ad)
             return adctx
-        ret = adctx.init_address(ad)
+        ret = adctx.init_address(ad) # here ad is a string
         if not ret:
             return None
+        adctx.entry = self.set_head_addr(adctx.entry)
         return adctx
 
 

@@ -229,8 +229,9 @@ class Binary(object):
 
 
     def get_prev_section(self, ad):
-        i = bisect.bisect_right(self._sorted_sections, ad - 1)
-        if not i:
+        s = self.get_section(ad)
+        i = bisect.bisect_right(self._sorted_sections, s.start - 1)
+        if i == 0:
             return None
         start = self._sorted_sections[i - 1]
         return self._abs_sections[start]

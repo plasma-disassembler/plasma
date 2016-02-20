@@ -64,6 +64,9 @@ class Visual(Window):
             b"I": self.main_cmd_inst_output,
             b"M": self.main_cmd_show_mangling,
             b"B": self.main_cmd_show_bytes,
+            b"/": self.main_cmd_search,
+            b"n": self.main_cmd_search_forward,
+            b"N": self.main_cmd_search_backward,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -249,6 +252,98 @@ class Visual(Window):
         self.gctx.show_mangling = not self.gctx.show_mangling
         self.reload_output(h)
         return True
+
+
+    def __search(self, text, h, w, forward=True):
+        # Search the next line with an address
+        line = self.win_y + self.cursor_y
+        moved = False
+        while line not in self.output.line_addr:
+            line += 1
+            moved = True
+
+        # Goto next line
+        if forward and not moved:
+            line += 1
+            while line not in self.output.line_addr:
+                line += 1
+
+        ad = self.output.line_addr[line]
+
+        s = self.dis.binary.get_section(ad)
+
+        if s is None:
+            self.status_bar("not found", h, True)
+            return False
+
+        while 1:
+            off = ad - s.start
+
+            new_off = s.data.find(text, off) if forward \
+                      else s.data.rfind(text, 0, off)
+
+            if new_off != -1:
+                topush = self.__compute_curr_position()
+                self.saved_stack.clear()
+                self.stack.append(topush)
+                ad = self.gctx.set_head_addr(s.start + new_off)
+                if not self.goto_address(ad, h, w):
+                    if self.exec_disasm(ad, h):
+                        self.cursor_y = 0
+                        self.win_y = 0
+                        self.goto_address(self.ctx.entry, h, w)
+                return True
+
+            s = self.dis.binary.get_next_section(ad) if forward \
+                else self.dis.binary.get_prev_section(ad)
+
+            if s is None:
+                self.status_bar("not found", h, True)
+                return False
+
+            ad = ad = s.start if forward else s.end
+
+
+    def main_cmd_search(self, h, w):
+        # TODO not very clean...
+        self.status_bar("/", h, True)
+        scr = curses.newwin(h, w - 1, h, 1)
+        w = Window(None)
+        w.print_curr_line = False
+        text = w.open_textbox(scr, "")
+
+        if not text:
+            return True
+
+        if text[0] == "!":
+            textenc = []
+            for by in text[1:].split():
+                try:
+                    textenc.append(int(by, 16))
+                except:
+                    self.status_bar("err search not in hexa", h, True)
+                    return False
+            textenc = bytes(textenc)
+
+        else:
+            textenc = text.encode()
+
+        if self.__search(textenc, h, w, forward=True):
+            self.search_bin = textenc
+            return True
+        return False
+
+
+    def main_cmd_search_forward(self, h, w):
+        if self.search_bin is None:
+            return False
+        return self.__search(self.search_bin, h, w, forward=True)
+
+
+    def main_cmd_search_backward(self, h, w):
+        if self.search_bin is None:
+            return False
+        return self.__search(self.search_bin, h, w, forward=False)
 
 
     def view_inline_comment_editor(self, h, w):

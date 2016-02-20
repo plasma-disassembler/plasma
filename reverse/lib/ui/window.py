@@ -46,7 +46,8 @@ class Window():
         self.should_stop = False
         self.has_statusbar = has_statusbar
 
-        self.search = None
+        self.search_hi = None
+        self.search_bin = None
         self.word_accepted_chars = ["_", "@", ".", "$", ":"]
 
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
@@ -174,6 +175,8 @@ class Window():
 
 
     def status_bar(self, s, h, refresh=False):
+        self.screen.move(h, 0)
+        self.screen.clrtoeol()
         self.screen.addstr(h, 0, s)
         if refresh:
             self.screen.refresh()
@@ -274,15 +277,15 @@ class Window():
             
 
     def highlight_search(self, i, w):
-        if self.search is None:
+        if self.search_hi is None:
             return
         num_line = self.win_y + i
         start = 0
         while 1:
-            idx = self.output.lines[num_line].find(self.search, start)
+            idx = self.output.lines[num_line].find(self.search_hi, start)
             if idx == -1 or idx >= w:
                 break
-            self.screen.chgat(i, idx, len(self.search), curses.color_pair(1))
+            self.screen.chgat(i, idx, len(self.search_hi), curses.color_pair(1))
             start = idx + 1
 
 
@@ -534,12 +537,12 @@ class Window():
         w = self.get_word_under_cursor()
         if w is None:
             return False
-        self.search = w
+        self.search_hi = w
         return True
 
 
     def cmd_highlight_clear(self, h, w):
-        self.search = None
+        self.search_hi = None
         return True
 
 
