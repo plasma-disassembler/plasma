@@ -532,7 +532,10 @@ class Console():
             return
 
         if c.callback_exec is not None:
-            c.callback_exec(args)
+            try:
+                c.callback_exec(args)
+            except Exception as e:
+                traceback.print_stack()
 
 
     def __exec_exit(self, args):
