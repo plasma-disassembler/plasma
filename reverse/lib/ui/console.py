@@ -22,15 +22,18 @@ import sys
 import shlex
 import code
 import traceback
+import readline
 from queue import Queue
 
 from reverse.lib.colors import color
 from reverse.lib.utils import error, print_no_end
 from reverse.lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
-from reverse.lib.ui.readline import ReadLine
 from reverse.lib.ui.visual import Visual
 from reverse.lib.disassembler import NB_LINES_TO_DISASM
 from reverse.lib.analyzer import Analyzer
+
+
+MAX_PRINT_COMPLETE = 300
 
 
 COMMANDS_ALPHA = [
@@ -60,6 +63,10 @@ COMMANDS_ALPHA = [
 ]
 
 
+def yellow(text):
+    return "\x1b[;33m" + text + "\x1b[0m"
+
+
 class Command():
     def __init__(self, max_args, callback_exec, callback_complete, desc):
         self.max_args = max_args
@@ -68,10 +75,86 @@ class Command():
         self.desc = desc
 
 
+class Completer():
+    def __init__(self, con):
+        readline.set_completer_delims(' \t\n;')
+        readline.set_history_length(100)
+        readline.set_completer(self.complete)
+        readline.parse_and_bind("tab: complete")
+        self.con = con
+
+
+    def get_history(self):
+        hist = []
+        for i in range(readline.get_current_history_length()):
+             hist.append(readline.get_history_item(i + 1))
+        return hist
+
+
+    def set_history(self, hist):
+        for h in hist:
+            readline.add_history(h)
+
+
+    def complete(self, text, state):
+        line = readline.get_line_buffer()
+        line = line[:readline.get_endidx()]
+
+        # If last_word == "_" it means that there was spaces before
+        # and we want to complete a new arg
+        tmp_line = line + "_"
+        tokens = shlex.split(tmp_line)
+        last_tok = tokens[-1][:-1] # remove the _ on the last token
+
+        much = False
+
+        if state == 0:
+            if len(tokens) == 1:
+                i = 0
+                self.matches = []
+                for cmd in COMMANDS_ALPHA:
+                    if cmd.startswith(last_tok):
+                        self.matches.append(cmd + " ")
+                        i += 1
+                        if i == MAX_PRINT_COMPLETE:
+                            much = True
+                            break
+
+            else:
+                cmd = tokens[0]
+                if cmd in self.con.COMMANDS:
+                    f = self.con.COMMANDS[cmd].callback_complete
+                    if f is not None:
+                        self.matches = f(len(tokens)-1, last_tok)
+                        if self.matches is None:
+                            much = True
+
+        if much:
+            print("\ntoo much possibilities")
+            return None
+
+        return self.matches[state]
+
+
+    def loop(self):
+        while 1:
+            try:
+                line = input(yellow(">> "))
+                if line:
+                    self.con.exec_command(line)
+
+            except KeyboardInterrupt:
+                print()
+                pass
+
+            except EOFError:
+                print()
+                break
+
+
 class Console():
     COMMANDS = None
     TAB = "      "
-    MAX_PRINT_COMPLETE = 80
 
     def __init__(self, gctx):
         self.gctx = gctx
@@ -98,7 +181,6 @@ class Console():
                 "Force to analyze the entry point, symbols and a memory scan will be done.",
                 ]
             ),
-
 
             "help": Command(
                 0,
@@ -353,10 +435,6 @@ class Console():
             ),
         }
 
-        rl = ReadLine(self.exec_command, self.complete, self.send_control_c)
-        self.rl = rl
-        self.rl.history = gctx.db.history
-
         self.analyzer = Analyzer()
         self.analyzer.init()
         self.analyzer.start()
@@ -372,10 +450,11 @@ class Console():
             if gctx.autoanalyzer and len(gctx.db.functions) == 0:
                 self.push_analyze_symbols(None)
 
-        rl.reload_cursor_line()
+        self.comp = Completer(self)
+        self.comp.set_history(gctx.db.history)
 
         while 1:
-            rl.loop()
+            self.comp.loop()
             if not self.check_db_modified():
                 break
 
@@ -389,83 +468,11 @@ class Console():
         return False
 
 
-    def send_control_c(self):
-        return
-
-
-    #
-    # Returns tuple :
-    # - list of completed string (i.e. rest of the current token)
-    # - string: the beginning of the current token
-    # - if len(list) > 1: it contains the common string between
-    #        all possibilities
-    #
-    # Each sub-complete functions returns only the list.
-    #
-    def complete(self, line):
-        # If last_word == "_" it means that there was spaces before
-        # and we want to complete a new arg
-        tmp_line = line + "_"
-        tokens = shlex.split(tmp_line)
-        last_tok = tokens[-1][:-1] # remove the _
-        tmp_line = tmp_line[:-1]
-
-        comp = []
-
-        # Complete a command name
-        if len(tokens) == 1:
-            i = 0
-            for cmd in COMMANDS_ALPHA:
-                if cmd.startswith(last_tok):
-                    # To keep spaces
-                    comp.append(cmd[len(last_tok):] + " ")
-                    i += 1
-                    if i == self.MAX_PRINT_COMPLETE:
-                        comp = None
-                        break
-        else:
-            try:
-                first_tok = tokens[0]
-                f = self.COMMANDS[first_tok].callback_complete
-                if f is not None:
-                    comp = f(tmp_line, len(tokens)-1, last_tok)
-            except KeyError:
-                pass
-
-        if comp is None:
-            print("\ntoo much possibilities")
-            return None, None, None
-
-        if len(comp) <= 1:
-            return comp, last_tok, None
-
-        common = []
-        words_idx = {len(word):i for i, word in enumerate(comp)}
-        min_len = min(words_idx)
-        ref = words_idx[min_len]
-
-        # Recreate because we have maybe removed words with same length
-        words_idx = set(range(len(comp)))
-        words_idx.remove(ref)
-
-        for i, char in enumerate(comp[ref]):
-            found = True
-            for j in words_idx:
-                if comp[j][i] != char:
-                    found = False
-                    break
-            if not found:
-                break
-            common.append(char)
-
-        return comp, last_tok, "".join(common)
-
-
-    def __complete_load(self, tmp_line, nth_arg, last_tok):
+    def __complete_file(self, nth_arg, last_tok):
         if nth_arg != 1:
             return []
 
-        comp = []
+        results = []
         basename = os.path.basename(last_tok)
         dirname = os.path.dirname(last_tok)
 
@@ -481,43 +488,43 @@ class Console():
                         s = f_backslahed + "/"
                     else:
                         s = f_backslahed + " "
-                    comp.append(s[len(basename):])
+                    results.append(s[len(basename):])
                     i += 1
-                    if i == self.MAX_PRINT_COMPLETE:
+                    if i == MAX_PRINT_COMPLETE:
                         return None
             return comp
         except FileNotFoundError:
             return []
 
 
-    def __complete_x(self, tmp_line, nth_arg, last_tok):
+    def __complete_x(self, nth_arg, last_tok):
         if nth_arg != 1 or self.gctx.dis is None:
             return []
-        return self.__find_symbol(tmp_line, nth_arg, last_tok)
+        return self.__find_symbol(nth_arg, last_tok)
 
 
-    def __find_symbol(self, tmp_line, nth_arg, last_tok):
-        comp = []
+    def __find_symbol(self, nth_arg, last_tok):
+        results = []
         i = 0
         for sect in self.gctx.dis.binary.section_names:
             if sect.startswith(last_tok):
-                comp.append((sect + " ")[len(last_tok):])
+                results.append((sect + " "))
                 i += 1
-                if i == self.MAX_PRINT_COMPLETE:
+                if i == MAX_PRINT_COMPLETE:
                     return None
         for sym in self.gctx.db.symbols:
             if sym.startswith(last_tok):
-                comp.append((sym + " ")[len(last_tok):])
+                results.append((sym + " "))
                 i += 1
-                if i == self.MAX_PRINT_COMPLETE:
+                if i == MAX_PRINT_COMPLETE:
                     return None
         for sym in self.gctx.db.demangled:
             if sym.startswith(last_tok):
-                comp.append((sym + " ")[len(last_tok):])
+                results.append((sym + " "))
                 i += 1
-                if i == self.MAX_PRINT_COMPLETE:
+                if i == MAX_PRINT_COMPLETE:
                     return None
-        return comp
+        return results
 
 
     def exec_command(self, line):
@@ -688,17 +695,16 @@ class Console():
         for name in COMMANDS_ALPHA:
             cmd = self.COMMANDS[name]
             if cmd.callback_exec is not None:
-                self.rl.print(color(name, 2))
-                self.rl.print(" ")
+                print_no_end(color(name, 2))
+                print_no_end(" ")
                 for i, line in enumerate(cmd.desc):
                     if i > 0:
-                        self.rl.print(self.TAB)
-                    self.rl.print(line)
-                    self.rl.print("\n")
+                        print_no_end(self.TAB)
+                    print(line)
 
 
     def __exec_history(self, args):
-        for line in reversed(self.rl.history):
+        for line in self.comp.get_history():
             print(line)
 
 
@@ -707,8 +713,8 @@ class Console():
             error("load a file before")
             return
 
-        self.rl.print("NAME".ljust(20))
-        self.rl.print(" [ START - END - VIRTUAL_SIZE - RAW_SIZE ]\n")
+        print_no_end("NAME".ljust(20))
+        print(" [ START - END - VIRTUAL_SIZE - RAW_SIZE ]")
 
         for s in self.gctx.dis.binary.iter_sections():
             s.print_header()
@@ -773,7 +779,7 @@ class Console():
         if self.gctx.dis is None:
             error("load a file before")
             return
-        self.gctx.db.save(self.rl.history)
+        self.gctx.db.save(self.comp.get_history())
         print("database saved to", self.gctx.db.path)
         self.gctx.db.modified = False
 

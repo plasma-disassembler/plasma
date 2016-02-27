@@ -20,7 +20,7 @@
 import os
 import sys
 import reverse
-from reverse.lib import GlobalContext, AddrContext
+from reverse.lib import GlobalContext
 from reverse.lib.utils import info, die
 from reverse.lib.ui.vim import generate_vim_syntax
 
@@ -45,7 +45,7 @@ def console_entry():
 
     if gctx.interactive_mode:
         from reverse.lib.ui.console import Console
-        i = Console(gctx)
+        Console(gctx)
 
     else:
         if gctx.list_sections:
