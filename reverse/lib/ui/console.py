@@ -541,8 +541,8 @@ class Console():
         if c.callback_exec is not None:
             try:
                 c.callback_exec(args)
-            except Exception as e:
-                traceback.print_stack()
+            except:
+                traceback.print_exc()
 
 
     def __exec_exit(self, args):
@@ -551,6 +551,7 @@ class Console():
 
 
     def __exec_dump(self, args):
+        nop
         if self.gctx.dis is None:
             error("load a file before")
             return
