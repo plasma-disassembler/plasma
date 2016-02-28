@@ -551,7 +551,6 @@ class Console():
 
 
     def __exec_dump(self, args):
-        nop
         if self.gctx.dis is None:
             error("load a file before")
             return
