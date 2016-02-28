@@ -179,6 +179,9 @@ class Analyzer(threading.Thread):
         mem = self.dis.mem
 
         for s in b.iter_sections():
+            if s.is_exec:
+                continue
+
             ad = s.start
             end = ad + s.real_size
 
@@ -192,25 +195,26 @@ class Analyzer(threading.Thread):
                 val = s.read_int(ad, self.default_size)
 
                 # Detect if it's an address
-                if val is not None and b.get_section(val) is not None:
-                    self.dis.add_xref(ad, val)
-                    self.dis.mem.add(ad, self.default_size, MEM_OFFSET)
-                    ad += self.default_size
+                if val is not None:
+                    s2 = b.get_section(val)
+                    if s2 is not None and s2.is_exec:
+                        self.dis.add_xref(ad, val)
+                        self.dis.mem.add(ad, self.default_size, MEM_OFFSET)
+                        ad += self.default_size
 
+                        if not self.dis.mem.exists(val):
+                            self.dis.mem.add(val, self.default_size, MEM_UNK)
 
-                    if not self.dis.mem.exists(val):
-                        self.dis.mem.add(val, self.default_size, MEM_UNK)
+                            # Do an analysis on this value.
+                            if val not in self.pending and \
+                                    val not in self.pending_not_curr and \
+                                    self.first_inst_are_code(val):
 
-                        # Do an analysis on this value.
-                        if val not in self.pending and \
-                                val not in self.pending_not_curr and \
-                                self.first_inst_are_code(val):
+                                self.pending_not_curr.add(val)
+                                self.msg.put(
+                                    (val, self.has_prolog(val), False, True, None))
 
-                            self.pending_not_curr.add(val)
-                            self.msg.put(
-                                (val, self.has_prolog(val), False, True, None))
-
-                    continue
+                        continue
 
                 # Detect if it's a string
                 n = b.is_string(ad, s=s)

@@ -52,8 +52,8 @@ class Raw:
                 raw_base,
                 len(self.raw),
                 len(self.raw),
-                True,
-                True,
+                False, # is_exec
+                True, # is_data
                 self.raw)
 
 
