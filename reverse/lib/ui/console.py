@@ -35,6 +35,8 @@ from reverse.lib.analyzer import Analyzer
 
 MAX_PRINT_COMPLETE = 300
 
+SHOULD_EXIT = False
+
 
 COMMANDS_ALPHA = [
     "analyzer",
@@ -138,6 +140,8 @@ class Completer():
 
     def loop(self):
         while 1:
+            if SHOULD_EXIT:
+                break
             try:
                 line = input(yellow(">> "))
                 if line:
@@ -455,6 +459,8 @@ class Console():
 
         while 1:
             self.comp.loop()
+            if SHOULD_EXIT:
+                break
             if not self.check_db_modified():
                 break
 
@@ -546,8 +552,9 @@ class Console():
 
 
     def __exec_exit(self, args):
+        global SHOULD_EXIT
         self.analyzer.msg.put("exit")
-        sys.exit(0)
+        SHOULD_EXIT = True
 
 
     def __exec_dump(self, args):
