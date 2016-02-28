@@ -143,3 +143,21 @@ class Memory():
 
     def find_type(self, sz):
         return self.rev_size_lookup.get(sz, 1)
+
+
+    def get_head_addr(self, ad):
+        # Now check if need to go backward (maybe we are inside an instruction
+        # or a string) : if should disassemble at the first address.
+        # For the moment we will check 128 bytes before : see issue #49
+        saved_ad = ad
+        for i in range(128):
+            if ad in self.mm:
+                sz = self.mm[ad][0]
+                if ad + sz > saved_ad:
+                    return ad
+            ad -= 1
+        return saved_ad
+
+
+    def is_inside_mem(self, ad):
+        return ad != self.get_head_addr(ad)

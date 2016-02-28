@@ -213,7 +213,6 @@ class Analyzer(threading.Thread):
                                 self.pending_not_curr.add(val)
                                 self.msg.put(
                                     (val, self.has_prolog(val), False, True, None))
-
                         continue
 
                 # Detect if it's a string
@@ -475,9 +474,13 @@ class Analyzer(threading.Thread):
                     entry_is_func and entry in self.functions:
                 return
 
+        mem = self.dis.mem
+
+        if mem.is_inside_mem(entry):
+            return
+
         self.pending.add(entry)
 
-        mem = self.dis.mem
         inner_code = {} # ad -> capstone instruction
 
         is_pe_import = False
