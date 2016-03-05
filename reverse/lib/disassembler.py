@@ -38,18 +38,6 @@ from reverse.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
 NB_LINES_TO_DISASM = 256 # without comments, ...
 CAPSTONE_CACHE_SIZE = 60000
 
-RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_",
-                   "var_"]
-
-
-class Jmptable():
-    def __init__(self, inst_addr, table_addr, table, name):
-        self.inst_addr = inst_addr
-        self.table_addr = table_addr
-        self.table = table
-        self.name = name
-
 
 class Disassembler():
     def __init__(self, filename, raw_type, raw_base, raw_big_endian, database):
@@ -64,7 +52,7 @@ class Disassembler():
             self.mem = Memory()
             database.mem = self.mem
 
-        self.binary = Binary(self.mem, filename, raw_type, raw_base, raw_big_endian)
+        self.binary = Binary(self.db, filename, raw_type, raw_base, raw_big_endian)
 
         self.binary.load_section_names()
         arch, mode = self.binary.get_arch()
@@ -103,142 +91,27 @@ class Disassembler():
             s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
 
 
-    def get_unpack_str(self, size_word):
-        if self.mode & self.capstone.CS_MODE_BIG_ENDIAN:
-            endian = ">"
-        else:
-            endian = "<"
-        if size_word == 1:
-            unpack_str = endian + "B"
-        elif size_word == 2:
-            unpack_str = endian + "H"
-        elif size_word == 4:
-            unpack_str = endian + "L"
-        elif size_word == 8:
-            unpack_str = endian + "Q"
-        else:
-            return None
-        return unpack_str
-
-
-    def add_xref(self, from_ad, to_ad):
-        if isinstance(to_ad, list):
-            for x in to_ad:
-                if x in self.xrefs:
-                    if from_ad not in self.xrefs[x]:
-                        self.xrefs[x].append(from_ad)
-                else:
-                    self.xrefs[x] = [from_ad]
-        else:
-            if to_ad in self.xrefs:
-                if from_ad not in self.xrefs[to_ad]:
-                    self.xrefs[to_ad].append(from_ad)
-            else:
-                self.xrefs[to_ad] = [from_ad]
-
-
-    def rm_xrefs(self, from_ad, to_ad):
-        if isinstance(to_ad, list):
-            for x in to_ad:
-                if from_ad in self.xrefs[x]:
-                    self.xrefs[x].remove(from_ad)
-                if not self.xrefs[x]:
-                    del self.xrefs[x]
-        else:
-            if from_ad in self.xrefs[to_ad]:
-                self.xrefs[to_ad].remove(from_ad)
-            if not self.xrefs[to_ad]:
-                del self.xrefs[to_ad]
-
-
-    def rm_xrefs_range(self, start, end):
-        while start < end:
-            if start in self.xrefs:
-                del self.xrefs[start]
-            start += 1
-
-
-    def add_symbol(self, ad, name):
-        if name in self.db.symbols:
-            last = self.db.symbols[name]
-            del self.db.reverse_symbols[last]
-
-        if ad in self.db.reverse_symbols:
-            last = self.db.reverse_symbols[ad]
-            del self.db.symbols[last]
-
-        self.db.symbols[name] = ad
-        self.db.reverse_symbols[ad] = name
-
-        if not self.mem.exists(ad):
-            self.mem.add(ad, 1, MEM_UNK)
-
-        return name
-
-
-    def rm_symbol(self, ad):
-        if ad in self.db.reverse_symbols:
-            name = self.db.reverse_symbols[ad]
-            del self.db.reverse_symbols[ad]
-
-        if name in self.db.symbols:
-            del self.db.symbols[name]
-
-
-    def has_reserved_prefix(self, name):
-        for n in RESERVED_PREFIX:
-            if name.startswith(n):
-                return True
-        return False
-
-
     # `func_ad` is the function address where the variable `name`
     # is supposed to be.
     def var_get_offset(self, func_ad, name):
-        if func_ad in self.functions:
-            for off, val in self.functions[func_ad][FUNC_VARS].items():
-                if val[VAR_NAME] == name:
-                    return off
+        if func_ad not in self.functions:
+            return None
+        func_obj = self.functions[func_ad]
+        if func_obj is None:
+            return None
+        for off, val in func_obj[FUNC_VARS].items():
+            if val[VAR_NAME] == name:
+                return off
         return None
 
 
     def var_rename(self, func_ad, off, name):
-        if func_ad in self.functions:
-            self.functions[func_ad][FUNC_VARS][off][VAR_NAME] = name
-
-
-    # TODO: create a function in SectionAbs
-    def read_array(self, ad, array_max_size, size_word, s=None):
-        unpack_str = self.get_unpack_str(size_word)
-        N = size_word * array_max_size
-
-        if s is None:
-            s = self.binary.get_section(ad)
-
-        array = []
-        l = 0
-
-        while l < array_max_size:
-            buf = s.read(ad, N)
-            if not buf:
-                break
-
-            i = 0
-            while i < len(buf):
-                b = buf[i:i + size_word]
-
-                if ad > s.end or len(b) != size_word:
-                    return array
-
-                w = struct.unpack(unpack_str, b)[0]
-                array.append(w)
-
-                ad += size_word
-                i += size_word
-                l += 1
-                if l >= array_max_size:
-                    return array
-        return array
+        if func_ad not in self.functions:
+            return
+        func_obj = self.functions[func_ad]
+        if func_obj is None:
+            return
+        func_obj[FUNC_VARS][off][VAR_NAME] = name
 
 
     def load_arch_module(self):
@@ -317,35 +190,6 @@ class Disassembler():
         return ad in self.db.reverse_symbols or ad in self.xrefs
 
 
-    def get_symbol(self, ad, gctx=None):
-        if ad in self.db.reverse_symbols:
-            if gctx is not None and gctx.show_mangling:
-                s = self.db.reverse_demangled.get(ad, None)
-                if s is not None:
-                    return s
-            return self.db.reverse_symbols[ad]
-
-        ty = self.mem.get_type(ad)
-        if ty == MEM_FUNC:
-            return "sub_%x" % ad
-        if ty == MEM_CODE:
-            return "loc_%x" % ad
-        if ty == MEM_DWORD:
-            return "dword_%x" % ad
-        if ty == MEM_BYTE:
-            return "byte_%x" % ad
-        if ty == MEM_QWORD:
-            return "qword_%x" % ad
-        if ty == MEM_UNK:
-            return "unk_%x" % ad
-        if ty == MEM_WORD:
-            return "word_%x" % ad
-        if ty == MEM_ASCII:
-            return "asc_%x" % ad
-        if ty == MEM_OFFSET:
-            return "off_%x" % ad
-
-
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
         from capstone import CS_OP_IMM
 
@@ -374,6 +218,7 @@ class Disassembler():
         o.curr_section = s
         o.mode_dump = True
         l = 0
+        api = ctx.gctx.api
 
         while 1:
             if ad == s.start:
@@ -389,11 +234,12 @@ class Disassembler():
                     and ad <= s.end:
 
                 ty = self.mem.get_type(ad)
-                is_func = ad in self.functions
 
                 # A PE import should not be displayed as a subroutine
                 if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
-                        and (ty == MEM_FUNC and is_func or ty == MEM_CODE):
+                        and self.mem.is_code(ad):
+
+                    is_func = ad in self.functions
 
                     if is_func:
                         if not o.is_last_2_line_empty():
@@ -413,7 +259,7 @@ class Disassembler():
 
                     if ad in self.end_functions:
                         for fad in self.end_functions[ad]:
-                            sy = self.get_symbol(fad, ctx.gctx)
+                            sy = api.get_symbol(fad)
                             o._user_comment("; end function %s" % sy)
                             o._new_line()
                         o._new_line()
@@ -539,6 +385,7 @@ class Disassembler():
         l = 0
         ascii_str = []
         ad_str = -1
+        api = ctx.gctx.api
 
         while l < lines:
             buf = s.read(ad, N)
@@ -567,7 +414,7 @@ class Disassembler():
 
                 if c == 0 and len(ascii_str) >= 2:
                     if self.is_label(ad_str):
-                        print(color_symbol(self.get_symbol(ad_str)))
+                        print(color_symbol(api.get_symbol(ad_str)))
                     print_no_end(color_addr(ad_str))
                     print_no_end(color_string(
                             "\"" + "".join(map(get_char, ascii_str)) + "\""))
@@ -576,7 +423,7 @@ class Disassembler():
                     i = j
                 else:
                     if self.is_label(ad):
-                        print(color_symbol(self.get_symbol(ad)))
+                        print(color_symbol(api.get_symbol(ad)))
                     print_no_end(color_addr(ad))
                     print("0x%.2x " % buf[i])
                     ad += 1
@@ -593,10 +440,11 @@ class Disassembler():
         ad = ctx.entry
         s = self.binary.get_section(ad)
         s.print_header()
+        api = ctx.gctx.api
 
-        for w in self.read_array(ad, lines, size_word, s):
+        for w in api.read_array(ad, lines, size_word, s):
             if self.is_label(ad):
-                print(color_symbol(self.get_symbol(ad)))
+                print(color_symbol(api.get_symbol(ad)))
             print_no_end(color_addr(ad))
             print_no_end("0x%.2x" % w)
 
@@ -608,13 +456,13 @@ class Disassembler():
                 print_no_end(")")
                 if size_word >= 4 and self.is_label(w):
                     print_no_end(" ")
-                    print_no_end(color_symbol(self.get_symbol(w)))
+                    print_no_end(color_symbol(api.get_symbol(w)))
 
             ad += size_word
             print()
 
 
-    def print_functions(self):
+    def print_functions(self, api):
         total = 0
 
         lst = list(self.functions)
@@ -623,7 +471,7 @@ class Disassembler():
         # TODO: race condition with the analyzer ?
         for ad in lst:
             print_no_end(color_addr(ad))
-            sy = self.get_symbol(ad)
+            sy = api.get_symbol(ad)
 
             if ad in self.db.reverse_demangled:
                 print_no_end(" %s (%s) " % (self.db.reverse_demangled[ad],
@@ -729,6 +577,9 @@ class Disassembler():
 
 
     def is_noreturn(self, ad):
+        func_obj = self.functions[ad]
+        if func_obj is None:
+            return False
         return self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
@@ -851,28 +702,3 @@ class Disassembler():
         debug__("Graph built in %fs (%d instructions)" % (elapsed, len(gph.nodes)))
 
         return gph, nb_new_syms
-
-
-    def add_jmptable(self, inst_addr, table_addr, entry_size, nb_entries):
-        name = self.add_symbol(table_addr, "jmptable_%x" % table_addr)
-
-        table = self.read_array(table_addr, nb_entries, entry_size)
-        self.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
-
-        self.internal_inline_comments[inst_addr] = "switch statement %s" % name
-
-        all_cases = {}
-        for ad in table:
-            all_cases[ad] = []
-
-        case = 0
-        for ad in table:
-            all_cases[ad].append(case)
-            case += 1
-
-        for ad in all_cases:
-            self.internal_previous_comments[ad] = \
-                ["case %s  %s" % (
-                    ", ".join(map(str, all_cases[ad])),
-                    name
-                )]

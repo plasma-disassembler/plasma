@@ -26,7 +26,6 @@ from elftools.elf.constants import SH_FLAGS
 
 from reverse.lib.utils import warning
 from reverse.lib.fileformat.binary import SectionAbs
-from reverse.lib.memory import MEM_FUNC, MEM_UNK
 
 
 # SHF_WRITE=0x1
@@ -45,13 +44,13 @@ from reverse.lib.memory import MEM_FUNC, MEM_UNK
 
 
 class ELF:
-    def __init__(self, mem, classbinary, filename):
+    def __init__(self, db, classbinary, filename):
         import capstone as CAPSTONE
 
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
-        self.mem = mem
+        self.db = db
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -68,10 +67,6 @@ class ELF:
                 32: CAPSTONE.CS_MODE_MIPS32,
                 64: CAPSTONE.CS_MODE_MIPS64,
             }
-        }
-
-        self.sym_type_lookup = {
-            "STT_FUNC": MEM_FUNC,
         }
 
         self.__sections = {} # start address -> elf section
@@ -132,8 +127,8 @@ class ELF:
                     self.classbinary.reverse_symbols[ad] = name
                     self.classbinary.symbols[name] = ad
 
-                    ty = self.sym_type_lookup.get(sy.entry.st_info.type, MEM_UNK)
-                    self.mem.add(ad, 1, ty)
+                    if sy.entry.st_info.type == "STT_FUNC":
+                        self.db.functions[ad] = None
 
 
     def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
@@ -143,9 +138,8 @@ class ELF:
             sym = symtab.get_symbol(r.entry.r_info_sym)
             name = sym.name.decode()
             ad = r.entry.r_offset
-            if name and ad:
-                ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
-                got_off[ad] = [name, ty]
+            if name and ad and sym.entry.st_info.type == "STT_FUNC":
+                got_off[ad] = name
 
         # .got.plt is an array of addresses to the .plt
 
@@ -179,15 +173,14 @@ class ELF:
                         wrong_jump_opcode = True
                         continue
 
-                    name, ty = got_off[off]
+                    name = got_off[off]
                     if name in self.classbinary.symbols:
                         continue
 
                     self.classbinary.imports[plt_entry_start] = True
                     self.classbinary.reverse_symbols[plt_entry_start] = name
                     self.classbinary.symbols[name] = plt_entry_start
-
-                    self.mem.add(plt_entry_start, 1, ty)
+                    self.db.functions[plt_entry_start] = None
 
         if wrong_jump_opcode:
             warning("I'm expecting to see a jmp *(ADDR) on each plt entry")
@@ -217,8 +210,8 @@ class ELF:
                     self.classbinary.reverse_symbols[ad] = name
                     self.classbinary.symbols[name] = ad
 
-                    ty = self.sym_type_lookup.get(sym.entry.st_info.type, MEM_UNK)
-                    self.mem.add(ad, 1, ty)
+                    if sym.entry.st_info.type == "STT_FUNC":
+                        self.db.functions[ad] = None
 
 
     def __iter_reloc(self):

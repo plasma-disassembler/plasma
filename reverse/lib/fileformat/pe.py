@@ -28,7 +28,6 @@ from reverse.lib.exceptions import ExcPEFail
 from reverse.lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
 from reverse.lib.fileformat.binary import SectionAbs
 from reverse.lib.utils import warning
-from reverse.lib.memory import MEM_FUNC, MEM_UNK
 
 try:
     # This folder is not present in simonzack/pefile-py3k
@@ -40,11 +39,11 @@ except:
 
 
 class PE:
-    def __init__(self, mem, classbinary, filename):
+    def __init__(self, db, classbinary, filename):
         import capstone as CAPSTONE
 
         self.classbinary = classbinary
-        self.mem = mem
+        self.db = db
 
         self.pe = PE2(filename, fast_load=True)
         self.__data_sections = []
@@ -129,11 +128,7 @@ class PE:
                     self.classbinary.symbols[name] = ad
 
                     if sym.type & PE_DT_FCN and not sym.type & PE_DT_PTR:
-                        ty = MEM_FUNC
-                    else:
-                        ty = MEM_UNK
-
-                    self.mem.add(ad, 1, ty)
+                        self.db.functions[ad] = None
 
             if sym.numaux != 0:
                 off += sym.numaux * sizeof(SymbolEntry)
@@ -165,7 +160,7 @@ class PE:
                 self.classbinary.symbols[name] = imp.address
 
                 # TODO: always a function ?
-                self.mem.add(imp.address, 1, MEM_FUNC)
+                self.db.functions[imp.address] = None
 
 
     def pe_reverse_stripped(self, dis, first_inst):
@@ -203,13 +198,13 @@ class PE:
             return -1
 
         name = "_" + self.classbinary.reverse_symbols[ptr]
-        ty = self.mem.get_type(ptr)
+        ty = self.db.mem.get_type(ptr)
 
         self.classbinary.reverse_symbols[first_inst.address] = name
         self.classbinary.symbols[name] = first_inst.address
 
         if ty != -1:
-            self.mem.add(first_inst.address, 1, ty)
+            self.db.mem.add(first_inst.address, 1, ty)
 
         return ptr
 

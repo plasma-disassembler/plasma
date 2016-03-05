@@ -22,7 +22,7 @@ import sys
 import shlex
 import code
 import traceback
-import readline
+import readline, rlcompleter
 from queue import Queue
 
 from reverse.lib.colors import color
@@ -31,6 +31,7 @@ from reverse.lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 from reverse.lib.ui.visual import Visual
 from reverse.lib.disassembler import NB_LINES_TO_DISASM
 from reverse.lib.analyzer import Analyzer
+from reverse.lib.api import Api
 
 
 MAX_PRINT_COMPLETE = 300
@@ -162,6 +163,7 @@ class Console():
 
     def __init__(self, gctx):
         self.gctx = gctx
+        self.db = gctx.db
         gctx.vim = False
 
 
@@ -399,12 +401,13 @@ class Console():
             ),
 
             "py": Command(
-                0,
+                1,
                 self.__exec_py,
-                None,
+                self.__complete_file,
                 [
-                "",
-                "Run an interactive python shell."
+                "[FILE]",
+                "Run an interactive python shell or execute a script.",
+                "The global variable 'api' will be accessible."
                 ]
             ),
 
@@ -442,6 +445,8 @@ class Console():
         self.analyzer = Analyzer()
         self.analyzer.init()
         self.analyzer.start()
+        self.api = Api(gctx, self.analyzer)
+        gctx.api = self.api
         self.analyzer.set(gctx)
 
         if gctx.dis.binary.get_arch_string() == "MIPS" and \
@@ -450,12 +455,12 @@ class Console():
             print("mips_set_gp 0xADDRESS")
             print("push_analyze_symbols")
         else:
-            # It means that the first analysis was already done
-            if gctx.autoanalyzer and len(gctx.db.functions) == 0:
+            # If false it means that the first analysis was already done
+            if gctx.autoanalyzer and len(self.db.mem) == 0:
                 self.push_analyze_symbols(None)
 
         self.comp = Completer(self)
-        self.comp.set_history(gctx.db.history)
+        self.comp.set_history(self.db.history)
 
         while 1:
             self.comp.loop()
@@ -468,7 +473,7 @@ class Console():
 
 
     def check_db_modified(self):
-        if self.gctx.db is not None and self.gctx.db.modified:
+        if self.db is not None and self.db.modified:
             print("the database was modified, run save or exit to force")
             return True
         return False
@@ -494,11 +499,11 @@ class Console():
                         s = f_backslahed + "/"
                     else:
                         s = f_backslahed + " "
-                    results.append(s[len(basename):])
+                    results.append(s)
                     i += 1
                     if i == MAX_PRINT_COMPLETE:
                         return None
-            return comp
+            return results
         except FileNotFoundError:
             return []
 
@@ -518,13 +523,13 @@ class Console():
                 i += 1
                 if i == MAX_PRINT_COMPLETE:
                     return None
-        for sym in self.gctx.db.symbols:
+        for sym in self.db.symbols:
             if sym.startswith(last_tok):
                 results.append((sym + " "))
                 i += 1
                 if i == MAX_PRINT_COMPLETE:
                     return None
-        for sym in self.gctx.db.demangled:
+        for sym in self.db.demangled:
             if sym.startswith(last_tok):
                 results.append((sym + " "))
                 i += 1
@@ -558,9 +563,6 @@ class Console():
 
 
     def __exec_dump(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         nb_lines = self.gctx.nb_lines
         if len(args) == 3:
             try:
@@ -574,9 +576,6 @@ class Console():
 
 
     def __exec_data(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         nb_lines = self.gctx.nb_lines
         if len(args) <= 1:
             self.gctx.entry = None
@@ -605,8 +604,8 @@ class Console():
 
     def push_analyze_symbols(self, args):
         # Analyze all imports (it checks if functions return or not)
-        for ad in self.gctx.db.imports:
-            if self.gctx.dis.mem.is_func(ad):
+        for ad in self.db.imports:
+            if ad in self.db.functions and self.db.functions[ad] is None:
                 self.analyzer.msg.put((ad, True, True, False, None))
 
         # Analyze entry point
@@ -614,24 +613,16 @@ class Console():
         if ep is not None:
             self.analyzer.msg.put((ep, False, True, False, None))
 
-        # Re push defined functions
-        for ad in self.gctx.db.functions:
-            if ad not in self.gctx.db.imports:
-                self.analyzer.msg.put((ad, False, True, False, None))
-
         # Analyze static functions
-        for ad in self.gctx.db.reverse_symbols:
-            if ad not in self.gctx.db.imports and self.gctx.dis.mem.is_func(ad):
-                self.analyzer.msg.put((ad, True, True, False, None))
+        for ad in self.db.reverse_symbols:
+            if ad not in self.db.imports and \
+                    ad in self.db.functions and self.db.functions[ad] is None:
+                self.analyzer.msg.put((ad, True, False, False, None))
 
         self.analyzer.msg.put("pass_scan_mem")
 
 
     def __exec_sym(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
-
         if len(args) == 1:
             self.gctx.dis.print_symbols(self.gctx.sectionsname)
             return
@@ -661,20 +652,15 @@ class Console():
 
         # Save new symbol
         try:
-            if self.gctx.dis.has_reserved_prefix(args[1]):
-                error("this is a reserved prefix")
+            if not self.api.add_symbol(int(args[2], 16), args[1]):
+                error("cannot rename")
                 return
-            addr = int(args[2], 16)
-            self.gctx.db.modified = True
-            self.gctx.dis.add_symbol(addr, args[1])
+            self.db.modified = True
         except:
             error("there was an error when creating a symbol")
 
 
     def __exec_x(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         ad = None if len(args) == 1 else args[1]
         ctx = self.gctx.get_addr_context(ad)
         if ctx:
@@ -687,15 +673,12 @@ class Console():
 
 
     def __exec_v(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         ad = None if len(args) == 1 else args[1]
         ctx = self.gctx.get_addr_context(ad)
         if ctx:
             o = ctx.dump_asm(NB_LINES_TO_DISASM)
             if o is not None:
-                Visual(self.gctx, ctx, self.analyzer)
+                Visual(self.gctx, ctx, self.analyzer, self.api)
 
 
     def __exec_help(self, args):
@@ -716,10 +699,6 @@ class Console():
 
 
     def __exec_sections(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
-
         print_no_end("NAME".ljust(20))
         print(" [ START - END - VIRTUAL_SIZE - RAW_SIZE ]")
 
@@ -728,9 +707,6 @@ class Console():
 
 
     def __exec_info(self, args):
-        if self.gctx.filename is None:
-            print("no file loaded")
-            return
         print("File:", self.gctx.filename)
 
         statinfo = os.stat(self.gctx.filename)
@@ -783,18 +759,12 @@ class Console():
 
 
     def __exec_save(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
-        self.gctx.db.save(self.comp.get_history())
-        print("database saved to", self.gctx.db.path)
-        self.gctx.db.modified = False
+        self.db.save(self.comp.get_history())
+        print("database saved to", self.db.path)
+        self.db.modified = False
 
 
     def __exec_jmptable(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         try:
             inst_addr = int(args[1], 16)
             table_addr = int(args[2], 16)
@@ -808,51 +778,35 @@ class Console():
             error("error the entry size should be in [2, 4, 8]")
             return
 
-        self.gctx.db.modified = True
-        self.gctx.dis.add_jmptable(inst_addr, table_addr, entry_size, nb_entries)
-
-        queue_wait_analyzer = Queue()
-
-        # Re-run the analyzer
-        func_id = self.gctx.dis.mem.get_func_id(inst_addr)
-        if func_id == -1:
-            self.analyzer.msg.put((inst_addr, False, True, queue_wait_analyzer))
-        else:
-            ad = self.gctx.dis.func_id[func_id]
-            self.analyzer.msg.put((ad, True, True, queue_wait_analyzer))
-
-        queue_wait_analyzer.get()
+        self.db.modified = True
+        self.api.create_jmptable(inst_addr, table_addr, entry_size, nb_entries)
 
 
     def __exec_py(self, args):
-        code.interact(local=locals())
+        ns = {"api": self.api}
+        if len(args) == 2:
+            exec(open(args[1]).read(), ns)
+        else:
+            readline.set_completer(rlcompleter.Completer(ns).complete)
+            code.interact(local=ns)
+            readline.set_completer(self.comp.complete)
 
 
     def __exec_mips_set_gp(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
-
         try:
             self.gctx.dis.mips_gp = int(args[1], 16)
-            self.gctx.db.mips_gp = self.gctx.dis.mips_gp
+            self.db.mips_gp = self.gctx.dis.mips_gp
         except:
             error("bad address")
 
-        self.gctx.db.modified = True
+        self.db.modified = True
 
 
     def __exec_functions(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
-        self.gctx.dis.print_functions()
+        self.gctx.dis.print_functions(self.api)
 
 
     def __exec_xrefs(self, args):
-        if self.gctx.dis is None:
-            error("load a file before")
-            return
         ad = None if len(args) == 1 else args[1]
         ctx = self.gctx.get_addr_context(ad)
         if ctx:

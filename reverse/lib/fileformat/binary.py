@@ -114,7 +114,7 @@ class SectionAbs():
 
 
 class Binary(object):
-    def __init__(self, mem, filename, raw_type=None, raw_base=None, raw_big_endian=None):
+    def __init__(self, db, filename, raw_type=None, raw_base=None, raw_big_endian=None):
         self.__binary = None
         self.reverse_symbols = {} # ad -> name
         self.symbols = {} # name -> ad
@@ -139,10 +139,10 @@ class Binary(object):
 
         if self.type == T_BIN_ELF:
             import reverse.lib.fileformat.elf as LIB_ELF
-            self.__binary = LIB_ELF.ELF(mem, self, filename)
+            self.__binary = LIB_ELF.ELF(db, self, filename)
         elif self.type == T_BIN_PE:
             import reverse.lib.fileformat.pe as LIB_PE
-            self.__binary = LIB_PE.PE(mem, self, filename)
+            self.__binary = LIB_PE.PE(db, self, filename)
         else:
             raise ExcFileFormat()
 

@@ -67,6 +67,7 @@ class Analyzer(threading.Thread):
         self.gctx = gctx
         self.dis = gctx.dis
         self.db = gctx.db
+        self.api = gctx.api
         self.ARCH_UTILS = self.dis.load_arch_module().utils
 
         # TODO: find a better solution, globally ? The problem
@@ -119,14 +120,14 @@ class Analyzer(threading.Thread):
         self.is_cond_jump = self.ARCH_UTILS.is_cond_jump
         self.is_call = self.ARCH_UTILS.is_call
         self.disasm = self.dis.lazy_disasm
-        self.jmptables = self.dis.jmptables
-        self.functions = self.dis.functions
+        self.jmptables = self.db.jmptables
+        self.functions = self.db.functions
         self.prologs = self.ARCH_UTILS.PROLOGS
 
 
     def __add_prefetch(self, addr_set, inst):
         if self.is_mips:
-            prefetch = self.dis.lazy_disasm(inst.address + inst.size)
+            prefetch = self.disasm(inst.address + inst.size)
             if prefetch is not None:
                 addr_set[prefetch.address] = prefetch
             return prefetch
@@ -176,7 +177,7 @@ class Analyzer(threading.Thread):
 
     def pass_detect_unk_data(self):
         b = self.dis.binary
-        mem = self.dis.mem
+        mem = self.db.mem
 
         for s in b.iter_sections():
             if s.is_exec:
@@ -198,12 +199,12 @@ class Analyzer(threading.Thread):
                 if val is not None:
                     s2 = b.get_section(val)
                     if s2 is not None and s2.is_exec:
-                        self.dis.add_xref(ad, val)
-                        self.dis.mem.add(ad, self.default_size, MEM_OFFSET)
+                        self.api.add_xref(ad, val)
+                        self.db.mem.add(ad, self.default_size, MEM_OFFSET)
                         ad += self.default_size
 
-                        if not self.dis.mem.exists(val):
-                            self.dis.mem.add(val, self.default_size, MEM_UNK)
+                        if not self.db.mem.exists(val):
+                            self.db.mem.add(val, self.default_size, MEM_UNK)
 
                             # Do an analysis on this value.
                             if val not in self.pending and \
@@ -218,7 +219,7 @@ class Analyzer(threading.Thread):
                 # Detect if it's a string
                 n = b.is_string(ad, s=s)
                 if n != 0:
-                    self.dis.mem.add(ad, n, MEM_ASCII)
+                    self.db.mem.add(ad, n, MEM_ASCII)
                     ad += n
                     continue
 
@@ -227,7 +228,7 @@ class Analyzer(threading.Thread):
 
     def pass_detect_functions(self):
         b = self.dis.binary
-        mem = self.dis.mem
+        mem = self.db.mem
 
         for s in b.iter_sections():
             if not s.is_exec:
@@ -257,7 +258,7 @@ class Analyzer(threading.Thread):
     # Each instruction must be different of null bytes.
     def first_inst_are_code(self, ad):
         for i in range(5):
-            inst = self.dis.lazy_disasm(ad)
+            inst = self.disasm(ad)
             if inst is None:
                 return False
             if inst.bytes.count(0) == len(inst.bytes):
@@ -286,7 +287,7 @@ class Analyzer(threading.Thread):
         if not match:
             return False
 
-        inst = self.dis.lazy_disasm(ad)
+        inst = self.disasm(ad)
         if inst is None:
             return False
 
@@ -298,7 +299,7 @@ class Analyzer(threading.Thread):
 
         for lst in self.prologs:
             for p in lst:
-                if buf.startswith(p):
+                if buf.startswith(p[inst.size:]):
                     return True
 
         return False
@@ -326,7 +327,7 @@ class Analyzer(threading.Thread):
                         elif (op.mem.base == self.X86_REG_EBP or \
                               op.mem.base == self.X86_REG_RBP):
                             if func_obj is not None:
-                                ty = self.dis.mem.find_type(op.size)
+                                ty = self.db.mem.find_type(op.size)
                                 func_obj[FUNC_VARS][op.mem.disp] = [ty, None]
                             # Continue the loop !!
                             continue
@@ -357,19 +358,19 @@ class Analyzer(threading.Thread):
             if s is None or s.start == 0:
                 continue
 
-            self.dis.add_xref(i.address, val)
+            self.api.add_xref(i.address, val)
 
-            if not self.dis.mem.exists(val):
+            if not self.db.mem.exists(val):
                 sz = op.size if self.has_op_size else self.default_size
                 deref = s.read_int(val, sz)
 
                 # If (*val) is an address
                 if deref is not None and b.is_address(deref):
                     ty = MEM_OFFSET
-                    self.dis.add_xref(val, deref)
+                    self.api.add_xref(val, deref)
 
-                    if not self.dis.mem.exists(deref):
-                        self.dis.mem.add(deref, 1, MEM_UNK)
+                    if not self.db.mem.exists(deref):
+                        self.db.mem.add(deref, 1, MEM_UNK)
 
                         # Do an anlysis on this value.
                         if deref not in self.pending and \
@@ -387,11 +388,11 @@ class Analyzer(threading.Thread):
                     else:
                         sz = op.size if self.has_op_size else self.default_size
                         if op.type == self.CS_OP_MEM:
-                            ty = self.dis.mem.find_type(sz)
+                            ty = self.db.mem.find_type(sz)
                         else:
                             ty = MEM_UNK
 
-                self.dis.mem.add(val, sz, ty)
+                self.db.mem.add(val, sz, ty)
 
                 if ty == MEM_UNK:
                     # Do an analysis on this value, if this is not code
@@ -408,25 +409,27 @@ class Analyzer(threading.Thread):
 
 
     def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
-        if entry_is_func:
-            if entry in self.functions:
+        is_def = entry in self.functions
+        if entry_is_func or is_def:
+            # It can be None because when symbols are loaded functions are
+            # set to None initially.
+            if is_def and self.functions[entry] is not None:
                 last_end = self.functions[entry][FUNC_END]
-                self.dis.end_functions[last_end].remove(entry)
-                if not self.dis.end_functions[last_end]:
-                    del self.dis.end_functions[last_end]
+                self.db.end_functions[last_end].remove(entry)
+                if not self.db.end_functions[last_end]:
+                    del self.db.end_functions[last_end]
 
             e = max(inner_code) if inner_code else -1
             func_id = self.db.func_id_counter
-            self.functions[entry] = [e, flags, {}, func_id]
-            func_obj = self.functions[entry]
-
+            func_obj = [e, flags, {}, func_id]
+            self.functions[entry] = func_obj
             self.db.func_id[func_id] = entry
             self.db.func_id_counter += 1
 
-            if e in self.dis.end_functions:
-                self.dis.end_functions[e].append(entry)
+            if e in self.db.end_functions:
+                self.db.end_functions[e].append(entry)
             else:
-                self.dis.end_functions[e] = [entry]
+                self.db.end_functions[e] = [entry]
 
         else:
             func_id = -1
@@ -435,7 +438,7 @@ class Analyzer(threading.Thread):
         for ad, inst in inner_code.items():
             self.analyze_operands(inst, func_obj)
 
-            if ad in self.functions:
+            if ad == entry and func_id != -1:
                 mem.add(ad, inst.size, MEM_FUNC, func_id)
             else:
                 mem.add(ad, inst.size, MEM_CODE, func_id)
@@ -443,11 +446,11 @@ class Analyzer(threading.Thread):
             if ad in self.db.reverse_symbols:
                 name = self.db.reverse_symbols[ad]
                 if name.startswith("ret_") or name.startswith("loop_"):
-                    self.dis.rm_symbol(ad)
+                    self.api.rm_symbol(ad)
 
 
     def is_noreturn(self, ad, entry):
-        return ad !=entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
+        return ad != entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
     #
@@ -457,9 +460,10 @@ class Analyzer(threading.Thread):
     #                   instructions will be set only as "code".
     # force             if true and entry is already functions, the analysis
     #                   is forced.
-    # add_if_code       if true and if entry seems to have a correct control
-    #                   flow with any bad instructions, instructions are set
-    #                   as code.
+    # add_if_code       if true, it means that we are not sure that entry is an
+    #                   address to a code location. In this case, if the control
+    #                   flow contains a bad instruction, the functions or
+    #                   instructions will not be added.
     #
     def analyze_flow(self, entry, entry_is_func, force, add_if_code):
         if entry in self.pending_not_curr:
@@ -470,11 +474,11 @@ class Analyzer(threading.Thread):
 
         if not force:
             # TODO check that we don't go inside an instruction
-            if not entry_is_func and self.dis.mem.is_loc(entry) or \
-                    entry_is_func and entry in self.functions:
+            if not entry_is_func and self.db.mem.is_loc(entry) or \
+                    entry_is_func and self.db.mem.is_func(entry):
                 return
 
-        mem = self.dis.mem
+        mem = self.db.mem
 
         if mem.is_inside_mem(entry):
             return
@@ -503,7 +507,7 @@ class Analyzer(threading.Thread):
             flags = self.__sub_analyze_flow(entry, inner_code, add_if_code)
 
         if inner_code and flags != -1:
-            self.__add_analyzed_code(self.dis.mem, entry, inner_code,
+            self.__add_analyzed_code(self.db.mem, entry, inner_code,
                                      entry_is_func, flags)
 
         inner_code.clear()
@@ -548,8 +552,8 @@ class Analyzer(threading.Thread):
 
                 if op.type == self.CS_OP_IMM:
                     nxt = unsigned(op.value.imm)
-                    self.dis.add_xref(ad, nxt)
-                    if nxt in self.functions:
+                    self.api.add_xref(ad, nxt)
+                    if self.db.mem.is_func(nxt):
                         has_ret = not self.is_noreturn(nxt, entry)
                     else:
                         stack.append(nxt)
@@ -559,7 +563,7 @@ class Analyzer(threading.Thread):
                     if inst.address in self.jmptables:
                         table = self.jmptables[inst.address].table
                         stack += table
-                        self.dis.add_xref(ad, table)
+                        self.api.add_xref(ad, table)
                         if add_if_code:
                             added_xrefs.append((ad, table))
                     else:
@@ -579,13 +583,13 @@ class Analyzer(threading.Thread):
                         direct_nxt = prefetch.address + prefetch.size
 
                     nxt_jmp = unsigned(unsigned(op.value.imm))
-                    self.dis.add_xref(ad, nxt_jmp)
+                    self.api.add_xref(ad, nxt_jmp)
                     stack.append(direct_nxt)
 
                     if add_if_code:
                         added_xrefs.append((ad, nxt_jmp))
 
-                    if nxt_jmp in self.functions:
+                    if self.db.mem.is_func(nxt_jmp):
                         has_ret = not self.is_noreturn(nxt_jmp, entry)
                     else:
                         stack.append(nxt_jmp)
@@ -594,15 +598,15 @@ class Analyzer(threading.Thread):
                 op = inst.operands[-1]
                 if op.type == self.CS_OP_IMM:
                     imm = unsigned(op.value.imm)
-                    self.dis.add_xref(ad, imm)
+                    self.api.add_xref(ad, imm)
 
                     if add_if_code:
                         added_xrefs.append((ad, imm))
 
-                    if imm not in self.functions:
+                    if not self.db.mem.is_func(imm):
                         self.analyze_flow(imm, True, False, add_if_code)
 
-                    if imm in self.functions and self.is_noreturn(imm, entry):
+                    if self.db.mem.is_func(imm) and self.is_noreturn(imm, entry):
                         self.__add_prefetch(inner_code, inst)
                         continue
 
@@ -615,7 +619,7 @@ class Analyzer(threading.Thread):
 
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:
-                self.dis.rm_xrefs(from_ad, to_ad)
+                self.api.rm_xrefs(from_ad, to_ad)
             return -1
 
         # for ELF

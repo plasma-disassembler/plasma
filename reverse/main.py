@@ -23,6 +23,7 @@ import reverse
 from reverse.lib import GlobalContext
 from reverse.lib.utils import info, die
 from reverse.lib.ui.vim import generate_vim_syntax
+from reverse.lib.api import Api
 
 # Generates the file custom_colors.py at the beginning
 import reverse.lib.colors
@@ -45,9 +46,12 @@ def console_entry():
 
     if gctx.interactive_mode:
         from reverse.lib.ui.console import Console
+        gctx.is_interactive = True
         Console(gctx)
 
     else:
+        gctx.api = Api(gctx, None)
+
         if gctx.list_sections:
             for s in gctx.dis.binary.iter_sections():
                 s.print_header()

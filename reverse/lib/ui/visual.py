@@ -18,8 +18,6 @@
 #
 
 import curses
-
-from queue import Queue
 import traceback
 
 from reverse.lib.analyzer import FUNC_END, FUNC_ID
@@ -31,15 +29,16 @@ from reverse.lib.memory import (MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD,
 
 
 class Visual(Window):
-    def __init__(self, gctx, ctx, analyzer):
+    def __init__(self, gctx, ctx, analyzer, api):
         Window.__init__(self, ctx.output, has_statusbar=True)
 
         self.ctx = ctx
         self.gctx = gctx
         self.mode = MODE_DUMP
         self.dis = gctx.dis
+        self.db = gctx.db
         self.analyzer = analyzer
-        self.queue_wait_analyzer = Queue()
+        self.api = api
 
         # Last/first address printed (only in MODE_DUMP)
         self.last_addr = max(self.output.addr_line)
@@ -180,8 +179,8 @@ class Visual(Window):
             while line not in self.output.line_addr:
                 line += 1
 
-            fid = self.dis.mem.get_func_id(self.output.line_addr[line])
-            func_ad = self.dis.func_id[fid]
+            fid = self.db.mem.get_func_id(self.output.line_addr[line])
+            func_ad = self.db.func_id[fid]
 
             if word.startswith("var_"):
                 try:
@@ -203,29 +202,25 @@ class Visual(Window):
         else:
             # Rename a symbol
 
-            if self.dis.has_reserved_prefix(word):
-                try:
-                    ad = int(word[word.index("_") + 1:], 16)
-                except:
-                    return True
+            ad = self.api.get_addr_from_symbol(word)
+            if ad == -1:
+                return True
+
+            if self.api.is_reserved_prefix(word):
                 word = ""
-            else:
-                if word not in self.gctx.db.symbols:
-                    return True
-                ad = self.gctx.db.symbols[word]
 
         text = w.open_textbox(scr, word)
 
-        if word == text or not text or self.dis.has_reserved_prefix(text):
+        if word == text or not text or self.api.is_reserved_prefix(text):
             return True
 
         if is_var:
             self.dis.var_rename(func_ad, off, text)
         else:
-            self.dis.add_symbol(ad, text)
+            self.api.add_symbol(ad, text)
 
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
 
         return True
 
@@ -373,12 +368,12 @@ class Visual(Window):
 
         self.status_bar("-- INLINE COMMENT --", h)
 
-        if addr in self.dis.user_inline_comments:
-            text = self.dis.user_inline_comments[addr]
+        if addr in self.db.user_inline_comments:
+            text = self.db.user_inline_comments[addr]
         else:
             text = ""
 
-        is_new_token = addr not in self.dis.user_inline_comments
+        is_new_token = addr not in self.db.user_inline_comments
 
         ed = InlineEd(self, h, w, line, xbegin, idx_token, text,
                       is_new_token, COLOR_USER_COMMENT.val,
@@ -387,16 +382,16 @@ class Visual(Window):
         ret = ed.start_view(self.screen)
 
         if ret:
-            self.gctx.db.modified = True
+            self.db.modified = True
 
             if ed.text:
-                self.dis.user_inline_comments[addr] = ed.text
+                self.db.user_inline_comments[addr] = ed.text
                 if is_new_token:
                     self.output.index_end_inst[line] = \
                             (xbegin, idx_token)
 
             elif not is_new_token:
-                del self.dis.user_inline_comments[addr]
+                del self.db.user_inline_comments[addr]
 
         return True
 
@@ -458,7 +453,7 @@ class Visual(Window):
         if self.last_addr == self.dis.binary.get_last_addr():
             return
 
-        if self.dis.mem.is_code(self.last_addr):
+        if self.db.mem.is_code(self.last_addr):
             inst = self.dis.lazy_disasm(self.last_addr)
             ad = self.last_addr + inst.size
         else:
@@ -634,7 +629,7 @@ class Visual(Window):
 
         self.ctx = ctx
 
-        if self.mode == MODE_DECOMPILE and not self.dis.mem.is_code(ad):
+        if self.mode == MODE_DECOMPILE and not self.db.mem.is_func(ad):
             self.mode = MODE_DUMP
 
         ret = self.exec_disasm(ad, h)
@@ -710,14 +705,14 @@ class Visual(Window):
         ad = self.output.line_addr[l]
 
         if self.mode == MODE_DUMP:
-            func_id = self.dis.mem.get_func_id(ad)
+            func_id = self.db.mem.get_func_id(ad)
 
             if func_id == -1:
                 self.status_bar("not in a function: create a function or use "
                                 "the cmd x in the console", h, True)
                 return False
 
-            ad_disasm = self.dis.func_id[func_id]
+            ad_disasm = self.db.func_id[func_id]
             self.mode = MODE_DECOMPILE
 
         else:
@@ -739,16 +734,6 @@ class Visual(Window):
         self.exec_disasm(self.first_addr, h, dump_until=self.last_addr)
 
 
-    def __undefine(self, ad, end_range):
-        # TODO : check if instructions contains an address with xrefs
-        if ad in self.dis.functions:
-            # TODO : undefine all func_id of each instructions
-            content = self.dis.functions[ad]
-            del self.dis.end_functions[content[FUNC_END]]
-            del self.dis.func_id[content[FUNC_ID]]
-            del self.dis.functions[ad]
-
-
     def main_cmd_set_code(self, h, w):
         if self.mode == MODE_DECOMPILE:
             return False
@@ -759,14 +744,12 @@ class Visual(Window):
 
         ad = self.output.line_addr[line]
 
-        if self.dis.mem.is_loc(ad) or ad in self.gctx.db.functions:
+        if not self.api.set_code(ad):
             return False
 
-        self.analyzer.msg.put((ad, False, False, False, self.queue_wait_analyzer))
-        self.queue_wait_analyzer.get()
         self.reload_output(h)
         self.goto_address(ad, h, w)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -776,16 +759,11 @@ class Visual(Window):
             return False
         ad = self.output.line_addr[line]
 
-        self.__undefine(ad, 1)
-
-        if ad in self.dis.xrefs:
-            self.dis.mem.add(ad, 1, MEM_BYTE)
-        else:
-            # not usefule to store it in the database
-            self.dis.mem.rm_range(ad, ad + 1)
+        if not self.api.set_byte(ad):
+            return False
 
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -794,10 +772,17 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
-        self.__undefine(ad, 2)
-        self.dis.mem.add(ad, 2, MEM_WORD)
+
+        if not self.api.set_word(ad):
+            return False
+
+        # TODO: add it for 16 bits
+        # we should first check the architecture to not set an
+        # offset on 32/64 bits .
+        # self.api.set_offset(ad)
+
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -806,10 +791,15 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
-        self.__undefine(ad, 4)
-        self.dis.mem.add(ad, 4, MEM_DWORD)
+
+        if not self.api.set_dword(ad):
+            return False
+
+        # TODO: check architecture first
+        self.api.set_offset(ad)
+
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -818,10 +808,15 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
-        self.__undefine(ad, 8)
-        self.dis.mem.add(ad, 8, MEM_QWORD)
+
+        if not self.api.set_qword(ad):
+            return False
+
+        # TODO: check architecture first
+        self.api.set_offset(ad)
+
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -830,13 +825,12 @@ class Visual(Window):
         if line not in self.output.line_addr:
             return False
         ad = self.output.line_addr[line]
-        sz = self.dis.binary.is_string(ad, 1)
-        if not sz:
+
+        if not self.api.set_ascii(ad):
             return False
-        self.__undefine(ad, sz)
-        self.dis.mem.add(ad, sz, MEM_ASCII)
+
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -846,31 +840,12 @@ class Visual(Window):
             return False
         ad = self.output.line_addr[line]
 
-        ty = self.dis.mem.get_type(ad)
-        if ty == -1 or ty < MEM_WORD or ty > MEM_QWORD:
-            return False
-
-        sz = self.dis.mem.get_size(ad)
-
-        s = self.dis.binary.get_section(ad)
-        off = s.read_int(ad, sz)
-        if off is None:
-            return False
-
-        s = self.dis.binary.get_section(off)
-        if s is None:
+        if not self.api.set_offset(ad):
             self.status_bar("not an address", h, True) 
             return False
 
-        self.dis.add_xref(ad, off)
-        if not self.dis.mem.exists(off):
-            self.dis.mem.add(off, 1, MEM_UNK)
-
-        self.__undefine(ad, sz)
-        self.dis.mem.add(ad, sz, MEM_OFFSET)
-
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         return True
 
 
@@ -884,14 +859,12 @@ class Visual(Window):
 
         ad = self.output.line_addr[line]
 
-        if ad in self.gctx.dis.functions != -1:
-            self.status_bar("error: already in a function", h, True)
+        if not self.api.set_function(ad):
+            self.status_bar("cannot set a function here", h, True)
             return False
 
-        self.analyzer.msg.put((ad, True, True, False, self.queue_wait_analyzer))
-        self.queue_wait_analyzer.get()
         self.reload_output(h)
-        self.gctx.db.modified = True
+        self.db.modified = True
         self.goto_address(ad, h, w)
         return True
 
@@ -905,7 +878,7 @@ class Visual(Window):
         if not ctx:
             return False
 
-        if ctx.entry not in self.dis.xrefs:
+        if ctx.entry not in self.db.xrefs:
             self.status_bar("no xrefs", h, True)
             return False
 
@@ -945,11 +918,11 @@ class Visual(Window):
         ad_disasm = ad
 
         if self.mode == MODE_DECOMPILE:
-            func_id = self.dis.mem.get_func_id(ad)
+            func_id = self.db.mem.get_func_id(ad)
             if func_id == -1:
                 self.mode = MODE_DUMP
             else:
-                ad_disasm = self.dis.func_id[func_id]
+                ad_disasm = self.db.func_id[func_id]
 
         ret = self.exec_disasm(ad_disasm, h)
         if ret:

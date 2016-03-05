@@ -25,7 +25,8 @@ from reverse.lib.colors import color, bold
 from reverse.lib.fileformat.binary import T_BIN_RAW
 from reverse.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
                                 MEM_DWORD, MEM_QWORD, MEM_ASCII, MEM_OFFSET)
-from reverse.lib.analyzer import FUNC_VARS, VAR_TYPE, VAR_NAME, FUNC_FLAG_NORETURN
+from reverse.lib.analyzer import (FUNC_VARS, VAR_TYPE, VAR_NAME,
+                                  FUNC_FLAG_NORETURN, FUNC_FLAGS)
 
 
 class OutputAbs():
@@ -196,83 +197,36 @@ class OutputAbs():
 
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
-        l = None
-        is_sym = False
+        l = self.gctx.api.get_symbol(ad)
+        if l is None:
+            return False
 
         ty = self._dis.mem.get_type(ad)
 
-        # TODO : fuse with disassembler.get_symbol
-
-        if self.gctx.show_mangling and ad in self.gctx.db.reverse_demangled:
-            l = str(self.gctx.db.reverse_demangled[ad])
-            col = COLOR_SYMBOL.val
-            is_sym = True
-
-        elif ad in self.gctx.db.reverse_symbols:
-            l = str(self.gctx.db.reverse_symbols[ad])
-            col = COLOR_SYMBOL.val
-            is_sym = True
-
-        elif ad not in self._dis.xrefs and ty != MEM_FUNC:
-            return False
-
-        # If ad not in xrefs, don't print a symbol name
-
+        col = 0
         if ty == MEM_FUNC:
-            if l is None:
-                l = "sub_%x" % ad
             col = COLOR_SYMBOL.val
-
         elif ty == MEM_CODE:
-            if self.ctx.is_dump:
-                if l is None:
-                    l = "loc_%x" % ad
-                col = COLOR_CODE_ADDR.val
-            else:
-                if not is_sym:
-                    return False
-                col = COLOR_ADDR.val
-
+            if not self.ctx.is_dump:
+                # It means that in decompilation mode we don't want to print
+                # labels with "loc_ADDR:", but we want to print them if they are
+                # referenced in an instruction, example : mov eax, loc_ADDR
+                if l.startswith("loc_"):
+                    if print_colon:
+                        return False
+                    l = hex(ad)
+            col = COLOR_CODE_ADDR.val
         elif ty == MEM_UNK:
-            if l is None:
-                l = "unk_%x" % ad
             col = COLOR_UNK.val
-
         elif MEM_BYTE <= ty <= MEM_OFFSET:
-            if l is None:
-                if ty == MEM_BYTE:
-                    l = "byte_%x" % ad
-                elif ty == MEM_WORD:
-                    l = "word_%x" % ad
-                elif ty == MEM_DWORD:
-                    l = "dword_%x" % ad
-                elif ty == MEM_QWORD:
-                    l = "qword_%x" % ad
-                elif ty == MEM_ASCII:
-                    l = "asc_%x" % ad
-                elif ty == MEM_OFFSET:
-                    l = "off_%x" % ad
             col = COLOR_DATA.val
-
-        elif not is_sym:
-            return False
 
         if print_colon:
             l += ":"
 
-        # TODO: keep all colors in decompilation mode ?
-        if not self.ctx.is_dump:
-            if ad in self.ctx.addr_color:
-                col = self.ctx.addr_color[ad]
-            else:
-                if is_sym or ty == MEM_FUNC:
-                    if l.startswith("loop_") or l.startswith("ret_"):
-                        col = COLOR_ADDR.val
-                    else:
-                        col = COLOR_SYMBOL.val
-                # else:
-                    # col = 0
-                    
+        if not self.ctx.is_dump and ad in self.ctx.addr_color:
+            col = self.ctx.addr_color[ad]
+
         if nocolor:
             col = 0
 
@@ -283,8 +237,8 @@ class OutputAbs():
         else:
             self._tabs(tab)
 
-            if ty == MEM_FUNC and ad in self.gctx.dis.functions:
-                flags = self.gctx.dis.functions[ad][1]
+            if ty == MEM_FUNC:
+                flags = self._dis.functions[ad][FUNC_FLAGS]
                 if flags & FUNC_FLAG_NORETURN:
                     self._comment("__noreturn__ ")
 
@@ -401,7 +355,7 @@ class OutputAbs():
 
 
     def _all_vars(self, func_addr):
-        if func_addr not in self._dis.functions:
+        if not self._dis.mem.is_func(func_addr):
             return
 
         tabs = 0 if self.ctx.is_dump else 1

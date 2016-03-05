@@ -31,7 +31,7 @@ except:
 
 import json
 
-from reverse.lib.disassembler import Jmptable
+from reverse.lib.api import Jmptable
 from reverse.lib.utils import info, warning
 from reverse.lib.memory import Memory
 
@@ -60,7 +60,7 @@ class Database():
         self.modified = False
         self.loaded = False
         self.mem = None
-        self.functions = {} # func address -> [end addr, flags, dict var_off -> [type, name]]
+        self.functions = {} # func address -> [end addr, flags, dict var_off -> [type, name], func_id]
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)

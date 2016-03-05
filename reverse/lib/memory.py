@@ -53,6 +53,10 @@ class Memory():
         }
 
 
+    def __len__(self):
+        return len(self.mm)
+
+
     def add(self, ad, size, ty, val=0):
         self.mm[ad] = [size, ty, val]
         if ty == MEM_UNK:

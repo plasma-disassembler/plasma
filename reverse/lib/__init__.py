@@ -44,6 +44,8 @@ class GlobalContext():
         # For info() messages
         self.quiet = False
 
+        self.is_interactive = False
+
         # Command line options
         self.sectionsname = False
         self.print_andif = True
@@ -73,6 +75,7 @@ class GlobalContext():
         self.dis = None # Disassembler
         self.libarch = None # module lib.arch.<BIN_ARCH>
         self.db = None # Database
+        self.api = None # Api
 
 
     def parse_args(self):
@@ -274,7 +277,7 @@ class AddrContext():
 
         is_hexa = entry.startswith("0x")
 
-        if not is_hexa and self.gctx.dis.has_reserved_prefix(entry):
+        if not is_hexa and self.gctx.api.is_reserved_prefix(entry):
             entry = entry[entry.index("_") + 1:]
             is_hexa = True
 

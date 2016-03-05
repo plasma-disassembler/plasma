@@ -13,6 +13,7 @@ from nose.tools import assert_equal
 from pathlib import Path
 from io import StringIO
 
+from reverse.lib.api import Api
 from reverse.lib import GlobalContext
 
 TESTS = Path('tests')
@@ -53,6 +54,8 @@ def reverse_file(filename, symbol, options):
 
     if not gctx.load_file():
         die()
+
+    gctx.api = Api(gctx, None)
 
     sio = StringIO()
     with redirect_stdout(sio):
