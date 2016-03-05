@@ -107,8 +107,8 @@ class Output(OutputAbs):
             self._add("(")
 
         if op.type == ARM_OP_IMM:
-            return self._imm(op.value.imm, 4, hexa,
-                             force_dont_print_data=force_dont_print_data)
+            self._imm(op.value.imm, 4, hexa,
+                      force_dont_print_data=force_dont_print_data)
 
         elif op.type == ARM_OP_REG:
             if op.value.reg == ARM_REG_PC and i.reg_read(ARM_REG_PC):
@@ -117,13 +117,11 @@ class Output(OutputAbs):
                 self._add(i.reg_name(op.value.reg))
             if op.shift.type:
                 self._shift(i, op.shift)
-            return False
 
         elif op.type == ARM_OP_FP:
             self._add("%f" % op.value.fp)
             if op.shift.type:
                 self._shift(i, op.shift)
-            return False
 
         elif op.type == ARM_OP_MEM:
             mm = op.mem
@@ -133,7 +131,7 @@ class Output(OutputAbs):
                     ad = i.address + i.size * 2 + mm.disp
 
                     if self.deref_if_offset(ad):
-                        return True
+                        return
 
                     if show_deref:
                         self._add("*(")
@@ -141,7 +139,7 @@ class Output(OutputAbs):
                               force_dont_print_data=force_dont_print_data)
                     if show_deref:
                         self._add(")")
-                    return True
+                    return
 
             printed = False
             if show_deref:
@@ -190,9 +188,6 @@ class Output(OutputAbs):
 
             if show_deref:
                 self._add(")")
-            return True
-
-        return False
 
 
     def _if_cond(self, cond, fused_inst):
@@ -206,13 +201,21 @@ class Output(OutputAbs):
 
         if assignment:
             self._add("(")
+
         self._add("(")
         self._operand(fused_inst, 0)
         self._add(" ")
 
-        self._add(cond_symbol(cond))
-        self._add(" ")
-        self._operand(fused_inst, 1)
+        if assignment:
+            self._add(inst_symbol(fused_inst))
+            self._add(" ")
+            self._operand(fused_inst, 1)
+            self._add(") ")
+            self._add(cond_symbol(jump_cond))
+        else:
+            self._add(cond_symbol(cond))
+            self._add(" ")
+            self._operand(fused_inst, 1)
 
         if (fused_inst.id != ARM_INS_CMP and \
                 (cond in COND_ADD_ZERO or assignment)):
@@ -221,48 +224,7 @@ class Output(OutputAbs):
         self._add(")")
 
 
-    def _sub_asm_inst(self, i, tab=0, prefix=""):
-        if is_ret(i):
-            self._retcall(self.get_inst_str(i))
-            return False
-
-        if is_call(i):
-            self._retcall(i.mnemonic)
-            self._add(" ")
-
-            if self.gctx.sectionsname:
-                op = i.operands[0]
-                if op.type == ARM_OP_IMM:
-                    s = self._binary.get_section(op.value.imm)
-                    if s is not None:
-                        self._add("(")
-                        self._section(s.name)
-                        self._add(") ")
-
-            self._operand(i, 0, hexa=True, force_dont_print_data=True)
-            return False
-
-        # Here we can have conditional jump with the option --dump
-        if is_jump(i):
-            if len(i.operands) == 0:
-                self._add(i.mnemonic)
-                return False
-
-            self._add(i.mnemonic + " ")
-
-            if i.operands[0].type != ARM_OP_IMM:
-                self._operand(i, 0, force_dont_print_data=True)
-                self.inst_end_here()
-                if is_uncond_jump(i) and not self.ctx.is_dump \
-                        and not i.address in self._dis.jmptables:
-                    self._add(" ")
-                    self._comment("# STOPPED")
-                return False
-
-            self._operand(i, 0, hexa=True, force_dont_print_data=True)
-            return False
-
-
+    def _sub_asm_inst(self, i, tab=0):
         modified = False
 
         if self.gctx.capstone_string == 0:
@@ -301,15 +263,13 @@ class Output(OutputAbs):
         if not modified:
             self._add("%s " % i.mnemonic)
             if len(i.operands) > 0:
-                modified = self._operand(i, 0)
+                self._operand(i, 0)
                 k = 1
                 while k < len(i.operands):
                     self._add(", ")
-                    modified |= self._operand(i, k)
+                    self._operand(i, k)
                     k += 1
 
         if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
             self._add(" ")
             self._type("(FLAGS)")
-
-        return modified

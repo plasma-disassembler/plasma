@@ -48,6 +48,10 @@ class OutputAbs():
         self.gctx = ctx.gctx
         self.ctx = ctx
 
+        import capstone
+        self.ARCH_UTILS = self._dis.load_arch_module().utils
+        self.CS_OP_IMM = capstone.CS_OP_IMM
+
 
     # All functions which start with a '_' add a new token/string on
     # the current line.
@@ -621,7 +625,52 @@ class OutputAbs():
             self._add(" ")
             self._add(i.op_str)
         else:
-            self._sub_asm_inst(i, tab, prefix)
+            tab = self._pre_asm_inst(i, tab)
+
+            if self.ARCH_UTILS.is_ret(i):
+                self._retcall(self.get_inst_str(i))
+
+            elif self.ARCH_UTILS.is_call(i):
+                self._retcall(i.mnemonic)
+                self._add(" ")
+
+                if self.gctx.sectionsname:
+                    op = i.operands[0]
+                    if op.type == self.CS_OP_IMM:
+                        s = self._binary.get_section(op.value.imm)
+                        if s is not None:
+                            self._add("(")
+                            self._section(s.name)
+                            self._add(") ")
+
+                self._operand(i, 0, hexa=True, force_dont_print_data=True)
+
+            # Here we can have conditional jump with the option --dump
+            elif self.ARCH_UTILS.is_jump(i):
+                self._add(i.mnemonic)
+                if len(i.operands) > 0:
+                    self._add(" ")
+
+                    for num in range(len(i.operands)-1):
+                        self._operand(i, num)
+                        self._add(", ")
+
+                    # WARNING: it assumes that the last operand is the address
+                    if i.operands[-1].type != self.CS_OP_IMM:
+                        self._operand(i, -1, force_dont_print_data=True)
+                        self.inst_end_here()
+                        if self.ARCH_UTILS.is_uncond_jump(i) and \
+                                not self.ctx.is_dump and \
+                                i.address not in self._dis.jmptables:
+                            self._add(" ")
+                            self._comment("# STOPPED")
+                    else:
+                        self._operand(i, -1, hexa=True, force_dont_print_data=True)
+
+            else:
+                self._sub_asm_inst(i, tab)
+
+            self._post_asm_inst(i, tab)
 
         self._inline_comment(i)
         self._new_line()
@@ -639,8 +688,13 @@ class OutputAbs():
             print()
 
 
-    # Return True if the operand is a variable (because the output is
-    # modified, we reprint the original instruction later)
+    def _pre_asm_inst(self, i, tab):
+        return tab
+
+
+    def _post_asm_inst(self, i, tab):
+        return
+
     def _operand(self, i, num_op, hexa=False, show_deref=True):
         raise NotImplementedError
 
@@ -650,5 +704,6 @@ class OutputAbs():
 
 
     # Architecture specific output
-    def _sub_asm_inst(self, i, tab=0, prefix=""):
+    def _sub_asm_inst(self, i, tab=0):
         raise NotImplementedError
+

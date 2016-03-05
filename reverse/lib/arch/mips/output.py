@@ -76,13 +76,12 @@ class Output(OutputAbs):
             op_size = 8
 
         if op.type == MIPS_OP_IMM:
-            return self._imm(op.value.imm, op_size, hexa,
-                             force_dont_print_data=force_dont_print_data)
+            self._imm(op.value.imm, op_size, hexa,
+                      force_dont_print_data=force_dont_print_data)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")
             self._add(i.reg_name(op.value.reg))
-            return False
 
         elif op.type == MIPS_OP_MEM:
             mm = op.mem
@@ -93,15 +92,15 @@ class Output(OutputAbs):
                 ad = self._dis.mips_gp + mm.disp
 
                 if self.deref_if_offset(ad):
-                    return True
+                    return
 
                 if show_deref:
                     self._add("*(")
-                self._imm(ad, 0, True, section=section, print_data=False,
+                self._imm(ad, 0, True, print_data=False,
                           force_dont_print_data=force_dont_print_data)
                 if show_deref:
                     self._add(")")
-                return True
+                return
 
             if show_deref:
                 self._add("*(")
@@ -131,7 +130,6 @@ class Output(OutputAbs):
 
             if show_deref:
                 self._add(")")
-            return True
 
 
     def _if_cond(self, cond, fused_inst):
@@ -140,24 +138,7 @@ class Output(OutputAbs):
             if cond in COND_ADD_ZERO:
                 self._add(" 0")
             return
-
-        assignment = fused_inst.id in ASSIGNMENT_OPS
-
-        if assignment:
-            self._add("(")
-        self._add("(")
-        self._operand(fused_inst, 0)
-        self._add(" ")
-
-        self._add(cond_symbol(cond))
-        self._add(" ")
-        self._operand(fused_inst, 1)
-
-        # if (fused_inst.id != ARM_INS_CMP and \
-                # (cond in COND_ADD_ZERO or assignment)):
-            # self._add(" 0")
-
-        self._add(")")
+        # TODO: fusion for MIPS
 
 
     def _asm_inst(self, i, tab=0, prefix=""):
@@ -176,54 +157,7 @@ class Output(OutputAbs):
         OutputAbs._asm_inst(self, i, tab, prefix)
 
 
-    def _sub_asm_inst(self, i, tab=0, prefix=""):
-        if is_ret(i):
-            self._retcall(self.get_inst_str(i))
-            return False
-
-        if is_call(i):
-            self._retcall(i.mnemonic)
-            self._add(" ")
-
-            if self.gctx.sectionsname:
-                op = i.operands[0]
-                if op.type == MIPS_OP_IMM:
-                    s = self._binary.get_section(op.value.imm)
-                    if s is not None:
-                        self._add("(")
-                        self._section(s.name)
-                        self._add(") ")
-
-            self._operand(i, 0, hexa=True, force_dont_print_data=True)
-            return False
-
-        # Here we can have conditional jump with the option --dump
-        if is_jump(i):
-            if len(i.operands) == 0:
-                self._add(i.mnemonic)
-                return False
-
-            self._add(i.mnemonic + " ")
-
-            for num in range(len(i.operands)-1):
-                self._operand(i, num)
-                self._add(", ")
-
-            if i.operands[-1].type != MIPS_OP_IMM:
-                self._operand(i, -1, force_dont_print_data=True)
-                self.inst_end_here()
-                if is_uncond_jump(i) and not self.ctx.is_dump \
-                        and not i.address in self._dis.jmptables:
-                    self._add(" ")
-                    self._comment("# STOPPED")
-                return False
-
-            self._operand(i, -1, hexa=True, force_dont_print_data=True)
-            return False
-
-
-        modified = False
-
+    def _sub_asm_inst(self, i, tab=0):
         if self.gctx.capstone_string == 0:
             if i.id in LD_CHECK:
                 self._operand(i, 0)
@@ -231,17 +165,17 @@ class Output(OutputAbs):
                 self._type(LD_TYPE[i.id])
                 self._add(") ")
                 self._operand(i, 1)
-                modified = True
+                return
 
-            elif i.id in ST_CHECK:
+            if i.id in ST_CHECK:
                 self._operand(i, 1)
                 self._add(" = (")
                 self._type(ST_TYPE[i.id])
                 self._add(") ")
                 self._operand(i, 0)
-                modified = True
+                return
 
-            elif i.id in INST_CHECK:
+            if i.id in INST_CHECK:
                 if i.id == MIPS_INS_LUI:
                     self._add("(load upper) ")
                     self._operand(i, 0)
@@ -267,16 +201,13 @@ class Output(OutputAbs):
                         self._add(" " + inst_symbol(i) + " ")
                     self._operand(i, 2)
 
-                modified = True
+                return
 
-        if not modified:
-            self._add("%s " % i.mnemonic)
-            if len(i.operands) > 0:
-                modified = self._operand(i, 0)
-                k = 1
-                while k < len(i.operands):
-                    self._add(", ")
-                    modified |= self._operand(i, k)
-                    k += 1
-
-        return modified
+        self._add("%s " % i.mnemonic)
+        if len(i.operands) > 0:
+            self._operand(i, 0)
+            k = 1
+            while k < len(i.operands):
+                self._add(", ")
+                self._operand(i, k)
+                k += 1

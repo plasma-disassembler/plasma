@@ -43,7 +43,7 @@ ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR,
 
 # After these instructions we need to add a zero
 # example : jns ADDR -> if > 0
-JMP_ADD_ZERO = {
+COND_ADD_ZERO = {
     X86_INS_JNS,
     X86_INS_JS,
     X86_INS_JP,
@@ -80,16 +80,14 @@ class Output(OutputAbs):
         op = i.operands[num_op]
 
         if op.type == X86_OP_IMM:
-            return self._imm(op.value.imm, op.size, hexa,
-                             force_dont_print_data=force_dont_print_data)
+            self._imm(op.value.imm, op.size, hexa,
+                      force_dont_print_data=force_dont_print_data)
 
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
-            return False
 
         elif op.type == X86_OP_FP:
             self._add("%f" % op.value.fp)
-            return False
 
         elif op.type == X86_OP_MEM:
             mm = op.mem
@@ -102,13 +100,13 @@ class Output(OutputAbs):
                     self._variable(self.get_var_name(i, num_op))
                     if i.id == X86_INS_LEA:
                         self._add(")")
-                    return True
+                    return
 
                 elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                     ad = i.address + i.size + mm.disp
 
                     if i.id != X86_INS_LEA and self.deref_if_offset(ad):
-                        return True
+                        return
 
                     if show_deref:
                         self._add("*(")
@@ -116,11 +114,11 @@ class Output(OutputAbs):
                               force_dont_print_data=force_dont_print_data)
                     if show_deref:
                         self._add(")")
-                    return True
+                    return
 
                 elif inv(mm.base):
                     if i.id != X86_INS_LEA and self.deref_if_offset(mm.disp):
-                        return True
+                        return
 
             printed = False
             if show_deref:
@@ -163,13 +161,12 @@ class Output(OutputAbs):
 
             if show_deref:
                 self._add(")")
-            return True
 
 
     def _if_cond(self, jump_cond, fused_inst):
         if fused_inst is None:
             self._add(cond_symbol(jump_cond))
-            if jump_cond in JMP_ADD_ZERO:
+            if jump_cond in COND_ADD_ZERO:
                 self._add(" 0")
             return
 
@@ -196,7 +193,7 @@ class Output(OutputAbs):
 
         if fused_inst.id == X86_INS_TEST or \
                 (fused_inst.id != X86_INS_CMP and \
-                 (jump_cond in JMP_ADD_ZERO or assignment)):
+                 (jump_cond in COND_ADD_ZERO or assignment)):
             self._add(" 0")
 
         self._add(")")
@@ -232,47 +229,18 @@ class Output(OutputAbs):
             tab -= 1
             self._tabs(tab)
             self._add("}")
+        return tab
 
 
-    def _sub_asm_inst(self, i, tab=0, prefix=""):
-        tab = self._rep_begin(i, tab)
-
-        if is_ret(i):
-            self._retcall(self.get_inst_str(i))
-            return False
-
-        if is_call(i):
-            self._retcall(i.mnemonic)
-            self._add(" ")
-
-            if self.gctx.sectionsname:
-                op = i.operands[0]
-                if op.type == X86_OP_IMM:
-                    s = self._binary.get_section(op.value.imm)
-                    if s is not None:
-                        self._add("(")
-                        self._section(s.name)
-                        self._add(") ")
-
-            self._operand(i, 0, hexa=True, force_dont_print_data=True)
-            return False
-
-        # Here we can have conditional jump with the option --dump
-        if is_jump(i):
-            self._add(i.mnemonic + " ")
-            if i.operands[0].type != X86_OP_IMM:
-                self._operand(i, 0, force_dont_print_data=True)
-                self.inst_end_here()
-                if is_uncond_jump(i) and not self.ctx.is_dump \
-                        and not i.address in self._dis.jmptables:
-                    self._add(" ")
-                    self._comment("# STOPPED")
-                return False
-
-            self._operand(i, 0, hexa=True, force_dont_print_data=True)
-            return False
+    def _pre_asm_inst(self, i, tab):
+        return self._rep_begin(i, tab)
 
 
+    def _post_asm_inst(self, i, tab):
+        self._rep_end(i, tab)
+
+
+    def _sub_asm_inst(self, i, tab=0):
         modified = False
 
         if self.gctx.capstone_string == 0:
@@ -429,15 +397,11 @@ class Output(OutputAbs):
         if not modified:
             if len(i.operands) > 0:
                 self._add("%s " % i.mnemonic)
-                modified = self._operand(i, 0)
+                self._operand(i, 0)
                 k = 1
                 while k < len(i.operands):
                     self._add(", ")
-                    modified |= self._operand(i, k)
+                    self._operand(i, k)
                     k += 1
             else:
                 self._add(i.mnemonic)
-
-        self._rep_end(i, tab)
-
-        return modified
