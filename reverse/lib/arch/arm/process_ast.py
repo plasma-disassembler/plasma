@@ -19,42 +19,14 @@
 
 from capstone.arm import ARM_OP_IMM, ARM_INS_CMP, ARM_CC_AL, ARM_INS_TST
 
-from reverse.lib.colors import pick_color
-from reverse.lib.utils import BRANCH_NEXT
-from reverse.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
+from reverse.lib.ast import (Ast_Branch, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
                              Ast_AndIf, Ast_If_cond)
 from reverse.lib.arch.arm.output import ASSIGNMENT_OPS
-from reverse.lib.arch.arm.utils import is_uncond_jump
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
 FUSE_OPS.add(ARM_INS_CMP)
 FUSE_OPS.add(ARM_INS_TST)
-
-
-def assign_colors(ctx, ast):
-    if isinstance(ast, Ast_Branch):
-        for n in ast.nodes:
-            if isinstance(n, list):
-                if is_uncond_jump(n[0]) and n[0].operands[0].type == ARM_OP_IMM and \
-                        n[0].address in ctx.gph.link_out:
-                    nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
-                    pick_color(nxt)
-            else: # ast
-                assign_colors(ctx, n)
-
-    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
-        pick_color(ast.addr_jump)
-
-    elif isinstance(ast, Ast_Ifelse):
-        assign_colors(ctx, ast.br_next_jump)
-        assign_colors(ctx, ast.br_next)
-
-    elif isinstance(ast, Ast_Loop):
-        assign_colors(ctx, ast.branch)
-
-    elif isinstance(ast, Ast_If_cond):
-        assign_colors(ctx, ast.br)
 
 
 def fuse_inst_with_if(ctx, ast):
@@ -82,7 +54,6 @@ def fuse_inst_with_if(ctx, ast):
 
 
 def convert_cond_to_if(ctx, ast):
-
     def add_node(i, last_cond, br_lst):
         if br_lst:
             if last_cond == ARM_CC_AL:

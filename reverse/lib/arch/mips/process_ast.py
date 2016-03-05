@@ -20,70 +20,15 @@
 from capstone.mips import (MIPS_OP_IMM, MIPS_INS_ADDIU, MIPS_INS_ORI, 
         MIPS_INS_LUI, MIPS_OP_REG, MIPS_REG_ZERO)
 
-from reverse.lib.colors import pick_color
-from reverse.lib.utils import BRANCH_NEXT
-from reverse.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
-                             Ast_AndIf, Ast_If_cond)
+from reverse.lib.ast import (Ast_Branch, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
+                             Ast_AndIf)
 from reverse.lib.arch.mips.output import ASSIGNMENT_OPS
-from reverse.lib.arch.mips.utils import is_uncond_jump, PseudoInst, NopInst
+from reverse.lib.arch.mips.utils import PseudoInst, NopInst
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
 # FUSE_OPS.add(ARM_INS_CMP)
 # FUSE_OPS.add(ARM_INS_TST)
-
-
-def assign_colors(ctx, ast):
-    if isinstance(ast, Ast_Branch):
-        for n in ast.nodes:
-            if isinstance(n, list):
-                if is_uncond_jump(n[0]) and n[0].operands[0].type == MIPS_OP_IMM and \
-                        n[0].address in ctx.gph.link_out:
-                    nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
-                    pick_color(nxt)
-            else: # ast
-                assign_colors(ctx, n)
-
-    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
-        pick_color(ast.addr_jump)
-
-    elif isinstance(ast, Ast_Ifelse):
-        assign_colors(ctx, ast.br_next_jump)
-        assign_colors(ctx, ast.br_next)
-
-    elif isinstance(ast, Ast_Loop):
-        assign_colors(ctx, ast.branch)
-
-    elif isinstance(ast, Ast_If_cond):
-        assign_colors(ctx, ast.br)
-
-
-# TODO !!
-def fuse_inst_with_if(ctx, ast):
-    if isinstance(ast, Ast_Branch):
-        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf, Ast_If_cond)
-        for i, n in enumerate(ast.nodes):
-            # TODO : try to do the same thing as x86
-            if isinstance(n, list):
-                if n[-1].id in FUSE_OPS and i+1 < len(ast.nodes) and \
-                        isinstance(ast.nodes[i+1], types_ast):
-                    ast.nodes[i+1].fused_inst = n[-1]
-                    ctx.all_fused_inst.add(n[-1].address)
-            else: # ast
-                fuse_inst_with_if(ctx, n)
-
-    # elif isinstance(ast, Ast_If_cond):
-        # fuse_inst_with_if(ctx, ast.br)
-
-    elif isinstance(ast, Ast_Ifelse):
-        fuse_inst_with_if(ctx, ast.br_next)
-        fuse_inst_with_if(ctx, ast.br_next_jump)
-
-    elif isinstance(ast, Ast_Loop):
-        fuse_inst_with_if(ctx, ast.branch)
-
-
-LI_INST = [MIPS_INS_ADDIU, MIPS_INS_ORI]
 
 
 def __blk_search_li(blk):

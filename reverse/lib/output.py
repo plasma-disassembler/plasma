@@ -47,10 +47,8 @@ class OutputAbs():
         self._binary = self._dis.binary
         self.gctx = ctx.gctx
         self.ctx = ctx
-
-        import capstone
-        self.ARCH_UTILS = self._dis.load_arch_module().utils
-        self.CS_OP_IMM = capstone.CS_OP_IMM
+        self.OP_IMM = self.gctx.libarch.utils.OP_IMM
+        self.ARCH_UTILS = self.gctx.libarch.utils
 
 
     # All functions which start with a '_' add a new token/string on
@@ -636,7 +634,7 @@ class OutputAbs():
 
                 if self.gctx.sectionsname:
                     op = i.operands[0]
-                    if op.type == self.CS_OP_IMM:
+                    if op.type == self.OP_IMM:
                         s = self._binary.get_section(op.value.imm)
                         if s is not None:
                             self._add("(")
@@ -656,7 +654,7 @@ class OutputAbs():
                         self._add(", ")
 
                     # WARNING: it assumes that the last operand is the address
-                    if i.operands[-1].type != self.CS_OP_IMM:
+                    if i.operands[-1].type != self.OP_IMM:
                         self._operand(i, -1, force_dont_print_data=True)
                         self.inst_end_here()
                         if self.ARCH_UTILS.is_uncond_jump(i) and \

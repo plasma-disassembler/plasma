@@ -24,6 +24,7 @@ from reverse.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_If_cond,
                              Ast_IfGoto, Ast_Ifelse, Ast_AndIf, Ast_Comment)
 from reverse.lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__
 from reverse.lib.exceptions import ExcIfelse
+from reverse.lib.colors import pick_color
 
 
 class Endpoint():
@@ -37,6 +38,30 @@ class Endpoint():
         self.loop_start.append(l_start)
         if prev in self.unseen:
             self.unseen.remove(prev)
+
+
+def assign_colors(libarch, ctx, ast):
+    if isinstance(ast, Ast_Branch):
+        for n in ast.nodes:
+            if isinstance(n, list):
+                if libarch.utils.is_uncond_jump(n[0]) and \
+                        n[0].operands[0].type == libarch.utils.OP_IMM and \
+                        n[0].address in ctx.gph.link_out:
+                    nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
+                    pick_color(nxt)
+            else: # ast
+                assign_colors(libarch, ctx, n)
+
+    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
+        pick_color(ast.addr_jump)
+
+    elif isinstance(ast, Ast_Ifelse):
+        assign_colors(libarch, ctx, ast.br_next_jump)
+        assign_colors(libarch, ctx, ast.br_next)
+
+    elif isinstance(ast, Ast_Loop):
+        assign_colors(libarch, ctx, ast.branch)
+
 
 
 def get_first_addr(ast):
@@ -691,7 +716,7 @@ def generate_ast(ctx__):
     debug__("Functions for processing ast in %fs" % elapsed)
 
     if ctx.gctx.color:
-        ctx.gctx.libarch.process_ast.assign_colors(ctx, ast)
+        assign_colors(ctx.gctx.libarch, ctx, ast)
 
     if waiting:
         ast_head.nodes.insert(0, Ast_Comment(""))

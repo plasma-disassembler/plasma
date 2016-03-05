@@ -20,42 +20,13 @@
 from capstone.x86 import (X86_INS_CMP, X86_INS_MOV, X86_INS_TEST, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_REG, X86_REG_EBP, X86_REG_RBP)
 
-from reverse.lib.colors import pick_color
-from reverse.lib.utils import BRANCH_NEXT
-from reverse.lib.ast import (Ast_Branch, Ast_Goto, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
+from reverse.lib.ast import (Ast_Branch, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
                              Ast_AndIf)
 from reverse.lib.arch.x86.output import ASSIGNMENT_OPS
-from reverse.lib.arch.x86.utils import is_uncond_jump, is_call
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
 FUSE_OPS.add(X86_INS_CMP)
-
-
-def inv(n):
-    return n == X86_OP_INVALID
-
-
-def assign_colors(ctx, ast):
-    if isinstance(ast, Ast_Branch):
-        for n in ast.nodes:
-            if isinstance(n, list):
-                if is_uncond_jump(n[0]) and n[0].operands[0].type == X86_OP_IMM and \
-                        n[0].address in ctx.gph.link_out:
-                    nxt = ctx.gph.link_out[n[0].address][BRANCH_NEXT]
-                    pick_color(nxt)
-            else: # ast
-                assign_colors(ctx, n)
-
-    elif isinstance(ast, Ast_IfGoto) or isinstance(ast, Ast_Goto):
-        pick_color(ast.addr_jump)
-
-    elif isinstance(ast, Ast_Ifelse):
-        assign_colors(ctx, ast.br_next_jump)
-        assign_colors(ctx, ast.br_next)
-
-    elif isinstance(ast, Ast_Loop):
-        assign_colors(ctx, ast.branch)
 
 
 def fuse_inst_with_if(ctx, ast):

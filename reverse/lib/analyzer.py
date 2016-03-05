@@ -68,7 +68,7 @@ class Analyzer(threading.Thread):
         self.dis = gctx.dis
         self.db = gctx.db
         self.api = gctx.api
-        self.ARCH_UTILS = self.dis.load_arch_module().utils
+        self.ARCH_UTILS = self.gctx.libarch.utils
 
         # TODO: find a better solution, globally ? The problem
         # is that I want the --help fast as possible.
