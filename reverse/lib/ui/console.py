@@ -23,7 +23,6 @@ import shlex
 import code
 import traceback
 import readline, rlcompleter
-from queue import Queue
 
 from reverse.lib.colors import color
 from reverse.lib.utils import error, print_no_end

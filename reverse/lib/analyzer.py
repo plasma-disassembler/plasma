@@ -178,6 +178,7 @@ class Analyzer(threading.Thread):
     def pass_detect_unk_data(self):
         b = self.dis.binary
         mem = self.db.mem
+        wait = Queue()
 
         for s in b.iter_sections():
             if s.is_exec:
@@ -210,10 +211,7 @@ class Analyzer(threading.Thread):
                             if val not in self.pending and \
                                     val not in self.pending_not_curr and \
                                     self.first_inst_are_code(val):
-
-                                self.pending_not_curr.add(val)
-                                self.msg.put(
-                                    (val, self.has_prolog(val), False, True, None))
+                                self.analyze_flow(val, self.has_prolog(val), False, True)
                         continue
 
                 # Detect if it's a string
@@ -249,7 +247,7 @@ class Analyzer(threading.Thread):
                 if ad not in self.pending and self.has_prolog(ad):
                     # Don't push, run directly the analyzer. Otherwise
                     # we will re-analyze next instructions.
-                    self.analyze_flow(ad, True, True, True)
+                    self.analyze_flow(ad, True, False, True)
 
                 ad += 1
 
@@ -476,6 +474,10 @@ class Analyzer(threading.Thread):
             # TODO check that we don't go inside an instruction
             if not entry_is_func and self.db.mem.is_loc(entry) or \
                     entry_is_func and self.db.mem.is_func(entry):
+                return
+
+            # Check if is not inside a function
+            if self.db.mem.get_func_id(entry) != -1:
                 return
 
         mem = self.db.mem
