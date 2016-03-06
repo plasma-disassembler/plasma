@@ -299,7 +299,7 @@ class Disassembler():
                     if buf is not None:
                         if ctx.gctx.print_bytes:
                             o._bytes(s.read(ad, sz))
-                        o._string(buf)
+                        o._string('"' + buf + '"')
                     o._add(", 0")
                     o._new_line()
                     ad += sz

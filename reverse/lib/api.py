@@ -199,7 +199,8 @@ class Api():
         The parameter section is the section where ad is. It's just use for
         optimization and used to not recall get_section.
         """
-        sz = self.__binary.is_string(ad, min_bytes=1, s=section)
+        # It must contains at least one character and the null byte.
+        sz = self.__binary.is_string(ad, min_bytes=2, s=section)
         if not sz:
             return False
         return True
@@ -207,13 +208,13 @@ class Api():
 
     def get_string(self, ad, section=None):
         """
-        Returns the string at ad. If the buffer is not null-terminated
-        or contains non ascii chars, it returns None.
+        Returns the string at ad (str type). If the buffer is not
+        null-terminated or contains non ascii chars, it returns None.
 
         The parameter section is the section where ad is. It's just use for
         optimization and used to not recall get_section.
         """
-        return self.__binary.get_string(ad, min_bytes=1, s=section)
+        return self.__binary.get_string(ad, s=section)
 
 
     def read_byte(self, ad, section=None):
@@ -277,7 +278,7 @@ class Api():
         return self.__binary.get_section(ad)
 
 
-    def iter_sections(self, ad):
+    def iter_sections(self):
         """
         Iterates over sections.
         """

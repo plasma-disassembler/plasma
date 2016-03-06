@@ -467,7 +467,7 @@ class OutputAbs():
                 s = self._binary.get_string(imm, self.gctx.max_data_size)
                 if s is not None:
                     self._add(" ")
-                    self._string(s)
+                    self._string('"' + s + '"')
 
             return True
 

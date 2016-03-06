@@ -452,9 +452,9 @@ class Console():
                 if f.startswith(basename):
                     f_backslahed = f.replace(" ", "\\ ")
                     if os.path.isdir(os.path.join(dirname, f)):
-                        s = f_backslahed + "/"
+                        s = "%s/%s/" % (dirname, f_backslahed)
                     else:
-                        s = f_backslahed + " "
+                        s = "%s/%s " % (dirname, f_backslahed)
                     results.append(s)
                     i += 1
                     if i == MAX_PRINT_COMPLETE:

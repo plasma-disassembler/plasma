@@ -243,7 +243,7 @@ class Binary(object):
 
 
     # TODO : move in SectionAbs
-    def get_string(self, addr, max_data_size, s=None):
+    def get_string(self, addr, max_data_size=-1, s=None):
         if s is None:
             s = self.get_section(addr)
             if s is None:
@@ -251,11 +251,11 @@ class Binary(object):
 
         data = s.data
         off = addr - s.start
-        txt = ['"']
+        txt = []
 
         c = 0
         i = 0
-        while i < max_data_size and off < len(data):
+        while (i < max_data_size or max_data_size == -1) and off < len(data):
             c = data[off]
             if c == 0:
                 break
@@ -271,9 +271,10 @@ class Binary(object):
         elif c != 0 or i == 0:
             return None
 
-        return ''.join(txt) + '"'
+        return ''.join(txt)
 
 
+    # Returns the size of the string or 0 if it's not an ascii string
     def is_string(self, addr, min_bytes=3, s=None):
         if s is None:
             s = self.get_section(addr)
