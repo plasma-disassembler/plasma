@@ -374,92 +374,49 @@ class Disassembler():
         return ad
 
 
-    def dump_data_ascii(self, ctx, lines):
-        N = 128 # read by block of 128 bytes
-        ad = ctx.entry
+    def hexdump(self, ctx, lines):
+        MAX_NB_BYTES = 16
 
-        s = self.binary.get_section(ad)
-        print(hex(ad))
-        s.print_header()
+        def print_line(ad, line):
+            if not line:
+                return
 
-        l = 0
-        ascii_str = []
-        ad_str = -1
-        api = ctx.gctx.api
-
-        while l < lines:
-            buf = s.read(ad, N)
-            if not buf:
-                break
-
-            i = 0
-            while i < len(buf):
-
-                if ad > s.end:
-                    return
-
-                j = i
-                while j < len(buf):
-                    c = buf[j]
-                    if c not in BYTES_PRINTABLE_SET:
-                        break
-                    if ad_str == -1:
-                        ad_str = ad
-                    ascii_str.append(c)
-                    j += 1
-
-                if c != 0 and j == len(buf):
-                    ad += j - i
-                    break
-
-                if c == 0 and len(ascii_str) >= 2:
-                    if self.is_label(ad_str):
-                        print(color_symbol(api.get_symbol(ad_str)))
-                    print_no_end(color_addr(ad_str))
-                    print_no_end(color_string(
-                            "\"" + "".join(map(get_char, ascii_str)) + "\""))
-                    print(", 0")
-                    ad += j - i
-                    i = j
-                else:
-                    if self.is_label(ad):
-                        print(color_symbol(api.get_symbol(ad)))
-                    print_no_end(color_addr(ad))
-                    print("0x%.2x " % buf[i])
-                    ad += 1
-                    i += 1
-
-                ad_str = -1
-                ascii_str = []
-                l += 1
-                if l >= lines:
-                    return
-
-
-    def dump_data(self, ctx, lines, size_word):
-        ad = ctx.entry
-        s = self.binary.get_section(ad)
-        s.print_header()
-        api = ctx.gctx.api
-
-        for w in api.read_array(ad, lines, size_word, s):
-            if self.is_label(ad):
-                print(color_symbol(api.get_symbol(ad)))
             print_no_end(color_addr(ad))
-            print_no_end("0x%.2x" % w)
 
-            section = self.binary.get_section(w)
+            for by in line:
+                print_no_end("%.2x " % by)
 
-            if section is not None:
-                print_no_end(" (")
-                print_no_end(color_section(section.name))
-                print_no_end(")")
-                if size_word >= 4 and self.is_label(w):
-                    print_no_end(" ")
-                    print_no_end(color_symbol(api.get_symbol(w)))
+            if len(line) != MAX_NB_BYTES:
+                print_no_end("   " * (MAX_NB_BYTES - len(line)))
 
-            ad += size_word
+            print_no_end("| ")
+
+            for by in line:
+                if by in BYTES_PRINTABLE_SET and by != 13 and by != 9 and by != 10:
+                    print_no_end("%c" % by)
+                else:
+                    print_no_end(".")
+
             print()
+
+        ad = ctx.entry
+        s = self.binary.get_section(ad)
+        off = ad - s.start
+        l = 0
+        buf = []
+        first_ad = ad
+
+        while off < s.real_size and l < lines:
+            buf.append(s.data[off])
+            if len(buf) == MAX_NB_BYTES:
+                l += 1
+                print_line(first_ad, buf)
+                buf.clear()
+                first_ad = s.start + off
+
+            off += 1
+
+        print_line(first_ad, buf)
 
 
     def print_functions(self, api):

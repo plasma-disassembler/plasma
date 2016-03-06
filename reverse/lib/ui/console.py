@@ -41,15 +41,11 @@ SHOULD_EXIT = False
 
 COMMANDS_ALPHA = [
     "analyzer",
-    "da",
-    "db",
-    "dd",
-    "dw",
-    "dq",
     "dump",
     "exit",
     "functions",
     "help",
+    "hexdump",
     "history",
     "info",
     "jmptable",
@@ -266,53 +262,13 @@ class Console():
                 ]
             ),
 
-            "da": Command(
+            "hexdump": Command(
                 2,
-                self.__exec_data,
+                self.__exec_hexdump,
                 self.__complete_x,
                 [
                 "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data in ascii, it stops when the end of the section is found",
-                ]
-            ),
-
-            "db": Command(
-                2,
-                self.__exec_data,
-                self.__complete_x,
-                [
-                "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data in bytes, it stops when the end of the section is found",
-                ]
-            ),
-
-            "dd": Command(
-                2,
-                self.__exec_data,
-                self.__complete_x,
-                [
-                "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data in dwords, it stops when the end of the section is found",
-                ]
-            ),
-
-            "dw": Command(
-                2,
-                self.__exec_data,
-                self.__complete_x,
-                [
-                "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data in words, it stops when the end of the section is found",
-                ]
-            ),
-
-            "dq": Command(
-                2,
-                self.__exec_data,
-                self.__complete_x,
-                [
-                "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Print data in qwords, it stops when the end of the section is found",
+                "Dump memory in hexa."
                 ]
             ),
 
@@ -575,7 +531,7 @@ class Console():
             ctx.dump_asm(nb_lines).print()
 
 
-    def __exec_data(self, args):
+    def __exec_hexdump(self, args):
         nb_lines = self.gctx.nb_lines
         if len(args) <= 1:
             self.gctx.entry = None
@@ -590,16 +546,7 @@ class Console():
 
         ctx = self.gctx.get_addr_context(args[1])
         if ctx:
-            if args[0] == "da":
-                self.gctx.dis.dump_data_ascii(ctx, nb_lines)
-            elif args[0] == "db":
-                self.gctx.dis.dump_data(ctx, nb_lines, 1)
-            elif args[0] == "dw":
-                self.gctx.dis.dump_data(ctx, nb_lines, 2)
-            elif args[0] == "dd":
-                self.gctx.dis.dump_data(ctx, nb_lines, 4)
-            elif args[0] == "dq":
-                self.gctx.dis.dump_data(ctx, nb_lines, 8)
+            self.gctx.dis.hexdump(ctx, nb_lines)
 
 
     def push_analyze_symbols(self, args):
