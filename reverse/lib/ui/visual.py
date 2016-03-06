@@ -281,7 +281,7 @@ class Visual(Window):
                 topush = self.__compute_curr_position()
                 self.saved_stack.clear()
                 self.stack.append(topush)
-                ad = self.gctx.set_head_addr(s.start + new_off)
+                ad = self.db.mem.get_head_addr(s.start + new_off)
                 if not self.goto_address(ad, h, w):
                     if self.exec_disasm(ad, h):
                         self.cursor_y = 0
