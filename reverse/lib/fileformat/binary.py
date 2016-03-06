@@ -243,10 +243,11 @@ class Binary(object):
 
 
     # TODO : move in SectionAbs
-    def get_string(self, addr, max_data_size):
-        s = self.get_section(addr)
+    def get_string(self, addr, max_data_size, s=None):
         if s is None:
-            return None
+            s = self.get_section(addr)
+            if s is None:
+                return None
 
         data = s.data
         off = addr - s.start

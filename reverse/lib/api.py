@@ -192,44 +192,82 @@ class Api():
         return True
 
 
-    def read_byte(self, ad):
+    def is_string(self, ad, section=None):
+        """
+        Check if an ascii string can be found at ad.
+
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
+        """
+        sz = self.__binary.is_string(ad, min_bytes=1, s=section)
+        if not sz:
+            return False
+        return True
+
+
+    def get_string(self, ad, section=None):
+        """
+        Returns the string at ad. If the buffer is not null-terminated
+        or contains non ascii chars, it returns None.
+
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
+        """
+        return self.__binary.get_string(ad, min_bytes=1, s=section)
+
+
+    def read_byte(self, ad, section=None):
         """
         Read a byte, it returns None if ad is not an address.
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
         """
-        s = self.__binary.get_section(ad)
-        if s is None:
-            return None
-        return s.read_byte(ad)
+        if section is None:
+            section = self.__binary.get_section(ad)
+            if section is None:
+                return None
+        return section.read_byte(ad)
 
 
-    def read_word(self, ad):
+    def read_word(self, ad, section=None):
         """
         Read a word, it returns None if ad is not an address.
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
         """
-        s = self.__binary.get_section(ad)
-        if s is None:
-            return None
-        return s.read_word(ad)
+        if section is None:
+            section = self.__binary.get_section(ad)
+            if section is None:
+                return None
+        return section.read_word(ad)
 
 
-    def read_dword(self, ad):
+    def read_dword(self, ad, section=None):
         """
         Read a double word, it returns None if ad is not an address.
+
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
         """
-        s = self.__binary.get_section(ad)
-        if s is None:
-            return None
-        return s.read_dword(ad)
+        if section is None:
+            section = self.__binary.get_section(ad)
+            if section is None:
+                return None
+        return section.read_dword(ad)
 
 
-    def read_qword(self, ad):
+    def read_qword(self, ad, section=None):
         """
         Read a qword, it returns None if ad is not an address.
+
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
         """
-        s = self.__binary.get_section(ad)
-        if s is None:
-            return None
-        return s.read_qword(ad)
+        if section is None:
+            section = self.__binary.get_section(ad)
+            if section is None:
+                return None
+        return section.read_qword(ad)
 
 
     def get_section(self, ad):
@@ -246,27 +284,27 @@ class Api():
         return self.__binary.iter_sections()
 
 
-    def read_array(self, ad, nb_entries, size_word, s=None):
+    def read_array(self, ad, nb_entries, size_word, section=None):
         """
         Returns a list of words at the address ad. size_word must be in
         [1, 2, 4, 8] otherwise the function returns None. The returned
         list could be less than nb_entries if it's at the end of a
         section.
         
-        The parameter s is the section where ad is. It's just use for
-        optimization and to not recall get_section.
+        The parameter section is the section where ad is. It's just use for
+        optimization and used to not recall get_section.
         """
         if size_word != 1 and size_word != 2 and size_word != 4 and size_word != 8:
             return None
 
-        if s is None:
-            s = self.__binary.get_section(ad)
+        if section is None:
+            section = self.__binary.get_section(ad)
 
         array = []
         l = 0
 
         while l < nb_entries:
-            val = s.read_int(ad, size_word)
+            val = section.read_int(ad, size_word)
             if val is None:
                 return array
             array.append(val)
