@@ -30,6 +30,8 @@ FUSE_OPS = set(ASSIGNMENT_OPS)
 # FUSE_OPS.add(ARM_INS_CMP)
 # FUSE_OPS.add(ARM_INS_TST)
 
+LI_INST = [MIPS_INS_ADDIU, MIPS_INS_ORI]
+
 
 def __blk_search_li(blk):
     prev_k = -1
