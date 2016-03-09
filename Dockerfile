@@ -1,4 +1,4 @@
-# Usage: docker run -h reverse -t -i reverse:latest
+# Usage: docker run -h plasma -t -i plasma:latest
 # >> load tests/nestedloop1.bin
 # >> x
 
@@ -16,10 +16,10 @@ RUN apt-get -y install --no-install-recommends python3-pip git make gcc build-es
 RUN ln /usr/bin/python3.4 /usr/local/bin/python && \
     ln /usr/bin/pip3 /usr/local/bin/pip
 
-ADD . /reverse
+ADD . /plasma
 
-RUN /reverse/requirements.sh
+RUN /plasma/requirements.sh
 
-WORKDIR /reverse
-CMD python3.4 /reverse/reverse.py -i
+WORKDIR /plasma
+CMD python3.4 /plasma/plasma.py -i
 

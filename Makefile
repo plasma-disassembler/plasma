@@ -22,7 +22,7 @@ all: check
 
 
 check:
-	@python3 test_reverse.py
+	@python3 test_plasma.py
 
 
 # Verbose : print the diff at each test
@@ -35,7 +35,7 @@ check:
 oldcheck: $(REV)
 FORCE:
 $(TESTS_DIR)/%.rev: FORCE
-	@./diff.sh $@ ${OPTIONS[$@]} ${V} $(SYMBOLS[$@])
+	@./tests/diff.sh $@ ${OPTIONS[$@]} ${V} $(SYMBOLS[$@])
 
 
 clean:

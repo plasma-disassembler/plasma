@@ -1,17 +1,19 @@
-Reverse
-=======
+PLASMA
+======
 
-`Reverse` is a reverse engineering tool used to disassemble binaries.
-It can generate a more readable code (pseudo-C) with colored syntax.
-An interactive mode is still in development.
+The old project name was **Reverse**.
+
+`PLASMA` is an interactive disassembler. It can generate a more readable
+assembly (pseudo code) with colored syntax. You can write scripts with the
+available Python api.
+
+The project is still in big development. You can see the TODO list and some
+documentation on the [wiki](https://github.com/joelpx/plasma/wiki).
+The `Makefile` is used only for checking tests.
 
 It supports :
 * architectures : x86, ARM, MIPS{64} (partially)
 * formats : ELF, PE, RAW
-
-The `Makefile` is used only for checking tests.
-
-More documentation on the [wiki](https://github.com/joelpx/reverse/wiki)
 
 
 ## Requirements
@@ -20,7 +22,7 @@ More documentation on the [wiki](https://github.com/joelpx/reverse/wiki)
 * [capstone](https://github.com/aquynh/capstone)
 * [python-pyelftools](https://github.com/eliben/pyelftools)
 * [pefile](https://github.com/mlaferrera/python3-pefile)
-* [python-msgpack](https://github.com/msgpack/msgpack-python)
+* [python-msgpack](https://github.com/msgpack/msgpack-python) >= 0.4.6
 * `c++filt` (available in the binutils Linux package)
 * terminal with 256 colors (if not, use the option `--nocolor`)
 
@@ -28,16 +30,15 @@ More documentation on the [wiki](https://github.com/joelpx/reverse/wiki)
 ## Installation
 
     ./requirements.sh
-    python3 setup.py install
+    python3 setup.py install   # or create an alias to run_plasma.py
 
 
 ## Pseudo-decompilation of functions
 
-    $ reverse -i tests/server.bin
+    $ plasma -i tests/server.bin
     >> v main
     # then press tab
 
-![reverse](/images/screenshot.png?raw=true)
+![plasma](/images/screenshot.png?raw=true)
 
-![reverse](/images/visual.png?raw=true)
-
+![plasma](/images/visual.png?raw=true)
