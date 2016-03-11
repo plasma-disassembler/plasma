@@ -144,21 +144,19 @@ class Output(OutputAbs):
     def _asm_inst(self, i, tab=0, prefix=""):
         if isinstance(i, NopInst):
             return
-
-        if isinstance(i, PseudoInst):
-            for i2 in i.real_inst_list:
-                OutputAbs._asm_inst(self, i2, tab, "# ")
-            self.set_line(i.real_inst_list[0].address)
-            self._label_and_address(i.real_inst_list[0].address, tab)
-            self._add(i.pseudo)
-            self._new_line()
-            return
-
         OutputAbs._asm_inst(self, i, tab, prefix)
 
 
     def _sub_asm_inst(self, i, tab=0):
         if self.gctx.capstone_string == 0:
+            # Pseudo instructions
+            if i.id == -1:
+                if i.mnemonic == "li":
+                    self._operand(i, 0)
+                    self._add(" = ")
+                    self._operand(i, 1)
+                return
+
             if i.id in LD_CHECK:
                 self._operand(i, 0)
                 self._add(" = (")
@@ -177,10 +175,10 @@ class Output(OutputAbs):
 
             if i.id in INST_CHECK:
                 if i.id == MIPS_INS_LUI:
-                    self._add("(load upper) ")
                     self._operand(i, 0)
                     self._add(" = ")
                     self._operand(i, 1)
+                    self._add(" << 8")
 
                 elif i.id == MIPS_INS_MOVE:
                     self._operand(i, 0)
@@ -191,9 +189,10 @@ class Output(OutputAbs):
                         self._operand(i, 1)
 
                 else:
+                    op = i.operands
                     self._operand(i, 0)
-                    if i.operands[0].type == i.operands[1].type == MIPS_OP_REG and \
-                        i.operands[0].value.reg == i.operands[1].value.reg:
+                    if op[0].type == op[1].type == MIPS_OP_REG and \
+                            op[0].value.reg == op[1].value.reg:
                         self._add(" " + inst_symbol(i) + "= ")
                     else:
                         self._add(" = ")

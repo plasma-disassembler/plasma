@@ -18,12 +18,12 @@
 #
 
 from capstone.mips import (MIPS_OP_IMM, MIPS_INS_ADDIU, MIPS_INS_ORI, 
-        MIPS_INS_LUI, MIPS_OP_REG, MIPS_REG_ZERO)
+        MIPS_INS_LUI, MIPS_OP_REG, MIPS_REG_ZERO, MipsOpValue)
 
 from plasma.lib.ast import (Ast_Branch, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
                             Ast_AndIf)
 from plasma.lib.arch.mips.output import ASSIGNMENT_OPS
-from plasma.lib.arch.mips.utils import PseudoInst, NopInst
+from plasma.lib.arch.mips.utils import PseudoInst, NopInst, PseudoOp
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
@@ -51,11 +51,18 @@ def __blk_search_li(blk):
                     prev_op[1].type == MIPS_OP_IMM and \
                     prev_op[0].value.reg == op[0].value.reg:
 
-                    blk[k] = PseudoInst("li $%s, %s" % (
-                            i.reg_name(op[0].value.reg),
-                            hex((prev_op[1].value.imm << 16) + op[2].value.imm)),
-                            [prev_i, i])
+                    op1 = op[0]
+                    op2 = PseudoOp(MIPS_OP_IMM, 
+                            (prev_op[1].value.imm << 16) + op[2].value.imm)
 
+                    op_str = "$%s, %s" % (
+                            i.reg_name(op[0].value.reg),
+                            hex(op2.value.imm))
+
+                    new_i = PseudoInst(i.address, "li", op_str, [prev_i, i])
+                    new_i.operands = [op1, op2]
+
+                    blk[k] = new_i
                     blk[prev_k] = NopInst()
 
             else:
@@ -64,10 +71,18 @@ def __blk_search_li(blk):
                     op[2].type == MIPS_OP_IMM and \
                     op[1].value.reg == MIPS_REG_ZERO:
 
-                    blk[k] = PseudoInst("li $%s, %s" % (
+                    op1 = op[0]
+                    op2 = PseudoOp(MIPS_OP_IMM, op[2].value.imm)
+
+                    op_str = "$%s, %s" % (
                             i.reg_name(op[0].value.reg),
-                            op[2].value.imm),
-                            [i])
+                            hex(op2.value.imm))
+
+                    new_i = PseudoInst(i.address, "li", op_str, [i])
+                    new_i.operands = [op1, op2]
+
+                    blk[k] = new_i
+                    blk[prev_k] = NopInst()
 
         prev_k = k
         prev_i = i
