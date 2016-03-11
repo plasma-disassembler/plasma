@@ -23,6 +23,10 @@ class ExcArch(Exception):
         self.arch = arch
 
 
+class ExcElf(Exception):
+    pass
+
+
 class ExcFileFormat(Exception):
     pass
 

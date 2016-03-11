@@ -43,7 +43,7 @@ class SectionAbs():
         self.is_exec = is_exec
         self.is_data = is_data
         self.data = data
-        self.big_endian = False
+        self.big_endian = False # set in lib.disassembler
 
     def print_header(self):
         print_no_end(color_section(self.name.ljust(20)))
@@ -113,6 +113,23 @@ class SectionAbs():
                (w[3] << 24) + (w[2] << 16) + (w[1] << 8) + w[0]
 
 
+class SegmentAbs(SectionAbs):
+    def __init__(self, name, start, virt_size, real_size, is_exec, is_data,
+                 data, file_offset, big_endian):
+        self.name = name
+        self.start = start
+        self.virt_size = virt_size
+        self.real_size = real_size
+        self.end = start + virt_size - 1
+        self.real_end = start + real_size - 1
+        self.is_exec = is_exec
+        self.is_data = is_data
+        self.file_offset = file_offset
+        self.data = data
+        self.big_endian = big_endian
+
+
+
 class Binary(object):
     def __init__(self, db, filename, raw_type=None, raw_base=None, raw_big_endian=None):
         self.__binary = None
@@ -126,6 +143,14 @@ class Binary(object):
 
         self._abs_sections = {} # start section -> SectionAbs
         self._sorted_sections = [] # bisect list, contains section start address
+
+        # for elf
+        self._abs_segments = {}
+        self._sorted_segments = []
+
+        # To be compatible with CLE, used only in ELF
+        self.rebase_addr = 0
+        self.arch = None
 
         if raw_type != None:
             import plasma.lib.fileformat.raw as LIB_RAW
@@ -167,6 +192,18 @@ class Binary(object):
             return None
         start = self._sorted_sections[i - 1]
         s = self._abs_sections[start]
+        if ad <= s.end:
+            return s
+        return None
+
+
+    # for elf
+    def get_segment(self, ad):
+        i = bisect.bisect_right(self._sorted_segments, ad)
+        if not i:
+            return None
+        start = self._sorted_segments[i - 1]
+        s = self._abs_segments[start]
         if ad <= s.end:
             return s
         return None
@@ -303,17 +340,10 @@ class Binary(object):
         return 0
 
 
-    # Wrappers to the real class
-
-
-    def load_symbols(self):
-        start = time()
-        self.__binary.load_static_sym()
-        self.__binary.load_dyn_sym()
-        self.__demangle_symbols()
-        elapsed = time()
-        elapsed = elapsed - start
-        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+    def load_section_names(self):
+        # Used for the auto-completion
+        for ad, sec in self._abs_sections.items():
+            self.section_names[sec.name] = ad
 
 
     def __demangle_symbols(self):
@@ -346,12 +376,17 @@ class Binary(object):
             self.demangled[n] = ad
 
 
-    def load_section_names(self):
-        self.__binary.load_section_names()
+    # Wrappers to the real class
 
 
-    def section_stream_read(self, addr, size):
-        return self.__binary.section_stream_read(addr, size)
+    def load_symbols(self):
+        start = time()
+        self.__binary.load_static_sym()
+        self.__binary.load_dyn_sym()
+        self.__demangle_symbols()
+        elapsed = time()
+        elapsed = elapsed - start
+        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
 
 
     def get_arch(self):

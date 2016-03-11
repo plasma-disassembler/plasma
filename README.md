@@ -9,7 +9,7 @@ available Python api.
 
 The project is still in big development. You can see the TODO list and some
 documentation on the [wiki](https://github.com/joelpx/plasma/wiki).
-The `Makefile` is used only for checking tests.
+The `Makefile` is only used for checking tests.
 
 It supports :
 * architectures : x86, ARM, MIPS{64} (partially)

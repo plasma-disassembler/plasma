@@ -57,26 +57,12 @@ class Raw:
                 self.raw)
 
 
-    def load_section_names(self):
-        return
-
-
     def load_static_sym(self):
         return
 
 
     def load_dyn_sym(self):
         return
-
-
-    def section_stream_read(self, addr, size):
-        ad = addr - self.raw_base
-        if ad >= len(self.raw) or ad < 0:
-            return b""
-        end = min(self.raw_base - ad + len(self.raw), size)
-        if ad == 0 and end == len(self.raw):
-            return self.raw
-        return self.raw[ad:ad + end]
 
 
     def get_arch(self):

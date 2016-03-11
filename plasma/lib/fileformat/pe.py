@@ -62,14 +62,11 @@ class PE:
             pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS: CAPSTONE.CS_MODE_64,
         }
 
-        self.__sections = {} # start address -> pe section
-
         base = self.pe.OPTIONAL_HEADER.ImageBase
 
         for s in self.pe.sections:
             start = base + s.VirtualAddress
 
-            self.__sections[start] = s
             is_data = self.__section_is_data(s)
             is_exec = self.__section_is_exec(s)
 
@@ -84,14 +81,6 @@ class PE:
                     is_exec,
                     is_data,
                     s.get_data())
-
-
-    def load_section_names(self):
-        # Used for the auto-completion
-        for s in self.pe.sections:
-            name = s.Name.decode().rstrip(' \0')
-            ad = self.pe.OPTIONAL_HEADER.ImageBase + s.VirtualAddress
-            self.classbinary.section_names[name] = ad
 
 
     def load_static_sym(self):
@@ -219,17 +208,6 @@ class PE:
         if s is None:
             return 0
         return s.Characteristics & 0x20000000
-
-
-    def section_stream_read(self, addr, size):
-        s = self.classbinary.get_section(addr)
-        if s is None:
-            return b""
-        s = self.__sections[s.start]
-        base = self.pe.OPTIONAL_HEADER.ImageBase
-        off = addr - base
-        end = base + s.VirtualAddress + s.SizeOfRawData
-        return s.get_data(off, min(size, end - addr))
 
 
     def get_arch(self):

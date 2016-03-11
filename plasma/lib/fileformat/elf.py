@@ -17,15 +17,31 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+##############################################################################
+#                                                                            #
+# This file is inspired/copied and adapted from the project                  #
+# https://github.com/angr/cle/. You can find the LICENSE in the directory    #
+# relocations/.                                                              #
+#                                                                            #
+##############################################################################
+
+# TODO/FIXME : I have to do a cleanup pass. The code from CLE was just ported
+# to work. Some function in relocations/generic may fail, because not every 
+# relocator has been ported.
+
 import struct
 import bisect
 
-from elftools.elf.elffile import ELFFile
+from elftools.elf.elffile import (ELFFile, SymbolTableSection,
+        StringTableSection, RelocationSection)
 from elftools.elf.sections import NullSection
-from elftools.elf.constants import SH_FLAGS
+from elftools.elf.constants import SH_FLAGS, P_FLAGS
 
-from plasma.lib.utils import warning
-from plasma.lib.fileformat.binary import SectionAbs
+from plasma.lib.utils import warning, die
+from plasma.lib.fileformat.binary import SectionAbs, SegmentAbs
+from plasma.lib.exceptions import ExcElf
+from plasma.lib.fileformat.relocations import get_relocation
+from plasma.lib.fileformat.relocations.generic import MipsGlobalReloc, MipsLocalReloc
 
 
 # SHF_WRITE=0x1
@@ -43,6 +59,7 @@ from plasma.lib.fileformat.binary import SectionAbs
 # SHF_MASKPROC=0xf0000000
 
 
+
 class ELF:
     def __init__(self, db, classbinary, filename):
         import capstone as CAPSTONE
@@ -51,6 +68,11 @@ class ELF:
         self.elf = ELFFile(fd)
         self.classbinary = classbinary
         self.db = db
+
+        self.__parsed_reloc_tables = set()
+        self.dtags = {}
+        self.jmprel = []
+        self.dynamic_seg = None
 
         self.arch_lookup = {
             "x86": CAPSTONE.CS_ARCH_X86,
@@ -69,24 +91,67 @@ class ELF:
             }
         }
 
-        self.__sections = {} # start address -> elf section
+        self.classbinary.arch = self.elf.get_machine_arch()
 
+        arch, mode = self.get_arch()
+
+        if arch == CAPSTONE.CS_ARCH_MIPS:
+            if mode & CAPSTONE.CS_MODE_MIPS32:
+                self.dynamic_tag_translation = {
+                    0x70000001: "DT_MIPS_RLD_VERSION",
+                    0x70000005: "DT_MIPS_FLAGS",
+                    0x70000006: "DT_MIPS_BASE_ADDRESS",
+                    0x7000000a: "DT_MIPS_LOCAL_GOTNO",
+                    0x70000011: "DT_MIPS_SYMTABNO",
+                    0x70000012: "DT_MIPS_UNREFEXTNO",
+                    0x70000013: "DT_MIPS_GOTSYM",
+                    0x70000016: "DT_MIPS_RLD_MAP",
+                    0x70000032: "DT_MIPS_PLTGOT"
+                }
+                self.nbytes = 4
+                self.classbinary.arch += "32"
+            elif mode & CAPSTONE.CS_MODE_MIPS64:
+                self.dynamic_tag_translation = {
+                    0x70000001: "DT_MIPS_RLD_VERSION",
+                    0x70000005: "DT_MIPS_FLAGS",
+                    0x70000006: "DT_MIPS_BASE_ADDRESS",
+                    0x7000000a: "DT_MIPS_LOCAL_GOTNO",
+                    0x70000011: "DT_MIPS_SYMTABNO",
+                    0x70000012: "DT_MIPS_UNREFEXTNO",
+                    0x70000013: "DT_MIPS_GOTSYM",
+                    0x70000016: "DT_MIPS_RLD_MAP"
+                }
+                self.nbytes = 8
+                self.classbinary.arch += "64"
+        else:
+            self.dynamic_tag_translation = {}
+            if arch == CAPSTONE.CS_ARCH_ARM:
+                self.nbytes = 4
+            elif arch == CAPSTONE.CS_ARCH_X86:
+                if mode & CAPSTONE.CS_MODE_32:
+                    self.nbytes = 4
+                elif mode & CAPSTONE.CS_MODE_64:
+                    self.nbytes = 8
+
+        # Load sections
         for s in self.elf.iter_sections():
             if not s.name:
                 continue
 
+            # Keep only sections R|W|X
+            # TODO : is it sufficiant ?
+            if s.header.sh_flags & 0xf == 0:
+                continue
+
+            name = s.name.decode()
             start = s.header.sh_addr
-
-            if s.header.sh_flags & 0xf != 0:
-                bisect.insort_left(classbinary._sorted_sections, start)
-
-            self.__sections[start] = s
+            bisect.insort_left(classbinary._sorted_sections, start)
             is_data = self.__section_is_data(s)
             is_exec = self.__section_is_exec(s)
             data = s.data()
 
             classbinary._abs_sections[start] = SectionAbs(
-                    s.name.decode(),
+                    name,
                     start,
                     s.header.sh_size,
                     len(data),
@@ -94,14 +159,292 @@ class ELF:
                     is_data,
                     data)
 
+        # Load segments
+        rename_counter = 1
+        seen = set()
+        for seg in self.elf.iter_segments():
+            if seg.header.p_type == "PT_DYNAMIC":
+                self.dynamic_seg = seg
 
-    def load_section_names(self):
-        # Used for the auto-completion
-        for s in self.elf.iter_sections():
-            if s.header.sh_flags & 0xf != 0:
-                ad = s.header.sh_addr
-                name = s.name.decode()
-                self.classbinary.section_names[name] = ad
+            if seg.header.p_type != "PT_LOAD":
+                continue
+
+            name = seg.header.p_type
+            if name in seen:
+                name += "_%d" % rename_counter
+                rename_counter += 1
+
+            seen.add(name)
+            start = seg.header.p_vaddr
+            bisect.insort_left(classbinary._sorted_segments, start)
+
+            is_data = self.__segment_is_data(seg)
+            is_exec = self.__segment_is_exec(seg)
+            data = seg.data()
+
+            classbinary._abs_segments[start] = SegmentAbs(
+                    name,
+                    start,
+                    seg.header.p_memsz,
+                    len(data),
+                    is_exec,
+                    is_data,
+                    data,
+                    seg.header.p_offset,
+                    not self.elf.little_endian)
+
+        # No section headers, we add segments in sections
+        if len(classbinary._abs_sections) == 0:
+            classbinary._abs_sections = classbinary._abs_segments
+            classbinary._sorted_sections = classbinary._sorted_segments
+
+
+    def read_addr_at(self, ad):
+        seg = self.classbinary.get_segment(ad)
+        if self.nbytes == 4:
+            return seg.read_dword(ad)
+        else:
+            return seg.read_qword(ad)
+
+
+    def translate_dynamic_tag(self, tag):
+        if isinstance(tag, int):
+            return self.dynamic_tag_translation[tag]
+        return tag
+
+
+    def get_offset(self, ad):
+        seg = self.classbinary.get_segment(ad)
+        return seg.file_offset + ad - seg.start
+
+
+    def load_dyn_sym(self):
+        if self.dynamic_seg is None:
+            return
+
+        self.dtags = {}
+
+        for tag in self.dynamic_seg.iter_tags():
+            # Create a dictionary, mapping DT_* strings to their values
+            tagstr = self.translate_dynamic_tag(tag.entry.d_tag)
+            self.dtags[tagstr] = tag.entry.d_val
+
+        # None of the following things make sense without a string table
+        if "DT_STRTAB" not in self.dtags:
+            return
+
+        # To handle binaries without section headers, we need to hack around
+        # pyreadelf's assumptions make our own string table
+        fakestrtabheader = {
+            "sh_offset": self.get_offset(self.dtags["DT_STRTAB"]),
+        }
+        strtab = StringTableSection(
+                fakestrtabheader, "strtab_plasma", self.elf.stream)
+
+        # ...
+        # Here in CLE was checked the DT_SONAME 
+        # ...
+
+        # None of the following structures can be used without a symbol table
+        if "DT_SYMTAB" not in self.dtags or "DT_SYMENT" not in self.dtags:
+            return
+
+        # Construct our own symbol table to hack around pyreadelf
+        # assuming section headers are around
+        fakesymtabheader = {
+            "sh_offset": self.get_offset(self.dtags["DT_SYMTAB"]),
+            "sh_entsize": self.dtags["DT_SYMENT"],
+            "sh_size": 0
+        } # bogus size: no iteration allowed
+        self.dynsym = SymbolTableSection(
+                fakesymtabheader, "symtab_plasma", self.elf.stream,
+                self.elf, strtab)
+
+        # TODO
+        # mips' relocations are absolutely screwed up, handle some of them here.
+        self.__relocate_mips()
+
+        # perform a lot of checks to figure out what kind of relocation
+        # tables are around
+        rela_type = None
+        if "DT_PLTREL" in self.dtags:
+            if self.dtags["DT_PLTREL"] == 7:
+                rela_type = "RELA"
+                relentsz = self.elf.structs.Elf_Rela.sizeof()
+            elif self.dtags["DT_PLTREL"] == 17:
+                rela_type = "REL"
+                relentsz = self.elf.structs.Elf_Rel.sizeof()
+            else:
+                raise ExcElf("DT_PLTREL is not REL or RELA?")
+        else:
+            if "DT_RELA" in self.dtags:
+                rela_type = "RELA"
+                relentsz = self.elf.structs.Elf_Rela.sizeof()
+            elif "DT_REL" in self.dtags:
+                rela_type = "REL"
+                relentsz = self.elf.structs.Elf_Rel.sizeof()
+            else:
+                return
+
+        # try to parse relocations out of a table of type DT_REL{,A}
+        if "DT_" + rela_type in self.dtags:
+            reloffset = self.dtags["DT_" + rela_type]
+            relsz = self.dtags["DT_" + rela_type + "SZ"]
+            fakerelheader = {
+                "sh_offset": self.get_offset(reloffset),
+                "sh_type": "SHT_" + rela_type,
+                "sh_entsize": relentsz,
+                "sh_size": relsz
+            }
+            reloc_sec = RelocationSection(
+                    fakerelheader, "reloc_plasma",
+                    self.elf.stream, self.elf)
+            self.__register_relocs(reloc_sec)
+
+        # try to parse relocations out of a table of type DT_JMPREL
+        if "DT_JMPREL" in self.dtags:
+            jmpreloffset = self.dtags["DT_JMPREL"]
+            jmprelsz = self.dtags["DT_PLTRELSZ"]
+            fakejmprelheader = {
+                "sh_offset": self.get_offset(jmpreloffset),
+                "sh_type": "SHT_" + rela_type,
+                "sh_entsize": relentsz,
+                "sh_size": jmprelsz
+            }
+            jmprel_sec = RelocationSection(
+                    fakejmprelheader, "jmprel_plasma",
+                    self.elf.stream, self.elf)
+
+            self.jmprel = self.__register_relocs(jmprel_sec)
+
+        self.__resolve_plt()
+
+
+    def __relocate_mips(self):
+        if 'DT_MIPS_BASE_ADDRESS' not in self.dtags:
+            return
+        # The MIPS GOT is an array of addresses, simple as that.
+        got_local_num = self.dtags['DT_MIPS_LOCAL_GOTNO'] # number of local GOT entries
+        # a.k.a the index of the first global GOT entry
+        symtab_got_idx = self.dtags['DT_MIPS_GOTSYM']   # index of first symbol w/ GOT entry
+        symbol_count = self.dtags['DT_MIPS_SYMTABNO']
+        gotaddr = self.dtags['DT_PLTGOT']
+        wordsize = self.nbytes
+
+        for i in range(2, got_local_num):
+            symbol = self.dynsym.get_symbol(i)
+            reloc = MipsLocalReloc(self.classbinary, symbol, gotaddr + i * wordsize)
+            self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+
+        for i in range(symbol_count - symtab_got_idx):
+            symbol = self.dynsym.get_symbol(i + symtab_got_idx)
+            reloc = MipsGlobalReloc(self.classbinary, symbol,
+                            gotaddr + (i + got_local_num) * wordsize)
+            self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+            self.jmprel.append(reloc)
+
+
+    def __resolve_plt(self):
+        # For PPC32 and PPC64 the address to save is 'got'
+
+        if self.classbinary.arch in ('X86', 'x64'):
+            for rel in self.jmprel:
+                got = rel.addr
+                # 0x6 is the size of the plt's jmpq instruction in x86_64
+                ad = self.read_addr_at(got) - 6
+                self.__save_symbol(rel, ad)
+
+        elif self.classbinary.arch in ('ARM', 'AARCH64', 'MIPS32', 'MIPS64'):
+            for rel in self.jmprel:
+                got = rel.addr
+                ad = self.read_addr_at(got)
+                self.__save_symbol(rel, ad)
+
+
+    def __save_symbol(self, rel, ad):
+        if ad == 0:
+            return
+
+        name = rel.symbol.name.decode()
+
+        if name in self.classbinary.symbols:
+            name = self.classbinary.rename_sym(name)
+
+        if rel.is_import:
+            self.classbinary.imports[ad] = True
+
+        if self.is_function(rel.symbol):
+            self.db.functions[ad] = None
+
+        self.classbinary.reverse_symbols[ad] = name
+        self.classbinary.symbols[name] = ad
+
+
+    def __register_relocs(self, section):
+        if section.header["sh_offset"] in self.__parsed_reloc_tables:
+            return
+        self.__parsed_reloc_tables.add(section.header["sh_offset"])
+
+        relocs = []
+        for r in section.iter_relocations():
+            # MIPS64 is just plain old fucked up
+            # https://www.sourceware.org/ml/libc-alpha/2003-03/msg00153.html
+            if self.classbinary.arch == "MIPS64":
+                # Little endian addionally needs one of its fields reversed... WHY
+                if self.elf.little_endian:
+                    r.entry.r_info_sym = r.entry.r_info & 0xFFFFFFFF
+                    r.entry.r_info = struct.unpack(">Q", struct.pack("<Q",
+                            r.entry.r_info))[0]
+
+                type_1 = r.entry.r_info & 0xFF
+                type_2 = r.entry.r_info >> 8 & 0xFF
+                type_3 = r.entry.r_info >> 16 & 0xFF
+                extra_sym = r.entry.r_info >> 24 & 0xFF
+                if extra_sym != 0:
+                    die("r_info_extra_sym is nonzero??? PLEASE SEND HELP")
+
+                sym = self.dynsym.get_symbol(r.entry.r_info_sym)
+
+                if type_1 != 0:
+                    r.entry.r_info_type = type_1
+                    reloc = self._make_reloc(r, sym)
+                    if reloc is not None:
+                        relocs.append(reloc)
+                        self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+                if type_2 != 0:
+                    r.entry.r_info_type = type_2
+                    reloc = self._make_reloc(r, sym)
+                    if reloc is not None:
+                        relocs.append(reloc)
+                        self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+                if type_3 != 0:
+                    r.entry.r_info_type = type_3
+                    reloc = self._make_reloc(r, sym)
+                    if reloc is not None:
+                        relocs.append(reloc)
+                        self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+            else:
+                if "sh_link" in section.header:
+                    symtab = self.reader.get_section(section.header["sh_link"])
+                    sym = symtab.get_symbol(r.entry.r_info_sym)
+                else:
+                    sym = self.dynsym.get_symbol(r.entry.r_info_sym)
+
+                reloc = self._make_reloc(r, sym)
+                if reloc is not None:
+                    relocs.append(reloc)
+                    self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+        return relocs
+
+
+    def _make_reloc(self, reloc_sec, symbol):
+        addend = reloc_sec.entry.r_addend if reloc_sec.is_RELA() else None
+        RelocClass = get_relocation(self.classbinary.arch,
+                                    reloc_sec.entry.r_info_type)
+        if RelocClass is None:
+            return None
+        return RelocClass(self.classbinary, symbol,
+                          reloc_sec.entry.r_offset, addend)
 
 
     def load_static_sym(self):
@@ -127,131 +470,8 @@ class ELF:
                     self.classbinary.reverse_symbols[ad] = name
                     self.classbinary.symbols[name] = ad
 
-                    if sy.entry.st_info.type == "STT_FUNC":
+                    if self.is_function(sy):
                         self.db.functions[ad] = None
-
-
-    def __x86_resolve_reloc(self, rel, symtab, plt, got_plt, addr_size):
-        # Save all got offsets with the corresponding symbol
-        got_off = {}
-        for r in rel.iter_relocations():
-            sym = symtab.get_symbol(r.entry.r_info_sym)
-            name = sym.name.decode()
-            ad = r.entry.r_offset
-            if name and ad and sym.entry.st_info.type == "STT_FUNC":
-                got_off[ad] = name
-
-        # .got.plt is an array of addresses to the .plt
-
-        data = got_plt.data()
-
-        unpack_str = "<" if self.elf.little_endian else ">"
-        unpack_str += str(int(len(data) / addr_size))
-        unpack_str += "Q" if addr_size == 8 else "I"
-
-        got_values = struct.unpack(unpack_str, data)
-        plt_data = plt.data()
-        wrong_jump_opcode = False
-        opcode_jmp = [b"\xff\x25", b"\xff\xa3"]
-
-        # Read the .got.plt and for each address in the plt, substract 6
-        # to go at the begining of the plt entry.
-
-        off = got_plt.header.sh_addr - addr_size
-
-        for jump_in_plt in got_values:
-            off += addr_size
-
-            if off in got_off:
-                plt_entry_start = jump_in_plt - 6
-
-                if self.classbinary.is_address(ad):
-                    plt_off = plt_entry_start - plt.header.sh_addr
-
-                    # Check "jmp *(ADDR)" opcode.
-                    if plt_data[plt_off:plt_off+2] not in opcode_jmp:
-                        wrong_jump_opcode = True
-                        continue
-
-                    name = got_off[off]
-                    if name in self.classbinary.symbols:
-                        continue
-
-                    self.classbinary.imports[plt_entry_start] = True
-                    self.classbinary.reverse_symbols[plt_entry_start] = name
-                    self.classbinary.symbols[name] = plt_entry_start
-                    self.db.functions[plt_entry_start] = None
-
-        if wrong_jump_opcode:
-            warning("I'm expecting to see a jmp *(ADDR) on each plt entry")
-            warning("opcode \\xff\\x25 was not found, please report")
-
-
-    def __resolve_symtab(self, rel, symtab, arch):
-        # TODO: don't know why st_value is not 0 like x86
-        # In some executables I've tested, it seems that st_value
-        # is the address of the plt entry
-
-        # TODO: really useful to iter on relocations and get the symbol
-        # from the symtab ?
-        # for r in rel.iter_relocations():
-            # sym = symtab.get_symbol(r.entry.r_info_sym)
-
-        for sym in symtab.iter_symbols():
-            ad = sym.entry.st_value
-            if ad != 0:
-                name = sym.name.decode()
-
-                if name in self.classbinary.symbols:
-                    continue
-
-                if self.classbinary.is_address(ad):
-                    self.classbinary.imports[ad] = True
-                    self.classbinary.reverse_symbols[ad] = name
-                    self.classbinary.symbols[name] = ad
-
-                    if sym.entry.st_info.type == "STT_FUNC":
-                        self.db.functions[ad] = None
-
-
-    def __iter_reloc(self):
-        for s in self.elf.iter_sections():
-            if s.header.sh_type in ["SHT_RELA", "SHT_REL"]:
-                symtab = self.elf.get_section(s.header.sh_link)
-                if symtab is None:
-                    continue
-                yield (s, symtab)
-
-
-    def load_dyn_sym(self):
-        arch = self.elf.get_machine_arch()
-
-        if arch == "ARM" or arch == "MIPS":
-            for (rel, symtab) in self.__iter_reloc():
-                self.__resolve_symtab(rel, symtab, arch)
-            return
-
-        # x86/x64
-
-        # TODO: .plt can be renamed ?
-        plt = self.elf.get_section_by_name(b".plt")
-
-        if plt is None:
-            warning(".plt section not found")
-            return
-
-        # TODO: .got.plt can be renamed or may be removed ?
-        got_plt = self.elf.get_section_by_name(b".got.plt")
-        addr_size = 8 if arch == "x64" else 4
-
-        if got_plt is None:
-            warning(".got.plt section not found")
-            return
-
-        for (rel, symtab) in self.__iter_reloc():
-            if isinstance(symtab, NullSection):
-                continue
-            self.__x86_resolve_reloc(rel, symtab, plt, got_plt, addr_size)
 
 
     def __section_is_data(self, s):
@@ -260,20 +480,20 @@ class ELF:
 
 
     def __section_is_exec(self, s):
-        if s is None:
-            return 0
         return s.header.sh_flags & SH_FLAGS.SHF_EXECINSTR
 
 
-    def section_stream_read(self, addr, size):
-        s = self.classbinary.get_section(addr)
-        if s is None:
-            return b""
-        s = self.__sections[s.start]
-        off = addr - s.header.sh_addr
-        end = s.header.sh_addr + s.header.sh_size
-        s.stream.seek(s.header.sh_offset + off)
-        return s.stream.read(min(size, end - addr))
+    def __segment_is_data(self, s):
+        mask = P_FLAGS.PF_W | P_FLAGS.PF_R
+        return s.header.p_flags & mask and not self.__segment_is_exec(s)
+
+
+    def __segment_is_exec(self, s):
+        return s.header.p_flags & P_FLAGS.PF_X
+
+
+    def is_function(self, sy):
+        return sy.entry.st_info.type == "STT_FUNC"
 
 
     def get_arch(self):
