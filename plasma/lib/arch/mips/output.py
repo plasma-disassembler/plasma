@@ -178,7 +178,7 @@ class Output(OutputAbs):
                     self._operand(i, 0)
                     self._add(" = ")
                     self._operand(i, 1)
-                    self._add(" << 8")
+                    self._add(" << 16")
 
                 elif i.id == MIPS_INS_MOVE:
                     self._operand(i, 0)
