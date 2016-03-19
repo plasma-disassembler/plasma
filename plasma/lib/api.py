@@ -22,6 +22,8 @@ from queue import Queue
 from plasma.lib.memory import (MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD,
                                 MEM_ASCII, MEM_OFFSET, MEM_UNK, MEM_FUNC,
                                 MEM_CODE)
+from plasma.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
+                                 FUNC_VARS, VAR_NAME)
 
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
@@ -60,9 +62,10 @@ class Api():
         if ad in self.__db.functions:
             # TODO : undefine all func_id of each instructions
             func_obj = self.__db.functions[ad]
-            del self.__db.end_functions[func_obj[FUNC_END]]
-            del self.__db.func_id[func_obj[FUNC_ID]]
             del self.__db.functions[ad]
+            if func_obj is not None:
+                del self.__db.end_functions[func_obj[FUNC_END]]
+                del self.__db.func_id[func_obj[FUNC_ID]]
 
 
     def set_code(self, ad):
