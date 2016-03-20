@@ -21,7 +21,7 @@ It supports :
 * python >= 3.4
 * [capstone](https://github.com/aquynh/capstone)
 * [python-pyelftools](https://github.com/eliben/pyelftools)
-* [pefile](https://github.com/mlaferrera/python3-pefile)
+* [pefile](https://github.com/erocarrera/pefile) + python3-future
 * [python-msgpack](https://github.com/msgpack/msgpack-python) >= 0.4.6
 * `c++filt` (available in the binutils Linux package)
 * terminal with 256 colors (if not, use the option `--nocolor`)

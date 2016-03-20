@@ -29,13 +29,9 @@ from plasma.lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
 from plasma.lib.fileformat.binary import SectionAbs
 from plasma.lib.utils import warning
 
-try:
-    # This folder is not present in simonzack/pefile-py3k
-    import ordlookup
-except:
+if not pefile.__version__.startswith("201"):
     warning("you should use the most recent port of pefile")
-    warning("https://github.com/mlaferrera/python3-pefile")
-    pass
+    warning("https://github.com/erocarrera/pefile")
 
 
 class PE:
@@ -104,9 +100,6 @@ class PE:
                     sym.sym.name.decode() if sym.sym.addr.zeroes != 0 else \
                     self.pe.get_string_at_offset(string_table_off + \
                                                  sym.sym.addr.offset)
-
-                # print("%d   %s" % (sym.scnum, name))
-
                 ad = sym.value + base
 
                 if self.classbinary.is_address(ad):
@@ -140,6 +133,12 @@ class PE:
                     continue
 
                 name = imp.name
+
+                # erocarrera/pefile returns a bytes but mlaferrera/prefile
+                # returns a string.
+                if isinstance(name, bytes):
+                    name = name.decode()
+
                 if name in self.classbinary.symbols:
                     continue
                     name = self.classbinary.rename_sym(name)
