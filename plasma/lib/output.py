@@ -35,7 +35,7 @@ class OutputAbs():
         self.lines = [] # each line contains the entire string
         self.line_addr = {} # line -> address
         self.addr_line = {} # address -> line
-        self.index_end_inst = {} # line -> (char_index, token_index)
+        self.idx_tok_inline_comm = {} # line -> (char_index, token_index)
         self.curr_index = 0
 
         self.section_prefix = False
@@ -60,13 +60,9 @@ class OutputAbs():
         return "%s %s" % (i.mnemonic, i.op_str)
 
 
-    def inst_end_here(self):
-        # save a tuple (a, b)
-        # a: index (in self.lines[i]) of the last character of an instruction.
-        # b: index (in self.token_lines[i]) of the last token.
+    def inline_comm_starts_here(self):
         line = len(self.token_lines)-1
-        self.index_end_inst[line] = \
-            (self.curr_index, len(self.token_lines[line]))
+        self.idx_tok_inline_comm[line] = self.curr_index
 
     def is_last_2_line_empty(self):
         if len(self.lines) < 2:
@@ -309,15 +305,16 @@ class OutputAbs():
 
 
     def _inline_comment(self, i):
-        self.inst_end_here()
-        if i.address in self._dis.user_inline_comments:
-            self._add(" ")
-            self._user_comment("; %s" %
-                    self._dis.user_inline_comments[i.address])
+        # A user comment should always be at the end of the line
+
         if i.address in self._dis.internal_inline_comments:
-            self._add(" ")
-            self._internal_comment("; %s" %
-                    self._dis.internal_inline_comments[i.address])
+            self._internal_comment(" ; ")
+            self._internal_comment(self._dis.internal_inline_comments[i.address])
+
+        if i.address in self._dis.user_inline_comments:
+            self._user_comment(" ; ")
+            self.inline_comm_starts_here()
+            self._user_comment(self._dis.user_inline_comments[i.address])
 
 
     # Only used when --nocomment is enabled and a jump point to this instruction
@@ -586,8 +583,8 @@ class OutputAbs():
         for i, l in enumerate(self.lines):
             self.lines[i] = "".join(self.lines[i])
             sz = len(self.lines[i])
-            if i not in self.index_end_inst:
-                self.index_end_inst[i] = (sz + 1, len(l))
+            if i not in self.idx_tok_inline_comm:
+                self.idx_tok_inline_comm[i] = (sz + 1, len(l))
 
 
     def _asm_inst(self, i, tab=0, prefix=""):
@@ -656,7 +653,6 @@ class OutputAbs():
                     # WARNING: it assumes that the last operand is the address
                     if i.operands[-1].type != self.OP_IMM:
                         self._operand(i, -1, force_dont_print_data=True)
-                        self.inst_end_here()
                         if self.ARCH_UTILS.is_uncond_jump(i) and \
                                 not self.ctx.is_dump and \
                                 i.address not in self._dis.jmptables:

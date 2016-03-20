@@ -362,36 +362,48 @@ class Visual(Window):
             (h, w) = self.screen.getmaxyx()
             self.view_main_redraw(h, w)
 
-        # xbegin is the first index just after all operands
-        # So we need to add 1 to be at the index of ;
-        xbegin, idx_token = self.output.index_end_inst[line]
+        tok_line = list(self.output.token_lines[line])
+
+        # A user comment should always be at the end of the line
+
+        # Get coords of the user comment
+        if addr in self.db.user_inline_comments:
+            xbegin = self.output.idx_tok_inline_comm[line]
+            tok_line.pop(-1)
+            text = self.db.user_inline_comments[addr]
+            is_new_token = False
+        else:
+            tok_line.append((" ; ", COLOR_USER_COMMENT.val,
+                    COLOR_USER_COMMENT.bold))
+            xbegin = len(self.output.lines[line]) + 3
+            text = ""
+            is_new_token = True
 
         self.status_bar("-- INLINE COMMENT --", h)
 
-        if addr in self.db.user_inline_comments:
-            text = self.db.user_inline_comments[addr]
-        else:
-            text = ""
-
-        is_new_token = addr not in self.db.user_inline_comments
-
+        idx_token = len(tok_line)
         ed = InlineEd(self, h, w, line, xbegin, idx_token, text,
-                      is_new_token, COLOR_USER_COMMENT.val,
-                      self.token_lines[line], prefix="; ")
+                      COLOR_USER_COMMENT.val, tok_line)
 
         ret = ed.start_view(self.screen)
 
         if ret:
             self.db.modified = True
-
             if ed.text:
                 self.db.user_inline_comments[addr] = ed.text
-                if is_new_token:
-                    self.output.index_end_inst[line] = \
-                            (xbegin, idx_token)
+                o = (ed.text, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold)
+                ed.tok_line.append(o)
 
-            elif not is_new_token:
-                del self.db.user_inline_comments[addr]
+                # Only update token_lines is necessary
+                self.token_lines[line] = ed.tok_line
+                self.output.idx_tok_inline_comm[line] = xbegin
+
+            else:
+                ed.tok_line.pop(-1) # remove the " ; "
+                self.token_lines[line] = ed.tok_line
+
+                if not is_new_token:
+                    del self.db.user_inline_comments[addr]
 
         return True
 
@@ -432,15 +444,17 @@ class Visual(Window):
 
             for ad, l in self.output.addr_line.items():
                 o.line_addr[nb_new_lines + l] = ad
-                o.index_end_inst[nb_new_lines + l] = self.output.index_end_inst[l]
                 o.addr_line[ad] = nb_new_lines + l
+                if l in self.output.idx_tok_inline_comm:
+                    o.idx_tok_inline_comm[nb_new_lines + l] = \
+                            self.output.idx_tok_inline_comm[l]
 
             self.output.line_addr.clear()
             self.output.addr_line.clear()
-            self.output.index_end_inst.clear()
+            self.output.idx_tok_inline_comm.clear()
             self.output.line_addr = o.line_addr
             self.output.addr_line = o.addr_line
-            self.output.index_end_inst = o.index_end_inst
+            self.output.idx_tok_inline_comm = o.idx_tok_inline_comm
             self.token_lines = self.output.token_lines
 
         return wy
@@ -472,10 +486,12 @@ class Visual(Window):
             for l in o.line_addr:
                 self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
                 self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
-                self.output.index_end_inst[nb_new_lines + l] = o.index_end_inst[l]
+                if l in self.o.idx_tok_inline_comm:
+                    self.output.idx_tok_inline_comm[nb_new_lines + l] = \
+                            o.idx_tok_inline_comm[l]
 
 
-    # New mapping
+    # New mappings
 
 
     def main_k_prev_paragraph(self, h, w):

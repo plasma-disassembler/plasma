@@ -550,8 +550,7 @@ class Window():
         from plasma.lib.ui.inlineed import InlineEd
         (h, w) = screen.getmaxyx()
 
-        ed = InlineEd(self, h, w, 0, 0, 0, text,
-                      True, 0, [], do_nothing=True)
+        ed = InlineEd(self, h, w, 0, 0, 0, text, 0, [])
 
         # TODO: fix self.cursor_x >= w
         self.cursor_x = len(text)
@@ -562,4 +561,4 @@ class Window():
         ret = ed.start_view(screen)
         if not ret:
             return ""
-        return "".join(ed.text)
+        return ed.text
