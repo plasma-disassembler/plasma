@@ -486,7 +486,7 @@ class Visual(Window):
             for l in o.line_addr:
                 self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
                 self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
-                if l in self.o.idx_tok_inline_comm:
+                if l in self.output.idx_tok_inline_comm:
                     self.output.idx_tok_inline_comm[nb_new_lines + l] = \
                             o.idx_tok_inline_comm[l]
 
