@@ -363,18 +363,21 @@ class Visual(Window):
             self.view_main_redraw(h, w)
 
         tok_line = list(self.output.token_lines[line])
+        str_line = str(self.output.lines[line])
 
         # A user comment should always be at the end of the line
 
         # Get coords of the user comment
         if addr in self.db.user_inline_comments:
             xbegin = self.output.idx_tok_inline_comm[line]
+            str_line = str_line[:xbegin]
             tok_line.pop(-1)
             text = self.db.user_inline_comments[addr]
             is_new_token = False
         else:
             tok_line.append((" ; ", COLOR_USER_COMMENT.val,
                     COLOR_USER_COMMENT.bold))
+            str_line += " ; "
             xbegin = len(self.output.lines[line]) + 3
             text = ""
             is_new_token = True
@@ -393,14 +396,18 @@ class Visual(Window):
                 self.db.user_inline_comments[addr] = ed.text
                 o = (ed.text, COLOR_USER_COMMENT.val, COLOR_USER_COMMENT.bold)
                 ed.tok_line.append(o)
+                str_line += ed.text
 
-                # Only update token_lines is necessary
-                self.token_lines[line] = ed.tok_line
+                self.output.lines[line] = str_line
+                self.output.token_lines[line] = ed.tok_line
                 self.output.idx_tok_inline_comm[line] = xbegin
 
             else:
                 ed.tok_line.pop(-1) # remove the " ; "
-                self.token_lines[line] = ed.tok_line
+                str_line = str_line[:-3]
+
+                self.output.token_lines[line] = ed.tok_line
+                self.output.lines[line] = str_line
 
                 if not is_new_token:
                     del self.db.user_inline_comments[addr]
