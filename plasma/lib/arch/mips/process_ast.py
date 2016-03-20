@@ -43,7 +43,8 @@ def __blk_search_li(blk):
             op = i.operands
 
             if prev_k != -1 and prev_i.id == MIPS_INS_LUI:
-                if op[0].type == MIPS_OP_REG and \
+                if prev_op is not None and \
+                    op[0].type == MIPS_OP_REG and \
                     op[1].type == MIPS_OP_REG and \
                     op[2].type == MIPS_OP_IMM and \
                     op[0].value.reg == op[1].value.reg and \
