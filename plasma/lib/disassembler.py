@@ -220,6 +220,10 @@ class Disassembler():
         l = 0
         api = ctx.gctx.api
 
+        # For mips: after a jump we add a newline, but for mips we should
+        # add this newline after the prefetch instruction.
+        prefetch_after_branch = False
+
         while 1:
             if ad == s.start:
                 if not o.is_last_2_line_empty():
@@ -257,7 +261,15 @@ class Disassembler():
 
                     o._asm_inst(i)
 
-                    if ad in self.end_functions:
+                    is_end = ad in self.end_functions
+
+                    # mips
+                    if prefetch_after_branch:
+                        prefetch_after_branch = False
+                        if not is_end:
+                            o._new_line()
+
+                    if is_end:
                         for fad in self.end_functions[ad]:
                             sy = api.get_symbol(fad)
                             o._user_comment("; end function %s" % sy)
@@ -265,14 +277,20 @@ class Disassembler():
                         o._new_line()
 
                     elif ARCH_UTILS.is_uncond_jump(i) or ARCH_UTILS.is_ret(i):
-                        o._new_line()
+                        if o.is_mips():
+                            prefetch_after_branch = True
+                        else:
+                            o._new_line()
 
                     elif ARCH_UTILS.is_call(i):
                         op = i.operands[0]
                         if op.type == CS_OP_IMM:
                             imm = unsigned(op.value.imm)
                             if imm in self.functions and self.is_noreturn(imm):
-                                o._new_line()
+                                if o.is_mips():
+                                    prefetch_after_branch = True
+                                else:
+                                    o._new_line()
 
                     ad += i.size
 

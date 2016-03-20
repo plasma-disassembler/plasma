@@ -210,3 +210,7 @@ class Output(OutputAbs):
                 self._add(", ")
                 self._operand(i, k)
                 k += 1
+
+
+    def is_mips(self):
+        return True
