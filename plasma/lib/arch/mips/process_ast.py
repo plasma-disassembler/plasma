@@ -83,7 +83,6 @@ def __blk_search_li(blk):
                     new_i.operands = [op1, op2]
 
                     blk[k] = new_i
-                    blk[prev_k] = NopInst()
 
         prev_k = k
         prev_i = i
