@@ -51,6 +51,7 @@ COMMANDS_ALPHA = [
     "mips_set_gp",
     "py",
     "push_analyze_symbols",
+    "rename",
     "save",
     "sections",
     "sym",
@@ -301,6 +302,16 @@ class Console():
                 "Print all symbols or set a new symbol.",
                 "You can filter symbols by searching the word FILTER.",
                 "If FILTER starts with -, the match is inversed."
+                ]
+            ),
+
+            "rename": Command(
+                2,
+                self.__exec_rename,
+                self.__complete_x,
+                [
+                "OLD_SYM NEW_SYM",
+                "Rename a symbol."
                 ]
             ),
 
@@ -566,6 +577,17 @@ class Console():
                 self.analyzer.msg.put((ad, True, False, False, None))
 
         self.analyzer.msg.put("pass_scan_mem")
+
+
+    def __exec_rename(self, args):
+        if args[1] == args[2]:
+            return
+        ad = self.api.get_addr_from_symbol(args[1])
+        if ad == -1:
+            print("symbol %s not found" % args[1])
+            return
+        self.api.add_symbol(ad, args[2])
+        self.db.modified = True
 
 
     def __exec_sym(self, args):
