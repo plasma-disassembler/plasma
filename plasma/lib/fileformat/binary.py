@@ -23,7 +23,6 @@ import subprocess
 
 from plasma.lib.utils import debug__, print_no_end, get_char, BYTES_PRINTABLE_SET
 from plasma.lib.colors import color_section
-from plasma.lib.exceptions import ExcFileFormat
 
 T_BIN_ELF = 0
 T_BIN_PE  = 1
@@ -131,16 +130,13 @@ class SegmentAbs(SectionAbs):
 
 
 class Binary(object):
-    def __init__(self, db, filename, raw_type=None, raw_base=None, raw_big_endian=None):
-        self.__binary = None
+    def __init__(self):
         self.reverse_symbols = {} # ad -> name
         self.symbols = {} # name -> ad
         self.section_names = {}
         self.demangled = {} # name -> ad
         self.reverse_demangled = {} # ad -> name
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
-        self.type = None
-
         self._abs_sections = {} # start section -> SectionAbs
         self._sorted_sections = [] # bisect list, contains section start address
 
@@ -150,40 +146,10 @@ class Binary(object):
 
         # To be compatible with CLE, used only in ELF
         self.rebase_addr = 0
-        self.arch = None
 
-        if raw_type != None:
-            import plasma.lib.fileformat.raw as LIB_RAW
-            self.__binary = LIB_RAW.Raw(self, filename, raw_type,
-                                        raw_base, raw_big_endian)
-            self.type = T_BIN_RAW
-            return
-
-        start = time()
-        self.load_magic(filename)
-
-        if self.type == T_BIN_ELF:
-            import plasma.lib.fileformat.elf as LIB_ELF
-            self.__binary = LIB_ELF.ELF(db, self, filename)
-        elif self.type == T_BIN_PE:
-            import plasma.lib.fileformat.pe as LIB_PE
-            self.__binary = LIB_PE.PE(db, self, filename)
-        else:
-            raise ExcFileFormat()
-
-        elapsed = time()
-        elapsed = elapsed - start
-        debug__("Binary loaded in %fs" % elapsed)
-
-
-    def load_magic(self, filename):
-        f = open(filename, "rb")
-        magic = f.read(8)
-        if magic.startswith(b"\x7fELF"):
-            self.type = T_BIN_ELF
-        elif magic.startswith(b"MZ"):
-            self.type = T_BIN_PE
-        f.close()
+        # It will be set in Disassembler !
+        self.wordsize = 0
+        self.type = -1
 
 
     def get_section(self, ad):
@@ -346,7 +312,7 @@ class Binary(object):
             self.section_names[sec.name] = ad
 
 
-    def __demangle_symbols(self):
+    def demangle_symbols(self):
         addr = []
         lookup_names = []
         for n, ad in self.symbols.items():
@@ -376,44 +342,17 @@ class Binary(object):
             self.demangled[n] = ad
 
 
-    # Wrappers to the real class
+    def load_static_sym(self):
+        return
 
 
-    def load_symbols(self):
-        start = time()
-        self.__binary.load_static_sym()
-        self.__binary.load_dyn_sym()
-        self.__demangle_symbols()
-        elapsed = time()
-        elapsed = elapsed - start
-        debug__("Found %d symbols in %fs" % (len(self.symbols), elapsed))
+    def load_dyn_sym(self):
+        return
 
 
-    def get_arch(self):
-        return self.__binary.get_arch()
-
-
-    def get_arch_string(self):
-        return self.__binary.get_arch_string()
+    def is_big_endian(self):
+        raise NotImplementedError
 
 
     def get_entry_point(self):
-        return self.__binary.get_entry_point()
-
-
-    # Only for PE !
-
-
-    def pe_reverse_stripped(self, dis, i):
-        return self.__binary.pe_reverse_stripped(dis, i)
-
-
-    def pe_reverse_stripped_list(self, dis, addr_to_analyze):
-        count = 0
-        for ad in addr_to_analyze:
-            i = dis.lazy_disasm(ad)
-            if i is None:
-                continue
-            if self.__binary.pe_reverse_stripped(dis, i):
-                count += 1
-        return count
+        raise NotImplementedError

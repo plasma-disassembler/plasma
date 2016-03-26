@@ -700,7 +700,3 @@ class OutputAbs():
     # Architecture specific output
     def _sub_asm_inst(self, i, tab=0):
         raise NotImplementedError
-
-
-    def is_mips(self):
-        return False

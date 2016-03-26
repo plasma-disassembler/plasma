@@ -25,9 +25,8 @@
 #                                                                            #
 ##############################################################################
 
-# TODO/FIXME : I have to do a cleanup pass. The code from CLE was just ported
-# to work. Some function in relocations/generic may fail, because not every 
-# relocator has been ported.
+# FIXME : The code from CLE was just ported to work. Some function in
+# relocations/generic may fail, because not every relocators have been ported.
 
 import struct
 import bisect
@@ -38,7 +37,7 @@ from elftools.elf.sections import NullSection
 from elftools.elf.constants import SH_FLAGS, P_FLAGS
 
 from plasma.lib.utils import warning, die
-from plasma.lib.fileformat.binary import SectionAbs, SegmentAbs
+from plasma.lib.fileformat.binary import SectionAbs, SegmentAbs, Binary
 from plasma.lib.exceptions import ExcElf
 from plasma.lib.fileformat.relocations import get_relocation
 from plasma.lib.fileformat.relocations.generic import MipsGlobalReloc, MipsLocalReloc
@@ -60,13 +59,12 @@ from plasma.lib.fileformat.relocations.generic import MipsGlobalReloc, MipsLocal
 
 
 
-class ELF:
-    def __init__(self, db, classbinary, filename):
-        import capstone as CAPSTONE
+class ELF(Binary):
+    def __init__(self, db, filename):
+        Binary.__init__(self)
 
         fd = open(filename, "rb")
         self.elf = ELFFile(fd)
-        self.classbinary = classbinary
         self.db = db
 
         self.__parsed_reloc_tables = set()
@@ -74,64 +72,35 @@ class ELF:
         self.jmprel = []
         self.dynamic_seg = None
 
-        self.arch_lookup = {
-            "x86": CAPSTONE.CS_ARCH_X86,
-            "x64": CAPSTONE.CS_ARCH_X86,
-            "ARM": CAPSTONE.CS_ARCH_ARM,
-            "MIPS": CAPSTONE.CS_ARCH_MIPS,
-        }
+        self.set_arch_name()
 
-        self.arch_mode_lookup = {
-            "x86": CAPSTONE.CS_MODE_32,
-            "x64": CAPSTONE.CS_MODE_64,
-            "ARM": CAPSTONE.CS_ARCH_ARM,
-            "MIPS": {
-                32: CAPSTONE.CS_MODE_MIPS32,
-                64: CAPSTONE.CS_MODE_MIPS64,
+        if self.arch == "MIPS32":
+            self.dynamic_tag_translation = {
+                0x70000001: "DT_MIPS_RLD_VERSION",
+                0x70000005: "DT_MIPS_FLAGS",
+                0x70000006: "DT_MIPS_BASE_ADDRESS",
+                0x7000000a: "DT_MIPS_LOCAL_GOTNO",
+                0x70000011: "DT_MIPS_SYMTABNO",
+                0x70000012: "DT_MIPS_UNREFEXTNO",
+                0x70000013: "DT_MIPS_GOTSYM",
+                0x70000016: "DT_MIPS_RLD_MAP",
+                0x70000032: "DT_MIPS_PLTGOT"
             }
-        }
-
-        self.classbinary.arch = self.elf.get_machine_arch()
-
-        arch, mode = self.get_arch()
-
-        if arch == CAPSTONE.CS_ARCH_MIPS:
-            if mode & CAPSTONE.CS_MODE_MIPS32:
-                self.dynamic_tag_translation = {
-                    0x70000001: "DT_MIPS_RLD_VERSION",
-                    0x70000005: "DT_MIPS_FLAGS",
-                    0x70000006: "DT_MIPS_BASE_ADDRESS",
-                    0x7000000a: "DT_MIPS_LOCAL_GOTNO",
-                    0x70000011: "DT_MIPS_SYMTABNO",
-                    0x70000012: "DT_MIPS_UNREFEXTNO",
-                    0x70000013: "DT_MIPS_GOTSYM",
-                    0x70000016: "DT_MIPS_RLD_MAP",
-                    0x70000032: "DT_MIPS_PLTGOT"
-                }
-                self.nbytes = 4
-                self.classbinary.arch += "32"
-            elif mode & CAPSTONE.CS_MODE_MIPS64:
-                self.dynamic_tag_translation = {
-                    0x70000001: "DT_MIPS_RLD_VERSION",
-                    0x70000005: "DT_MIPS_FLAGS",
-                    0x70000006: "DT_MIPS_BASE_ADDRESS",
-                    0x7000000a: "DT_MIPS_LOCAL_GOTNO",
-                    0x70000011: "DT_MIPS_SYMTABNO",
-                    0x70000012: "DT_MIPS_UNREFEXTNO",
-                    0x70000013: "DT_MIPS_GOTSYM",
-                    0x70000016: "DT_MIPS_RLD_MAP"
-                }
-                self.nbytes = 8
-                self.classbinary.arch += "64"
+        elif self.arch == "MIPS64":
+            self.dynamic_tag_translation = {
+                0x70000001: "DT_MIPS_RLD_VERSION",
+                0x70000005: "DT_MIPS_FLAGS",
+                0x70000006: "DT_MIPS_BASE_ADDRESS",
+                0x7000000a: "DT_MIPS_LOCAL_GOTNO",
+                0x70000011: "DT_MIPS_SYMTABNO",
+                0x70000012: "DT_MIPS_UNREFEXTNO",
+                0x70000013: "DT_MIPS_GOTSYM",
+                0x70000016: "DT_MIPS_RLD_MAP"
+            }
         else:
             self.dynamic_tag_translation = {}
-            if arch == CAPSTONE.CS_ARCH_ARM:
-                self.nbytes = 4
-            elif arch == CAPSTONE.CS_ARCH_X86:
-                if mode & CAPSTONE.CS_MODE_32:
-                    self.nbytes = 4
-                elif mode & CAPSTONE.CS_MODE_64:
-                    self.nbytes = 8
+
+        reloc = 0
 
         # Load sections
         for s in self.elf.iter_sections():
@@ -145,12 +114,17 @@ class ELF:
 
             name = s.name.decode()
             start = s.header.sh_addr
-            bisect.insort_left(classbinary._sorted_sections, start)
+
+            if start == 0:
+                start = reloc
+                reloc += s.header.sh_size
+
+            bisect.insort_left(self._sorted_sections, start)
             is_data = self.__section_is_data(s)
             is_exec = self.__section_is_exec(s)
             data = s.data()
 
-            classbinary._abs_sections[start] = SectionAbs(
+            self._abs_sections[start] = SectionAbs(
                     name,
                     start,
                     s.header.sh_size,
@@ -176,13 +150,13 @@ class ELF:
 
             seen.add(name)
             start = seg.header.p_vaddr
-            bisect.insort_left(classbinary._sorted_segments, start)
+            bisect.insort_left(self._sorted_segments, start)
 
             is_data = self.__segment_is_data(seg)
             is_exec = self.__segment_is_exec(seg)
             data = seg.data()
 
-            classbinary._abs_segments[start] = SegmentAbs(
+            self._abs_segments[start] = SegmentAbs(
                     name,
                     start,
                     seg.header.p_memsz,
@@ -194,27 +168,27 @@ class ELF:
                     not self.elf.little_endian)
 
         # No section headers, we add segments in sections
-        if len(classbinary._abs_sections) == 0:
-            classbinary._abs_sections = classbinary._abs_segments
-            classbinary._sorted_sections = classbinary._sorted_segments
+        if len(self._abs_sections) == 0:
+            self._abs_sections = self._abs_segments
+            self._sorted_sections = self._sorted_segments
 
 
     def read_addr_at(self, ad):
-        seg = self.classbinary.get_segment(ad)
-        if self.nbytes == 4:
+        seg = self.get_segment(ad)
+        if self.wordsize == 4:
             return seg.read_dword(ad)
         else:
             return seg.read_qword(ad)
 
 
-    def translate_dynamic_tag(self, tag):
+    def __translate_dynamic_tag(self, tag):
         if isinstance(tag, int):
             return self.dynamic_tag_translation[tag]
         return tag
 
 
-    def get_offset(self, ad):
-        seg = self.classbinary.get_segment(ad)
+    def __get_offset(self, ad):
+        seg = self.get_segment(ad)
         return seg.file_offset + ad - seg.start
 
 
@@ -226,7 +200,7 @@ class ELF:
 
         for tag in self.dynamic_seg.iter_tags():
             # Create a dictionary, mapping DT_* strings to their values
-            tagstr = self.translate_dynamic_tag(tag.entry.d_tag)
+            tagstr = self.__translate_dynamic_tag(tag.entry.d_tag)
             self.dtags[tagstr] = tag.entry.d_val
 
         # None of the following things make sense without a string table
@@ -236,7 +210,7 @@ class ELF:
         # To handle binaries without section headers, we need to hack around
         # pyreadelf's assumptions make our own string table
         fakestrtabheader = {
-            "sh_offset": self.get_offset(self.dtags["DT_STRTAB"]),
+            "sh_offset": self.__get_offset(self.dtags["DT_STRTAB"]),
         }
         strtab = StringTableSection(
                 fakestrtabheader, "strtab_plasma", self.elf.stream)
@@ -252,7 +226,7 @@ class ELF:
         # Construct our own symbol table to hack around pyreadelf
         # assuming section headers are around
         fakesymtabheader = {
-            "sh_offset": self.get_offset(self.dtags["DT_SYMTAB"]),
+            "sh_offset": self.__get_offset(self.dtags["DT_SYMTAB"]),
             "sh_entsize": self.dtags["DT_SYMENT"],
             "sh_size": 0
         } # bogus size: no iteration allowed
@@ -260,7 +234,6 @@ class ELF:
                 fakesymtabheader, "symtab_plasma", self.elf.stream,
                 self.elf, strtab)
 
-        # TODO
         # mips' relocations are absolutely screwed up, handle some of them here.
         self.__relocate_mips()
 
@@ -291,7 +264,7 @@ class ELF:
             reloffset = self.dtags["DT_" + rela_type]
             relsz = self.dtags["DT_" + rela_type + "SZ"]
             fakerelheader = {
-                "sh_offset": self.get_offset(reloffset),
+                "sh_offset": self.__get_offset(reloffset),
                 "sh_type": "SHT_" + rela_type,
                 "sh_entsize": relentsz,
                 "sh_size": relsz
@@ -306,7 +279,7 @@ class ELF:
             jmpreloffset = self.dtags["DT_JMPREL"]
             jmprelsz = self.dtags["DT_PLTRELSZ"]
             fakejmprelheader = {
-                "sh_offset": self.get_offset(jmpreloffset),
+                "sh_offset": self.__get_offset(jmpreloffset),
                 "sh_type": "SHT_" + rela_type,
                 "sh_entsize": relentsz,
                 "sh_size": jmprelsz
@@ -324,22 +297,25 @@ class ELF:
         if 'DT_MIPS_BASE_ADDRESS' not in self.dtags:
             return
         # The MIPS GOT is an array of addresses, simple as that.
-        got_local_num = self.dtags['DT_MIPS_LOCAL_GOTNO'] # number of local GOT entries
+        # number of local GOT entries
+        got_local_num = self.dtags['DT_MIPS_LOCAL_GOTNO']
+
         # a.k.a the index of the first global GOT entry
-        symtab_got_idx = self.dtags['DT_MIPS_GOTSYM']   # index of first symbol w/ GOT entry
+        # index of first symbol w/ GOT entry
+        symtab_got_idx = self.dtags['DT_MIPS_GOTSYM']
+
         symbol_count = self.dtags['DT_MIPS_SYMTABNO']
         gotaddr = self.dtags['DT_PLTGOT']
-        wordsize = self.nbytes
 
         for i in range(2, got_local_num):
             symbol = self.dynsym.get_symbol(i)
-            reloc = MipsLocalReloc(self.classbinary, symbol, gotaddr + i * wordsize)
+            reloc = MipsLocalReloc(self, symbol, gotaddr + i * self.wordsize)
             self.__save_symbol(reloc, reloc.symbol.entry.st_value)
 
         for i in range(symbol_count - symtab_got_idx):
             symbol = self.dynsym.get_symbol(i + symtab_got_idx)
-            reloc = MipsGlobalReloc(self.classbinary, symbol,
-                            gotaddr + (i + got_local_num) * wordsize)
+            reloc = MipsGlobalReloc(self, symbol,
+                            gotaddr + (i + got_local_num) * self.wordsize)
             self.__save_symbol(reloc, reloc.symbol.entry.st_value)
             self.jmprel.append(reloc)
 
@@ -347,14 +323,14 @@ class ELF:
     def __resolve_plt(self):
         # For PPC32 and PPC64 the address to save is 'got'
 
-        if self.classbinary.arch in ('X86', 'x64'):
+        if self.arch in ('x86', 'x64'):
             for rel in self.jmprel:
                 got = rel.addr
                 # 0x6 is the size of the plt's jmpq instruction in x86_64
                 ad = self.read_addr_at(got) - 6
                 self.__save_symbol(rel, ad)
 
-        elif self.classbinary.arch in ('ARM', 'AARCH64', 'MIPS32', 'MIPS64'):
+        elif self.arch in ('ARM', 'AARCH64', 'MIPS32', 'MIPS64'):
             for rel in self.jmprel:
                 got = rel.addr
                 ad = self.read_addr_at(got)
@@ -367,17 +343,17 @@ class ELF:
 
         name = rel.symbol.name.decode()
 
-        if name in self.classbinary.symbols:
-            name = self.classbinary.rename_sym(name)
+        if name in self.symbols:
+            name = self.rename_sym(name)
 
         if rel.is_import:
-            self.classbinary.imports[ad] = True
+            self.imports[ad] = True
 
         if self.is_function(rel.symbol):
             self.db.functions[ad] = None
 
-        self.classbinary.reverse_symbols[ad] = name
-        self.classbinary.symbols[name] = ad
+        self.reverse_symbols[ad] = name
+        self.symbols[name] = ad
 
 
     def __register_relocs(self, section):
@@ -389,7 +365,7 @@ class ELF:
         for r in section.iter_relocations():
             # MIPS64 is just plain old fucked up
             # https://www.sourceware.org/ml/libc-alpha/2003-03/msg00153.html
-            if self.classbinary.arch == "MIPS64":
+            if self.arch == "MIPS64":
                 # Little endian addionally needs one of its fields reversed... WHY
                 if self.elf.little_endian:
                     r.entry.r_info_sym = r.entry.r_info & 0xFFFFFFFF
@@ -439,12 +415,11 @@ class ELF:
 
     def _make_reloc(self, reloc_sec, symbol):
         addend = reloc_sec.entry.r_addend if reloc_sec.is_RELA() else None
-        RelocClass = get_relocation(self.classbinary.arch,
+        RelocClass = get_relocation(self.arch,
                                     reloc_sec.entry.r_info_type)
         if RelocClass is None:
             return None
-        return RelocClass(self.classbinary, symbol,
-                          reloc_sec.entry.r_offset, addend)
+        return RelocClass(self, symbol, reloc_sec.entry.r_offset, addend)
 
 
     def load_static_sym(self):
@@ -452,8 +427,7 @@ class ELF:
         if symtab is None:
             return
         dont_save = [b"$a", b"$t", b"$d"]
-        arch = self.elf.get_machine_arch()
-        is_arm = arch == "ARM"
+        is_arm = self.arch == "ARM"
 
         for sy in symtab.iter_symbols():
             if is_arm and sy.name in dont_save:
@@ -463,12 +437,12 @@ class ELF:
             if ad != 0 and sy.name != b"":
                 name = sy.name.decode()
 
-                if self.classbinary.is_address(ad):
-                    if name in self.classbinary.symbols:
-                        name = self.classbinary.rename_sym(name)
+                if self.is_address(ad):
+                    if name in self.symbols:
+                        name = self.rename_sym(name)
 
-                    self.classbinary.reverse_symbols[ad] = name
-                    self.classbinary.symbols[name] = ad
+                    self.reverse_symbols[ad] = name
+                    self.symbols[name] = ad
 
                     if self.is_function(sy):
                         self.db.functions[ad] = None
@@ -496,28 +470,20 @@ class ELF:
         return sy.entry.st_info.type == "STT_FUNC"
 
 
-    def get_arch(self):
-        import capstone as CAPSTONE
-        arch = self.arch_lookup.get(self.elf.get_machine_arch(), None)
-        mode = self.arch_mode_lookup.get(self.elf.get_machine_arch(), None)
+    def set_arch_name(self):
+        arch = self.elf.get_machine_arch()
 
-        if arch is None:
-            return None, None
+        if arch == "MIPS":
+            if self.elf.elfclass == 32:
+                arch += "32"
+            elif self.elf.elfclass == 64:
+                arch += "64"
 
-        # If one arch name has multiple "word size"
-        if isinstance(mode, dict):
-            mode = mode[self.elf.elfclass]
-
-        if self.elf.little_endian:
-            mode |= CAPSTONE.CS_MODE_LITTLE_ENDIAN
-        else:
-            mode |= CAPSTONE.CS_MODE_BIG_ENDIAN
-
-        return arch, mode
+        self.arch = arch
 
 
-    def get_arch_string(self):
-        return self.elf.get_machine_arch()
+    def is_big_endian(self):
+        return not self.elf.little_endian
 
 
     def get_entry_point(self):

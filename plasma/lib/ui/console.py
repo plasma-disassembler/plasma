@@ -415,8 +415,7 @@ class Console():
         gctx.api = self.api
         self.analyzer.set(gctx)
 
-        if gctx.dis.binary.get_arch_string() == "MIPS" and \
-                gctx.dis.mips_gp == -1:
+        if gctx.dis.is_mips and gctx.dis.mips_gp == -1:
             print("please run first these commands :")
             print("mips_set_gp 0xADDRESS")
             print("push_analyze_symbols")
@@ -690,28 +689,9 @@ class Console():
         elif ty == T_BIN_RAW:
             print("RAW")
 
-        import capstone as CAPSTONE
+        print("Arch:", self.gctx.dis.binary.arch)
 
-        arch, mode = self.gctx.dis.binary.get_arch()
-
-        print_no_end("Arch: ")
-
-        if arch == CAPSTONE.CS_ARCH_X86:
-            if mode & CAPSTONE.CS_MODE_32:
-                print("x86")
-            elif mode & CAPSTONE.CS_MODE_64:
-                print("x64")
-        elif arch == CAPSTONE.CS_ARCH_ARM:
-            print("arm")
-        elif arch == CAPSTONE.CS_ARCH_MIPS:
-            if mode & CAPSTONE.CS_MODE_32:
-                print("mips")
-            elif mode & CAPSTONE.CS_MODE_64:
-                print("mips64 (octeon)")
-        else:
-            print("not supported")
-
-        if mode & CAPSTONE.CS_MODE_BIG_ENDIAN:
+        if self.gctx.dis.binary.is_big_endian():
             print("Endianess: big endian")
         else:
             print("Endianess: little endian")

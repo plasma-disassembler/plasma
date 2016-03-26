@@ -70,13 +70,8 @@ class Output(OutputAbs):
 
         op = i.operands[num_op]
 
-        if self.gctx.dis.mode & CS_MODE_32:
-            op_size = 4
-        else:
-            op_size = 8
-
         if op.type == MIPS_OP_IMM:
-            self._imm(op.value.imm, op_size, hexa,
+            self._imm(op.value.imm, self._dis.wordsize, hexa,
                       force_dont_print_data=force_dont_print_data)
 
         elif op.type == MIPS_OP_REG:
@@ -210,7 +205,3 @@ class Output(OutputAbs):
                 self._add(", ")
                 self._operand(i, k)
                 k += 1
-
-
-    def is_mips(self):
-        return True

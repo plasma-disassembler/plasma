@@ -70,21 +70,12 @@ class Analyzer(threading.Thread):
         self.api = gctx.api
         self.ARCH_UTILS = self.gctx.libarch.utils
 
-        # TODO: find a better solution, globally ? The problem
-        # is that I want the --help fast as possible.
-        from capstone import (CS_OP_IMM, CS_OP_MEM, CS_ARCH_MIPS, CS_ARCH_X86,
-                              CS_MODE_32, CS_MODE_64, CS_ARCH_ARM,
-                              CS_MODE_BIG_ENDIAN)
-        self.CS_OP_IMM = CS_OP_IMM
-        self.CS_OP_MEM = CS_OP_MEM
+        self.CS_OP_IMM = self.dis.capstone.CS_OP_IMM
+        self.CS_OP_MEM = self.dis.capstone.CS_OP_MEM
 
-        self.is_mips = self.dis.arch == CS_ARCH_MIPS
-        self.is_x86 = self.dis.arch == CS_ARCH_X86
-        self.is_arm = self.dis.arch == CS_ARCH_ARM
+        # TODO: move arch dependant in lib/arch
 
-        self.is_big_endian = self.dis.mode & CS_MODE_BIG_ENDIAN
-
-        if self.is_x86:
+        if self.dis.is_x86:
             from capstone.x86 import (X86_REG_EIP, X86_REG_RIP,
                                       X86_REG_EBP, X86_REG_RBP)
             self.X86_REG_EIP = X86_REG_EIP
@@ -92,26 +83,13 @@ class Analyzer(threading.Thread):
             self.X86_REG_RBP = X86_REG_RBP
             self.X86_REG_EBP = X86_REG_EBP
 
-            if self.dis.mode & CS_MODE_32:
-                self.default_size = 4
-            else:
-                self.default_size = 8
-
-        elif self.is_mips:
+        elif self.dis.is_mips:
             from capstone.mips import MIPS_REG_GP
             self.MIPS_REG_GP = MIPS_REG_GP
 
-            if self.dis.mode & CS_MODE_32:
-                self.default_size = 4
-            else:
-                self.default_size = 8
-
-        elif self.is_arm:
+        elif self.dis.is_arm:
             from capstone.arm import ARM_REG_PC
             self.ARM_REG_PC = ARM_REG_PC
-            self.default_size = 4
-
-        self.has_op_size = self.dis.arch == CS_ARCH_X86
 
         # cache
         self.is_ret = self.ARCH_UTILS.is_ret
@@ -126,7 +104,7 @@ class Analyzer(threading.Thread):
 
 
     def __add_prefetch(self, addr_set, inst):
-        if self.is_mips:
+        if self.dis.is_mips:
             prefetch = self.disasm(inst.address + inst.size)
             if prefetch is not None:
                 addr_set[prefetch.address] = prefetch
@@ -194,18 +172,18 @@ class Analyzer(threading.Thread):
                     ad += mem.get_size(ad)
                     continue
 
-                val = s.read_int(ad, self.default_size)
+                val = s.read_int(ad, self.dis.wordsize)
 
                 # Detect if it's an address
                 if val is not None:
                     s2 = b.get_section(val)
                     if s2 is not None and s2.is_exec:
                         self.api.add_xref(ad, val)
-                        self.db.mem.add(ad, self.default_size, MEM_OFFSET)
-                        ad += self.default_size
+                        self.db.mem.add(ad, self.dis.wordsize, MEM_OFFSET)
+                        ad += self.dis.wordsize
 
                         if not self.db.mem.exists(val):
-                            self.db.mem.add(val, self.default_size, MEM_UNK)
+                            self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
 
                             # Do an analysis on this value.
                             if val not in self.pending and \
@@ -273,7 +251,7 @@ class Analyzer(threading.Thread):
         if buf is None:
             return False
 
-        if not self.is_x86 and not self.is_big_endian:
+        if not self.dis.is_big_endian:
             buf = bytes(reversed(buf))
 
         for lst in self.prologs:
@@ -292,7 +270,7 @@ class Analyzer(threading.Thread):
         # Don't disassemble the second instruction, just get a copy of bytes.
         buf = self.dis.binary.read(ad + inst.size, 4)
 
-        if not self.is_x86 and not self.is_big_endian:
+        if not self.dis.is_big_endian:
             buf = bytes(reversed(buf))
 
         for lst in self.prologs:
@@ -312,7 +290,7 @@ class Analyzer(threading.Thread):
 
             elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
 
-                if self.is_x86:
+                if self.dis.is_x86:
                     if op.mem.segment != 0:
                         continue
                     if op.mem.index == 0:
@@ -336,13 +314,13 @@ class Analyzer(threading.Thread):
 
                 # TODO: stack variables for arm/mips
 
-                elif self.is_arm:
+                elif self.dis.is_arm:
                     if op.mem.index == 0 and op.mem.base == self.ARM_REG_PC:
                         val = i.address + i.size * 2 + op.mem.disp
                     else:
                         val = op.mem.disp
 
-                elif self.is_mips:
+                elif self.dis.is_mips:
                     if op.mem.base == self.MIPS_REG_GP:
                         if self.dis.mips_gp == -1:
                             continue
@@ -359,7 +337,7 @@ class Analyzer(threading.Thread):
             self.api.add_xref(i.address, val)
 
             if not self.db.mem.exists(val):
-                sz = op.size if self.has_op_size else self.default_size
+                sz = op.size if self.dis.is_x86 else self.dis.wordsize
                 deref = s.read_int(val, sz)
 
                 # If (*val) is an address
@@ -384,7 +362,7 @@ class Analyzer(threading.Thread):
                     if sz != 0:
                         ty = MEM_ASCII
                     else:
-                        sz = op.size if self.has_op_size else self.default_size
+                        sz = op.size if self.dis.is_x86 else self.dis.wordsize
                         if op.type == self.CS_OP_MEM:
                             ty = self.db.mem.find_type(sz)
                         else:
@@ -500,7 +478,7 @@ class Analyzer(threading.Thread):
             else:
                 inst = self.dis.lazy_disasm(entry)
                 if inst is not None:
-                    ptr = self.dis.binary.pe_reverse_stripped(self.dis, inst)
+                    ptr = self.dis.binary.reverse_stripped(self.dis, inst)
                     if ptr != -1:
                         inner_code[inst.address] = inst
                         flags = self.import_flags(ptr)

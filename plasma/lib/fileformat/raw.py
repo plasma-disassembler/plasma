@@ -17,37 +17,29 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from plasma.lib.fileformat.binary import SectionAbs
+from plasma.lib.fileformat.binary import SectionAbs, Binary
 
 
-class Raw:
-    def __init__(self, classbinary, filename, raw_type, raw_base, raw_big_endian):
-        import capstone as CAPSTONE
+class Raw(Binary):
+    def __init__(self, filename, raw_type, raw_base, raw_big_endian):
+        Binary.__init__(self)
 
         self.raw = open(filename, "rb").read()
-        self.raw_type = raw_type
         self.raw_base = raw_base
         self.raw_big_endian = raw_big_endian
 
-        self.arch_lookup = {
-            "x86": CAPSTONE.CS_ARCH_X86,
-            "x64": CAPSTONE.CS_ARCH_X86,
-            "arm": CAPSTONE.CS_ARCH_ARM,
-            "mips": CAPSTONE.CS_ARCH_MIPS,
-            "mips64": CAPSTONE.CS_ARCH_MIPS,
+        arch_lookup = {
+            "x86": "x86",
+            "x64": "x64",
+            "arm": "ARM",
+            "mips": "MIPS32",
+            "mips64": "MIPS64",
         }
 
-        self.arch_mode_lookup = {
-            "x86": CAPSTONE.CS_MODE_32,
-            "x64": CAPSTONE.CS_MODE_64,
-            "arm": CAPSTONE.CS_ARCH_ARM,
-            "mips": CAPSTONE.CS_MODE_MIPS32,
-            "mips64": CAPSTONE.CS_MODE_MIPS64,
-        }
+        self.arch = arch_lookup.get(raw_type, None)
 
-        classbinary._sorted_sections = [raw_base]
-
-        classbinary._abs_sections[raw_base] = SectionAbs(
+        self._sorted_sections = [raw_base]
+        self._abs_sections[raw_base] = SectionAbs(
                 "raw",
                 raw_base,
                 len(self.raw),
@@ -57,27 +49,8 @@ class Raw:
                 self.raw)
 
 
-    def load_static_sym(self):
-        return
-
-
-    def load_dyn_sym(self):
-        return
-
-
-    def get_arch(self):
-        import capstone as CAPSTONE
-        arch = self.arch_lookup.get(self.raw_type, None)
-        mode = self.arch_mode_lookup.get(self.raw_type, None)
-        if self.raw_big_endian:
-            mode |= CAPSTONE.CS_MODE_BIG_ENDIAN
-        else:
-            mode |= CAPSTONE.CS_MODE_LITTLE_ENDIAN
-        return arch, mode
-
-
-    def get_arch_string(self):
-        return ""
+    def is_big_endian(self):
+        return self.raw_big_endian
 
 
     def get_entry_point(self):

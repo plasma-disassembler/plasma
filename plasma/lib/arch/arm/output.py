@@ -107,7 +107,7 @@ class Output(OutputAbs):
             self._add("(")
 
         if op.type == ARM_OP_IMM:
-            self._imm(op.value.imm, 4, hexa,
+            self._imm(op.value.imm, self._dis.wordsize, hexa,
                       force_dont_print_data=force_dont_print_data)
 
         elif op.type == ARM_OP_REG:

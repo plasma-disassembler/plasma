@@ -24,10 +24,10 @@ from ctypes import c_char, POINTER, cast, c_voidp
 from plasma.lib.graph import Graph
 from plasma.lib.utils import (unsigned, debug__, BYTES_PRINTABLE_SET,
                               get_char, print_no_end)
-from plasma.lib.fileformat.binary import Binary, T_BIN_PE
+from plasma.lib.fileformat.binary import Binary, T_BIN_PE, T_BIN_ELF, T_BIN_RAW
 from plasma.lib.colors import (color_addr, color_symbol, color_comment,
                                color_section, color_string)
-from plasma.lib.exceptions import ExcArch
+from plasma.lib.exceptions import ExcArch, ExcFileFormat
 from plasma.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
                                MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII,
                                MEM_OFFSET)
@@ -43,6 +43,30 @@ class Disassembler():
     def __init__(self, filename, raw_type, raw_base, raw_big_endian, database):
         import capstone as CAPSTONE
 
+        arch_lookup = {
+            "x86": CAPSTONE.CS_ARCH_X86,
+            "x64": CAPSTONE.CS_ARCH_X86,
+            "ARM": CAPSTONE.CS_ARCH_ARM,
+            "MIPS32": CAPSTONE.CS_ARCH_MIPS,
+            "MIPS64": CAPSTONE.CS_ARCH_MIPS,
+        }
+
+        mode_lookup = {
+            "x86": CAPSTONE.CS_MODE_32,
+            "x64": CAPSTONE.CS_MODE_64,
+            "ARM": CAPSTONE.CS_ARCH_ARM,
+            "MIPS32": CAPSTONE.CS_MODE_MIPS32,
+            "MIPS64": CAPSTONE.CS_MODE_MIPS64,
+        }
+
+        word_size_lookup = {
+            "x86": 4,
+            "x64": 8,
+            "ARM": 4,
+            "MIPS32": 4,
+            "MIPS64": 8,
+        }
+
         self.capstone_inst = {} # capstone instruction cache
         self.db = database
 
@@ -52,13 +76,20 @@ class Disassembler():
             self.mem = Memory()
             database.mem = self.mem
 
-        self.binary = Binary(self.db, filename, raw_type, raw_base, raw_big_endian)
+        self.instanciate_binary(filename, raw_type, raw_base, raw_big_endian)
+
+        if self.binary.arch not in ("x86", "x64", "MIPS32", "MIPS64", "ARM"):
+            raise ExcArch(arch)
+
+        self.wordsize = word_size_lookup.get(self.binary.arch, None)
+        self.binary.wordsize = self.wordsize
+
+        self.is_mips = self.binary.arch in ("MIPS32", "MIPS64")
+        self.is_x86 = self.binary.arch in ("x86", "x64")
+        self.is_arm = self.binary.arch in ("ARM")
+        self.is_big_endian = self.binary.is_big_endian()
 
         self.binary.load_section_names()
-        arch, mode = self.binary.get_arch()
-
-        if arch is None or mode is None:
-            raise ExcArch(self.binary.get_arch_string())
 
         self.jmptables = database.jmptables
         self.user_inline_comments = database.user_inline_comments
@@ -70,25 +101,77 @@ class Disassembler():
         self.end_functions = database.end_functions
         self.xrefs = database.xrefs
 
-        # TODO: is it a global constant or $gp can change during the execution ?
         self.mips_gp = database.mips_gp
 
         if not database.loaded:
-            self.binary.load_symbols()
+            self.load_symbols()
             database.symbols = self.binary.symbols
             database.reverse_symbols = self.binary.reverse_symbols
             database.demangled = self.binary.demangled
             database.reverse_demangled = self.binary.reverse_demangled
             database.imports = self.binary.imports
 
+        cs_arch = arch_lookup.get(self.binary.arch, None)
+        cs_mode = mode_lookup.get(self.binary.arch, None)
+
+        if self.is_big_endian:
+            cs_mode |= CAPSTONE.CS_MODE_BIG_ENDIAN
+        else:
+            cs_mode |= CAPSTONE.CS_MODE_LITTLE_ENDIAN
+
         self.capstone = CAPSTONE
-        self.md = CAPSTONE.Cs(arch, mode)
+        self.md = CAPSTONE.Cs(cs_arch, cs_mode)
         self.md.detail = True
-        self.arch = arch
-        self.mode = mode
 
         for s in self.binary.iter_sections():
-            s.big_endian = self.mode & self.capstone.CS_MODE_BIG_ENDIAN
+            s.big_endian = cs_mode & CAPSTONE.CS_MODE_BIG_ENDIAN
+
+
+    def instanciate_binary(self, filename, raw_type, raw_base, raw_big_endian):
+        if raw_type != None:
+            import plasma.lib.fileformat.raw as LIB_RAW
+            self.binary = LIB_RAW.Raw(filename, raw_type, raw_base, raw_big_endian)
+            self.type = T_BIN_RAW
+            return
+
+        start = time()
+        ty = self.get_magic(filename)
+
+        if ty == T_BIN_ELF:
+            import plasma.lib.fileformat.elf as LIB_ELF
+            self.binary = LIB_ELF.ELF(self.db, filename)
+        elif ty == T_BIN_PE:
+            import plasma.lib.fileformat.pe as LIB_PE
+            self.binary = LIB_PE.PE(self.db, filename)
+        else:
+            raise ExcFileFormat()
+
+        self.binary.type = ty
+
+        elapsed = time()
+        elapsed = elapsed - start
+        debug__("Binary loaded in %fs" % elapsed)
+
+
+    def load_symbols(self):
+        start = time()
+        self.binary.load_static_sym()
+        self.binary.load_dyn_sym()
+        self.binary.demangle_symbols()
+        elapsed = time()
+        elapsed = elapsed - start
+        debug__("Found %d symbols in %fs" % (len(self.binary.symbols), elapsed))
+
+
+    def get_magic(self, filename):
+        f = open(filename, "rb")
+        magic = f.read(8)
+        f.close()
+        if magic.startswith(b"\x7fELF"):
+            return T_BIN_ELF
+        elif magic.startswith(b"MZ"):
+            return T_BIN_PE
+        return None
 
 
     # `func_ad` is the function address where the variable `name`
@@ -115,11 +198,11 @@ class Disassembler():
 
 
     def load_arch_module(self):
-        if self.arch == self.capstone.CS_ARCH_X86:
+        if self.binary.arch in ("x86", "x64"):
             import plasma.lib.arch.x86 as ARCH
-        elif self.arch == self.capstone.CS_ARCH_ARM:
+        elif self.binary.arch == "ARM":
             import plasma.lib.arch.arm as ARCH
-        elif self.arch == self.capstone.CS_ARCH_MIPS:
+        elif self.binary.arch in ("MIPS32", "MIPS64"):
             import plasma.lib.arch.mips as ARCH
         else:
             raise NotImplementedError
@@ -191,8 +274,6 @@ class Disassembler():
 
 
     def dump_asm(self, ctx, lines=NB_LINES_TO_DISASM, until=-1):
-        from capstone import CS_OP_IMM
-
         ARCH = self.load_arch_module()
         ARCH_OUTPUT = ARCH.output
         ARCH_UTILS = ARCH.utils
@@ -277,17 +358,17 @@ class Disassembler():
                         o._new_line()
 
                     elif ARCH_UTILS.is_uncond_jump(i) or ARCH_UTILS.is_ret(i):
-                        if o.is_mips():
+                        if self.is_mips:
                             prefetch_after_branch = True
                         else:
                             o._new_line()
 
                     elif ARCH_UTILS.is_call(i):
                         op = i.operands[0]
-                        if op.type == CS_OP_IMM:
+                        if op.type == self.capstone.CS_OP_IMM:
                             imm = unsigned(op.value.imm)
                             if imm in self.functions and self.is_noreturn(imm):
-                                if o.is_mips():
+                                if self.is_mips:
                                     prefetch_after_branch = True
                                 else:
                                     o._new_line()
@@ -544,7 +625,7 @@ class Disassembler():
 
 
     def __add_prefetch(self, addr_set, inst):
-        if self.arch == self.CS_ARCH_MIPS:
+        if self.is_mips:
             prefetch = self.lazy_disasm(inst.address + inst.size)
             addr_set.add(prefetch.address)
             return prefetch
@@ -560,9 +641,6 @@ class Disassembler():
 
     # Generate a flow graph of the given function (addr)
     def get_graph(self, entry):
-        from capstone import CS_OP_IMM, CS_ARCH_MIPS
-
-        self.CS_ARCH_MIPS = CS_ARCH_MIPS
         ARCH_UTILS = self.load_arch_module().utils
 
         gph = Graph(self, entry)
@@ -608,7 +686,7 @@ class Disassembler():
                 gph.uncond_jumps_set.add(ad)
                 op = inst.operands[-1]
 
-                if op.type == CS_OP_IMM:
+                if op.type == self.capstone.CS_OP_IMM:
                     nxt = unsigned(op.value.imm)
 
                     if nxt in self.functions:
@@ -632,7 +710,7 @@ class Disassembler():
                 gph.cond_jumps_set.add(ad)
                 op = inst.operands[-1]
 
-                if op.type == CS_OP_IMM:
+                if op.type == self.capstone.CS_OP_IMM:
                     if prefetch is None:
                         direct_nxt = inst.address + inst.size
                     else:
@@ -653,7 +731,7 @@ class Disassembler():
             else:
                 if ad != entry and ARCH_UTILS.is_call(inst):
                     op = inst.operands[0]
-                    if op.type == CS_OP_IMM:
+                    if op.type == self.capstone.CS_OP_IMM:
                         imm = unsigned(op.value.imm)
                         if imm in self.functions and self.is_noreturn(imm):
                             prefetch = self.__add_prefetch(addresses, inst)
@@ -668,7 +746,7 @@ class Disassembler():
             return None, 0
 
         if self.binary.type == T_BIN_PE:
-            nb_new_syms = self.binary.pe_reverse_stripped_list(self, addresses)
+            nb_new_syms = self.binary.reverse_stripped_list(self, addresses)
         else:
             nb_new_syms = 0
 

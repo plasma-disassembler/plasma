@@ -20,13 +20,12 @@
 import bisect
 
 import pefile
-from capstone.x86 import (X86_OP_INVALID, X86_OP_IMM, X86_OP_MEM, X86_REG_RIP,
-        X86_REG_EIP)
+from capstone.x86 import (X86_OP_INVALID, X86_OP_MEM, X86_REG_RIP, X86_REG_EIP)
 from ctypes import sizeof
 
 from plasma.lib.exceptions import ExcPEFail
 from plasma.lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
-from plasma.lib.fileformat.binary import SectionAbs
+from plasma.lib.fileformat.binary import SectionAbs, Binary
 from plasma.lib.utils import warning
 
 if not pefile.__version__.startswith("201"):
@@ -34,11 +33,10 @@ if not pefile.__version__.startswith("201"):
     warning("https://github.com/erocarrera/pefile")
 
 
-class PE:
-    def __init__(self, db, classbinary, filename):
-        import capstone as CAPSTONE
+class PE(Binary):
+    def __init__(self, db, filename):
+        Binary.__init__(self)
 
-        self.classbinary = classbinary
         self.db = db
 
         self.pe = PE2(filename, fast_load=True)
@@ -46,17 +44,7 @@ class PE:
         self.__data_sections_content = []
         self.__exec_sections = []
 
-        self.arch_lookup = {
-            # See machine_types in pefile.py
-            0x014c: CAPSTONE.CS_ARCH_X86, # i386
-            0x8664: CAPSTONE.CS_ARCH_X86, # AMD64
-            # TODO ARM
-        }
-
-        self.arch_mode_lookup = {
-            pefile.OPTIONAL_HEADER_MAGIC_PE: CAPSTONE.CS_MODE_32,
-            pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS: CAPSTONE.CS_MODE_64,
-        }
+        self.set_arch_name()
 
         base = self.pe.OPTIONAL_HEADER.ImageBase
 
@@ -67,9 +55,9 @@ class PE:
             is_exec = self.__section_is_exec(s)
 
             if is_data or is_exec:
-                bisect.insort_left(classbinary._sorted_sections, start)
+                bisect.insort_left(self._sorted_sections, start)
 
-            classbinary._abs_sections[start] = SectionAbs(
+            self._abs_sections[start] = SectionAbs(
                     s.Name.decode().rstrip(' \0'),
                     start,
                     s.Misc_VirtualSize,
@@ -102,12 +90,12 @@ class PE:
                                                  sym.sym.addr.offset)
                 ad = sym.value + base
 
-                if self.classbinary.is_address(ad):
-                    if name in self.classbinary.symbols:
-                        name = self.classbinary.rename_sym(name)
+                if self.is_address(ad):
+                    if name in self.symbols:
+                        name = self.rename_sym(name)
 
-                    self.classbinary.reverse_symbols[ad] = name
-                    self.classbinary.symbols[name] = ad
+                    self.reverse_symbols[ad] = name
+                    self.symbols[name] = ad
 
                     if sym.type & PE_DT_FCN and not sym.type & PE_DT_PTR:
                         self.db.functions[ad] = None
@@ -139,19 +127,19 @@ class PE:
                 if isinstance(name, bytes):
                     name = name.decode()
 
-                if name in self.classbinary.symbols:
+                if name in self.symbols:
                     continue
-                    name = self.classbinary.rename_sym(name)
+                    name = self.rename_sym(name)
 
-                self.classbinary.imports[imp.address] = True
-                self.classbinary.reverse_symbols[imp.address] = name
-                self.classbinary.symbols[name] = imp.address
+                self.imports[imp.address] = True
+                self.reverse_symbols[imp.address] = name
+                self.symbols[name] = imp.address
 
                 # TODO: always a function ?
                 self.db.functions[imp.address] = None
 
 
-    def pe_reverse_stripped(self, dis, first_inst):
+    def reverse_stripped(self, dis, first_inst):
         # Now try to find the real call. For each SYMBOL address 
         # we have this :
         #
@@ -181,20 +169,31 @@ class PE:
         if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
             ptr += next_ip
 
-        if ptr not in self.classbinary.imports or not inv(mm.segment) or \
+        if ptr not in self.imports or not inv(mm.segment) or \
                 not inv(mm.index):
             return -1
 
-        name = "_" + self.classbinary.reverse_symbols[ptr]
+        name = "_" + self.reverse_symbols[ptr]
         ty = self.db.mem.get_type(ptr)
 
-        self.classbinary.reverse_symbols[first_inst.address] = name
-        self.classbinary.symbols[name] = first_inst.address
+        self.reverse_symbols[first_inst.address] = name
+        self.symbols[name] = first_inst.address
 
         if ty != -1:
             self.db.mem.add(first_inst.address, 1, ty)
 
         return ptr
+
+
+    def reverse_stripped_list(self, dis, addr_to_analyze):
+        count = 0
+        for ad in addr_to_analyze:
+            i = dis.lazy_disasm(ad)
+            if i is None:
+                continue
+            if self.reverse_stripped(dis, i):
+                count += 1
+        return count
 
 
     def __section_is_data(self, s):
@@ -209,13 +208,24 @@ class PE:
         return s.Characteristics & 0x20000000
 
 
-    def get_arch(self):
-        return self.arch_lookup.get(self.pe.FILE_HEADER.Machine, None), \
-               self.arch_mode_lookup.get(self.pe.OPTIONAL_HEADER.Magic, None)
+    def set_arch_name(self):
+        # TODO ARM
+
+        # TODO Should we check these flags ?
+        # pefile.OPTIONAL_HEADER_MAGIC_PE
+        # pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS
+
+        # return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
+
+        if self.pe.FILE_HEADER.Machine == 0x014c:
+            self.arch = "x86"
+
+        if self.pe.FILE_HEADER.Machine == 0x8664:
+            self.arch = "x64"
 
 
-    def get_arch_string(self):
-        return pefile.MACHINE_TYPE[self.pe.FILE_HEADER.Machine]
+    def is_big_endian(self):
+        return False # only x86 supported
 
 
     def get_entry_point(self):
