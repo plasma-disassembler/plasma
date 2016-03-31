@@ -40,7 +40,7 @@ function __imp___cexit (.text) {
         0x4011b5: ebx = *(0x402010)
         0x4011bb: *(eax) = ebx
         0x4011bd: call __pei386_runtime_relocator
-        0x4011c2: esp &= 4294967280
+        0x4011c2: esp &= -16
         0x4011c5: call ___p__environ
         0x4011ca: ecx = *(eax)
         0x4011cc: *(esp + 8) = ecx

@@ -2,7 +2,7 @@ function _main (.text) {
     0x401290: push ebp
     0x401291: ebp = esp
     0x401293: esp -= 216
-    0x401299: esp &= 4294967280
+    0x401299: esp &= -16
     0x40129c: eax = 0
     0x4012a1: eax += 15
     0x4012a4: eax += 15

@@ -18,6 +18,7 @@
 #
 
 import struct
+from ctypes import c_int, c_short, c_long
 
 from plasma.lib.custom_colors import *
 from plasma.lib.utils import unsigned, print_no_end, get_char, BYTES_PRINTABLE_SET
@@ -440,7 +441,7 @@ class OutputAbs():
             # the file was loaded without a database.
             if imm in self._dis.xrefs and ty != MEM_UNK and \
                     ty != MEM_ASCII or ty == -1:
-                return True
+                return
 
             if ty == MEM_ASCII:
                 print_data = True
@@ -466,17 +467,22 @@ class OutputAbs():
                     self._add(" ")
                     self._string('"' + s + '"')
 
-            return True
+            return
 
         if label_printed:
-            return True
+            return
 
         if op_size == 1:
             self._string("'%s'" % get_char(imm))
         elif hexa:
             self._add(hex(imm))
         else:
-            self._add(str(imm))
+            if op_size == 4:
+                self._add(str(c_int(imm).value))
+            elif op_size == 2:
+                self._add(str(c_short(imm).value))
+            else:
+                self._add(str(c_long(imm).value))
 
             if imm > 0:
                 if op_size == 4:
@@ -484,17 +490,11 @@ class OutputAbs():
                 elif op_size == 8:
                     packed = struct.pack("<Q", imm)
                 else:
-                    return True
+                    return
                 if set(packed).issubset(BYTES_PRINTABLE_SET):
                     self._string(" \"" + "".join(map(chr, packed)) + "\"")
-                    return False
 
-            # returns True because capstone print immediate in hexa and
-            # it will be printed in a comment, sometimes it's better
-            # to have the value in hexa
-            return True
-
-        return False
+        return
 
 
     def set_line(self, addr):
