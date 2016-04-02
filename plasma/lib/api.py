@@ -195,7 +195,7 @@ class Api():
         return True
 
 
-    def is_string(self, ad, section=None):
+    def is_string(self, ad, section=None, min_bytes=2):
         """
         Check if an ascii string can be found at ad.
 
@@ -203,7 +203,7 @@ class Api():
         optimization and used to not recall get_section.
         """
         # It must contains at least one character and the null byte.
-        sz = self.__binary.is_string(ad, min_bytes=2, s=section)
+        sz = self.__binary.is_string(ad, min_bytes, s=section)
         if not sz:
             return False
         return True
