@@ -25,7 +25,7 @@ from ctypes import sizeof
 
 from plasma.lib.exceptions import ExcPEFail
 from plasma.lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
-from plasma.lib.fileformat.binary import SectionAbs, Binary
+from plasma.lib.fileformat.binary import Binary
 from plasma.lib.utils import warning
 
 if not pefile.__version__.startswith("201"):
@@ -49,22 +49,14 @@ class PE(Binary):
         base = self.pe.OPTIONAL_HEADER.ImageBase
 
         for s in self.pe.sections:
-            start = base + s.VirtualAddress
-
-            is_data = self.__section_is_data(s)
-            is_exec = self.__section_is_exec(s)
-
-            if is_data or is_exec:
-                bisect.insort_left(self._sorted_sections, start)
-
-            self._abs_sections[start] = SectionAbs(
-                    s.Name.decode().rstrip(' \0'),
-                    start,
-                    s.Misc_VirtualSize,
-                    s.SizeOfRawData,
-                    is_exec,
-                    is_data,
-                    s.get_data())
+            self.add_section(
+                base + s.VirtualAddress,
+                s.Name.decode().rstrip(' \0'),
+                s.Misc_VirtualSize,
+                s.SizeOfRawData,
+                self.__section_is_exec(s),
+                self.__section_is_data(s),
+                s.get_data())
 
 
     def load_static_sym(self):

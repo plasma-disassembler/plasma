@@ -163,6 +163,20 @@ class Binary(object):
         return None
 
 
+    def add_section(self, start_address, name, virt_size, real_size,
+                    is_exec, is_data, data):
+        if is_exec or is_data:
+            bisect.insort_left(self._sorted_sections, start_address)
+        self._abs_sections[start_address] = SectionAbs(
+                name,
+                start_address,
+                virt_size,
+                real_size,
+                is_exec,
+                is_data,
+                data)
+
+
     # for elf
     def get_segment(self, ad):
         i = bisect.bisect_right(self._sorted_segments, ad)

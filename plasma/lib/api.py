@@ -281,6 +281,19 @@ class Api():
         return self.__binary.get_section(ad)
 
 
+    def add_section(self, start_address, name, virt_size, real_size,
+                    is_exec, is_data, data):
+        """
+        Create a new section at start_address. name is a string and data
+        is a bytes. The real_size should be less than virt_size, but nothing
+        will be done if virt_size is less than real_size.
+        """
+        if virt_size < real_size:
+            return
+        self.__binary.add_section(start_address, name, virt_size,
+                real_size, is_exec, is_data, data)
+
+
     def iter_sections(self):
         """
         Iterates over sections.

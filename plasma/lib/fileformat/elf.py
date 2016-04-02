@@ -37,7 +37,7 @@ from elftools.elf.sections import NullSection
 from elftools.elf.constants import SH_FLAGS, P_FLAGS
 
 from plasma.lib.utils import warning, die
-from plasma.lib.fileformat.binary import SectionAbs, SegmentAbs, Binary
+from plasma.lib.fileformat.binary import SegmentAbs, Binary
 from plasma.lib.exceptions import ExcElf
 from plasma.lib.fileformat.relocations import get_relocation
 from plasma.lib.fileformat.relocations.generic import MipsGlobalReloc, MipsLocalReloc
@@ -119,19 +119,16 @@ class ELF(Binary):
                 start = reloc
                 reloc += s.header.sh_size
 
-            bisect.insort_left(self._sorted_sections, start)
-            is_data = self.__section_is_data(s)
-            is_exec = self.__section_is_exec(s)
             data = s.data()
 
-            self._abs_sections[start] = SectionAbs(
-                    name,
-                    start,
-                    s.header.sh_size,
-                    len(data),
-                    is_exec,
-                    is_data,
-                    data)
+            self.add_section(
+                start,
+                s.name.decode(),
+                s.header.sh_size,
+                len(data),
+                self.__section_is_exec(s),
+                self.__section_is_data(s),
+                data)
 
         # Load segments
         rename_counter = 1

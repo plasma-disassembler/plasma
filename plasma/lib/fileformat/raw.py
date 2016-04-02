@@ -38,15 +38,14 @@ class Raw(Binary):
 
         self.arch = arch_lookup.get(raw_type, None)
 
-        self._sorted_sections = [raw_base]
-        self._abs_sections[raw_base] = SectionAbs(
-                "raw",
-                raw_base,
-                len(self.raw),
-                len(self.raw),
-                False, # is_exec
-                True, # is_data
-                self.raw)
+        self.add_section(
+            raw_base,
+            "raw",
+            len(self.raw),
+            len(self.raw),
+            False, # is_exec
+            True, # is_data
+            self.raw)
 
 
     def is_big_endian(self):
