@@ -37,7 +37,7 @@ FUNC_FLAG_NORETURN = 1
 
 
 NORETURN_ELF = {
-    "exit", "_exit", "__stack_chk_fail",
+    "exit", "_exit", "__stack_chk_fail", "err", "verr", "errx", "verrx",
     "abort", "__assert_fail", "__libc_start_main",
 }
 
