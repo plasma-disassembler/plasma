@@ -24,13 +24,13 @@ import code
 import traceback
 import readline, rlcompleter
 
-from plasma.lib.colors import color
+from plasma.lib.colors import color, bold
 from plasma.lib.utils import error, print_no_end
 from plasma.lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
+from plasma.lib.consts import NB_LINES_TO_DISASM
 from plasma.lib.ui.visual import Visual
-from plasma.lib.disassembler import NB_LINES_TO_DISASM
-from plasma.lib.analyzer import Analyzer
 from plasma.lib.api import Api
+from plasma.lib.analyzer import Analyzer
 
 
 MAX_PRINT_COMPLETE = 300
@@ -140,7 +140,7 @@ class Completer():
             if SHOULD_EXIT:
                 break
             try:
-                line = input(yellow(">> "))
+                line = input(bold(color("plasma> ", 11)))
                 if line:
                     self.con.exec_command(line)
 
@@ -408,12 +408,19 @@ class Console():
             ),
         }
 
+        if gctx.dis.is_x86:
+            import plasma.lib.arch.x86.analyzer as arch_analyzer
+        elif gctx.dis.is_mips:
+            import plasma.lib.arch.mips.analyzer as arch_analyzer
+        elif gctx.dis.is_arm:
+            import plasma.lib.arch.arm.analyzer as arch_analyzer
+
         self.analyzer = Analyzer()
         self.analyzer.init()
         self.analyzer.start()
         self.api = Api(gctx, self.analyzer)
         gctx.api = self.api
-        self.analyzer.set(gctx)
+        self.analyzer.set(gctx, arch_analyzer)
 
         if gctx.dis.is_mips and gctx.dis.mips_gp == -1:
             print("please run first these commands :")
@@ -764,7 +771,8 @@ class Console():
 
 
     def __exec_analyzer(self, args):
-        print("addresses remaining to analyze:", self.analyzer.msg.qsize())
+        n = self.analyzer.msg.qsize() + len(self.analyzer.pending)
+        print("addresses remaining to analyze:", n)
 
         if self.analyzer.running_second_pass:
             print("scanning the whole memory...")

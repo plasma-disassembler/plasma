@@ -92,17 +92,18 @@ class Output(OutputAbs):
         elif op.type == X86_OP_MEM:
             mm = op.mem
 
-            if inv(mm.segment) and inv(mm.index) and mm.disp != 0:
-                if (mm.base == X86_REG_RBP or mm.base == X86_REG_EBP) and \
-                       self.var_name_exists(i, num_op):
-                    if i.id == X86_INS_LEA:
-                        self._add("&(")
-                    self._variable(self.get_var_name(i, num_op))
-                    if i.id == X86_INS_LEA:
-                        self._add(")")
-                    return
+            ret = self.get_var_offset(i, num_op)
+            if ret is not None:
+                func_addr, off = ret
+                if i.id == X86_INS_LEA:
+                    self._add("&(")
+                self._variable(self.get_var_name(func_addr, off))
+                if i.id == X86_INS_LEA:
+                    self._add(")")
+                return
 
-                elif mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
+            if inv(mm.segment) and inv(mm.index) and mm.disp != 0:
+                if mm.base == X86_REG_RIP or mm.base == X86_REG_EIP:
                     ad = i.address + i.size + mm.disp
 
                     if i.id != X86_INS_LEA and self.deref_if_offset(ad):

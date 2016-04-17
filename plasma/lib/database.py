@@ -60,7 +60,12 @@ class Database():
         self.modified = False
         self.loaded = False
         self.mem = None
-        self.functions = {} # func address -> [end addr, flags, dict var_off -> [type, name], func_id]
+        # func address ->
+        #  [ end addr, flags,
+        #       dict vars_off -> [type, name],
+        #       func_id,
+        #       dict inst.address -> [var_off]
+        self.functions = {}
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)

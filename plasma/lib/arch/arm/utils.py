@@ -32,6 +32,7 @@ JUMPS_LINK = {ARM_INS_BL, ARM_INS_BLX}
 
 OP_IMM = ARM_OP_IMM
 OP_MEM = ARM_OP_MEM
+OP_REG = ARM_OP_REG
 
 
 # Warning: before adding new prolog check in lib.analyzer.has_prolog

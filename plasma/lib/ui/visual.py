@@ -20,12 +20,10 @@
 import curses
 import traceback
 
-from plasma.lib.analyzer import FUNC_END, FUNC_ID
 from plasma.lib.custom_colors import *
 from plasma.lib.ui.window import *
 from plasma.lib.ui.inlineed import InlineEd
-from plasma.lib.memory import (MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD,
-                               MEM_ASCII, MEM_OFFSET, MEM_UNK)
+from plasma.lib.consts import *
 
 
 class Visual(Window):

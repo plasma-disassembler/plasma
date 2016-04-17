@@ -4,7 +4,20 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from distutils.core import Extension
 import plasma
+
+
+x86_analyzer = Extension('plasma.lib.arch.x86.analyzer',
+    sources = ['plasma/lib/arch/x86/analyzer.c'])
+
+mips_analyzer = Extension('plasma.lib.arch.mips.analyzer',
+    sources = ['plasma/lib/arch/mips/analyzer.c'])
+
+arm_analyzer = Extension('plasma.lib.arch.arm.analyzer',
+    sources = ['plasma/lib/arch/arm/analyzer.c'])
+
+
 
 setup(
     name='plasma',
@@ -16,6 +29,12 @@ setup(
     author_email="Unknown",
 
     license="GPLv3",
+
+    ext_modules=[
+        x86_analyzer,
+        mips_analyzer,
+        arm_analyzer,
+    ],
 
     packages=['plasma',
               'plasma.lib',
@@ -41,5 +60,6 @@ setup(
         "console_scripts": [
             "plasma = plasma.main:console_entry",
         ],
-    }
+    },
+
 )

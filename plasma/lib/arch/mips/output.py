@@ -23,7 +23,8 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
         MIPS_INS_ADDIU, MIPS_INS_LB, MIPS_INS_LBU, MIPS_INS_SB,
         MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_SUB,
-        MIPS_INS_SUBU, MIPS_INS_BGTZ,
+        MIPS_INS_SUBU, MIPS_INS_BGTZ, MIPS_INS_LH, MIPS_INS_LHU,
+        MIPS_INS_SH, MIPS_INS_SD, MIPS_INS_LD, MIPS_GRP_MIPS64,
         MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
         MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP)
 
@@ -36,14 +37,19 @@ from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
 ASSIGNMENT_OPS = {}
 
 LD_TYPE = {
+    MIPS_INS_LH: "halfword",
+    MIPS_INS_LHU: "unsigned halfword",
     MIPS_INS_LW: "word",
     MIPS_INS_LB: "byte",
     MIPS_INS_LBU: "unsigned byte",
+    MIPS_INS_LD: "double",
 }
 
 ST_TYPE = {
+    MIPS_INS_SH: "halfword",
     MIPS_INS_SW: "word",
     MIPS_INS_SB: "byte",
+    MIPS_INS_SD: "double",
 }
 
 
@@ -82,6 +88,12 @@ class Output(OutputAbs):
             mm = op.mem
 
             printed = False
+
+            ret = self.get_var_offset(i, num_op)
+            if ret is not None:
+                func_addr, off = ret
+                self._variable(self.get_var_name(func_addr, off))
+                return
 
             if mm.base == MIPS_REG_GP and self._dis.mips_gp != -1:
                 ad = self._dis.mips_gp + mm.disp

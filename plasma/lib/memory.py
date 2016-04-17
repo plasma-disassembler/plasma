@@ -17,15 +17,7 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-MEM_UNK = 1
-MEM_CODE = 2
-MEM_FUNC = 3
-MEM_BYTE = 4
-MEM_WORD = 5
-MEM_DWORD = 6
-MEM_QWORD = 7
-MEM_ASCII = 8
-MEM_OFFSET = 9
+from plasma.lib.consts import *
 
 
 class Memory():

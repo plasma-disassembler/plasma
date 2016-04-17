@@ -19,7 +19,6 @@
 
 import struct
 from time import time
-from ctypes import c_char, POINTER, cast, c_voidp
 
 from plasma.lib.graph import Graph
 from plasma.lib.utils import (unsigned, debug__, BYTES_PRINTABLE_SET,
@@ -28,15 +27,8 @@ from plasma.lib.fileformat.binary import Binary, T_BIN_PE, T_BIN_ELF, T_BIN_RAW
 from plasma.lib.colors import (color_addr, color_symbol, color_comment,
                                color_section, color_string)
 from plasma.lib.exceptions import ExcArch, ExcFileFormat
-from plasma.lib.memory import (Memory, MEM_UNK, MEM_FUNC, MEM_CODE, MEM_BYTE,
-                               MEM_WORD, MEM_DWORD, MEM_QWORD, MEM_ASCII,
-                               MEM_OFFSET)
-from plasma.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
-                                 FUNC_VARS, VAR_NAME)
-
-
-NB_LINES_TO_DISASM = 256 # without comments, ...
-CAPSTONE_CACHE_SIZE = 60000
+from plasma.lib.memory import Memory
+from plasma.lib.consts import *
 
 
 class Disassembler():
@@ -182,7 +174,7 @@ class Disassembler():
         func_obj = self.functions[func_ad]
         if func_obj is None:
             return None
-        for off, val in func_obj[FUNC_VARS].items():
+        for off, val in func_obj[FUNC_OFF_VARS].items():
             if val[VAR_NAME] == name:
                 return off
         return None
@@ -194,7 +186,7 @@ class Disassembler():
         func_obj = self.functions[func_ad]
         if func_obj is None:
             return
-        func_obj[FUNC_VARS][off][VAR_NAME] = name
+        func_obj[FUNC_OFF_VARS][off][VAR_NAME] = name
 
 
     def load_arch_module(self):
@@ -284,7 +276,7 @@ class Disassembler():
         if s is None:
             # until is != -1 only from the visual mode
             # It allows to not go before the first section.
-            if until != -1: 
+            if until != -1:
                 return None
             # Get the next section, it's not mandatory that sections
             # are consecutives !
@@ -376,6 +368,7 @@ class Disassembler():
                     ad += i.size
 
                 elif ty == MEM_OFFSET:
+                    prefetch_after_branch = False
                     o._label_and_address(ad)
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
@@ -391,6 +384,7 @@ class Disassembler():
                     ad += sz
 
                 elif ty == MEM_ASCII:
+                    prefetch_after_branch = False
                     o._label_and_address(ad)
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
@@ -404,6 +398,7 @@ class Disassembler():
                     ad += sz
 
                 else:
+                    prefetch_after_branch = False
                     o._label_and_address(ad)
                     o.set_line(ad)
                     sz = self.mem.get_size_from_type(ty)

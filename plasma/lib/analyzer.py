@@ -22,33 +22,7 @@ from queue import Queue
 
 from plasma.lib.utils import unsigned
 from plasma.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
-from plasma.lib.memory import MEM_CODE, MEM_FUNC, MEM_UNK, MEM_ASCII, MEM_OFFSET
-
-# database.functions[ADDR] contains a list, here are the indexes
-FUNC_END = 0
-FUNC_FLAGS = 1
-FUNC_VARS = 2
-FUNC_ID = 3
-
-VAR_TYPE = 0
-VAR_NAME = 1
-
-FUNC_FLAG_NORETURN = 1
-
-
-NORETURN_ELF = {
-    "exit", "_exit", "__stack_chk_fail",
-    "abort", "__assert_fail", "__libc_start_main",
-}
-
-NORETURN_PE = {
-    "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort"
-}
-
-
-
-# TODO: generic way, some functions are copied or a bit
-# modified from lib.disassembler
+from plasma.lib.consts import *
 
 
 class Analyzer(threading.Thread):
@@ -56,42 +30,19 @@ class Analyzer(threading.Thread):
         self.dis = None
         self.msg = Queue()
         self.pending = set() # prevent recursive call
-        self.pending_not_curr = set() # prevent big stack
 
         self.running_second_pass = False
         self.where = 0 # cursor when parsing memory
         self.second_pass_done = False
 
 
-    def set(self, gctx):
+    def set(self, gctx, arch_analyzer):
+        # cache
         self.gctx = gctx
         self.dis = gctx.dis
         self.db = gctx.db
         self.api = gctx.api
         self.ARCH_UTILS = self.gctx.libarch.utils
-
-        self.CS_OP_IMM = self.dis.capstone.CS_OP_IMM
-        self.CS_OP_MEM = self.dis.capstone.CS_OP_MEM
-
-        # TODO: move arch dependant in lib/arch
-
-        if self.dis.is_x86:
-            from capstone.x86 import (X86_REG_EIP, X86_REG_RIP,
-                                      X86_REG_EBP, X86_REG_RBP)
-            self.X86_REG_EIP = X86_REG_EIP
-            self.X86_REG_RIP = X86_REG_RIP
-            self.X86_REG_RBP = X86_REG_RBP
-            self.X86_REG_EBP = X86_REG_EBP
-
-        elif self.dis.is_mips:
-            from capstone.mips import MIPS_REG_GP
-            self.MIPS_REG_GP = MIPS_REG_GP
-
-        elif self.dis.is_arm:
-            from capstone.arm import ARM_REG_PC
-            self.ARM_REG_PC = ARM_REG_PC
-
-        # cache
         self.is_ret = self.ARCH_UTILS.is_ret
         self.is_jump = self.ARCH_UTILS.is_jump
         self.is_uncond_jump = self.ARCH_UTILS.is_uncond_jump
@@ -101,14 +52,11 @@ class Analyzer(threading.Thread):
         self.jmptables = self.db.jmptables
         self.functions = self.db.functions
         self.prologs = self.ARCH_UTILS.PROLOGS
+        self.arch_analyzer = arch_analyzer
 
 
+    # Should be rewritten for mips
     def __add_prefetch(self, addr_set, inst):
-        if self.dis.is_mips:
-            prefetch = self.disasm(inst.address + inst.size)
-            if prefetch is not None:
-                addr_set[prefetch.address] = prefetch
-            return prefetch
         return None
 
 
@@ -187,7 +135,6 @@ class Analyzer(threading.Thread):
 
                             # Do an analysis on this value.
                             if val not in self.pending and \
-                                    val not in self.pending_not_curr and \
                                     self.first_inst_are_code(val):
                                 self.analyze_flow(val, self.has_prolog(val), False, True)
                         continue
@@ -228,6 +175,54 @@ class Analyzer(threading.Thread):
                     self.analyze_flow(ad, True, False, True)
 
                 ad += 1
+
+
+    # Do an analysis if the immediate is an address
+    def analyze_imm(self, i, op, imm):
+        s = self.dis.binary.get_section(imm)
+        if s is None or s.start == 0:
+            return
+
+        self.api.add_xref(i.address, imm)
+
+        if self.db.mem.exists(imm):
+            return
+
+        sz = op.size if self.dis.is_x86 else self.dis.wordsize
+        deref = s.read_int(imm, sz)
+
+        # If (*imm) is an address
+        if deref is not None and self.dis.binary.is_address(deref):
+            ty = MEM_OFFSET
+            self.api.add_xref(imm, deref)
+
+            if not self.db.mem.exists(deref):
+                self.db.mem.add(deref, 1, MEM_UNK)
+
+                # Do an anlysis on this value.
+                if deref not in self.pending and \
+                        self.first_inst_are_code(deref):
+                    self.analyze_flow(deref, self.has_prolog(deref), True, None)
+        else:
+            # Check if this is an address to a string
+            sz = self.dis.binary.is_string(imm)
+            if sz != 0:
+                ty = MEM_ASCII
+            else:
+                sz = op.size if self.dis.is_x86 else self.dis.wordsize
+                if op.type == self.ARCH_UTILS.OP_MEM:
+                    ty = self.db.mem.find_type(sz)
+                else:
+                    ty = MEM_UNK
+
+        self.db.mem.add(imm, sz, ty)
+
+        if ty == MEM_UNK:
+            # Do an analysis on this value, if this is not code
+            # nothing will be done.
+            if imm not in self.pending and \
+                    self.first_inst_are_code(imm):
+                self.analyze_flow(imm, self.has_prolog(imm), True, None)
 
 
     # Check if the five first instructions can be disassembled.
@@ -281,139 +276,23 @@ class Analyzer(threading.Thread):
         return False
 
 
-    def analyze_operands(self, i, func_obj):
-        b = self.dis.binary
-
-        for op in i.operands:
-            if op.type == self.CS_OP_IMM:
-                val = unsigned(op.value.imm)
-
-            elif op.type == self.CS_OP_MEM and op.mem.disp != 0:
-
-                if self.dis.is_x86:
-                    if op.mem.segment != 0:
-                        continue
-                    if op.mem.index == 0:
-                        # Compute the rip register
-                        if op.mem.base == self.X86_REG_EIP or \
-                            op.mem.base == self.X86_REG_RIP:
-                            val = i.address + i.size + unsigned(op.mem.disp)
-
-                        # Check if it's a stack variable
-                        elif (op.mem.base == self.X86_REG_EBP or \
-                              op.mem.base == self.X86_REG_RBP):
-                            if func_obj is not None:
-                                ty = self.db.mem.find_type(op.size)
-                                func_obj[FUNC_VARS][op.mem.disp] = [ty, None]
-                            # Continue the loop !!
-                            continue
-                        else:
-                            val = unsigned(op.mem.disp)
-                    else:
-                        val = unsigned(op.mem.disp)
-
-                # TODO: stack variables for arm/mips
-
-                elif self.dis.is_arm:
-                    if op.mem.index == 0 and op.mem.base == self.ARM_REG_PC:
-                        val = i.address + i.size * 2 + op.mem.disp
-                    else:
-                        val = op.mem.disp
-
-                elif self.dis.is_mips:
-                    if op.mem.base == self.MIPS_REG_GP:
-                        if self.dis.mips_gp == -1:
-                            continue
-                        val = op.mem.disp + self.dis.mips_gp
-                    else:
-                        val = op.mem.disp
-            else:
-                continue
-
-            s = b.get_section(val)
-            if s is None or s.start == 0:
-                continue
-
-            self.api.add_xref(i.address, val)
-
-            if not self.db.mem.exists(val):
-                sz = op.size if self.dis.is_x86 else self.dis.wordsize
-                deref = s.read_int(val, sz)
-
-                # If (*val) is an address
-                if deref is not None and b.is_address(deref):
-                    ty = MEM_OFFSET
-                    self.api.add_xref(val, deref)
-
-                    if not self.db.mem.exists(deref):
-                        self.db.mem.add(deref, 1, MEM_UNK)
-
-                        # Do an anlysis on this value.
-                        if deref not in self.pending and \
-                                deref not in self.pending_not_curr and \
-                                self.first_inst_are_code(deref):
-
-                            self.pending_not_curr.add(deref)
-                            self.msg.put(
-                                (deref, self.has_prolog(deref), False, True, None))
-                else:
-                    # Check if this is an address to a string
-                    sz = b.is_string(val)
-                    if sz != 0:
-                        ty = MEM_ASCII
-                    else:
-                        sz = op.size if self.dis.is_x86 else self.dis.wordsize
-                        if op.type == self.CS_OP_MEM:
-                            ty = self.db.mem.find_type(sz)
-                        else:
-                            ty = MEM_UNK
-
-                self.db.mem.add(val, sz, ty)
-
-                if ty == MEM_UNK:
-                    # Do an analysis on this value, if this is not code
-                    # nothing will be done.
-                    # jumps and calls are already analyzed in analyze_flow.
-                    if val not in self.pending and \
-                            not (self.is_jump(i) or self.is_call(i)) and \
-                            val not in self.pending_not_curr and \
-                            self.first_inst_are_code(val):
-
-                        self.pending_not_curr.add(val)
-                        self.msg.put(
-                            (val, self.has_prolog(val), False, True, None))
-
-
-    def __add_analyzed_code(self, mem, entry, inner_code, entry_is_func, flags):
-        is_def = entry in self.functions
-        if entry_is_func or is_def:
-            # It can be None because when symbols are loaded functions are
-            # set to None initially.
-            if is_def and self.functions[entry] is not None:
-                last_end = self.functions[entry][FUNC_END]
-                self.db.end_functions[last_end].remove(entry)
-                if not self.db.end_functions[last_end]:
-                    del self.db.end_functions[last_end]
-
+    def __add_analyzed_code(self, func_obj, mem, entry, inner_code, entry_is_func, flags):
+        if func_obj is not None:
             e = max(inner_code) if inner_code else -1
-            func_id = self.db.func_id_counter
-            func_obj = [e, flags, {}, func_id]
+            func_id = func_obj[FUNC_ID]
+            func_obj[FUNC_FLAGS] = flags
+            func_obj[FUNC_END] = e
             self.functions[entry] = func_obj
             self.db.func_id[func_id] = entry
-            self.db.func_id_counter += 1
 
             if e in self.db.end_functions:
                 self.db.end_functions[e].append(entry)
             else:
                 self.db.end_functions[e] = [entry]
-
         else:
             func_id = -1
-            func_obj = None
 
         for ad, inst in inner_code.items():
-            self.analyze_operands(inst, func_obj)
-
             if ad == entry and func_id != -1:
                 mem.add(ad, inst.size, MEM_FUNC, func_id)
             else:
@@ -442,9 +321,6 @@ class Analyzer(threading.Thread):
     #                   instructions will not be added.
     #
     def analyze_flow(self, entry, entry_is_func, force, add_if_code):
-        if entry in self.pending_not_curr:
-            self.pending_not_curr.remove(entry)
-
         if entry in self.pending:
             return
 
@@ -483,22 +359,40 @@ class Analyzer(threading.Thread):
                         inner_code[inst.address] = inst
                         flags = self.import_flags(ptr)
 
+        # Create a function object (see in Database)
+        is_def = entry in self.functions
+
+        if entry_is_func or is_def:
+            # It can be None because when symbols are loaded functions are
+            # set to None initially.
+            if is_def and self.functions[entry] is not None:
+                last_end = self.functions[entry][FUNC_END]
+                self.db.end_functions[last_end].remove(entry)
+                if not self.db.end_functions[last_end]:
+                    del self.db.end_functions[last_end]
+
+            # [func_end, flags, var_offsets, func_id, inst.addresses]
+            func_obj = [-1, 0, {}, self.db.func_id_counter, {}]
+            self.db.func_id_counter += 1
+
+        else:
+            func_obj = None
+
         if not is_pe_import and not inner_code:
-            flags = self.__sub_analyze_flow(entry, inner_code, add_if_code)
+            flags = self.__sub_analyze_flow(func_obj, entry, inner_code, add_if_code)
 
         if inner_code and flags != -1:
-            self.__add_analyzed_code(self.db.mem, entry, inner_code,
+            self.__add_analyzed_code(func_obj, self.db.mem, entry, inner_code,
                                      entry_is_func, flags)
 
         inner_code.clear()
         self.pending.remove(entry)
 
 
-    def __sub_analyze_flow(self, entry, inner_code, add_if_code):
+    def __sub_analyze_flow(self, func_obj, entry, inner_code, add_if_code):
         if self.dis.binary.get_section(entry) is None:
             return -1
 
-        stack = [entry]
         has_ret = False
 
         # If entry is not "code", we have to rollback added xrefs
@@ -506,8 +400,20 @@ class Analyzer(threading.Thread):
         if add_if_code:
             added_xrefs = []
 
+        regsctx = self.arch_analyzer.new_regs_context()
+        if regsctx is None:
+            # fatal error, but don't quit to let the user save the database
+            return 0
+
+        # FIXME : this is a hack for the cdecl calling convention
+        # if the stack pointer move after a call, this is probably a cdecl
+        # call, so we will ignore the add instruction.
+        one_call_called = False
+
+        stack = [(regsctx, entry)]
+
         while stack:
-            ad = stack.pop()
+            (regsctx, ad) = stack.pop()
             inst = self.disasm(ad)
 
             if inst is None:
@@ -521,6 +427,9 @@ class Analyzer(threading.Thread):
 
             inner_code[ad] = inst
 
+            self.arch_analyzer.analyze_operands(
+                    self, regsctx, inst, func_obj, one_call_called)
+
             if self.is_ret(inst):
                 self.__add_prefetch(inner_code, inst)
                 has_ret = True
@@ -530,19 +439,21 @@ class Analyzer(threading.Thread):
 
                 op = inst.operands[-1]
 
-                if op.type == self.CS_OP_IMM:
+                if op.type == self.ARCH_UTILS.OP_IMM:
                     nxt = unsigned(op.value.imm)
                     self.api.add_xref(ad, nxt)
                     if self.db.mem.is_func(nxt):
                         has_ret = not self.is_noreturn(nxt, entry)
                     else:
-                        stack.append(nxt)
+                        stack.append((regsctx, nxt))
                     if add_if_code:
                         added_xrefs.append((ad, nxt))
                 else:
                     if inst.address in self.jmptables:
                         table = self.jmptables[inst.address].table
-                        stack += table
+                        # TODO : dupplicate regsctx ??
+                        for n in table:
+                            stack.append((regsctx, n))
                         self.api.add_xref(ad, table)
                         if add_if_code:
                             added_xrefs.append((ad, table))
@@ -556,7 +467,7 @@ class Analyzer(threading.Thread):
                 prefetch = self.__add_prefetch(inner_code, inst)
 
                 op = inst.operands[-1]
-                if op.type == self.CS_OP_IMM:
+                if op.type == self.ARCH_UTILS.OP_IMM:
                     if prefetch is None:
                         direct_nxt = inst.address + inst.size
                     else:
@@ -564,7 +475,7 @@ class Analyzer(threading.Thread):
 
                     nxt_jmp = unsigned(unsigned(op.value.imm))
                     self.api.add_xref(ad, nxt_jmp)
-                    stack.append(direct_nxt)
+                    stack.append((regsctx, direct_nxt))
 
                     if add_if_code:
                         added_xrefs.append((ad, nxt_jmp))
@@ -572,30 +483,42 @@ class Analyzer(threading.Thread):
                     if self.db.mem.is_func(nxt_jmp):
                         has_ret = not self.is_noreturn(nxt_jmp, entry)
                     else:
-                        stack.append(nxt_jmp)
+                        newctx = self.arch_analyzer.clone_regs_context(regsctx)
+                        stack.append((newctx, nxt_jmp))
 
             elif self.is_call(inst):
+                one_call_called = True
                 op = inst.operands[-1]
-                if op.type == self.CS_OP_IMM:
-                    imm = unsigned(op.value.imm)
-                    self.api.add_xref(ad, imm)
+                value = None
+
+                if op.type == self.ARCH_UTILS.OP_IMM:
+                    value = unsigned(op.value.imm)
+                elif op.type == self.ARCH_UTILS.OP_REG:
+                    # FIXME : for MIPS, addresses are loaded in t9 (generally)
+                    # then jalr t9 is executed. The problem here is that we
+                    # will analyze twice the function. The first time is done
+                    # by the function analyze_imm.
+                    value = self.arch_analyzer.reg_value(regsctx, op.value.reg)
+
+                if value is not None:
+                    self.api.add_xref(ad, value)
 
                     if add_if_code:
-                        added_xrefs.append((ad, imm))
+                        added_xrefs.append((ad, value))
 
-                    if not self.db.mem.is_func(imm):
-                        self.analyze_flow(imm, True, False, add_if_code)
+                    if not self.db.mem.is_func(value):
+                        self.analyze_flow(value, True, False, add_if_code)
 
-                    if self.db.mem.is_func(imm) and self.is_noreturn(imm, entry):
+                    if self.db.mem.is_func(value) and self.is_noreturn(value, entry):
                         self.__add_prefetch(inner_code, inst)
                         continue
 
                 nxt = inst.address + inst.size
-                stack.append(nxt)
+                stack.append((regsctx, nxt))
 
             else:
                 nxt = inst.address + inst.size
-                stack.append(nxt)
+                stack.append((regsctx, nxt))
 
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:

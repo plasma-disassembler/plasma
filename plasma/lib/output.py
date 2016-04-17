@@ -24,10 +24,7 @@ from plasma.lib.custom_colors import *
 from plasma.lib.utils import unsigned, print_no_end, get_char, BYTES_PRINTABLE_SET
 from plasma.lib.colors import color, bold
 from plasma.lib.fileformat.binary import T_BIN_RAW
-from plasma.lib.memory import (MEM_CODE, MEM_UNK, MEM_FUNC, MEM_BYTE, MEM_WORD,
-                               MEM_DWORD, MEM_QWORD, MEM_ASCII, MEM_OFFSET)
-from plasma.lib.analyzer import (FUNC_VARS, VAR_TYPE, VAR_NAME,
-                                 FUNC_FLAG_NORETURN, FUNC_FLAGS)
+from plasma.lib.consts import *
 
 
 class OutputAbs():
@@ -359,7 +356,7 @@ class OutputAbs():
             return
 
         tabs = 0 if self.ctx.is_dump else 1
-        lst = list(self._dis.functions[func_addr][FUNC_VARS].keys())
+        lst = list(self._dis.functions[func_addr][FUNC_OFF_VARS].keys())
 
         if not lst:
             return
@@ -371,7 +368,7 @@ class OutputAbs():
             self._tabs(tabs)
             self._type(self.__get_var_type(func_addr, off))
             self._pad_width(11 + tabs * 4)
-            self._variable(self.__get_var_name(func_addr, off))
+            self._variable(self.get_var_name(func_addr, off))
             self._pad_width(20 + tabs * 4)
             if off < 0:
                 self._add(" = -0x%x" % (-off))
@@ -515,24 +512,19 @@ class OutputAbs():
         return -1
 
 
-    def var_name_exists(self, i, op_num):
-        if self._dis.mem.is_code(i.address):
-            func_id  = self._dis.mem.get_func_id(i.address)
-            if func_id != -1 and func_id in self._dis.func_id:
-                func_addr = self._dis.func_id[func_id]
-                v = i.operands[op_num].mem.disp
-                return v in self._dis.functions[func_addr][FUNC_VARS]
-        return False
-
-
-    def get_var_name(self, i, op_num):
+    # Returns (func_addr, off) or None
+    def get_var_offset(self, i, op_num):
         func_id  = self._dis.mem.get_func_id(i.address)
-        func_addr = self._dis.func_id[func_id]
-        return self.__get_var_name(func_addr, i.operands[op_num].mem.disp)
+        if func_id != -1 and func_id in self._dis.func_id:
+            func_addr = self._dis.func_id[func_id]
+            tmp = self._dis.functions[func_addr][FUNC_INST_ADDR]
+            if i.address in tmp:
+                return func_addr, tmp[i.address]
+        return None
 
 
-    def __get_var_name(self, func_addr, off):
-        name = self._dis.functions[func_addr][FUNC_VARS][off][VAR_NAME]
+    def get_var_name(self, func_addr, off):
+        name = self._dis.functions[func_addr][FUNC_OFF_VARS][off][VAR_NAME]
         if name is None:
             if off < 0:
                 return "var_%x" % (-off)
@@ -541,7 +533,7 @@ class OutputAbs():
 
 
     def __get_var_type(self, func_addr, off):
-        ty = self._dis.functions[func_addr][FUNC_VARS][off][VAR_TYPE]
+        ty = self._dis.functions[func_addr][FUNC_OFF_VARS][off][VAR_TYPE]
         if ty == MEM_BYTE:
             t = "char"
         elif ty == MEM_WORD:

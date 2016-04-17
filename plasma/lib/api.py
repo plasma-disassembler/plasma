@@ -19,16 +19,8 @@
 
 from queue import Queue
 
-from plasma.lib.memory import (MEM_BYTE, MEM_WORD, MEM_DWORD, MEM_QWORD,
-                                MEM_ASCII, MEM_OFFSET, MEM_UNK, MEM_FUNC,
-                                MEM_CODE)
-from plasma.lib.analyzer import (FUNC_FLAG_NORETURN, FUNC_END, FUNC_FLAGS,
-                                 FUNC_VARS, VAR_NAME)
-
-
-RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
-                   "dword_", "qword_", "asc_", "off_", "ret_", "loop_",
-                   "var_"]
+from plasma.lib.fileformat.binary import SectionAbs
+from plasma.lib.consts import *
 
 
 class Jmptable():
