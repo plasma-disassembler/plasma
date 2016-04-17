@@ -1,5 +1,7 @@
 #!/bin/sh
 
+umask 002
+
 REQ_EXEC="python3 pip3"
 for EXEC in ${REQ_EXEC} 
 do
@@ -46,7 +48,7 @@ cd ../../..
 # -> it fails due to a syntax error
 git clone -b master --depth 1 https://github.com/erocarrera/pefile
 cd pefile
-sudo -H python3 setup.py install
+sudo -H pip3 install .
 cd ..
 
 # ELF
