@@ -199,10 +199,10 @@ class Analyzer(threading.Thread):
             if not self.db.mem.exists(deref):
                 self.db.mem.add(deref, 1, MEM_UNK)
 
-                # Do an anlysis on this value.
+                # Do an analysis on this value.
                 if deref not in self.pending and \
                         self.first_inst_are_code(deref):
-                    self.analyze_flow(deref, self.has_prolog(deref), True, None)
+                    self.analyze_flow(deref, self.has_prolog(deref), False, True)
         else:
             # Check if this is an address to a string
             sz = self.dis.binary.is_string(imm)
@@ -222,7 +222,7 @@ class Analyzer(threading.Thread):
             # nothing will be done.
             if imm not in self.pending and \
                     self.first_inst_are_code(imm):
-                self.analyze_flow(imm, self.has_prolog(imm), True, None)
+                self.analyze_flow(imm, self.has_prolog(imm), True, True)
 
 
     # Check if the five first instructions can be disassembled.
