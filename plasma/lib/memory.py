@@ -51,15 +51,26 @@ class Memory():
 
     def add(self, ad, size, ty, val=0):
         self.mm[ad] = [size, ty, val]
+
         if ty == MEM_UNK:
-            # don't call rm_range, add will be called many times
             return
+
+        # don't call rm_range, it will be called so many times
         end = ad + size
-        ad += 1
-        while ad < end:
-            if ad in self.mm:
-                del self.mm[ad]
-            ad += 1
+        i = ad + 1
+        while i < end:
+            if i in self.mm:
+                del self.mm[i]
+            i += 1
+
+        # Set the MEM_HEAD if it's a big data
+        if size > MEM_QWORD:
+            end = ad + size
+            i = ad + BLOCK_SIZE
+            while i < end:
+                self.mm[i] = [i - ad, MEM_HEAD, ad]
+                i += BLOCK_SIZE
+            self.mm[end - 1] = [end - ad, MEM_HEAD, ad]
 
 
     def rm_range(self, ad, end):
@@ -143,16 +154,25 @@ class Memory():
 
     def get_head_addr(self, ad):
         # Now check if need to go backward (maybe we are inside an instruction
-        # or a string) : if should disassemble at the first address.
-        # For the moment we will check 128 bytes before : see issue #49
-        saved_ad = ad
-        for i in range(128):
-            if ad in self.mm:
-                sz = self.mm[ad][0]
-                if ad + sz > saved_ad:
-                    return ad
-            ad -= 1
-        return saved_ad
+        # or a string)
+
+        end = ad - BLOCK_SIZE
+        i = ad
+
+        while i >= end:
+            if i in self.mm:
+                m = self.mm[i]
+                if m[1] == MEM_HEAD:
+                    # The head address is stored at the offset 2
+                    return m[2]
+                # Check if the address is in the range
+                if i + m[0] > ad:
+                    return i
+                return ad
+            i -= 1
+
+        # It's only unknown data or .db
+        return ad
 
 
     def is_inside_mem(self, ad):

@@ -32,11 +32,11 @@ except:
 import json
 
 from plasma.lib.api import Jmptable
-from plasma.lib.utils import info, warning
+from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.0
+VERSION = 2.1
 
 
 class Database():
@@ -114,7 +114,9 @@ class Database():
             if self.version <= 1.5:
                 self.__load_labels(data)
 
-            if self.version != VERSION:
+            if self.version < VERSION:
+                die("your version of plasma is too old")
+            elif self.version != VERSION:
                 warning("the database version is old, some information may be missing")
 
             self.loaded = True

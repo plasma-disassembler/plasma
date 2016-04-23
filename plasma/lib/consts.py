@@ -29,6 +29,12 @@ MEM_QWORD = 7
 MEM_ASCII = 8
 MEM_OFFSET = 9
 
+# For big strings or data we put a MEM_HEAD every BLOCK_SIZE bytes and at
+# the end of the data. It allows to scroll up correctly in the visual mode.
+MEM_HEAD = 10
+BLOCK_SIZE = 128 # should be a power of 2
+BLOCK_SIZE_MASK = 128-1
+
 
 # Index of values for each Database.functions[i]
 FUNC_END = 0
@@ -57,8 +63,8 @@ NORETURN_PE = {
 }
 
 
-# This is the number of lines to disassemble (without comments and newline,
-# it counts only lines which start with address)
+# This is the number of lines to disassemble (without comments and newline:
+# it counts only lines which start with an address)
 NB_LINES_TO_DISASM = 256
 
 # Save disassembled instructions in a cache

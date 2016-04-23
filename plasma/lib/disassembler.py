@@ -445,11 +445,6 @@ class Disassembler():
         l = 0
         s = self.binary.get_section(ad)
 
-        # TODO: because we don't know addresses before, it will be
-        # necessary to add in memory.py an offset to tell that there is
-        # a known address at n previous bytes. It will allows to not set
-        # an offset on each byte (the database will increase too much).
-
         while l < NB_LINES_TO_DISASM:
             if self.mem.is_code(ad):
                 size = self.mem.mm[ad][0]
