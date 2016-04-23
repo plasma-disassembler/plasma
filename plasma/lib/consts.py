@@ -49,7 +49,7 @@ FUNC_FLAG_NORETURN = 1
 # Known functions which never returns
 NORETURN_ELF = {
     "exit", "_exit", "__stack_chk_fail", "err", "verr", "errx", "verrx",
-    "abort", "__assert_fail", "__libc_start_main",
+    "abort", "__assert_fail", "__libc_start_main", "perror",
 }
 
 NORETURN_PE = {
