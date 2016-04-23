@@ -444,7 +444,7 @@ class Api():
                     self.__db.xrefs[x].remove(from_ad)
                 if not self.__db.xrefs[x]:
                     del self.__db.xrefs[x]
-        else:
+        elif to_ad in self.__db.xrefs:
             if from_ad in self.__db.xrefs[to_ad]:
                 self.__db.xrefs[to_ad].remove(from_ad)
             if not self.__db.xrefs[to_ad]:

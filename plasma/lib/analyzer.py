@@ -325,7 +325,6 @@ class Analyzer(threading.Thread):
             return
 
         if not force:
-            # TODO check that we don't go inside an instruction
             if not entry_is_func and self.db.mem.is_loc(entry) or \
                     entry_is_func and self.db.mem.is_func(entry):
                 return
