@@ -27,7 +27,7 @@ from plasma.lib.ui.window import Window
 
 
 class InlineEd(Window):
-    def __init__(self, window, h, w, line, xbegin, idx_token, text,
+    def __init__(self, h, w, line, xbegin, idx_token, text,
                  color, tok_line):
         # The window class is only used for the read_escape_keys
         Window.__init__(self, None, has_statusbar=True)
@@ -45,11 +45,8 @@ class InlineEd(Window):
             b"\x05": self.k_end, # ctrl-e
         }
 
-        self.print_curr_line = True
-
         self.xbegin = xbegin
         self.idx_token = idx_token
-        self.par = window # parent == main window
         self.text = list(text)
         self.line = line
         self.color = color
@@ -58,11 +55,11 @@ class InlineEd(Window):
 
     def start_view(self, screen):
         self.screen = screen
-        y = self.par.cursor_y
+        y = self.cursor_y
 
         # index of the cursor in self.text
         i = len(self.text)
-        self.par.cursor_x = self.xbegin + i
+        self.cursor_x = self.xbegin + i
 
         while 1:
             (h, w) = screen.getmaxyx()
@@ -74,9 +71,9 @@ class InlineEd(Window):
             self.screen.clrtoeol()
             self.print_line(w, y)
 
-            if self.par.cursor_x >= w:
-                self.par.cursor_x = w - 1
-            screen.move(y, self.par.cursor_x)
+            if self.cursor_x >= w:
+                self.cursor_x = w - 1
+            screen.move(y, self.cursor_x)
             k = self.read_escape_keys()
 
             if k == b"\x1b": # escape = cancel
@@ -91,13 +88,13 @@ class InlineEd(Window):
                 i = self.mapping[k](i, w)
 
             # Ascii characters
-            elif k and k[0] >= 32 and k[0] <= 126 and self.par.cursor_x < w - 1:
+            elif k and k[0] >= 32 and k[0] <= 126 and self.cursor_x < w - 1:
                 # TODO: fix cursor_x >= w
                 # TODO: utf-8
                 c = chr(k[0])
                 self.text.insert(i, c)
                 i += 1
-                self.par.cursor_x += 1
+                self.cursor_x += 1
 
         self.text = "".join(self.text)
 
@@ -105,7 +102,6 @@ class InlineEd(Window):
 
 
     def print_line(self, w, y):
-        is_current_line = True
         force_exit = False
         x = 0
         i = 0
@@ -127,9 +123,6 @@ class InlineEd(Window):
 
             c = color_pair(col)
 
-            if is_current_line and self.print_curr_line:
-                c |= A_UNDERLINE
-
             if is_bold:
                 c |= curses.A_BOLD
 
@@ -139,47 +132,42 @@ class InlineEd(Window):
             if force_exit:
                 break
 
-        if is_current_line and not force_exit and self.print_curr_line:
-            n = w - x - 1
-            self.screen.addstr(y, x, " " * n, color_pair(0) | A_UNDERLINE)
-            x += n
-
 
     def k_left(self, i, w):
         if i != 0:
             i -= 1
-            self.par.cursor_x -= 1
+            self.cursor_x -= 1
         return i
 
     def k_right(self, i, w):
         if i != len(self.text):
             i += 1
-            self.par.cursor_x += 1
+            self.cursor_x += 1
             # TODO: fix cursor_x >= w
-            if self.par.cursor_x >= w:
-                i -= self.par.cursor_x - w + 1
-                self.par.cursor_x = w - 1
+            if self.cursor_x >= w:
+                i -= self.cursor_x - w + 1
+                self.cursor_x = w - 1
         return i
 
     def k_backspace(self, i, w):
         if i != 0:
             del self.text[i-1]
             i -= 1
-            self.par.cursor_x -= 1
+            self.cursor_x -= 1
         return i
 
     def k_home(self, i, w):
-        self.par.cursor_x = self.xbegin
+        self.cursor_x = self.xbegin
         return 0
 
     def k_end(self, i, w):
         n = len(self.text)
-        self.par.cursor_x = self.xbegin + n
+        self.cursor_x = self.xbegin + n
         i = n
         # TODO: fix cursor_x >= w
-        if self.par.cursor_x >= w:
-            i -= self.par.cursor_x - w + 1
-            self.par.cursor_x = w - 1
+        if self.cursor_x >= w:
+            i -= self.cursor_x - w + 1
+            self.cursor_x = w - 1
         return i
 
     def k_delete(self, i, w):
@@ -189,7 +177,7 @@ class InlineEd(Window):
 
     def k_ctrl_u(self, i, w):
         self.text = self.text[i:]
-        self.par.cursor_x = self.xbegin
+        self.cursor_x = self.xbegin
         return 0
 
     def k_ctrl_k(self, i, w):

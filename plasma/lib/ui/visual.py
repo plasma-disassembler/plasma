@@ -148,25 +148,6 @@ class Visual(Window):
         if self.cursor_x >= len(line):
             self.cursor_x = len(line) - 1
 
-        h2 = 1
-        w2 = int(w*6/7)
-
-        x = int((w - w2)/2) - 1
-        y = int((h - h2)/2) - 1
-
-        # A background with borders
-        scr_borders = curses.newwin(h2 + 2, w2 + 2, y, x)
-        scr_borders.border()
-        title = " rename "
-        scr_borders.addstr(0, int((w2 - len(title))/2), title)
-        scr_borders.refresh()
-
-        # The message box
-        scr = curses.newwin(h2, w2, y + 1, x + 1)
-
-        w = Window(None)
-        w.print_curr_line = False
-
         word = self.get_word_under_cursor()
         is_var = self.is_tok_var()
 
@@ -207,7 +188,7 @@ class Visual(Window):
             if self.api.is_reserved_prefix(word):
                 word = ""
 
-        text = w.open_textbox(scr, word)
+        text = popup_inputbox("rename", word, h, w).replace(" ", "_")
 
         if word == text or not text or self.api.is_reserved_prefix(text):
             return True
@@ -298,12 +279,8 @@ class Visual(Window):
 
 
     def main_cmd_search(self, h, w):
-        # TODO not very clean...
         self.status_bar("/", h, True)
-        scr = curses.newwin(h, w - 1, h, 1)
-        w = Window(None)
-        w.print_curr_line = False
-        text = w.open_textbox(scr, "")
+        text = inputbox("", 1, h, w - 1, h)
 
         if not text:
             return True
@@ -383,8 +360,10 @@ class Visual(Window):
         self.status_bar("-- INLINE COMMENT --", h)
 
         idx_token = len(tok_line)
-        ed = InlineEd(self, h, w, line, xbegin, idx_token, text,
+        ed = InlineEd(h, w, line, xbegin, idx_token, text,
                       COLOR_USER_COMMENT.val, tok_line)
+        ed.cursor_x = self.cursor_x
+        ed.cursor_y = self.cursor_y
 
         ret = ed.start_view(self.screen)
 
@@ -903,31 +882,15 @@ class Visual(Window):
             self.status_bar("no xrefs", h, True)
             return False
 
-        h2 = int(h*3/4)
-        w2 = int(w*6/7)
-
-        x = int((w - w2)/2) - 1
-        y = int((h - h2)/2) - 1
-
-        # A background with borders
-        scr_borders = curses.newwin(h2 + 2, w2 + 2, y, x)
-        scr_borders.border()
-        title = " xrefs for " + hex(ctx.entry)
-        scr_borders.addstr(0, int((w2 - len(title))/2), title)
-        scr_borders.refresh()
-
-        # The message box with xrefs
         o = ctx.dump_xrefs()
-        scr = curses.newwin(h2, w2, y + 1, x + 1)
-        w = Window(o)
-        ret = w.start_view(scr)
+        (ret, line) = popup_text("xrefs for 0x%x" % ctx.entry, o, h, w)
 
         if not ret:
             return True
 
         # Goto the selected xref
 
-        ad = o.line_addr[w.win_y + w.cursor_y]
+        ad = o.line_addr[line]
         topush = self.__compute_curr_position()
         self.cursor_x = 0
 

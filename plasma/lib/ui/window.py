@@ -32,6 +32,61 @@ MODE_DECOMPILE = 2
 MODE_OTHER = 3
 
 
+def popup_text(title, output, h_par, w_par):
+    """
+    It opens a centered popup. output is an instance of the class Output.
+    Returns (bool, line number of the cursor)
+    """
+    h2 = int(h_par * 3 / 4)
+    w2 = int(w_par * 6 / 7)
+
+    x = int((w_par - w2)/2) - 1
+    y = int((h_par - h2)/2) - 1
+
+    # A background with borders
+    borders = curses.newwin(h2 + 2, w2 + 2, y, x)
+    borders.border()
+    borders.addstr(0, int((w2 - len(title))/2), " %s " % title)
+    borders.refresh()
+
+    screen = curses.newwin(h2, w2, y + 1, x + 1)
+    w = Window(output)
+    ret = w.start_view(screen)
+    return (ret, w.win_y + w.cursor_y)
+
+
+def popup_inputbox(title, text, h_par, w_par):
+    """
+    It opens a centered popup and returns the text entered by the user.
+    """
+    h2 = 1
+    w2 = int(w_par * 6 / 7)
+
+    x = int((w_par - w2)/2) - 1
+    y = int((h_par - h2)/2) - 1
+
+    # A background with borders
+    borders = curses.newwin(h2 + 2, w2 + 2, y, x)
+    borders.border()
+    borders.addstr(0, int((w2 - len(title))/2), " %s " % title)
+    borders.refresh()
+
+    return inputbox(text, x + 1, y + 1, w2, h2)
+
+
+def inputbox(text, x, y, w, h):
+    """
+    It creates a surface for an inline editor.   
+    """
+    from plasma.lib.ui.inlineed import InlineEd
+    ed = InlineEd(h, w, 0, 0, 0, text, 0, [])
+    screen = curses.newwin(h, w, y, x)
+    ret = ed.start_view(screen)
+    if not ret:
+        return ""
+    return ed.text
+
+
 class Window():
     def __init__(self, output, has_statusbar=False):
         self.mode = MODE_OTHER
@@ -544,21 +599,3 @@ class Window():
     def cmd_highlight_clear(self, h, w):
         self.search_hi = None
         return True
-
-
-    def open_textbox(self, screen, text):
-        from plasma.lib.ui.inlineed import InlineEd
-        (h, w) = screen.getmaxyx()
-
-        ed = InlineEd(self, h, w, 0, 0, 0, text, 0, [])
-
-        # TODO: fix self.cursor_x >= w
-        self.cursor_x = len(text)
-        if self.cursor_x >= w:
-            self.cursor_x = w - 1
-
-        ed.print_curr_line = False
-        ret = ed.start_view(screen)
-        if not ret:
-            return ""
-        return ed.text
