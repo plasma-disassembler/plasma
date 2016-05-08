@@ -24,6 +24,7 @@ if [ $? -ne 0 ]; then
     exit
 fi
 
+# TODO : locate first capstone
 rm -rf /usr/lib/python3.*/site-packages/capstone*
 rm -rf build
 
@@ -44,12 +45,8 @@ sudo make install3
 cd ../../..
 
 # PE
-# TODO: pip3 install pefile
-# -> it fails due to a syntax error
-git clone -b master --depth 1 https://github.com/erocarrera/pefile
-cd pefile
-sudo -H pip3 install .
-cd ..
+# https://github.com/erocarrera/pefile
+sudo -H pip3 install pefile
 
 # ELF
 sudo -H pip3 install pyelftools
