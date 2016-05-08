@@ -20,6 +20,7 @@
 import curses
 import traceback
 
+from plasma.lib.utils import error, die
 from plasma.lib.custom_colors import *
 from plasma.lib.ui.window import *
 from plasma.lib.ui.inlineed import InlineEd
@@ -99,7 +100,17 @@ class Visual(Window):
         if self.gctx.color:
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, i, -1)
-            curses.init_pair(1, 253, 66) # for the highlight search
+
+            try:
+                curses.init_pair(1, 253, 66) # for the highlight search
+                curses.init_pair(2, 255, 238) # for the status bar
+            except:
+                curses.nocbreak()
+                curses.echo()
+                curses.endwin()
+                self.gctx.quiet = saved_quiet
+                error("is your terminal supports 256 colours ? check the issue #58")
+                return
         else:
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, 7, -1) # white
@@ -110,6 +121,7 @@ class Visual(Window):
             curses.nocbreak()
             curses.echo()
             curses.endwin()
+            self.gctx.quiet = saved_quiet
             traceback.print_exc()
             return
 
