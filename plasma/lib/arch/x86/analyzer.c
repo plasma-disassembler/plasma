@@ -91,7 +91,7 @@ static inline long py_aslong3(PyObject *obj, const char *name1, const char *name
 static int is_reg8(int r)
 {
     unsigned int i;
-    for (i = 0 ; i < sizeof(REG8) ; i++)
+    for (i = 0 ; i < sizeof(REG8) / sizeof(REG8[0]) ; i++)
         if (REG8[i] == r)
             return 1;
     return 0;
@@ -100,7 +100,7 @@ static int is_reg8(int r)
 static int is_reg16(int r)
 {
     unsigned int i;
-    for (i = 0 ; i < sizeof(REG16) ; i++)
+    for (i = 0 ; i < sizeof(REG16) / sizeof(REG16[0]) ; i++)
         if (REG16[i] == r)
             return 1;
     return 0;
@@ -109,7 +109,7 @@ static int is_reg16(int r)
 static int is_reg32(int r)
 {
     unsigned int i;
-    for (i = 0 ; i < sizeof(REG32) ; i++)
+    for (i = 0 ; i < sizeof(REG32) / sizeof(REG32[0]) ; i++)
         if (REG32[i] == r)
             return 1;
     return 0;
@@ -118,7 +118,7 @@ static int is_reg32(int r)
 static int is_reg64(int r)
 {
     unsigned int i;
-    for (i = 0 ; i < sizeof(REG64) ; i++)
+    for (i = 0 ; i < sizeof(REG64) / sizeof(REG64[0]); i++)
         if (REG64[i] == r)
             return 1;
     return 0;
