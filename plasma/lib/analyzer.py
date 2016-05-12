@@ -517,7 +517,8 @@ class Analyzer(threading.Thread):
 
             else:
                 nxt = inst.address + inst.size
-                stack.append((regsctx, nxt))
+                if nxt not in self.functions:
+                    stack.append((regsctx, nxt))
 
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:
