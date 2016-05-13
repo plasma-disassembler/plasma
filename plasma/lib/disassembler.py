@@ -102,6 +102,12 @@ class Disassembler():
             database.demangled = self.binary.demangled
             database.reverse_demangled = self.binary.reverse_demangled
             database.imports = self.binary.imports
+        else:
+            self.binary.symbols = database.symbols
+            self.binary.reverse_symbols = database.reverse_symbols
+            self.binary.demangled = database.demangled
+            self.binary.reverse_demangled = database.reverse_demangled 
+            self.binary.imports = database.imports
 
         cs_arch = arch_lookup.get(self.binary.arch, None)
         cs_mode = mode_lookup.get(self.binary.arch, None)

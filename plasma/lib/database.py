@@ -36,7 +36,7 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.2
+VERSION = 2.3
 
 
 class Database():
@@ -146,6 +146,7 @@ class Database():
             "raw_base": self.raw_base,
             "raw_type": self.raw_type,
             "raw_is_big_endian": self.raw_is_big_endian,
+            "imports": self.imports,
         }
 
         for j in self.jmptables.values():

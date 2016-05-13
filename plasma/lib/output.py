@@ -198,13 +198,13 @@ class OutputAbs():
             return False
 
         ty = self._dis.mem.get_type(ad)
-
         col = 0
-        if ty == MEM_FUNC:
-            if ad in self._dis.binary.imports:
-                col = COLOR_SECTION.val
-            else:
-                col = COLOR_SYMBOL.val
+
+        if ad in self._dis.binary.imports:
+            col = COLOR_SECTION.val
+
+        elif ty == MEM_FUNC:
+            col = COLOR_SYMBOL.val
 
         elif ty == MEM_CODE:
             if not self.ctx.is_dump:
