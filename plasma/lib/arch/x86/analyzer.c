@@ -611,7 +611,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
     if (len_ops == 1) {
         // Stack simualation not supported, just update the stack register
-        if (id == X86_INS_POP) {
+        switch (id) {
+        case X86_INS_POP:
             reg_add(regs, X86_REG_RSP, get_op_size(ops[0]));
 
             if (get_op_type(ops[0]) != X86_OP_REG)
@@ -623,24 +624,30 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 goto end;
 
             *(regs->is_def[r1]) = false;
-        }
-        else if (id == X86_INS_PUSH) {
-            reg_sub(regs, X86_REG_RSP, get_op_size(ops[0]));
-            goto analyze_push_value;
-        }
-        else {
-            int r = get_op_reg(ops[0]);
-            if (!is_reg_defined(regs, r))
-                goto end;
-            if (id == X86_INS_INC)
-                reg_inc(regs, r);
-            else if (id == X86_INS_DEC)
-                reg_dec(regs, r);
-        }
-        goto end;
-    }
+            goto end;
 
-analyze_push_value:
+        case X86_INS_PUSH:
+            reg_sub(regs, X86_REG_RSP, get_op_size(ops[0]));
+            break;
+
+        case X86_INS_INC:
+        case X86_INS_DEC:
+            if (get_op_type(ops[0]) == X86_OP_REG) {
+                int r = get_op_reg(ops[0]);
+                if (is_reg_defined(regs, r)) {
+                    if (id == X86_INS_INC)
+                        reg_inc(regs, r);
+                    else if (id == X86_INS_DEC)
+                        reg_dec(regs, r);
+                }
+                goto end;
+            }
+            break;
+
+        default:
+            goto end;
+        }
+    }
 
     // Save operands values and search stack variables
 
@@ -690,9 +697,6 @@ analyze_push_value:
         PyObject_CallMethod(analyzer, "analyze_imm", "OOi",
                             insn, ops[i], values[i]);
     }
-    
-    if (id == X86_INS_PUSH)
-        goto end;
 
     if (get_op_type(ops[0]) != X86_OP_REG)
         goto end;
