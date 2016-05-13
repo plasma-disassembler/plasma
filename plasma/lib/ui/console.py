@@ -136,11 +136,16 @@ class Completer():
 
 
     def loop(self):
+        if sys.stdin.isatty():
+            prompt = bold(color("plasma> ", 11))
+        else:
+            prompt = ""
+
         while 1:
             if SHOULD_EXIT:
                 break
             try:
-                line = input(bold(color("plasma> ", 11)))
+                line = input(prompt)
                 if line:
                     self.con.exec_command(line)
 
@@ -149,7 +154,6 @@ class Completer():
                 pass
 
             except EOFError:
-                print()
                 break
 
 
