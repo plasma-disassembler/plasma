@@ -1,0 +1,85 @@
+; ---------------------------------------------------------------------
+.text  0x4000d4 -> 0x40013f
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__stdcall:
+
+long int   var_4     = -0x4
+
+.text 0x4000d4: push rbp
+.text 0x4000d5: rbp = rsp
+.text 0x4000d8: rax = var_4
+.text 0x4000dc: pop rbp
+.text 0x4000dd: pop rax
+.text 0x4000de: pop rax
+.text 0x4000df: pop rax
+.text 0x4000e0: ret
+; end function __stdcall
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__cdecl:
+.text 0x4000e1: push rbp
+.text 0x4000e2: rbp = rsp
+.text 0x4000e5: pop rbp
+.text 0x4000e6: ret
+; end function __cdecl
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__jmp_func:
+.text 0x4000e7: jmp __stdcall
+; end function __jmp_func
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__noreturn__ __noreturn:
+.text 0x4000e9: jmp __noreturn
+; end function __noreturn
+
+_start:
+.text 0x4000eb: call (.text) main
+.text 0x4000f0: call (.text) __noreturn
+
+.text 0x4000f5: .db c3
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+main:
+
+long int   var_c     = -0xc
+
+.text 0x4000f6: push rbp
+.text 0x4000f7: rbp = rsp
+.text 0x4000fa: rsp -= 16
+.text 0x4000fe: rax = var_c
+.text 0x400102: rax = var_c
+.text 0x400107: push rax
+.text 0x400108: push rbx
+.text 0x400109: push rcx
+.text 0x40010a: call (.text) __stdcall
+.text 0x40010f: rax = var_c
+.text 0x400113: rax = var_c
+.text 0x400118: push rax
+.text 0x400119: push rbx
+.text 0x40011a: push rcx
+.text 0x40011b: call (.text) __cdecl
+.text 0x400120: rsp += 24
+.text 0x400124: rax = var_c
+.text 0x400128: rax = var_c
+.text 0x40012d: push rax
+.text 0x40012e: push rbx
+.text 0x40012f: push rcx
+.text 0x400130: call (.text) __jmp_func
+.text 0x400135: rax = var_c
+.text 0x400139: rax = var_c
+.text 0x40013e: pop rbp
+.text 0x40013f: ret
+; end function main
+

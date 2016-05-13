@@ -1,0 +1,38 @@
+#!/bin/sh
+
+color() {
+    local color="$1"
+    if [ "$3" == "" ]; then
+        local prefix=""
+        local txt="$2"
+    else
+        local prefix="$2 "
+        local txt="$3"
+    fi
+    echo -en "${prefix}\x1b[;${color}m${txt}\x1b[0m"
+}
+
+red() {
+    color 31 "$1" "$2"
+}
+
+green() {
+    color 32 "$1" "$2"
+}
+
+echo "analyzer tests..."
+
+ls *.bin | while read file; do
+    name=`basename $file .bin`
+    echo -e "py ${name}.py\ndump .text 999\n exit" | \
+        ../../run_plasma.py -i -na -nc ${name}.bin >tmp
+
+    diff -q ${name}.rev tmp >/dev/null
+    if [ $? -eq 0 ]; then
+        green "$name" "[OK]\n"
+    else
+        red "$name" "[FAIL]\n"
+    fi
+done
+
+rm tmp

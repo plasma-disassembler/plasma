@@ -23,6 +23,7 @@ all: check
 
 check:
 	@python3 test_plasma.py
+	@cd tests/analyzer && ./run.sh
 
 
 # Verbose : print the diff at each test
