@@ -53,22 +53,65 @@ static PyTypeObject regs_context_T = {
     sizeof(struct regs_context),
 };
 
+static int reg_size(int r)
+{
+    switch (r) {
+    case X86_REG_AH:
+    case X86_REG_AL:
+    case X86_REG_BH:
+    case X86_REG_BL:
+    case X86_REG_BPL:
+    case X86_REG_CL:
+    case X86_REG_CH:
+    case X86_REG_DIL:
+    case X86_REG_DL:
+    case X86_REG_DH:
+    case X86_REG_SIL:
+    case X86_REG_SPL:
+        return 1;
 
-static int REG8[] = {
-    X86_REG_AH, X86_REG_AL, X86_REG_BH, X86_REG_BL, X86_REG_BPL,
-    X86_REG_CL, X86_REG_CH, X86_REG_DIL, X86_REG_DL, X86_REG_DH,
-    X86_REG_SIL, X86_REG_SPL};
-static int REG16[] = {
-    X86_REG_BP, X86_REG_AX, X86_REG_BX, X86_REG_CX, X86_REG_CS,
-    X86_REG_DI, X86_REG_DS, X86_REG_DX, X86_REG_ES, X86_REG_FS,
-    X86_REG_GS, X86_REG_IP, X86_REG_SI, X86_REG_SP, X86_REG_SS};
-static int REG32[] = {
-    X86_REG_EAX, X86_REG_EBP, X86_REG_EBX, X86_REG_ECX, X86_REG_EDI,
-    X86_REG_EDX, X86_REG_EIP, X86_REG_ESI, X86_REG_ESP};
-static int REG64[] = {
-    X86_REG_RAX, X86_REG_RBP, X86_REG_RBX, X86_REG_RCX, X86_REG_RDI,
-    X86_REG_RDX, X86_REG_RIP, X86_REG_RSI, X86_REG_RSP};
+    case X86_REG_BP:
+    case X86_REG_AX:
+    case X86_REG_BX:
+    case X86_REG_CX:
+    case X86_REG_CS:
+    case X86_REG_DI:
+    case X86_REG_DS:
+    case X86_REG_DX:
+    case X86_REG_ES:
+    case X86_REG_FS:
+    case X86_REG_GS:
+    case X86_REG_IP:
+    case X86_REG_SI:
+    case X86_REG_SP:
+    case X86_REG_SS:
+        return 2;
 
+    case X86_REG_EAX:
+    case X86_REG_EBP:
+    case X86_REG_EBX:
+    case X86_REG_ECX:
+    case X86_REG_EDI:
+    case X86_REG_EDX:
+    case X86_REG_EIP:
+    case X86_REG_ESI:
+    case X86_REG_ESP:
+        return 4;
+
+    case X86_REG_RAX:
+    case X86_REG_RBP:
+    case X86_REG_RBX:
+    case X86_REG_RCX:
+    case X86_REG_RDI:
+    case X86_REG_RDX:
+    case X86_REG_RIP:
+    case X86_REG_RSI:
+    case X86_REG_RSP:
+        return 8;
+    }
+
+    return 0;
+}
 
 static inline long py_aslong2(PyObject *obj, const char *name)
 {
@@ -86,42 +129,6 @@ static inline long py_aslong3(PyObject *obj, const char *name1, const char *name
     Py_DECREF(tmp);
     Py_DECREF(tmp2);
     return n;
-}
-
-static int is_reg8(int r)
-{
-    unsigned int i;
-    for (i = 0 ; i < sizeof(REG8) / sizeof(REG8[0]) ; i++)
-        if (REG8[i] == r)
-            return 1;
-    return 0;
-}
-
-static int is_reg16(int r)
-{
-    unsigned int i;
-    for (i = 0 ; i < sizeof(REG16) / sizeof(REG16[0]) ; i++)
-        if (REG16[i] == r)
-            return 1;
-    return 0;
-}
-
-static int is_reg32(int r)
-{
-    unsigned int i;
-    for (i = 0 ; i < sizeof(REG32) / sizeof(REG32[0]) ; i++)
-        if (REG32[i] == r)
-            return 1;
-    return 0;
-}
-
-static int is_reg64(int r)
-{
-    unsigned int i;
-    for (i = 0 ; i < sizeof(REG64) / sizeof(REG64[0]); i++)
-        if (REG64[i] == r)
-            return 1;
-    return 0;
 }
 
 static PyObject *new_regs_context(PyObject *self, PyObject *args)
@@ -282,106 +289,150 @@ static PyObject* reg_value(PyObject *self, PyObject *args)
 
 static void reg_mov(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r)) {
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) = (long) v;
         *(self->is_def[r]) = true;
-    }
-    else if (is_reg32(r)) {
+        break;
+    case 4:
         *((int*) self->regs[r]) = (int) v;
         *(self->is_def[r]) = true;
-    }
-    else if (is_reg8(r)) {
+        break;
+    case 1:
         *((char*) self->regs[r]) = (char) v;
         *(self->is_def[r]) = true;
-    }
-    else if (is_reg16(r)) {
+        break;
+    case 2:
         *((short*) self->regs[r]) = (short) v;
         *(self->is_def[r]) = true;
+        break;
     }
 }
 
 static void reg_add(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) += (long) v;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) += (int) v;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) += (char) v;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) += (short) v;
+        break;
+    }
 }
 
 static void reg_sub(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) -= (long) v;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) -= (int) v;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) -= (char) v;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) -= (short) v;
+        break;
+    }
 }
 
 static void reg_or(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) |= (long) v;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) |= (int) v;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) |= (char) v;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) |= (short) v;
+        break;
+    }
 }
 
 static void reg_and(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) &= (long) v;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) &= (int) v;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) &= (char) v;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) &= (short) v;
+        break;
+    }
 }
 
 static void reg_xor(struct regs_context *self, int r, long v)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) ^= (long) v;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) ^= (int) v;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) ^= (char) v;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) ^= (short) v;
+        break;
+    }
 }
 
 static void reg_inc(struct regs_context *self, int r)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) += 1;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) += 1;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) += 1;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) += 1;
+        break;
+    }
 }
 
 static void reg_dec(struct regs_context *self, int r)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         *(self->regs[r]) -= 1;
-    else if (is_reg32(r))
+        break;
+    case 4:
         *((int*) self->regs[r]) -= 1;
-    else if (is_reg8(r))
+        break;
+    case 1:
         *((char*) self->regs[r]) -= 1;
-    else if (is_reg16(r))
+        break;
+    case 2:
         *((short*) self->regs[r]) -= 1;
+        break;
+    }
 }
 
 static PyObject* get_sp(PyObject *self, PyObject *args)
@@ -456,14 +507,14 @@ static inline long get_op_imm(PyObject *op)
 {
     long imm = py_aslong3(op, "value", "imm");
     switch (get_op_size(op)) {
-        case 1:
-            return (long) ((char) imm);
-        case 2:
-            return (long) ((short) imm);
-        case 4:
-            return (long) ((int) imm);
-        case 8:
-            return imm;
+    case 1:
+        return (long) ((char) imm);
+    case 2:
+        return (long) ((short) imm);
+    case 4:
+        return (long) ((int) imm);
+    case 8:
+        return imm;
     }
     // should not happen
     return 0;
@@ -471,14 +522,16 @@ static inline long get_op_imm(PyObject *op)
 
 static long get_reg_value(struct regs_context *regs, int r)
 {
-    if (is_reg64(r))
+    switch (reg_size(r)) {
+    case 8:
         return (long) *((long*) regs->regs[r]);
-    if (is_reg32(r))
+    case 4:
         return (long) *((int*) regs->regs[r]);
-    if (is_reg8(r))
+    case 1:
         return (long) *((char*) regs->regs[r]);
-    if (is_reg16(r))
+    case 2:
         return (long) *((short*) regs->regs[r]);
+    }
     // should not happen
     return 0;
 }
