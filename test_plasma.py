@@ -38,7 +38,6 @@ def test_plasma():
 
 def plasma_file(filename, symbol, options):
     gctx = GlobalContext()
-    gctx.sectionsname = False
     gctx.color = False
     gctx.filename = filename
     gctx.entry = symbol

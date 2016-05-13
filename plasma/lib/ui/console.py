@@ -57,7 +57,6 @@ COMMANDS_ALPHA = [
     "sym",
     "x",
     "v",
-    "display.print_section",
     "xrefs",
 ]
 
@@ -154,6 +153,8 @@ class Completer():
                 pass
 
             except EOFError:
+                if sys.stdin.isatty():
+                    print()
                 break
 
 
@@ -346,16 +347,6 @@ class Console():
                 [
                 "",
                 "Information about the current binary"
-                ]
-            ),
-
-            "display.print_section": Command(
-                0,
-                self.__exec_display_print_section,
-                None,
-                [
-                "",
-                "Print or not section when an address is found"
                 ]
             ),
 
@@ -602,14 +593,14 @@ class Console():
 
     def __exec_sym(self, args):
         if len(args) == 1:
-            self.gctx.dis.print_symbols(self.gctx.sectionsname)
+            self.gctx.dis.print_symbols()
             return
 
         if args[1][0] == "|":
             if len(args) == 2 or len(args) > 3:
                 error("bad arguments (warn: need spaces between |)")
                 return
-            self.gctx.dis.print_symbols(self.gctx.sectionsname, args[2])
+            self.gctx.dis.print_symbols(args[2])
             return
 
         if len(args) > 3:
@@ -706,15 +697,6 @@ class Console():
             print("Endianess: big endian")
         else:
             print("Endianess: little endian")
-
-
-    def __exec_display_print_section(self, args):
-        if self.gctx.sectionsname:
-            print("now it's off")
-            self.gctx.sectionsname = False
-        else:
-            print("now it's on")
-            self.gctx.sectionsname = True
 
 
     def __exec_save(self, args):

@@ -43,8 +43,8 @@ __noreturn__ __noreturn:
 ; end function __noreturn
 
 _start:
-.text 0x4000eb: call (.text) main
-.text 0x4000f0: call (.text) __noreturn
+.text 0x4000eb: call main
+.text 0x4000f0: call __noreturn
 
 .text 0x4000f5: .db c3
 
@@ -63,20 +63,20 @@ long int   var_c     = -0xc
 .text 0x400107: push rax
 .text 0x400108: push rbx
 .text 0x400109: push rcx
-.text 0x40010a: call (.text) __stdcall
+.text 0x40010a: call __stdcall
 .text 0x40010f: rax = var_c
 .text 0x400113: rax = var_c
 .text 0x400118: push rax
 .text 0x400119: push rbx
 .text 0x40011a: push rcx
-.text 0x40011b: call (.text) __cdecl
+.text 0x40011b: call __cdecl
 .text 0x400120: rsp += 24
 .text 0x400124: rax = var_c
 .text 0x400128: rax = var_c
 .text 0x40012d: push rax
 .text 0x40012e: push rbx
 .text 0x40012f: push rcx
-.text 0x400130: call (.text) __jmp_func
+.text 0x400130: call __jmp_func
 .text 0x400135: rax = var_c
 .text 0x400139: rax = var_c
 .text 0x40013e: pop rbp

@@ -20,7 +20,7 @@ green() {
     color 32 "$1" "$2"
 }
 
-OPTIONS="--nosectionsname --nocolor"
+OPTIONS="--nocolor"
 VERBOSE=0
 
 __diff() {

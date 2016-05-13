@@ -201,7 +201,11 @@ class OutputAbs():
 
         col = 0
         if ty == MEM_FUNC:
-            col = COLOR_SYMBOL.val
+            if ad in self._dis.binary.imports:
+                col = COLOR_SECTION.val
+            else:
+                col = COLOR_SYMBOL.val
+
         elif ty == MEM_CODE:
             if not self.ctx.is_dump:
                 # It means that in decompilation mode we don't want to print
@@ -620,16 +624,6 @@ class OutputAbs():
             elif self.ARCH_UTILS.is_call(i):
                 self._retcall(i.mnemonic)
                 self._add(" ")
-
-                if self.gctx.sectionsname:
-                    op = i.operands[0]
-                    if op.type == self.OP_IMM:
-                        s = self._binary.get_section(op.value.imm)
-                        if s is not None:
-                            self._add("(")
-                            self._section(s.name)
-                            self._add(") ")
-
                 self._operand(i, 0, hexa=True, force_dont_print_data=True)
 
             # Here we can have conditional jump with the option --dump

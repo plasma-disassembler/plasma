@@ -47,7 +47,6 @@ class GlobalContext():
         self.is_interactive = False
 
         # Command line options
-        self.sectionsname = False
         self.print_andif = True
         self.color = True
         self.max_data_size = 30
@@ -108,7 +107,6 @@ class GlobalContext():
         parser.add_argument('-i', '--interactive', action='store_true',
                 help='Interactive mode')
         parser.add_argument('-d', '--opt_debug', action='store_true')
-        parser.add_argument('-ns', '--nosectionsname', action='store_true')
         parser.add_argument('--raw', metavar='x86|x64|arm|mips|mips64',
                 help='Consider the input file as a raw binary')
         parser.add_argument('--rawbase', metavar='0xXXXXX',
@@ -123,7 +121,6 @@ class GlobalContext():
         self.debug           = args.opt_debug
         self.print_andif     = not args.noandif
         self.color           = not args.nocolor
-        self.sectionsname    = not args.nosectionsname
         self.max_data_size   = args.datasize
         self.filename        = args.filename
         self.raw_type        = args.raw

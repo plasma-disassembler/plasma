@@ -58,7 +58,7 @@ def console_entry():
             sys.exit(0)
 
         if gctx.syms:
-            gctx.dis.print_symbols(gctx.sectionsname)
+            gctx.dis.print_symbols()
             sys.exit(0)
 
         ctx = gctx.get_addr_context(gctx.entry)

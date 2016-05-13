@@ -534,7 +534,7 @@ class Disassembler():
     # sym_filter : search a symbol, non case-sensitive
     #    if it starts with '-', it prints non-matching symbols
     #
-    def print_symbols(self, print_sections, sym_filter=None):
+    def print_symbols(self, sym_filter=None):
         if sym_filter is not None:
             sym_filter = sym_filter.lower()
             if sym_filter[0] == "-":
@@ -571,9 +571,6 @@ class Disassembler():
                     else:
                         print_no_end(" " + sy)
 
-                    section = self.binary.get_section(ad)
-                    if print_sections and section is not None:
-                        print_no_end(" (" + color_section(section.name) + ")")
                     print()
                     total += 1
 
