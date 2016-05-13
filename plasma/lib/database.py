@@ -36,7 +36,7 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.1
+VERSION = 2.2
 
 
 class Database():
@@ -61,10 +61,13 @@ class Database():
         self.loaded = False
         self.mem = None
         # func address ->
-        #  [ end addr, flags,
-        #       dict vars_off -> [type, name],
-        #       func_id,
-        #       dict inst.address -> [var_off]
+        #  [ end addr,
+        #    flags,
+        #    dict vars_off -> [type, name],
+        #    func_id,
+        #    dict inst.address -> [var_off],
+        #    stack_pointer (result of sp at the end of the function)
+        #  ]
         self.functions = {}
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
@@ -274,14 +277,6 @@ class Database():
     def __load_functions(self, data):
         try:
             self.functions = data["functions"]
-
-            if self.version <= 1.7:
-                for fad, value in self.functions.items():
-                    value.append({}) # dict vars
-
-            if self.version <= 1.9:
-                for fad, value in self.functions.items():
-                    value.append(0) # func_id, will fail if we redefine a function...
 
             for fad, value in self.functions.items():
                 # end of the function

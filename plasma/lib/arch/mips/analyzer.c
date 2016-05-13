@@ -217,6 +217,24 @@ static inline void reg_xor(struct regs_context *self, int r, int v1, int v2)
     *((int*) &self->regs[r]) = v1 ^ v2;
 }
 
+static PyObject* get_sp(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    if (!PyArg_ParseTuple(args, "O", &regs))
+        Py_RETURN_NONE;
+    return PyLong_FromLong(regs->regs[MIPS_REG_SP]);
+}
+
+static PyObject* add_sp(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    long imm;
+    if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
+        Py_RETURN_NONE;
+    reg_add(regs, MIPS_REG_SP, regs->regs[MIPS_REG_SP], imm);
+    Py_RETURN_NONE;
+}
+
 static inline int get_insn_address(PyObject *op)
 {
     return py_aslong2(op, "address");
@@ -392,10 +410,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
-    bool one_call_called;
 
-    if (!PyArg_ParseTuple(args, "OOOOB",
-            &analyzer, &regs, &insn, &func_obj, &one_call_called))
+    if (!PyArg_ParseTuple(args, "OOOO", &analyzer, &regs, &insn, &func_obj))
         Py_RETURN_NONE;
 
     if (!GP)
@@ -567,6 +583,8 @@ static PyMethodDef mod_methods[] = {
     { "clone_regs_context", clone_regs_context, METH_VARARGS },
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
+    { "get_sp", get_sp, METH_VARARGS },
+    { "add_sp", add_sp, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 

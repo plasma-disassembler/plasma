@@ -17,6 +17,10 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+# http://wiki.osdev.org/COFF
+# http://www.delorie.com/djgpp/doc/coff/symtab.html
+# http://unixwiz.net/techtips/win32-callconv.html
+
 import bisect
 
 import pefile
@@ -60,9 +64,6 @@ class PE(Binary):
 
 
     def load_static_sym(self):
-        # http://wiki.osdev.org/COFF
-        # http://www.delorie.com/djgpp/doc/coff/symtab.html
-
         sym_table_off = self.pe.FILE_HEADER.PointerToSymbolTable
         n_sym = self.pe.FILE_HEADER.NumberOfSymbols
         string_table_off = sym_table_off + sizeof(SymbolEntry) * n_sym

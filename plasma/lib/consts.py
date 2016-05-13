@@ -42,6 +42,7 @@ FUNC_FLAGS = 1
 FUNC_OFF_VARS = 2
 FUNC_ID = 3
 FUNC_INST_ADDR = 4
+FUNC_SP = 5
 
 # Index of values for each Database.functions[i][FUNC_OFF_VARS][offset]
 VAR_TYPE = 0

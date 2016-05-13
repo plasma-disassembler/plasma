@@ -29,7 +29,7 @@ class Analyzer(threading.Thread):
     def init(self):
         self.dis = None
         self.msg = Queue()
-        self.pending = set() # prevent recursive call
+        self.pending = set() # to avoid recursion
 
         self.running_second_pass = False
         self.where = 0 # cursor when parsing memory
@@ -134,8 +134,7 @@ class Analyzer(threading.Thread):
                             self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
 
                             # Do an analysis on this value.
-                            if val not in self.pending and \
-                                    self.first_inst_are_code(val):
+                            if self.first_inst_are_code(val):
                                 self.analyze_flow(val, self.has_prolog(val), False, True)
                         continue
 
@@ -169,7 +168,7 @@ class Analyzer(threading.Thread):
 
                 # Do an analysis on this value.
                 # Don't run first_inst_are_code, it's too slow on big sections.
-                if ad not in self.pending and self.has_prolog(ad):
+                if self.has_prolog(ad):
                     # Don't push, run directly the analyzer. Otherwise
                     # we will re-analyze next instructions.
                     self.analyze_flow(ad, True, False, True)
@@ -200,8 +199,7 @@ class Analyzer(threading.Thread):
                 self.db.mem.add(deref, 1, MEM_UNK)
 
                 # Do an analysis on this value.
-                if deref not in self.pending and \
-                        self.first_inst_are_code(deref):
+                if self.first_inst_are_code(deref):
                     self.analyze_flow(deref, self.has_prolog(deref), False, True)
         else:
             # Check if this is an address to a string
@@ -220,8 +218,7 @@ class Analyzer(threading.Thread):
         if ty == MEM_UNK:
             # Do an analysis on this value, if this is not code
             # nothing will be done.
-            if imm not in self.pending and \
-                    self.first_inst_are_code(imm):
+            if self.first_inst_are_code(imm):
                 self.analyze_flow(imm, self.has_prolog(imm), True, True)
 
 
@@ -276,12 +273,14 @@ class Analyzer(threading.Thread):
         return False
 
 
-    def __add_analyzed_code(self, func_obj, mem, entry, inner_code, entry_is_func, flags):
+    def __add_analyzed_code(self, func_obj, mem, entry, inner_code,
+                            entry_is_func, flags, sp):
         if func_obj is not None:
             e = max(inner_code) if inner_code else -1
             func_id = func_obj[FUNC_ID]
             func_obj[FUNC_FLAGS] = flags
             func_obj[FUNC_END] = e
+            func_obj[FUNC_SP] = sp
             self.functions[entry] = func_obj
             self.db.func_id[func_id] = entry
 
@@ -308,6 +307,15 @@ class Analyzer(threading.Thread):
         return ad != entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
+    def function_sp(self, entry):
+        if entry not in self.functions:
+            return 0
+        func_obj = self.functions[entry]
+        if func_obj is None:
+            return 0
+        return func_obj[FUNC_SP]
+
+
     #
     # analyze_flow:
     # entry             address of the code to analyze.
@@ -319,24 +327,25 @@ class Analyzer(threading.Thread):
     #                   address to a code location. In this case, if the control
     #                   flow contains a bad instruction, the functions or
     #                   instructions will not be added.
+    # return stack offset : if this is not a function, it returns any value.
     #
     def analyze_flow(self, entry, entry_is_func, force, add_if_code):
         if entry in self.pending:
-            return
+            return 0
 
         if not force:
             if not entry_is_func and self.db.mem.is_loc(entry) or \
                     entry_is_func and self.db.mem.is_func(entry):
-                return
+                return self.function_sp(entry)
 
-            # Check if is not inside a function
+            # Check if this is not inside a function
             if self.db.mem.get_func_id(entry) != -1:
-                return
+                return self.function_sp(entry)
 
         mem = self.db.mem
 
         if mem.is_inside_mem(entry):
-            return
+            return self.function_sp(entry)
 
         self.pending.add(entry)
 
@@ -359,6 +368,7 @@ class Analyzer(threading.Thread):
                         flags = self.import_flags(ptr)
 
         # Create a function object (see in Database)
+
         is_def = entry in self.functions
 
         if entry_is_func or is_def:
@@ -370,27 +380,37 @@ class Analyzer(threading.Thread):
                 if not self.db.end_functions[last_end]:
                     del self.db.end_functions[last_end]
 
-            # [func_end, flags, var_offsets, func_id, inst.addresses]
-            func_obj = [-1, 0, {}, self.db.func_id_counter, {}]
+            # [func_end, flags, var_offsets, func_id, inst.addresses, sp]
+            func_obj = [-1, 0, {}, self.db.func_id_counter, {}, 0]
             self.db.func_id_counter += 1
-
         else:
             func_obj = None
 
-        if not is_pe_import and not inner_code:
-            flags = self.__sub_analyze_flow(func_obj, entry, inner_code, add_if_code)
+        do_save = True
+        sp = 0
 
-        if inner_code and flags != -1:
+        if not is_pe_import and not inner_code:
+            ret = self.__sub_analyze_flow(func_obj, entry, inner_code, add_if_code)
+            if ret is None:
+                do_save = False
+            else:
+                flags, sp = ret
+
+        if inner_code and do_save:
             self.__add_analyzed_code(func_obj, self.db.mem, entry, inner_code,
-                                     entry_is_func, flags)
+                                     entry_is_func, flags, sp)
 
         inner_code.clear()
         self.pending.remove(entry)
 
+        return sp
 
+
+    # Returns a tuple (flags, sp) or None if an error occurs
+    # flags is equal to 
     def __sub_analyze_flow(self, func_obj, entry, inner_code, add_if_code):
         if self.dis.binary.get_section(entry) is None:
-            return -1
+            return None
 
         has_ret = False
 
@@ -402,12 +422,7 @@ class Analyzer(threading.Thread):
         regsctx = self.arch_analyzer.new_regs_context()
         if regsctx is None:
             # fatal error, but don't quit to let the user save the database
-            return 0
-
-        # FIXME : this is a hack for the cdecl calling convention
-        # if the stack pointer move after a call, this is probably a cdecl
-        # call, so we will ignore the add instruction.
-        one_call_called = False
+            return 0, None
 
         stack = [(regsctx, entry)]
 
@@ -426,8 +441,7 @@ class Analyzer(threading.Thread):
 
             inner_code[ad] = inst
 
-            self.arch_analyzer.analyze_operands(
-                    self, regsctx, inst, func_obj, one_call_called)
+            self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
 
             if self.is_ret(inst):
                 self.__add_prefetch(inner_code, inst)
@@ -443,6 +457,8 @@ class Analyzer(threading.Thread):
                     self.api.add_xref(ad, nxt)
                     if self.db.mem.is_func(nxt):
                         has_ret = not self.is_noreturn(nxt, entry)
+                        ret_sp = self.function_sp(nxt)
+                        self.arch_analyzer.add_sp(regsctx, ret_sp)
                     else:
                         stack.append((regsctx, nxt))
                     if add_if_code:
@@ -474,19 +490,26 @@ class Analyzer(threading.Thread):
 
                     nxt_jmp = unsigned(unsigned(op.value.imm))
                     self.api.add_xref(ad, nxt_jmp)
-                    stack.append((regsctx, direct_nxt))
+
+                    if self.db.mem.is_func(direct_nxt):
+                        has_ret = not self.is_noreturn(direct_nxt, entry)
+                        ret_sp = self.function_sp(direct_nxt)
+                        self.arch_analyzer.add_sp(regsctx, ret_sp)
+                    else:
+                        stack.append((regsctx, direct_nxt))
 
                     if add_if_code:
                         added_xrefs.append((ad, nxt_jmp))
 
                     if self.db.mem.is_func(nxt_jmp):
                         has_ret = not self.is_noreturn(nxt_jmp, entry)
+                        ret_sp = self.function_sp(nxt_jmp)
+                        self.arch_analyzer.add_sp(regsctx, ret_sp)
                     else:
                         newctx = self.arch_analyzer.clone_regs_context(regsctx)
                         stack.append((newctx, nxt_jmp))
 
             elif self.is_call(inst):
-                one_call_called = True
                 op = inst.operands[-1]
                 value = None
 
@@ -506,7 +529,11 @@ class Analyzer(threading.Thread):
                         added_xrefs.append((ad, value))
 
                     if not self.db.mem.is_func(value):
-                        self.analyze_flow(value, True, False, add_if_code)
+                        ret_sp = self.analyze_flow(value, True, False, add_if_code)
+                    else:
+                        ret_sp = self.function_sp(value)
+
+                    self.arch_analyzer.add_sp(regsctx, ret_sp)
 
                     if self.db.mem.is_func(value) and self.is_noreturn(value, entry):
                         self.__add_prefetch(inner_code, inst)
@@ -523,14 +550,13 @@ class Analyzer(threading.Thread):
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:
                 self.api.rm_xrefs(from_ad, to_ad)
-            return -1
+            return None
 
         # for ELF
+        flags = FUNC_FLAG_NORETURN
         if entry in self.dis.binary.imports:
             flags = self.import_flags(entry)
         elif has_ret:
             flags = 0
-        else:
-            flags = FUNC_FLAG_NORETURN
 
-        return flags
+        return flags, self.arch_analyzer.get_sp(regsctx)

@@ -121,6 +121,16 @@ static void regs_context_dealloc(PyObject *self)
     free(r->is_stack);
 }
 
+static PyObject* get_sp(PyObject *self, PyObject *args)
+{
+    return 0;
+}
+
+static PyObject* add_sp(PyObject *self, PyObject *args)
+{
+    Py_RETURN_NONE;
+}
+
 static inline int is_reg_supported(int r)
 {
     return r > 0 && r <= LAST_REG;
@@ -226,10 +236,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
-    bool one_call_called;
 
-    if (!PyArg_ParseTuple(args, "OOOOB",
-            &analyzer, &regs, &insn, &func_obj, &one_call_called))
+    if (!PyArg_ParseTuple(args, "OOOO",
+            &analyzer, &regs, &insn, &func_obj))
         Py_RETURN_NONE;
 
     PyObject *list_ops = PyObject_GetAttrString(insn, "operands");
@@ -276,6 +285,8 @@ static PyMethodDef mod_methods[] = {
     { "clone_regs_context", clone_regs_context, METH_VARARGS },
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
+    { "get_sp", get_sp, METH_VARARGS },
+    { "add_sp", add_sp, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 

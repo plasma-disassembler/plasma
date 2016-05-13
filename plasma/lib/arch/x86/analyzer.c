@@ -384,6 +384,24 @@ static void reg_dec(struct regs_context *self, int r)
         *((short*) self->regs[r]) -= 1;
 }
 
+static PyObject* get_sp(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    if (!PyArg_ParseTuple(args, "O", &regs))
+        Py_RETURN_NONE;
+    return PyLong_FromLong(*(regs->regs[X86_REG_RSP]));
+}
+
+static PyObject* add_sp(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    long imm;
+    if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
+        Py_RETURN_NONE;
+    reg_add(regs, X86_REG_RSP, imm);
+    Py_RETURN_NONE;
+}
+
 static inline int get_insn_address(PyObject *op)
 {
     return py_aslong2(op, "address");
@@ -542,12 +560,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     PyObject *insn;
     PyObject *func_obj;
 
-    // See the FIXME in lib.analyzer.__sub_analyze_flow
-    // this is a hack for the cdecl calling convention.
-    bool one_call_called;
- 
-    if (!PyArg_ParseTuple(args, "OOOOB",
-            &analyzer, &regs, &insn, &func_obj, &one_call_called))
+    if (!PyArg_ParseTuple(args, "OOOO", &analyzer, &regs, &insn, &func_obj))
         Py_RETURN_NONE;
 
     int id = py_aslong2(insn, "id");
@@ -710,9 +723,7 @@ analyze_push_value:
 
     switch (id) {
         case X86_INS_ADD:
-            // Update the register only if this is not a cdecl call (supposed)
-            if (!one_call_called || (r1 != X86_REG_RSP &&
-                    r1 != X86_REG_ESP && r1 != X86_REG_SP))
+            if (!(r1 != X86_REG_RSP && r1 != X86_REG_ESP && r1 != X86_REG_SP))
                 reg_add(regs, r1, values[1]);
             break;
 
@@ -748,6 +759,8 @@ static PyMethodDef mod_methods[] = {
     { "clone_regs_context", clone_regs_context, METH_VARARGS },
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
+    { "get_sp", get_sp, METH_VARARGS },
+    { "add_sp", add_sp, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 
