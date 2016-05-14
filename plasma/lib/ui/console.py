@@ -578,7 +578,9 @@ class Console():
         # Analyze entry point
         ep = self.gctx.dis.binary.get_entry_point()
         if ep is not None:
-            self.analyzer.msg.put((ep, False, True, False, None))
+            self.analyzer.msg.put((ep, True, True, False, None))
+
+        self.analyzer.msg.put("rename_entry_point")
 
         # Analyze static functions
         for ad in self.db.reverse_symbols:

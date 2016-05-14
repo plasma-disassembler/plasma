@@ -100,6 +100,72 @@ class Analyzer(threading.Thread):
                     else:
                         self.msg.put(item)
 
+                elif item == "rename_entry_point":
+                    self.rename_entry_point()
+
+                    
+    def rename_entry_point(self):
+        def new_function(ad, name):
+            if name not in self.db.symbols:
+                self.api.add_symbol(imm, name)
+            self.analyze_flow(imm, True, True, False)
+
+        if self.dis.binary.type != T_BIN_ELF or not self.dis.is_x86:
+            return
+
+        from capstone.x86 import (X86_REG_RDI, X86_REG_RCX, X86_REG_R8,
+                                  X86_INS_MOV, X86_OP_REG, X86_OP_IMM,
+                                  X86_INS_PUSH)
+
+        ep = self.api.entry_point()
+        insn_count = 10
+        arg_count = 0 # counter for x86
+
+        if "_start" not in self.db.symbols:
+            self.api.add_symbol(ep, "_start")
+
+        ad = self.api.get_addr_from_symbol("__libc_start_main")
+        if ad == -1:
+            return
+
+        ad = next(iter(self.api.xrefsto(ad)))
+
+        while insn_count != 0 and ad != ep:
+            if self.db.mem.is_code(ad):
+                insn = self.api.disasm(ad)
+
+                if self.dis.binary.arch == "x86":
+                    if insn.id == X86_INS_PUSH and \
+                            insn.operands[0].type == X86_OP_IMM:
+                        imm = insn.operands[0].value.imm
+
+                        if arg_count == 0:
+                            new_function(imm, "main")
+                        elif arg_count == 1:
+                            new_function(imm, "__libc_csu_init")
+                        elif arg_count == 2:
+                            new_function(imm, "__libc_csu_fini")
+                        arg_count += 1
+
+                else: # x64
+                    if insn.id == X86_INS_MOV and \
+                            insn.operands[0].type == X86_OP_REG and \
+                            insn.operands[1].type == X86_OP_IMM:
+
+                        reg = insn.operands[0].value.reg
+                        imm = insn.operands[1].value.imm
+
+                        if reg == X86_REG_RDI:
+                            new_function(imm, "main")
+                        elif reg == X86_REG_RCX:
+                            new_function(imm, "__libc_csu_init")
+                        elif reg == X86_REG_R8:
+                            new_function(imm, "__libc_csu_fini")
+
+                insn_count -= 1
+
+            ad -= 1
+
 
     def pass_detect_unk_data(self):
         b = self.dis.binary
