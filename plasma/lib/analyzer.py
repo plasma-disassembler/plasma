@@ -128,7 +128,10 @@ class Analyzer(threading.Thread):
         if ad == -1:
             return
 
-        ad = next(iter(self.api.xrefsto(ad)))
+        try:
+            ad = next(iter(self.api.xrefsto(ad)))
+        except:
+            return
 
         while insn_count != 0 and ad != ep:
             if self.db.mem.is_code(ad):
