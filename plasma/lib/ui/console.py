@@ -32,9 +32,10 @@ from plasma.lib.ui.visual import Visual
 from plasma.lib.api import Api
 from plasma.lib.analyzer import Analyzer
 
+import plasma
+PLASMA_SCRIPTS_DIR = os.path.dirname(plasma.__file__) + "/../scripts"
 
 MAX_PRINT_COMPLETE = 300
-
 SHOULD_EXIT = False
 
 
@@ -175,7 +176,7 @@ class Console():
                 None,
                 [
                 "",
-                "Analyzer information",
+                "Analyzer status.",
                 ]
             ),
 
@@ -195,7 +196,7 @@ class Console():
                 None,
                 [
                 "",
-                "Display this help"
+                "Display this help."
                 ]
             ),
 
@@ -205,7 +206,7 @@ class Console():
                 None,
                 [
                 "",
-                "Display the command history",
+                "Display the command history.",
                 ]
             ),
 
@@ -215,7 +216,7 @@ class Console():
                 None,
                 [
                 "",
-                "Save the database (only symbols and history currently).",
+                "Save the database.",
                 ]
             ),
 
@@ -284,17 +285,7 @@ class Console():
                 self.__complete_x,
                 [
                 "SYMBOL|0xXXXX|EP [NB_LINES]",
-                "Disassemble only.",
-                ]
-            ),
-
-            "set": Command(
-                3,
-                None,
-                None,
-                [
-                "",
-                "Set options"
+                "Print contents at the specified address.",
                 ]
             ),
 
@@ -336,7 +327,7 @@ class Console():
                 None,
                 [
                 "",
-                "Print all sections",
+                "Print all sections.",
                 ]
             ),
 
@@ -346,7 +337,7 @@ class Console():
                 None,
                 [
                 "",
-                "Information about the current binary"
+                "Information about the current binary."
                 ]
             ),
 
@@ -362,13 +353,14 @@ class Console():
             ),
 
             "py": Command(
-                1,
+                -1,
                 self.__exec_py,
                 self.__complete_file,
                 [
-                "[FILE]",
+                "[!][FILE]",
                 "Run an interactive python shell or execute a script.",
-                "The global variable 'api' will be accessible."
+                "Global variables api and args will be passed to the script.",
+                "The character ! is an alias to the scripts directory."
                 ]
             ),
 
@@ -398,7 +390,7 @@ class Console():
                 self.__complete_x,
                 [
                 "SYMBOL|0xXXXX|EP",
-                "Print all xrefs."
+                "Print cross references to the specified address."
                 ]
             ),
         }
@@ -451,21 +443,38 @@ class Console():
             return []
 
         results = []
-        basename = os.path.basename(last_tok)
-        dirname = os.path.dirname(last_tok)
 
-        if not dirname:
-            dirname = "."
+        if last_tok.startswith("!"):
+            basename = last_tok[1:]
+            dirname = PLASMA_SCRIPTS_DIR
+        else:
+            basename = os.path.basename(last_tok)
+            dirname = os.path.dirname(last_tok)
+            if not dirname:
+                dirname = "."
 
         try:
             i = 0
             for f in os.listdir(dirname):
                 if f.startswith(basename):
                     f_backslahed = f.replace(" ", "\\ ")
-                    if os.path.isdir(os.path.join(dirname, f)):
-                        s = "%s/%s/" % (dirname, f_backslahed)
+
+                    if last_tok.startswith("!"):
+                        s = "!%s " % f_backslahed
                     else:
-                        s = "%s/%s " % (dirname, f_backslahed)
+                        if os.path.isdir(os.path.join(dirname, f)):
+                            if dirname == "/":
+                                s = "/%s/" % f_backslahed
+                            elif dirname == ".":
+                                s = "%s/" % f_backslahed
+                            else:
+                                s = "%s/%s/" % (dirname, f_backslahed)
+                        else:
+                            if dirname == ".":
+                                s = "%s " % f_backslahed
+                            else:
+                                s = "%s/%s " % (dirname, f_backslahed)
+
                     results.append(s)
                     i += 1
                     if i == MAX_PRINT_COMPLETE:
@@ -512,7 +521,7 @@ class Console():
             return
         c = self.COMMANDS[args[0]]
 
-        if len(args)-1 > c.max_args:
+        if c.max_args != -1 and len(args) - 1 > c.max_args:
             error("%s takes max %d args" % (args[0], c.max_args))
             return
 
@@ -724,8 +733,10 @@ class Console():
 
 
     def __exec_py(self, args):
-        ns = {"api": self.api}
-        if len(args) == 2:
+        ns = {"api": self.api, "args": args[1:]}
+        if len(args) > 1:
+            if args[1].startswith("!"):
+                args[1] = "%s/%s" % (PLASMA_SCRIPTS_DIR, args[1][1:])
             exec(open(args[1]).read(), ns)
         else:
             readline.set_completer(rlcompleter.Completer(ns).complete)

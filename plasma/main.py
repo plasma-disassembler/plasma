@@ -24,9 +24,8 @@ from plasma.lib import GlobalContext
 from plasma.lib.utils import info, die
 from plasma.lib.ui.vim import generate_vim_syntax
 from plasma.lib.api import Api
-
-# Generates the file custom_colors.py at the beginning
 import plasma.lib.colors
+
 
 def console_entry():
     gctx = GlobalContext()
