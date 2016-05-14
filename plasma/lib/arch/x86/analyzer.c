@@ -542,7 +542,7 @@ static long get_reg_value(struct regs_context *regs, int r)
 static bool get_op_value(struct regs_context *regs, PyObject *insn, 
                          PyObject *op, long *value, bool *is_stack)
 {
-    int r, base, index, scale;
+    int r, base, index, scale, disp;
     long imm;
     switch (get_op_type(op)) {
         case X86_OP_IMM:
@@ -564,7 +564,7 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
 
             *is_stack = false;
             scale = get_op_mem_scale(op);
-            imm = get_op_mem_disp(op);
+            imm = disp = get_op_mem_disp(op);
 
             base = get_op_mem_base(op);
             if (base) {
@@ -572,8 +572,11 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
                     imm += get_insn_address(insn) + get_insn_size(insn);
                 }
                 else {
-                    if (!is_reg_defined(regs, base))
-                        return true;
+                    if (!is_reg_defined(regs, base)) {
+                        // just analyze the disp value
+                        *value = disp;
+                        return false;
+                    }
                     imm += get_reg_value(regs, base);
                     *is_stack = regs->is_stack[base];
                 }
@@ -585,8 +588,11 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
                     imm += (get_insn_address(insn) + get_insn_size(insn)) * scale;
                 }
                 else {
-                    if (!is_reg_defined(regs, index))
-                        return true;
+                    if (!is_reg_defined(regs, index)) {
+                        // just analyze the disp value
+                        *value = disp;
+                        return false;
+                    }
                     imm += get_reg_value(regs, index) * scale;
                     *is_stack |= regs->is_stack[index];
                     if (*is_stack && scale > 1) // FIXME
@@ -667,16 +673,11 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         switch (id) {
         case X86_INS_POP:
             reg_add(regs, X86_REG_RSP, get_op_size(ops[0]));
-
-            if (get_op_type(ops[0]) != X86_OP_REG)
-                goto end;
-
-            int r1 = get_op_reg(ops[0]);
-
-            if (!is_reg_supported(r1))
-                goto end;
-
-            *(regs->is_def[r1]) = false;
+            if (get_op_type(ops[0]) == X86_OP_REG) {
+                int r1 = get_op_reg(ops[0]);
+                if (is_reg_supported(r1))
+                    *(regs->is_def[r1]) = false;
+            }
             goto end;
 
         case X86_INS_PUSH:
@@ -696,11 +697,15 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 goto end;
             }
             break;
+        }
 
-        default:
-            goto end;
+        if (PyObject_CallMethod(insn, "group", "i", X86_GRP_JUMP) == Py_True) {
+            int ty = get_op_type(ops[0]);
+            if (ty != X86_OP_MEM)
+                goto end;
         }
     }
+
 
     // Save operands values and search stack variables
 
@@ -750,6 +755,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         PyObject_CallMethod(analyzer, "analyze_imm", "OOi",
                             insn, ops[i], values[i]);
     }
+
+    if (len_ops == 1)
+        goto end;
 
     if (get_op_type(ops[0]) != X86_OP_REG)
         goto end;

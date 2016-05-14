@@ -108,7 +108,7 @@ class Analyzer(threading.Thread):
         def new_function(ad, name):
             if name not in self.db.symbols:
                 self.api.add_symbol(imm, name)
-            self.analyze_flow(imm, True, True, False)
+            self.analyze_flow(imm, True, False, False)
 
         if self.dis.binary.type != T_BIN_ELF or not self.dis.is_x86:
             return
