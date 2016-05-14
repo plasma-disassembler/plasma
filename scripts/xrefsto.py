@@ -19,7 +19,7 @@ class Xdot(threading.Thread):
         os.remove(filename)
 
 
-def rec_xref(output, ad, depth):
+def rec_xref(output, first_ad, ad, depth):
     global links
 
     label = api.get_symbol(ad)
@@ -31,7 +31,10 @@ def rec_xref(output, ad, depth):
         else:
             return
 
-    output.write('node_%x [label="%s"];\n' % (ad, label))
+    if ad == first_ad:
+        output.write('node_%x [label="%s" fillcolor="#B6FFDD"];\n' % (ad, label))
+    else:
+        output.write('node_%x [label="%s"];\n' % (ad, label))
 
     if depth != -1:
         if depth == 0:
@@ -47,7 +50,7 @@ def rec_xref(output, ad, depth):
         if (x, ad) not in links:
             links.add((x, ad))
             output.write('node_%x -> node_%x;\n' % (x, ad))
-            rec_xref(output, x, depth)
+            rec_xref(output, first_ad, x, depth)
 
 
 if len(args) > 3 or len(args) <= 1:
@@ -67,7 +70,7 @@ else:
         if f is not None:
             ad = f
 
-    rec_xref(output, ad, depth)
+    rec_xref(output, ad, ad, depth)
     output.write('}')
     output.close()
 
