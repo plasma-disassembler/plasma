@@ -327,7 +327,7 @@ class Api():
         Returns a list of all xrefs to ad.
         """
         if ad in self.__dis.xrefs:
-            return list(self.__dis.xrefs[ad])
+            return set(self.__db.xrefs[ad])
         return []
 
 
@@ -522,3 +522,22 @@ class Api():
         Returns a capstone instruction object.
         """
         return self.__dis.lazy_disasm(ad)
+
+
+    def dump_asm(self, ad, nb_lines=10):
+        """
+        Returns an Output object.
+        """
+        ctx = self.__gctx.get_addr_context(ad)
+        return ctx.dump_asm(nb_lines)
+
+
+    def get_func_addr(self, ad):
+        """
+        Returns the function address where ad is. It returns None if
+        ad is not in a function.
+        """
+        func_id = self.__db.mem.get_func_id(ad)
+        if func_id == -1:
+            return None
+        return self.__db.func_id[func_id]
