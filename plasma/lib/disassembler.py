@@ -91,7 +91,10 @@ class Disassembler():
         self.functions = database.functions
         self.func_id = database.func_id
         self.end_functions = database.end_functions
+
         self.xrefs = database.xrefs
+        self.mem.xrefs = database.xrefs
+        self.mem.data_sub_xrefs = database.data_sub_xrefs
 
         self.mips_gp = database.mips_gp
 
@@ -214,8 +217,10 @@ class Disassembler():
         o = ARCH_OUTPUT.Output(ctx)
         o._new_line()
         o.print_labels = False
+        xrefs = list(ctx.gctx.api.xrefsto(ad))
+        xrefs.sort()
 
-        for x in ctx.gctx.dis.xrefs[ad]:
+        for x in xrefs:
             s = self.binary.get_section(x)
 
             ty = self.mem.get_type(x)
@@ -239,9 +244,10 @@ class Disassembler():
                 i = self.lazy_disasm(x, s.start)
                 o._asm_inst(i)
 
-            elif ty == MEM_OFFSET:
-                o._address(x)
+            elif MEM_WOFFSET <= ty <= MEM_QOFFSET:
                 o.set_line(x)
+                o._pad_width(20)
+                o._address(x)
                 sz = self.mem.get_size(x)
                 off = s.read_int(x, sz)
                 if off is None:
@@ -251,7 +257,15 @@ class Disassembler():
                 o._imm(off, sz, True, print_data=False, force_dont_print_data=True)
                 o._new_line()
 
+            elif ty == MEM_ARRAY:
+                o.set_line(x)
+                o._pad_width(20)
+                o._address(x)
+                o._label(x, print_colon=True)
+                o._new_line()
+
             else:
+                o._pad_width(20)
                 o._address(x)
                 o.set_line(x)
                 sz = self.mem.get_size_from_type(ty)
@@ -373,7 +387,7 @@ class Disassembler():
 
                     ad += i.size
 
-                elif ty == MEM_OFFSET:
+                elif MEM_WOFFSET <= ty <= MEM_QOFFSET:
                     prefetch_after_branch = False
                     o._label_and_address(ad)
                     o.set_line(ad)
@@ -402,6 +416,45 @@ class Disassembler():
                     o._add(", 0")
                     o._new_line()
                     ad += sz
+
+                elif ty == MEM_ARRAY:
+                    prefetch_after_branch = False
+                    o._label_and_address(ad)
+
+                    array_info = self.mem.mm[ad]
+                    total_size = array_info[0]
+                    entry_type = array_info[2]
+                    entry_size = self.mem.get_size_from_type(entry_type)
+
+                    n = int(total_size / entry_size)
+
+                    o.set_line(ad)
+                    o._data_prefix(entry_size)
+
+                    k = 0
+                    while k < total_size:
+                        if o.curr_index > 70:
+                            o._new_line()
+                            o.set_line(ad)
+                            o._address(ad)
+                            o._data_prefix(entry_size)
+                            l += 1
+
+                        val = s.read_int(ad, entry_size)
+                        if MEM_WOFFSET <= entry_type <= MEM_QOFFSET:
+                            o._add(" ")
+                            o._imm(val, entry_size, True,
+                                   print_data=False, force_dont_print_data=True)
+                        else:
+                            o._word(val, entry_size, is_from_array=True)
+
+                        ad += entry_size
+                        k += entry_size
+
+                        if k < total_size:
+                            o._add(",")
+
+                    o._new_line()
 
                 else:
                     prefetch_after_branch = False
@@ -434,7 +487,8 @@ class Disassembler():
             o.curr_section = s
 
         if until == ad:
-            if self.mem.is_code(ad) and ad in self.xrefs or ad == s.start:
+            if self.mem.is_code(ad) and ad in self.xrefs or \
+                    s is not None and ad == s.start:
                 if not o.is_last_2_line_empty():
                     o._new_line()
 

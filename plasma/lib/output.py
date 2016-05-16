@@ -172,14 +172,15 @@ class OutputAbs():
             self._data(".dq")
 
 
-    def _word(self, by, size):
-        self._data_prefix(size)
+    def _word(self, by, size, is_from_array=False):
+        if not is_from_array:
+            self._data_prefix(size)
         if by is None:
             self._add(" ?")
         else:
             if size == 1:
                 self._add(" %0.2x" % by)
-                if by in BYTES_PRINTABLE_SET:
+                if not is_from_array and by in BYTES_PRINTABLE_SET:
                     if by == 9:
                         self._string("  '\\t'")
                     elif by == 13:
@@ -193,9 +194,37 @@ class OutputAbs():
 
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
+        # Check if ad is inside an array, in this case we should print
+        # something link "((byte*) &label[idx]) + offset)".
+        tmp_ad = self._dis.mem.get_head_addr(ad)
+        ty = self._dis.mem.get_type(tmp_ad)
+        if ty == MEM_ASCII:
+            if tmp_ad != ad:
+                array_idx = ad - tmp_ad
+                array_offset = 0
+            else:
+                array_idx = -1
+        elif ty == MEM_ARRAY:
+            entry_type = self._dis.mem.get_array_entry_type(tmp_ad)
+            entry_size =  self._dis.mem.get_size_from_type(entry_type)
+            n = ad - tmp_ad
+            array_idx = int(n / entry_size)
+            array_offset = n % entry_size
+        else:
+            array_idx = -1
+
+        ad = tmp_ad
+
         l = self.gctx.api.get_symbol(ad)
         if l is None:
             return False
+
+        # If it's not the label but only from a xref
+        if not print_colon and array_idx != -1:
+            if array_offset != 0:
+                l = "((byte*) &%s[%d]) + %d" % (l, array_idx, array_offset)
+            else:
+                l = "&%s[%d]" % (l, array_idx)
 
         ty = self._dis.mem.get_type(ad)
         col = 0
@@ -218,7 +247,7 @@ class OutputAbs():
             col = COLOR_CODE_ADDR.val
         elif ty == MEM_UNK:
             col = COLOR_UNK.val
-        elif MEM_BYTE <= ty <= MEM_OFFSET:
+        elif MEM_BYTE <= ty <= MEM_ARRAY:
             col = COLOR_DATA.val
 
         if print_colon:
@@ -230,21 +259,23 @@ class OutputAbs():
         if nocolor:
             col = 0
 
-        if tab == -1:
-            self.token_lines[-1].append((l, col, False))
-            self.lines[-1].append(l)
-            self.curr_index += len(l)
-        else:
+        if tab != -1:
             self._tabs(tab)
-
             if ty == MEM_FUNC:
                 flags = self._dis.functions[ad][FUNC_FLAGS]
                 if flags & FUNC_FLAG_NORETURN:
                     self._comment("__noreturn__ ")
 
-            self.token_lines[-1].append((l, col, False))
-            self.lines[-1].append(l)
-            self.curr_index += len(l)
+        self.token_lines[-1].append((l, col, False))
+        self.lines[-1].append(l)
+        self.curr_index += len(l)
+
+        # If it's a label
+        if print_colon and ty == MEM_ARRAY:
+            entry_type = self._dis.mem.get_array_entry_type(ad)
+            sz_entry = self._dis.mem.get_size_from_type(entry_type)
+            n = int(self._dis.mem.get_size(ad) / sz_entry)
+            self._internal_comment(" ; [%d]" % n)
 
         return True
 

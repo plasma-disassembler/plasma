@@ -469,11 +469,11 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
             // Check if there is a stack reference
             if (is_stack[i] && func_obj != Py_None) {
-                // ty = analyzer.db.mem.find_type(op_size)
+                // ty = analyzer.db.mem.get_type_from_size(op_size)
                 PyObject *tmp;
                 PyObject *db = PyObject_GetAttrString(analyzer, "db");
                 PyObject *mem = PyObject_GetAttrString(db, "mem");
-                PyObject *ty = PyObject_CallMethod(mem, "find_type", "i",
+                PyObject *ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
                                                    get_op_mem_size(id));
 
                 // The second item is the name of the variable

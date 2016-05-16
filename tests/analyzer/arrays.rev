@@ -1,0 +1,334 @@
+; ---------------------------------------------------------------------
+.text  0x400440 -> 0x400621
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__noreturn__ _start:
+.text 0x400440: ebp = 0
+.text 0x400442: r9 = rdx
+.text 0x400445: pop rsi
+.text 0x400446: rdx = rsp
+.text 0x400449: rsp &= -16
+.text 0x40044d: push rax
+.text 0x40044e: push rsp
+.text 0x40044f: r8 = __libc_csu_fini
+.text 0x400456: rcx = __libc_csu_init
+.text 0x40045d: rdi = main
+.text 0x400464: call __libc_start_main
+; end function _start
+
+.text 0x400469: .db f4
+.text 0x40046a: .db 66  'f'
+.text 0x40046b: .db 0f
+.text 0x40046c: .db 1f
+.text 0x40046d: .db 44  'D'
+.text 0x40046e: .db 00
+.text 0x40046f: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+deregister_tm_clones:
+.text 0x400470: eax = unk_600a2f
+.text 0x400475: push rbp
+.text 0x400476: rax -= __TMC_END__
+.text 0x40047c: rax cmp '\x0e'
+.text 0x400480: rbp = rsp
+.text 0x400483: jbe loc_4004a0
+.text 0x400485: eax = 0
+.text 0x40048a: test rax, rax
+.text 0x40048d: je loc_4004a0
+.text 0x40048f: pop rbp
+.text 0x400490: edi = __TMC_END__
+.text 0x400495: jmp rax
+
+.text 0x400497: .db 66  'f'
+.text 0x400498: .db 0f
+.text 0x400499: .db 1f
+.text 0x40049a: .db 84
+.text 0x40049b: .db 00
+.text 0x40049c: .db 00
+.text 0x40049d: .db 00
+.text 0x40049e: .db 00
+.text 0x40049f: .db 00
+
+loc_4004a0:
+.text 0x4004a0: pop rbp
+.text 0x4004a1: ret
+; end function deregister_tm_clones
+
+.text 0x4004a2: .db 0f
+.text 0x4004a3: .db 1f
+.text 0x4004a4: .db 40  '@'
+.text 0x4004a5: .db 00
+.text 0x4004a6: .db 66  'f'
+.text 0x4004a7: .db 2e  '.'
+.text 0x4004a8: .db 0f
+.text 0x4004a9: .db 1f
+.text 0x4004aa: .db 84
+.text 0x4004ab: .db 00
+.text 0x4004ac: .db 00
+.text 0x4004ad: .db 00
+.text 0x4004ae: .db 00
+.text 0x4004af: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+register_tm_clones:
+.text 0x4004b0: esi = __TMC_END__
+.text 0x4004b5: push rbp
+.text 0x4004b6: rsi -= __TMC_END__
+.text 0x4004bd: rsi >>= 3
+.text 0x4004c1: rbp = rsp
+.text 0x4004c4: rax = rsi
+.text 0x4004c7: rax >>= 63
+.text 0x4004cb: rsi += rax
+.text 0x4004ce: rsi >>= 1
+.text 0x4004d1: je loc_4004e8
+.text 0x4004d3: eax = 0
+.text 0x4004d8: test rax, rax
+.text 0x4004db: je loc_4004e8
+.text 0x4004dd: pop rbp
+.text 0x4004de: edi = __TMC_END__
+.text 0x4004e3: jmp rax
+
+.text 0x4004e5: .db 0f
+.text 0x4004e6: .db 1f
+.text 0x4004e7: .db 00
+
+loc_4004e8:
+.text 0x4004e8: pop rbp
+.text 0x4004e9: ret
+
+.text 0x4004ea: .db 66  'f'
+.text 0x4004eb: .db 0f
+.text 0x4004ec: .db 1f
+.text 0x4004ed: .db 44  'D'
+.text 0x4004ee: .db 00
+.text 0x4004ef: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__do_global_dtors_aux:
+.text 0x4004f0: *(__TMC_END__) cmp '\0'
+.text 0x4004f7: jne loc_40050a
+.text 0x4004f9: push rbp
+.text 0x4004fa: rbp = rsp
+.text 0x4004fd: call deregister_tm_clones
+.text 0x400502: pop rbp
+.text 0x400503: *(__TMC_END__) = '\x01'
+
+loc_40050a:
+.text 0x40050a: ret
+; end function __do_global_dtors_aux
+
+.text 0x40050c: .db 0f
+.text 0x40050d: .db 1f
+.text 0x40050e: .db 40  '@'
+.text 0x40050f: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+frame_dummy:
+.text 0x400510: edi = __JCR_END__
+.text 0x400515: *(rdi) cmp 0
+.text 0x400519: jne loc_400520
+
+loc_40051b:
+.text 0x40051b: jmp register_tm_clones
+
+.text 0x40051d: .db 0f
+.text 0x40051e: .db 1f
+.text 0x40051f: .db 00
+
+loc_400520:
+.text 0x400520: eax = 0
+.text 0x400525: test rax, rax
+.text 0x400528: je loc_40051b
+.text 0x40052a: push rbp
+.text 0x40052b: rbp = rsp
+.text 0x40052e: call rax
+.text 0x400530: pop rbp
+.text 0x400531: jmp register_tm_clones
+; end function frame_dummy
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+main:
+
+long int   var_38    = -0x38
+int        var_2c    = -0x2c
+long int   var_20    = -0x20
+char       var_15    = -0x15
+int        var_14    = -0x14
+int        var_10    = -0x10
+int        var_c     = -0xc
+
+.text 0x400536: push rbp
+.text 0x400537: rbp = rsp
+.text 0x40053a: rsp -= 48
+.text 0x40053e: var_2c = edi
+.text 0x400541: var_38 = rsi
+.text 0x400545: eax = *(&global_array[0])
+.text 0x40054b: var_c = eax
+.text 0x40054e: eax = *(&global_array[5])
+.text 0x400554: var_10 = eax
+.text 0x400557: eax = *(&global_array[9])
+.text 0x40055d: var_14 = eax
+.text 0x400560: eax = (zero ext) *(&global_string[7])
+.text 0x400567: var_15 = al
+.text 0x40056a: rax = *(&global_ptr[0])
+.text 0x400571: var_20 = rax
+.text 0x400575: eax = *(&global_array[8])
+.text 0x40057b: esi = eax
+.text 0x40057d: edi = asc_400634 "%d\n"
+.text 0x400582: eax = 0
+.text 0x400587: call printf
+.text 0x40058c: edi = global_string "this is a string.\n"
+.text 0x400591: call puts
+.text 0x400596: eax = &global_string[3]
+.text 0x40059b: rdi = rax
+.text 0x40059e: call puts
+.text 0x4005a3: eax = 0
+.text 0x4005a8: leave
+.text 0x4005a9: ret
+; end function main
+
+.text 0x4005aa: .db 66  'f'
+.text 0x4005ab: .db 0f
+.text 0x4005ac: .db 1f
+.text 0x4005ad: .db 44  'D'
+.text 0x4005ae: .db 00
+.text 0x4005af: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__libc_csu_init:
+.text 0x4005b0: push r15
+.text 0x4005b2: push r14
+.text 0x4005b4: r15d = edi
+.text 0x4005b7: push r13
+.text 0x4005b9: push r12
+.text 0x4005bb: r12 = __init_array_start
+.text 0x4005c2: push rbp
+.text 0x4005c3: rbp = __init_array_end
+.text 0x4005ca: push rbx
+.text 0x4005cb: r14 = rsi
+.text 0x4005ce: r13 = rdx
+.text 0x4005d1: rbp -= r12
+.text 0x4005d4: rsp -= 8
+.text 0x4005d8: rbp >>= 3
+.text 0x4005dc: call _init
+.text 0x4005e1: test rbp, rbp
+.text 0x4005e4: je loc_400606
+.text 0x4005e6: ebx = 0
+.text 0x4005e8: nop *(rax + rax)
+
+loc_4005f0:
+.text 0x4005f0: rdx = r13
+.text 0x4005f3: rsi = r14
+.text 0x4005f6: edi = r15d
+.text 0x4005f9: call *(r12 + (rbx*8))
+.text 0x4005fd: rbx += 1
+.text 0x400601: rbp cmp rbx
+.text 0x400604: jne loc_4005f0
+
+loc_400606:
+.text 0x400606: rsp += 8
+.text 0x40060a: pop rbx
+.text 0x40060b: pop rbp
+.text 0x40060c: pop r12
+.text 0x40060e: pop r13
+.text 0x400610: pop r14
+.text 0x400612: pop r15
+.text 0x400614: ret
+; end function __libc_csu_init
+
+.text 0x400615: .db 90
+.text 0x400616: .db 66  'f'
+.text 0x400617: .db 2e  '.'
+.text 0x400618: .db 0f
+.text 0x400619: .db 1f
+.text 0x40061a: .db 84
+.text 0x40061b: .db 00
+.text 0x40061c: .db 00
+.text 0x40061d: .db 00
+.text 0x40061e: .db 00
+.text 0x40061f: .db 00
+__libc_csu_fini:
+.text 0x400620: .db f3
+__libc_csu_fini:
+.text 0x400621: .db c3
+
+; ---------------------------------------------------------------------
+.data  0x6009a0 -> 0x600a27
+
+__data_start:
+.data 0x6009a0: .db 00
+.data 0x6009a1: .db 00
+.data 0x6009a2: .db 00
+.data 0x6009a3: .db 00
+.data 0x6009a4: .db 00
+.data 0x6009a5: .db 00
+.data 0x6009a6: .db 00
+.data 0x6009a7: .db 00
+__dso_handle:
+.data 0x6009a8: .db 00
+.data 0x6009a9: .db 00
+.data 0x6009aa: .db 00
+.data 0x6009ab: .db 00
+.data 0x6009ac: .db 00
+.data 0x6009ad: .db 00
+.data 0x6009ae: .db 00
+.data 0x6009af: .db 00
+.data 0x6009b0: .db 00
+.data 0x6009b1: .db 00
+.data 0x6009b2: .db 00
+.data 0x6009b3: .db 00
+.data 0x6009b4: .db 00
+.data 0x6009b5: .db 00
+.data 0x6009b6: .db 00
+.data 0x6009b7: .db 00
+.data 0x6009b8: .db 00
+.data 0x6009b9: .db 00
+.data 0x6009ba: .db 00
+.data 0x6009bb: .db 00
+.data 0x6009bc: .db 00
+.data 0x6009bd: .db 00
+.data 0x6009be: .db 00
+.data 0x6009bf: .db 00
+global_array: ; [10]
+.data 0x6009c0: .dd 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9
+.data 0x6009e8: .db 00
+.data 0x6009e9: .db 00
+.data 0x6009ea: .db 00
+.data 0x6009eb: .db 00
+.data 0x6009ec: .db 00
+.data 0x6009ed: .db 00
+.data 0x6009ee: .db 00
+.data 0x6009ef: .db 00
+global_string:
+.data 0x6009f0: "this is a string.\n", 0
+.data 0x600a03: .db 00
+.data 0x600a04: .db 00
+.data 0x600a05: .db 00
+.data 0x600a06: .db 00
+.data 0x600a07: .db 00
+.data 0x600a08: .db 00
+.data 0x600a09: .db 00
+.data 0x600a0a: .db 00
+.data 0x600a0b: .db 00
+.data 0x600a0c: .db 00
+.data 0x600a0d: .db 00
+.data 0x600a0e: .db 00
+.data 0x600a0f: .db 00
+global_ptr: ; [3]
+.data 0x600a10: .dq &global_array[0], global_string "this is a string.\n",
+.data 0x600a20: .dq &global_string[4]
+

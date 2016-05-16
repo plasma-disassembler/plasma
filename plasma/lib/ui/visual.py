@@ -74,6 +74,7 @@ class Visual(Window):
             b"Q": self.main_cmd_set_qword,
             b"a": self.main_cmd_set_ascii,
             b"o": self.main_cmd_set_offset,
+            b"*": self.main_cmd_set_array,
 
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
@@ -861,6 +862,69 @@ class Visual(Window):
         return True
 
 
+    def main_cmd_set_array(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+
+        main_ty = ty = self.db.mem.get_type(ad)
+        if ty == MEM_ARRAY:
+            ty = self.db.mem.get_array_entry_type(ad)
+            sz_entry = self.db.mem.get_size_from_type(ty)
+        else:
+            if ty == -1 or ty == MEM_UNK:
+                ty = MEM_BYTE
+            if ty < MEM_BYTE or ty > MEM_QOFFSET:
+                self.status_bar("can't create an array here", h, True)
+                return False
+            sz_entry = self.db.mem.get_size(ad)
+
+        if sz_entry == 1:
+            type_name = "byte"
+        elif sz_entry == 2:
+            type_name = "short"
+        elif sz_entry == 4:
+            type_name = "int"
+        elif sz_entry == 8:
+            type_name = "long"
+
+        if main_ty == MEM_ARRAY:
+            n = int(self.db.mem.get_size(ad) / sz_entry)
+        else:
+            # Try to detect the size
+            n = 1
+            tmp_ad = ad + sz_entry
+            s = self.dis.binary.get_section(tmp_ad)
+            while tmp_ad <= s.end:
+                tmp_ty = self.db.mem.get_type(tmp_ad)
+                if tmp_ty != -1 and tmp_ty != MEM_UNK and \
+                         (tmp_ty < MEM_BYTE or tmp_ty > MEM_QOFFSET):
+                    break
+                if tmp_ad in self.db.xrefs:
+                    break
+
+                tmp_ad += sz_entry
+                n += 1
+
+        word = popup_inputbox("array of %s" % type_name, str(n), h, w)
+
+        if word == "":
+            return True
+
+        try:
+            n = int(word)
+        except:
+            self.redraw(h, w)
+            self.status_bar("error: not an integer", h)
+            return False
+
+        self.api.set_array(ad, n, ty)
+        self.reload_output(h)
+        self.db.modified = True
+        return True
+
+
     def main_cmd_set_function(self, h, w):
         if self.mode == MODE_DECOMPILE:
             return False
@@ -884,13 +948,13 @@ class Visual(Window):
     def main_cmd_xrefs(self, h, w):
         word = self.get_word_under_cursor()
         if word is None:
-            return False
+            return None
 
         ctx = self.gctx.get_addr_context(word)
-        if not ctx:
-            return False
 
-        if ctx.entry not in self.db.xrefs:
+        is_array = self.db.mem.is_array(ctx.entry)
+        if not ctx or (not is_array and ctx.entry not in self.db.xrefs) or \
+                (is_array and ctx.entry not in self.db.mem.data_sub_xrefs):
             self.status_bar("no xrefs", h, True)
             return False
 

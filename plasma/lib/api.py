@@ -49,15 +49,40 @@ class Api():
         return self.__binary.get_entry_point()
 
 
-    def __undefine(self, ad, end_range):
+    def __undefine(self, ad, min_end_range):
+        # TODO : better undefine !
+        # -> some undefine stuff is also done in the function rm_range
+        # called by self.mem.add.
+
         # TODO : check if instructions contains an address with xrefs
         if ad in self.__db.functions:
-            # TODO : undefine all func_id of each instructions
+            # TODO : undefine all instructions of the function
             func_obj = self.__db.functions[ad]
             del self.__db.functions[ad]
             if func_obj is not None:
                 del self.__db.end_functions[func_obj[FUNC_END]]
                 del self.__db.func_id[func_obj[FUNC_ID]]
+
+        # Remove xrefs if we erased offsets.
+
+        if self.mem.is_array(ad):
+            entry_type = self.mem.get_array_entry_type(ad)
+            if MEM_WOFFSET <= entry_type <= MEM_QOFFSET:
+                entry_size = self.mem.get_size_from_type(entry_type)
+                total_size = self.mem.get_size(ad)
+                i = ad
+                s = self.__binary.get_section(ad)
+                end = min(ad + total_size, s.end + 1)
+                while i < end:
+                    off = s.read_int(i, entry_size)
+                    self.rm_xref(i, off)
+                    i += entry_size
+
+        elif self.mem.is_offset(ad):
+            entry_size = self.mem.get_size(ad)
+            s = self.__binary.get_section(ad)
+            off = s.read_int(ad, entry_size)
+            self.rm_xref(ad, off)
 
 
     def set_code(self, ad):
@@ -98,11 +123,11 @@ class Api():
         returns True if ok
         """
         self.__undefine(ad, 1)
-        if ad in self.__db.xrefs:
+        if ad in self.__db.xrefs or ad in self.__db.data_sub_xrefs:
             self.mem.add(ad, 1, MEM_BYTE)
         else:
             # not useful to store it in the database
-            self.mem.rm_range(ad, ad + 1)
+            self.mem.rm_range(ad, max(self.mem.get_size(ad), 1))
         return True
 
 
@@ -149,18 +174,24 @@ class Api():
         return True
 
 
-    def set_offset(self, ad):
+    def set_offset(self, ad, ty=None, force_analyze=False):
         """
-        Define ad as a pointer. If the value is an address to a
-        code location, an analysis will be done. ad must be set as
-        WORD, DWORD or QWORD.
+        Define ad as an offset. If the value is an address to a
+        code location, an analysis will be done. ty should be in
+        [WORD, DWORD, QWORD], if not set the type at the address
+        ad is retrieved.
+        force_analyze is used internally ONLY.
+
         returns True if ok
         """
-        ty = self.mem.get_type(ad)
+        if ty is None:
+            ty = self.mem.get_type(ad)
+            sz = self.mem.get_size(ad)
+        else:
+            sz = self.mem.get_size_from_type(ty)
+
         if ty == -1 or ty < MEM_WORD or ty > MEM_QWORD:
             return False
-
-        sz = self.mem.get_size(ad)
 
         s = self.__binary.get_section(ad)
         off = s.read_int(ad, sz)
@@ -176,14 +207,53 @@ class Api():
             self.mem.add(off, 1, MEM_UNK)
 
         self.__undefine(ad, sz)
-        self.mem.add(ad, sz, MEM_OFFSET)
+
+        if ty == MEM_WORD:
+            self.mem.add(ad, sz, MEM_WOFFSET)
+        elif ty == MEM_DWORD:
+            self.mem.add(ad, sz, MEM_DOFFSET)
+        elif ty == MEM_QWORD:
+            self.mem.add(ad, sz, MEM_QOFFSET)
 
         if self.__analyzer.first_inst_are_code(off):
-            self.__analyzer.msg.put(
-                (off, self.__analyzer.has_prolog(off), False, True,
-                 self.__queue_wait))
-            self.__queue_wait.get()
+            if force_analyze:
+                self.__analyzer.analyze_flow(
+                    off, self.__analyzer.has_prolog(off), False, True)
+            else:
+                self.__analyzer.msg.put(
+                    (off, self.__analyzer.has_prolog(off), False, True,
+                     self.__queue_wait))
+                self.__queue_wait.get()
 
+        return True
+
+
+    def set_array(self, ad, nb_entries, entry_type):
+        """
+        returns True if ok.
+        """
+        if entry_type < MEM_BYTE or entry_type > MEM_QOFFSET:
+            return False
+
+        entry_size = self.mem.get_size_from_type(entry_type)
+        sz = entry_size * nb_entries
+
+        s = self.__binary.get_section(ad)
+        if ad + sz > s.end + 1:
+            return False
+
+        if MEM_QOFFSET <= entry_type <= MEM_QOFFSET:
+            end = ad + sz
+            i = ad
+            while i < end:
+                ty = self.mem.get_type(i)
+                if not (MEM_WOFFSET <= ty <= MEM_QOFFSET):
+                    self.set_offset(i, self.mem.get_type_from_size(entry_size))
+                i += entry_size
+        else:
+            self.__undefine(ad, sz)
+
+        self.mem.add(ad, sz, MEM_ARRAY, entry_type)
         return True
 
 
@@ -326,9 +396,19 @@ class Api():
         """
         Returns a list of all xrefs to ad.
         """
-        if ad in self.__dis.xrefs:
-            return set(self.__db.xrefs[ad])
-        return []
+        lst = []
+        if ad in self.__db.data_sub_xrefs:
+            for x in self.__db.data_sub_xrefs[ad]:
+                lst += self.__db.xrefs[x]
+            for i, x in enumerate(lst):
+                ad = self.__db.mem.get_head_addr(x)
+                if ad != x:
+                    lst[i] = ad
+            return set(lst)
+
+        if ad in self.__db.xrefs:
+            lst = set(self.__db.xrefs[ad])
+        return lst
 
 
     def add_symbol(self, ad, name, force=False):
@@ -422,36 +502,42 @@ class Api():
 
 
     def add_xref(self, from_ad, to_ad):
-        if isinstance(to_ad, list):
-            for x in to_ad:
-                if x in self.__db.xrefs:
-                    if from_ad not in self.__db.xrefs[x]:
-                        self.__db.xrefs[x].append(from_ad)
-                else:
-                    self.__db.xrefs[x] = [from_ad]
+        if to_ad in self.__db.xrefs:
+            if from_ad not in self.__db.xrefs[to_ad]:
+                self.__db.xrefs[to_ad].append(from_ad)
         else:
-            if to_ad in self.__db.xrefs:
-                if from_ad not in self.__db.xrefs[to_ad]:
-                    self.__db.xrefs[to_ad].append(from_ad)
-            else:
-                self.__db.xrefs[to_ad] = [from_ad]
+            self.__db.xrefs[to_ad] = [from_ad]
+
+        head = self.mem.get_head_addr(to_ad)
+        if head != to_ad and head in self.__db.data_sub_xrefs:
+            self.__db.data_sub_xrefs[head][to_ad] = True
+            self.mem.mm[to_ad] = [to_ad - head + 1, MEM_HEAD, head]
 
 
-    def rm_xrefs(self, from_ad, to_ad):
-        if isinstance(to_ad, list):
-            for x in to_ad:
-                if from_ad in self.__db.xrefs[x]:
-                    self.__db.xrefs[x].remove(from_ad)
-                if not self.__db.xrefs[x]:
-                    del self.__db.xrefs[x]
-        elif to_ad in self.__db.xrefs:
+    def add_xrefs_table(self, from_ad, to_ad_list):
+        for x in to_ad:
+            self.add_xref(from_ad, x)
+
+
+    def rm_xref(self, from_ad, to_ad):
+        if to_ad in self.__db.xrefs:
             if from_ad in self.__db.xrefs[to_ad]:
                 self.__db.xrefs[to_ad].remove(from_ad)
             if not self.__db.xrefs[to_ad]:
                 del self.__db.xrefs[to_ad]
 
+        head = self.mem.get_head_addr(to_ad)
+        if head != to_ad and head in self.__db.data_sub_xrefs:
+            del self.__db.data_sub_xrefs[head][to_ad]
 
-    def rm_xrefs_range(self, start, end):
+
+    def rm_xrefs_table(self, from_ad, to_ad_list):
+        for x in to_ad_list:
+            self.rm_xref(from_ad, x)
+
+
+    def rm_xrefs_range(self, start, size):
+        end = start + size
         while start < end:
             if start in self.xrefs:
                 del self.xrefs[start]
@@ -471,12 +557,10 @@ class Api():
         address. If name starts with a reserved prefix, the hexa string
         is converted in decimal.
         """
-        if self.is_reserved_prefix(name):
-            try:
-                return int(name[name.index("_") + 1:], 16)
-            except:
-                return -1
-        return self.__db.symbols.get(name, -1)
+        ctx = self.__gctx.get_addr_context(name, quiet=True)
+        if ctx is None:
+            return -1
+        return ctx.entry
 
 
     def get_symbol(self, ad):
@@ -493,6 +577,10 @@ class Api():
             return self.__db.reverse_symbols[ad]
 
         ty = self.mem.get_type(ad)
+
+        if ty == MEM_ARRAY:
+            ty = self.mem.mm[ad][2]
+
         if ty == MEM_FUNC:
             return "sub_%x" % ad
         if ty == MEM_CODE:
@@ -511,7 +599,7 @@ class Api():
             return "word_%x" % ad
         if ty == MEM_ASCII:
             return "asc_%x" % ad
-        if ty == MEM_OFFSET:
+        if MEM_WOFFSET <= ty <= MEM_QOFFSET:
             return "off_%x" % ad
 
         return None
@@ -524,12 +612,13 @@ class Api():
         return self.__dis.lazy_disasm(ad)
 
 
-    def dump_asm(self, ad, nb_lines=10):
+    def dump_asm(self, ad, nb_lines=10, until=-1):
         """
-        Returns an Output object.
+        Returns an Output object. You can then call the function print.
+        until is an end address, if it's set nb_lines is ignored.
         """
         ctx = self.__gctx.get_addr_context(ad)
-        return ctx.dump_asm(nb_lines)
+        return ctx.dump_asm(lines=nb_lines, until=until)
 
 
     def get_func_addr(self, ad):
@@ -537,7 +626,7 @@ class Api():
         Returns the function address where ad is. It returns None if
         ad is not in a function.
         """
-        func_id = self.__db.mem.get_func_id(ad)
+        func_id = self.mem.get_func_id(ad)
         if func_id == -1:
             return None
         return self.__db.func_id[func_id]

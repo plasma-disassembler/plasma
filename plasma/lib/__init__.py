@@ -214,12 +214,12 @@ class GlobalContext():
         return True
 
 
-    def get_addr_context(self, ad):
+    def get_addr_context(self, ad, quiet=False):
         adctx = AddrContext(self)
         if isinstance(ad, int):
             adctx.entry = self.db.mem.get_head_addr(ad)
             return adctx
-        ret = adctx.init_address(ad) # here ad is a string
+        ret = adctx.init_address(ad, quiet=quiet) # here ad is a string
         if not ret:
             return None
         adctx.entry = self.db.mem.get_head_addr(adctx.entry)
@@ -248,7 +248,7 @@ class AddrContext():
         self.ast = None
 
 
-    def init_address(self, entry):
+    def init_address(self, entry, quiet=False):
         if isinstance(entry, int):
             self.entry = entry
             return True
@@ -282,7 +282,8 @@ class AddrContext():
             try:
                 self.entry = int(entry, 16)
             except:
-                error("bad hexa string %s" % entry)
+                if not quiet:
+                    error("bad hexa string %s" % entry)
                 if self.gctx.interactive_mode:
                     return False
                 die()
@@ -293,7 +294,8 @@ class AddrContext():
                      self.gctx.dis.binary.section_names.get(entry, None)
 
         if self.entry is None:
-            error("symbol %s not found" % entry)
+            if not quiet:
+                error("symbol %s not found" % entry)
             if self.gctx.interactive_mode:
                 return False
                 die()
@@ -336,7 +338,7 @@ class AddrContext():
 
     def dump_asm(self, lines=NB_LINES_TO_DISASM, until=-1):
         self.is_dump = True
-        o = self.gctx.dis.dump_asm(self, lines, until=until)
+        o = self.gctx.dis.dump_asm(self, lines=lines, until=until)
         self.output = o
         return o
 

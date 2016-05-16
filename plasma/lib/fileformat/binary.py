@@ -54,7 +54,7 @@ class SectionAbs():
         print(" ]")
 
     def read(self, ad, size):
-        if ad >= self.real_end:
+        if ad > self.real_end:
             return b""
         off = ad - self.start
         return self.data[off:off + size]
@@ -71,13 +71,13 @@ class SectionAbs():
         return None
 
     def read_byte(self, ad):
-        if ad >= self.real_end:
+        if ad > self.real_end:
             return None
         off = ad - self.start
         return self.data[off]
 
     def read_word(self, ad):
-        if ad >= self.real_end:
+        if ad > self.real_end:
             return None
         off = ad - self.start
         w = self.data[off:off+2]
@@ -88,7 +88,7 @@ class SectionAbs():
         return (w[1] << 8) + w[0]
 
     def read_dword(self, ad):
-        if ad >= self.real_end:
+        if ad > self.real_end:
             return None
         off = ad - self.start
         w = self.data[off:off+4]
@@ -99,7 +99,7 @@ class SectionAbs():
         return (w[3] << 24) + (w[2] << 16) + (w[1] << 8) + w[0]
 
     def read_qword(self, ad):
-        if ad >= self.real_end:
+        if ad > self.real_end:
             return None
         off = ad - self.start
         w = self.data[off:off+8]
@@ -223,7 +223,7 @@ class Binary(object):
 
     def read_byte(self, ad):
         s = self.get_section(ad)
-        if ad >= s.real_end:
+        if ad > s.real_end:
             return None
         return s.read_byte(ad)
 

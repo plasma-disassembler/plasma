@@ -24,10 +24,10 @@ import code
 import traceback
 import readline, rlcompleter
 
+from plasma.lib.consts import *
 from plasma.lib.colors import color, bold
 from plasma.lib.utils import error, print_no_end
 from plasma.lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
-from plasma.lib.consts import NB_LINES_TO_DISASM
 from plasma.lib.ui.visual import Visual
 from plasma.lib.api import Api
 from plasma.lib.analyzer import Analyzer
@@ -38,6 +38,22 @@ PLASMA_SCRIPTS_DIR = os.path.dirname(plasma.__file__) + "/../scripts"
 MAX_PRINT_COMPLETE = 300
 SHOULD_EXIT = False
 
+# Used for scripting
+EXPORTED_SYMBOLS = {
+    "MEM_UNK": MEM_UNK,
+    "MEM_CODE": MEM_CODE,
+    "MEM_FUNC": MEM_FUNC,
+    "MEM_BYTE": MEM_BYTE,
+    "MEM_WORD": MEM_WORD,
+    "MEM_DWORD": MEM_DWORD,
+    "MEM_QWORD": MEM_QWORD,
+    "MEM_WOFFSET": MEM_WOFFSET,
+    "MEM_DOFFSET": MEM_DOFFSET,
+    "MEM_QOFFSET": MEM_QOFFSET,
+    "MEM_ASCII": MEM_ASCII,
+    "MEM_ARRAY": MEM_ARRAY,
+    "MEM_HEAD": MEM_HEAD,
+}
 
 COMMANDS_ALPHA = [
     "analyzer",
@@ -239,12 +255,16 @@ class Console():
                 [
                 "[SYMBOL|0xXXXX|EP]",
                 "Visual mode",
+                "Note: there is no undefine function for the moment. You can instead",
+                "create bytes but there is no garranty that it works correctly.",
+                "",
                 "Shortcuts:",
                 "c       create code",
                 "b/w/d/Q create byte/word/dword/qword",
                 "a       create ascii string",
                 "p       create function",
                 "o       set [d|q]word as an offset",
+                "*       create an array",
                 "x       show xrefs",
                 "r       rename",
                 "/       binary search: if the first char is ! you can put an",
@@ -738,6 +758,7 @@ class Console():
 
     def __exec_py(self, args):
         ns = {"api": self.api, "args": args[1:]}
+        ns.update(EXPORTED_SYMBOLS)
         if len(args) > 1:
             if args[1].startswith("!"):
                 args[1] = "%s/%s" % (PLASMA_SCRIPTS_DIR, args[1][1:])

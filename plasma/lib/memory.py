@@ -19,6 +19,41 @@
 
 from plasma.lib.consts import *
 
+#
+# Values stored in self.mm for each type :
+# The third element is type specific.
+#
+# MEM_UNK:
+#   nothing is saved
+#
+# MEM_CODE:
+# MEM_FUNC:
+#     [insn_size, MEM_CODE|MEM_FUNC, function_id (-1 if not set)]
+#
+# MEM_BYTE:
+#     if the address is not in xrefs nothing is saved, otherwise :
+#     [1, MEM_BYTE]
+#
+# MEM_WORD:
+# MEM_DWORD:
+# MEM_QWORD:
+#     [2|4|8, MEM_WORD|MEM_DWORD|MEM_QWORD]
+#
+# MEM_WOFFSET:
+# MEM_DOFFSET:
+# MEM_QOFFSET:
+#     [2|4|8, MEM_WOFFSET|MEM_DOFFSET|MEM_QOFFSET]
+#
+# MEM_ASCII: (null terminated)
+#     [size, MEM_ASCII]
+#
+# MEM_HEAD: (refernce to the head of the data, used for big strings/data)
+#     [size_until_end, MEM_HEAD, head_address]
+#
+# MEM_ARRAY:
+#     [size_in_bytes, MEM_ARRAY, entry_type]
+#
+
 
 class Memory():
     def __init__(self):
@@ -36,6 +71,9 @@ class Memory():
             MEM_WORD: 2,
             MEM_DWORD: 4,
             MEM_QWORD: 8,
+            MEM_WOFFSET: 2,
+            MEM_DOFFSET: 4,
+            MEM_QOFFSET: 8,
         }
         self.rev_size_lookup = {
             1: MEM_BYTE,
@@ -44,39 +82,88 @@ class Memory():
             8: MEM_QWORD,
         }
 
+        # Set by lib.disassembler
+        self.xrefs = None
+        self.data_sub_xrefs = None
+
 
     def __len__(self):
         return len(self.mm)
 
 
-    def add(self, ad, size, ty, val=0):
-        self.mm[ad] = [size, ty, val]
+    # If you are not sure about what you do, don't use this function.
+    # Maybe you should see in lib.api.
+    def add(self, ad, size, ty, val=None):
+        self.rm_range(ad, max(self.get_size(ad), size))
+
+        if val is None:
+            self.mm[ad] = [size, ty]
+        else:
+            self.mm[ad] = [size, ty, val]
 
         if ty == MEM_UNK:
             return
 
-        # don't call rm_range, it will be called so many times
-        end = ad + size
-        i = ad + 1
-        while i < end:
-            if i in self.mm:
-                del self.mm[i]
-            i += 1
+        if size > 1 and (ty == MEM_ARRAY or ty == MEM_ASCII):
+            # Set the MEM_HEAD if it's a big data
+            # Save inside xrefs
 
-        # Set the MEM_HEAD if it's a big data
-        if size > MEM_QWORD:
             end = ad + size
-            i = ad + BLOCK_SIZE
+            self.data_sub_xrefs[ad] = {}
+            i = ad
+
+            if i in self.xrefs:
+                self.data_sub_xrefs[ad][i] = True
+
+            i += 1
             while i < end:
-                self.mm[i] = [i - ad, MEM_HEAD, ad]
-                i += BLOCK_SIZE
-            self.mm[end - 1] = [end - ad, MEM_HEAD, ad]
+                if i in self.xrefs:
+                    self.data_sub_xrefs[ad][i] = 1
+                if i in self.mm:
+                    self.mm[i] = [end - i, MEM_HEAD, ad]
+                elif i % BLOCK_SIZE == 0:
+                    self.mm[i] = [end - i, MEM_HEAD, ad]
+                i += 1
+
+            self.mm[end - 1] = [1, MEM_HEAD, ad]
 
 
-    def rm_range(self, ad, end):
+    def __rm_block_heads(self, ad, sz):
+        end = ad + sz
         while ad < end:
             if ad in self.mm:
-                del self.mm[ad]
+                if ad in self.xrefs:
+                    self.mm[ad][0] = 1
+                    self.mm[ad][1] = MEM_UNK
+                else:
+                    del self.mm[ad]
+            ad += 1
+
+
+    def rm_range(self, ad, sz):
+        end = ad + sz
+        while ad < end:
+            if ad in self.mm:
+                obj = self.mm[ad]
+                ty = obj[1]
+                if ty == MEM_ARRAY or ty == MEM_ASCII:
+                    del self.data_sub_xrefs[ad]
+                    self.__rm_block_heads(ad, obj[0])
+                    ad += obj[0]
+                    continue
+                if ty == MEM_HEAD:
+                    ad = obj[2]
+                    obj = self.mm[ad]
+                    del self.data_sub_xrefs[ad]
+                    self.__rm_block_heads(ad, obj[0])
+                    ad += obj[0]
+                    continue
+
+                if ad in self.xrefs:
+                    obj[0] = 1
+                    obj[1] = MEM_UNK
+                else:
+                    del self.mm[ad]
             ad += 1
 
 
@@ -105,14 +192,15 @@ class Memory():
 
     def is_offset(self, ad):
         if ad in self.mm:
-            return self.mm[ad][1] == MEM_OFFSET
+            ty = self.mm[ad][1]
+            return  MEM_WOFFSET <= ty <= MEM_QOFFSET
         return False
 
 
     def is_data(self, ad):
         if ad in self.mm:
             ty = self.mm[ad][1]
-            return MEM_BYTE <= ty <= MEM_QWORD
+            return MEM_BYTE <= ty <= MEM_QWORD or ty == MEM_ARRAY
         return False
 
 
@@ -120,6 +208,12 @@ class Memory():
         if ad in self.mm:
             return self.mm[ad][1] == MEM_UNK
         return True
+
+
+    def is_array(self, ad):
+        if ad in self.mm:
+            return self.mm[ad][1] == MEM_ARRAY
+        return False
 
 
     def get_func_id(self, ad):
@@ -148,13 +242,19 @@ class Memory():
         return 1
 
 
-    def find_type(self, sz):
+    def get_type_from_size(self, sz):
         return self.rev_size_lookup.get(sz, 1)
+
+
+    def get_array_entry_type(self, ad):
+        if self.is_array(ad):
+            return self.mm[ad][2]
+        return -1
 
 
     def get_head_addr(self, ad):
         # Now check if need to go backward (maybe we are inside an instruction
-        # or a string)
+        # or a string/data) : we should return the head of the data.
 
         end = ad - BLOCK_SIZE
         i = ad
@@ -162,16 +262,16 @@ class Memory():
         while i >= end:
             if i in self.mm:
                 m = self.mm[i]
-                if m[1] == MEM_HEAD:
-                    # The head address is stored at the offset 2
-                    return m[2]
                 # Check if the address is in the range
-                if i + m[0] > ad:
+                if ad < i + m[0]:
+                    if m[1] == MEM_HEAD:
+                        # The head address is stored at the offset 2
+                        return m[2]
                     return i
                 return ad
             i -= 1
 
-        # It's only unknown data or .db
+        # Nothing found: it's an unknown data or byte
         return ad
 
 

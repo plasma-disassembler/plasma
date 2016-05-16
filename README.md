@@ -14,6 +14,10 @@ It supports :
 * formats : ELF, PE, RAW
 
 
+**Warning**: until structures and type definitions are not implemented, the
+database compatibility could be broken.
+
+
 ## Requirements
 
 * python >= 3.4

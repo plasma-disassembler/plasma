@@ -36,7 +36,7 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.3
+VERSION = 2.4
 
 
 class Database():
@@ -59,7 +59,7 @@ class Database():
         self.mips_gp = -1
         self.modified = False
         self.loaded = False
-        self.mem = None
+        self.mem = None # see lib.memory
         # func address ->
         #  [ end addr,
         #    flags,
@@ -71,6 +71,8 @@ class Database():
         self.functions = {}
         self.func_id = {} # id -> func address
         self.xrefs = {} # addr -> list addr
+        # For big data (arrays/strings) we save all addresses with an xrefs
+        self.data_sub_xrefs = {} # data_address -> {addresses_with_xrefs: True}
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
         self.raw_base = 0
         self.raw_type = None
@@ -143,6 +145,7 @@ class Database():
             "functions": self.functions,
             "func_id": self.func_id,
             "xrefs": self.xrefs,
+            "data_sub_xrefs": self.data_sub_xrefs,
             "raw_base": self.raw_base,
             "raw_type": self.raw_type,
             "raw_is_big_endian": self.raw_is_big_endian,
@@ -240,12 +243,6 @@ class Database():
         self.mem = Memory()
 
         try:
-            if self.version == -1:
-                self.mem.mm = data["mem_code"]
-                for ad in self.mem.mm:
-                    self.mem.mm[ad].append(-1)
-                return
-
             self.mem.mm = data["mem"]
         except:
             # Not available in previous versions, this try will be
@@ -260,6 +257,7 @@ class Database():
     def __load_xrefs(self, data):
         try:
             self.xrefs = data["xrefs"]
+            self.data_sub_xrefs = data["data_sub_xrefs"]
         except:
             # Not available in previous versions, this try will be
             # removed in the future

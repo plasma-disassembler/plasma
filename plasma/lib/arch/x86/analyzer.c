@@ -726,7 +726,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 PyObject *db = PyObject_GetAttrString(analyzer, "db");
                 PyObject *mem = PyObject_GetAttrString(db, "mem");
 
-                PyObject *ty = PyObject_CallMethod(mem, "find_type", "i",
+                PyObject *ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
                                                    get_op_size(ops[i]));
 
                 // The second item is the name of the variable

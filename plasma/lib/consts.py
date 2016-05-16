@@ -19,21 +19,27 @@
 
 
 # Type of data in Memory
+
 MEM_UNK = 1
 MEM_CODE = 2
 MEM_FUNC = 3
+
 MEM_BYTE = 4
 MEM_WORD = 5
 MEM_DWORD = 6
 MEM_QWORD = 7
-MEM_ASCII = 8
-MEM_OFFSET = 9
+MEM_WOFFSET = 8
+MEM_DOFFSET = 9
+MEM_QOFFSET = 10
+MEM_ASCII = 11
+MEM_ARRAY = 12
 
 # For big strings or data we put a MEM_HEAD every BLOCK_SIZE bytes and at
 # the end of the data. It allows to scroll up correctly in the visual mode.
-MEM_HEAD = 10
+MEM_HEAD = 50
 BLOCK_SIZE = 128 # should be a power of 2
 BLOCK_SIZE_MASK = 128-1
+
 
 
 # Index of values for each Database.functions[i]

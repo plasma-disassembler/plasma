@@ -54,6 +54,13 @@ class Analyzer(threading.Thread):
         self.prologs = self.ARCH_UTILS.PROLOGS
         self.arch_analyzer = arch_analyzer
 
+        if self.dis.wordsize == 2:
+            self.OFFSET_TYPE = MEM_WOFFSET
+        elif self.dis.wordsize == 4:
+            self.OFFSET_TYPE = MEM_DOFFSET
+        elif self.dis.wordsize == 8:
+            self.OFFSET_TYPE = MEM_QOFFSET
+
 
     # Should be rewritten for mips
     def __add_prefetch(self, addr_set, inst):
@@ -196,7 +203,7 @@ class Analyzer(threading.Thread):
                     s2 = b.get_section(val)
                     if s2 is not None and s2.is_exec:
                         self.api.add_xref(ad, val)
-                        self.db.mem.add(ad, self.dis.wordsize, MEM_OFFSET)
+                        self.db.mem.add(ad, self.dis.wordsize, self.OFFSET_TYPE)
                         ad += self.dis.wordsize
 
                         if not self.db.mem.exists(val):
@@ -247,48 +254,48 @@ class Analyzer(threading.Thread):
 
     # Do an analysis if the immediate is an address
     def analyze_imm(self, i, op, imm):
+        if op.type != self.ARCH_UTILS.OP_MEM and \
+                op.type != self.ARCH_UTILS.OP_IMM:
+            return
+
+        # imm must be an address
         s = self.dis.binary.get_section(imm)
         if s is None or s.start == 0:
             return
 
         self.api.add_xref(i.address, imm)
+        ad = imm
 
-        if self.db.mem.exists(imm):
+        if self.db.mem.exists(ad):
             return
 
-        sz = op.size if self.dis.is_x86 else self.dis.wordsize
-        deref = s.read_int(imm, sz)
+        sz = self.dis.wordsize
 
-        # If (*imm) is an address
+        # If *(*ad) is an address
+        deref = s.read_int(ad, sz)
         if deref is not None and self.dis.binary.is_address(deref):
-            ty = MEM_OFFSET
-            self.api.add_xref(imm, deref)
+            ty = self.db.mem.get_type_from_size(sz)
+            self.api.set_offset(ad, ty, force_analyze=True)
+            return
 
-            if not self.db.mem.exists(deref):
-                self.db.mem.add(deref, 1, MEM_UNK)
-
-                # Do an analysis on this value.
-                if self.first_inst_are_code(deref):
-                    self.analyze_flow(deref, self.has_prolog(deref), False, True)
+        # Check if this is an address to a string
+        sz = self.dis.binary.is_string(ad)
+        if sz != 0:
+            ty = MEM_ASCII
         else:
-            # Check if this is an address to a string
-            sz = self.dis.binary.is_string(imm)
-            if sz != 0:
-                ty = MEM_ASCII
+            sz = op.size if self.dis.is_x86 else self.dis.wordsize
+            if op.type == self.ARCH_UTILS.OP_MEM:
+                ty = self.db.mem.get_type_from_size(sz)
             else:
-                sz = op.size if self.dis.is_x86 else self.dis.wordsize
-                if op.type == self.ARCH_UTILS.OP_MEM:
-                    ty = self.db.mem.find_type(sz)
-                else:
-                    ty = MEM_UNK
+                ty = MEM_UNK
 
-        self.db.mem.add(imm, sz, ty)
+        self.db.mem.add(ad, sz, ty)
 
         if ty == MEM_UNK:
             # Do an analysis on this value, if this is not code
             # nothing will be done.
-            if self.first_inst_are_code(imm):
-                self.analyze_flow(imm, self.has_prolog(imm), True, True)
+            if self.first_inst_are_code(ad):
+                self.analyze_flow(ad, self.has_prolog(ad), True, True)
 
 
     # Check if the five first instructions can be disassembled.
@@ -538,7 +545,7 @@ class Analyzer(threading.Thread):
                         # TODO : dupplicate regsctx ??
                         for n in table:
                             stack.append((regsctx, n))
-                        self.api.add_xref(ad, table)
+                        self.api.add_xrefs_table(ad, table)
                         if add_if_code:
                             added_xrefs.append((ad, table))
                     else:
@@ -618,7 +625,7 @@ class Analyzer(threading.Thread):
 
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:
-                self.api.rm_xrefs(from_ad, to_ad)
+                self.api.rm_xref(from_ad, to_ad)
             return None
 
         # for ELF
