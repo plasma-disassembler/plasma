@@ -259,7 +259,7 @@ class Console():
                 "Q       quit",
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "%       goto next bracket",
-                "*       highlight current word (ctrl-k to clear)",
+                "space   highlight current word (ctrl-k to clear)",
                 "{ }     previous/next paragraph",
                 "tab     switch between dump/decompilation",
                 "enter   follow address",
@@ -516,6 +516,8 @@ class Console():
 
     def exec_command(self, line):
         args = shlex.split(line)
+        if not args:
+            return
         if args[0] not in self.COMMANDS:
             error("unknown command")
             return
@@ -752,7 +754,6 @@ class Console():
             self.db.mips_gp = self.gctx.dis.mips_gp
         except:
             error("bad address")
-
         self.db.modified = True
 
 
@@ -763,9 +764,7 @@ class Console():
     def __exec_xrefs(self, args):
         ad = None if len(args) == 1 else args[1]
         ctx = self.gctx.get_addr_context(ad)
-        if ctx:
-            if ctx.entry not in self.gctx.dis.xrefs:
-                return
+        if ctx and ctx.entry in self.gctx.dis.xrefs:
             ctx.dump_xrefs().print()
 
 

@@ -121,7 +121,7 @@ class Window():
             b"\x05": self.k_end, # ctrl-e
             b"\x1b\x5b\x37\x7e": self.k_home,
             b"\x1b\x5b\x38\x7e": self.k_end,
-            b"*": self.cmd_highlight_current_word,
+            b" ": self.cmd_highlight_current_word,
             b"\x0b": self.cmd_highlight_clear, # ctrl-k
             b"\x1b\x5b\x31\x3b\x35\x44": self.k_ctrl_left,
             b"\x1b\x5b\x31\x3b\x35\x43": self.k_ctrl_right,
