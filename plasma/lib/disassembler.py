@@ -22,7 +22,7 @@ from time import time
 
 from plasma.lib.graph import Graph
 from plasma.lib.utils import (unsigned, debug__, BYTES_PRINTABLE_SET,
-                              get_char, print_no_end)
+                              get_char, print_no_end, warning)
 from plasma.lib.fileformat.binary import Binary, T_BIN_PE, T_BIN_ELF, T_BIN_RAW
 from plasma.lib.colors import (color_addr, color_symbol, color_comment,
                                color_section, color_string)
@@ -126,6 +126,9 @@ class Disassembler():
 
         for s in self.binary.iter_sections():
             s.big_endian = cs_mode & CAPSTONE.CS_MODE_BIG_ENDIAN
+
+        if self.binary.arch == "x86":
+            warning("there is a known bug on stack analysis, issue #62")
 
 
     def instanciate_binary(self, filename, raw_type, raw_base, raw_big_endian):
