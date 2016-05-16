@@ -147,14 +147,16 @@ class Memory():
                 obj = self.mm[ad]
                 ty = obj[1]
                 if ty == MEM_ARRAY or ty == MEM_ASCII:
-                    del self.data_sub_xrefs[ad]
+                    if ad in self.data_sub_xrefs:
+                        del self.data_sub_xrefs[ad]
                     self.__rm_block_heads(ad, obj[0])
                     ad += obj[0]
                     continue
                 if ty == MEM_HEAD:
                     ad = obj[2]
                     obj = self.mm[ad]
-                    del self.data_sub_xrefs[ad]
+                    if ad in self.data_sub_xrefs:
+                        del self.data_sub_xrefs[ad]
                     self.__rm_block_heads(ad, obj[0])
                     ad += obj[0]
                     continue
