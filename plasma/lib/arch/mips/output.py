@@ -103,8 +103,7 @@ class Output(OutputAbs):
 
                 if show_deref:
                     self._add("*(")
-                self._imm(ad, 0, True, print_data=False,
-                          force_dont_print_data=force_dont_print_data)
+                self._imm(ad, 0, True, force_dont_print_data=False)
                 if show_deref:
                     self._add(")")
                 return
@@ -123,9 +122,8 @@ class Output(OutputAbs):
                 if is_label or section is not None:
                     if printed:
                         self._add(" + ")
-                    self._imm(mm.disp, 0, True,
-                              section=section, print_data=False,
-                              force_dont_print_data=force_dont_print_data)
+                    self._imm(mm.disp, 0, True, section=section,
+                              force_dont_print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

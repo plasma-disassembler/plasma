@@ -664,12 +664,12 @@ class OutputAbs():
                     self._add(" ")
 
                     for num in range(len(i.operands)-1):
-                        self._operand(i, num)
+                        self._operand(i, num, hexa=True, force_dont_print_data=True)
                         self._add(", ")
 
                     # WARNING: it assumes that the last operand is the address
                     if i.operands[-1].type != self.OP_IMM:
-                        self._operand(i, -1, force_dont_print_data=True)
+                        self._operand(i, -1, hexa=True, force_dont_print_data=True)
                         if self.ARCH_UTILS.is_uncond_jump(i) and \
                                 not self.ctx.is_dump and \
                                 i.address not in self._dis.jmptables:

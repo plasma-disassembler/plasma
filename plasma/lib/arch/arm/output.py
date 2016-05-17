@@ -135,8 +135,7 @@ class Output(OutputAbs):
 
                     if show_deref:
                         self._add("*(")
-                    self._imm(ad, 4, True, print_data=False,
-                              force_dont_print_data=force_dont_print_data)
+                    self._imm(ad, 4, True, force_dont_print_data=False)
                     if show_deref:
                         self._add(")")
                     return
@@ -175,8 +174,8 @@ class Output(OutputAbs):
                     if printed:
                         self._add(" + ")
                     # is_data=False : don't print string next to the symbol
-                    self._imm(mm.disp, 0, True, section=section, print_data=False,
-                              force_dont_print_data=force_dont_print_data)
+                    self._imm(mm.disp, 0, True, section=section,
+                              force_dont_print_data=False)
                 else:
                     if printed:
                         if mm.disp < 0:

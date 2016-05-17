@@ -217,7 +217,8 @@ class Analyzer(threading.Thread):
                 # Detect if it's a string
                 n = b.is_string(ad, s=s)
                 if n != 0:
-                    self.db.mem.add(ad, n, MEM_ASCII)
+                    if ad not in self.db.imports:
+                        self.db.mem.add(ad, n, MEM_ASCII)
                     ad += n
                     continue
 
@@ -279,15 +280,18 @@ class Analyzer(threading.Thread):
             return
 
         # Check if this is an address to a string
-        sz = self.dis.binary.is_string(ad)
-        if sz != 0:
-            ty = MEM_ASCII
+        if ad not in self.db.imports:
+            sz = self.dis.binary.is_string(ad)
+            if sz != 0:
+                ty = MEM_ASCII
+                self.db.mem.add(ad, sz, MEM_ASCII)
+                return
+
+        sz = op.size if self.dis.is_x86 else self.dis.wordsize
+        if op.type == self.ARCH_UTILS.OP_MEM:
+            ty = self.db.mem.get_type_from_size(sz)
         else:
-            sz = op.size if self.dis.is_x86 else self.dis.wordsize
-            if op.type == self.ARCH_UTILS.OP_MEM:
-                ty = self.db.mem.get_type_from_size(sz)
-            else:
-                ty = MEM_UNK
+            ty = MEM_UNK
 
         self.db.mem.add(ad, sz, ty)
 
