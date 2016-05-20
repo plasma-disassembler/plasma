@@ -698,14 +698,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             }
             break;
         }
-
-        if (PyObject_CallMethod(insn, "group", "i", X86_GRP_JUMP) == Py_True) {
-            int ty = get_op_type(ops[0]);
-            if (ty != X86_OP_MEM)
-                goto end;
-        }
     }
-
 
     // Save operands values and search stack variables
 

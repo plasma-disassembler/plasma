@@ -521,15 +521,12 @@ class Analyzer(threading.Thread):
 
             inner_code[ad] = inst
 
-            self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
-
             if self.is_ret(inst):
                 self.__add_prefetch(inner_code, inst)
                 has_ret = True
 
             elif self.is_uncond_jump(inst):
                 self.__add_prefetch(inner_code, inst)
-
                 op = inst.operands[-1]
 
                 if op.type == self.ARCH_UTILS.OP_IMM:
@@ -544,6 +541,8 @@ class Analyzer(threading.Thread):
                     if add_if_code:
                         added_xrefs.append((ad, nxt))
                 else:
+                    self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
+
                     if inst.address in self.jmptables:
                         table = self.jmptables[inst.address].table
                         # TODO : dupplicate regsctx ??
@@ -588,6 +587,8 @@ class Analyzer(threading.Thread):
                     else:
                         newctx = self.arch_analyzer.clone_regs_context(regsctx)
                         stack.append((newctx, nxt_jmp))
+                else:
+                    self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
 
             elif self.is_call(inst):
                 op = inst.operands[-1]
@@ -601,6 +602,8 @@ class Analyzer(threading.Thread):
                     # will analyze twice the function. The first time is done
                     # by the function analyze_imm.
                     value = self.arch_analyzer.reg_value(regsctx, op.value.reg)
+                else:
+                    self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
 
                 if value is not None:
                     self.api.add_xref(ad, value)
@@ -623,6 +626,7 @@ class Analyzer(threading.Thread):
                 stack.append((regsctx, nxt))
 
             else:
+                self.arch_analyzer.analyze_operands(self, regsctx, inst, func_obj)
                 nxt = inst.address + inst.size
                 if nxt not in self.functions:
                     stack.append((regsctx, nxt))
