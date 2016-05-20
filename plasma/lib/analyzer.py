@@ -66,8 +66,12 @@ class Analyzer(threading.Thread):
             self.OFFSET_TYPE = MEM_QOFFSET
 
 
-    # Should be rewritten for mips
     def __add_prefetch(self, addr_set, inst):
+        if self.dis.is_mips:
+            prefetch = self.disasm(inst.address + inst.size)
+            if prefetch is not None:
+                addr_set[prefetch.address] = prefetch
+            return prefetch
         return None
 
 
