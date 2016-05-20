@@ -47,6 +47,10 @@ struct regs_context {
 };
 
 
+// Set by lib.analyzer
+static int WORDSIZE = 0;
+
+
 static PyTypeObject regs_context_T = {
     PyVarObject_HEAD_INIT(0, 0)
     "RegsContext",
@@ -245,8 +249,8 @@ static PyObject *clone_regs_context(PyObject *self, PyObject *args)
     new = (struct regs_context*) new_regs_context(self, args);
 
     for (i = 0 ; i <= LAST_REG ; i++) {
-        *(new->regs[i]) = *(regs->regs[i]);
-        *(new->is_def[i]) = *(regs->is_def[i]);
+        new->reg_values[i] = regs->reg_values[i];
+        new->is_def_values[i] = regs->is_def_values[i];
         new->is_stack[i] = regs->is_stack[i];
     }
 
@@ -440,7 +444,13 @@ static PyObject* get_sp(PyObject *self, PyObject *args)
     struct regs_context *regs;
     if (!PyArg_ParseTuple(args, "O", &regs))
         Py_RETURN_NONE;
-    return PyLong_FromLong(*(regs->regs[X86_REG_RSP]));
+    if (WORDSIZE == 8)
+        return PyLong_FromLong(*(regs->regs[X86_REG_RSP]));
+    if (WORDSIZE == 4)
+        return PyLong_FromLong(*((int*) regs->regs[X86_REG_ESP]));
+    if (WORDSIZE == 2)
+        return PyLong_FromLong(*((short*) regs->regs[X86_REG_SP]));
+    Py_RETURN_NONE;
 }
 
 static PyObject* add_sp(PyObject *self, PyObject *args)
@@ -449,9 +459,21 @@ static PyObject* add_sp(PyObject *self, PyObject *args)
     long imm;
     if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
         Py_RETURN_NONE;
-    reg_add(regs, X86_REG_RSP, imm);
+    if (WORDSIZE == 8)
+        reg_add(regs, X86_REG_RSP, imm);
+    else if (WORDSIZE == 4)
+        reg_add(regs, X86_REG_ESP, (int) imm);
+    else if (WORDSIZE == 2)
+        reg_add(regs, X86_REG_SP, (short) imm);
     Py_RETURN_NONE;
 }
+
+static PyObject* set_wordsize(PyObject *self, PyObject *args)
+{
+    PyArg_ParseTuple(args, "i", &WORDSIZE);
+    Py_RETURN_NONE;
+}
+
 
 static inline int get_insn_address(PyObject *op)
 {
@@ -627,8 +649,21 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     PyObject *list_ops = PyObject_GetAttrString(insn, "operands");
     int len_ops = PyList_Size(list_ops);
 
-    if (len_ops == 0)
+    if (len_ops == 0) {
+        if (id == X86_INS_LEAVE) {
+            if (WORDSIZE == 4) {
+                if (is_reg_defined(regs, X86_REG_EBP)) // should be true
+                    reg_mov(regs, X86_REG_ESP, get_reg_value(regs, X86_REG_EBP));
+                reg_add(regs, X86_REG_ESP, WORDSIZE);
+            }
+            else if (WORDSIZE == 8) {
+                if (is_reg_defined(regs, X86_REG_RBP)) // should be true
+                    reg_mov(regs, X86_REG_RSP, get_reg_value(regs, X86_REG_RBP));
+                reg_add(regs, X86_REG_RSP, WORDSIZE);
+            }
+        }
         goto end;
+    }
 
     PyObject *ops[2];
 
@@ -819,6 +854,7 @@ static PyMethodDef mod_methods[] = {
     { "reg_value", reg_value, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
     { "add_sp", add_sp, METH_VARARGS },
+    { "set_wordsize", set_wordsize, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 

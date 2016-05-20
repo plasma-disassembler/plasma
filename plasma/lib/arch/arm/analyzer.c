@@ -38,6 +38,9 @@ typedef char bool;
 
 #define INVALID_VALUE -1
 
+// Set by lib.analyzer
+static int WORDSIZE = 0;
+
 
 struct regs_context {
     PyObject_HEAD
@@ -123,11 +126,17 @@ static void regs_context_dealloc(PyObject *self)
 
 static PyObject* get_sp(PyObject *self, PyObject *args)
 {
-    return 0;
+    return PyLong_FromLong(0);
 }
 
 static PyObject* add_sp(PyObject *self, PyObject *args)
 {
+    Py_RETURN_NONE;
+}
+
+static PyObject* set_wordsize(PyObject *self, PyObject *args)
+{
+    PyArg_ParseTuple(args, "i", &WORDSIZE);
     Py_RETURN_NONE;
 }
 
@@ -287,6 +296,7 @@ static PyMethodDef mod_methods[] = {
     { "reg_value", reg_value, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
     { "add_sp", add_sp, METH_VARARGS },
+    { "set_wordsize", set_wordsize, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 

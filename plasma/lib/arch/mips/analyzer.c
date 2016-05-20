@@ -36,6 +36,9 @@ typedef char bool;
 
 #define INVALID_VALUE -1
 
+// Set by lib.analyzer
+static int WORDSIZE = 0;
+
 
 struct regs_context {
     PyObject_HEAD
@@ -222,7 +225,11 @@ static PyObject* get_sp(PyObject *self, PyObject *args)
     struct regs_context *regs;
     if (!PyArg_ParseTuple(args, "O", &regs))
         Py_RETURN_NONE;
-    return PyLong_FromLong(regs->regs[MIPS_REG_SP]);
+    if (WORDSIZE == 4)
+        return PyLong_FromLong((int) regs->regs[MIPS_REG_SP]);
+    if (WORDSIZE == 8)
+        return PyLong_FromLong(regs->regs[MIPS_REG_SP]);
+    Py_RETURN_NONE;
 }
 
 static PyObject* add_sp(PyObject *self, PyObject *args)
@@ -231,7 +238,16 @@ static PyObject* add_sp(PyObject *self, PyObject *args)
     long imm;
     if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
         Py_RETURN_NONE;
-    reg_add(regs, MIPS_REG_SP, regs->regs[MIPS_REG_SP], imm);
+    if (WORDSIZE == 4)
+        reg_add(regs, MIPS_REG_SP, regs->regs[MIPS_REG_SP], (int) imm);
+    else if (WORDSIZE == 8)
+        reg_add(regs, MIPS_REG_SP, regs->regs[MIPS_REG_SP], imm);
+    Py_RETURN_NONE;
+}
+
+static PyObject* set_wordsize(PyObject *self, PyObject *args)
+{
+    PyArg_ParseTuple(args, "i", &WORDSIZE);
     Py_RETURN_NONE;
 }
 
@@ -585,6 +601,7 @@ static PyMethodDef mod_methods[] = {
     { "reg_value", reg_value, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
     { "add_sp", add_sp, METH_VARARGS },
+    { "set_wordsize", set_wordsize, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
 

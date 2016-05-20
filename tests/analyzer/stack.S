@@ -1,4 +1,4 @@
-// gcc -nostdlib test.S -e _start
+// gcc -nostdlib stack.S -e _start -o stack.bin
 
 .intel_syntax noprefix
 .global main
@@ -7,6 +7,7 @@
 .section .text
 
 .macro ACCESS_VARS
+    // these two access must be the same
     mov rax, [rbp - 4]
     mov rax, [rsp - 4 + 16]
 .endm
@@ -36,6 +37,16 @@ __jmp_func:
 
 __noreturn:
     jmp __noreturn
+
+__leave_func:
+	push rbp
+	mov rbp, rsp
+    nop
+    nop
+    nop
+    nop
+    leave
+    ret
 
 // --------------------------------------------------------
 
@@ -70,6 +81,14 @@ main:
     push rbx
     push rcx
     call __jmp_func
+
+    ACCESS_VARS
+
+	push rax
+	push rbx
+	push rcx
+    call __leave_func
+	add rsp, 8*3
 
     ACCESS_VARS
 

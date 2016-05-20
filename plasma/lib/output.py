@@ -628,6 +628,12 @@ class OutputAbs():
         if i.address in self.ctx.all_fused_inst:
             return
 
+        # debug
+        # from plasma.lib.analyzer import ALL_SP
+        # if i.address in ALL_SP:
+            # self._variable(str(ALL_SP[i.address]) + " ")
+            # self._pad_width(5)
+
         if self.print_labels:
             self._label_and_address(i.address, tab)
             self._bytes(i.bytes)

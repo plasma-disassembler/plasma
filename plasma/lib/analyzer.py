@@ -24,6 +24,9 @@ from plasma.lib.utils import unsigned
 from plasma.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from plasma.lib.consts import *
 
+# debug
+# ALL_SP = {}
+
 
 class Analyzer(threading.Thread):
     def init(self):
@@ -53,6 +56,7 @@ class Analyzer(threading.Thread):
         self.functions = self.db.functions
         self.prologs = self.ARCH_UTILS.PROLOGS
         self.arch_analyzer = arch_analyzer
+        self.arch_analyzer.set_wordsize(self.dis.wordsize)
 
         if self.dis.wordsize == 2:
             self.OFFSET_TYPE = MEM_WOFFSET
@@ -505,6 +509,7 @@ class Analyzer(threading.Thread):
             return 0, None
 
         stack = [(regsctx, entry)]
+        sp = 0
 
         while stack:
             (regsctx, ad) = stack.pop()
@@ -519,11 +524,15 @@ class Analyzer(threading.Thread):
             if ad in inner_code:
                 continue
 
+            # debug
+            # ALL_SP[ad] = self.arch_analyzer.get_sp(regsctx)
+
             inner_code[ad] = inst
 
             if self.is_ret(inst):
                 self.__add_prefetch(inner_code, inst)
                 has_ret = True
+                sp = self.arch_analyzer.get_sp(regsctx)
 
             elif self.is_uncond_jump(inst):
                 self.__add_prefetch(inner_code, inst)
@@ -536,6 +545,7 @@ class Analyzer(threading.Thread):
                         has_ret = not self.is_noreturn(nxt, entry)
                         ret_sp = self.function_sp(nxt)
                         self.arch_analyzer.add_sp(regsctx, ret_sp)
+                        sp = ret_sp
                     else:
                         stack.append((regsctx, nxt))
                     if add_if_code:
@@ -574,6 +584,7 @@ class Analyzer(threading.Thread):
                         has_ret = not self.is_noreturn(direct_nxt, entry)
                         ret_sp = self.function_sp(direct_nxt)
                         self.arch_analyzer.add_sp(regsctx, ret_sp)
+                        sp = ret_sp
                     else:
                         stack.append((regsctx, direct_nxt))
 
@@ -643,4 +654,4 @@ class Analyzer(threading.Thread):
         elif has_ret:
             flags = 0
 
-        return flags, self.arch_analyzer.get_sp(regsctx)
+        return flags, sp
