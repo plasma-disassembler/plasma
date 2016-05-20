@@ -242,7 +242,7 @@ class Disassembler():
                     else:
                         o._add(" - %d " % (-diff))
 
-                    o._pad_width(20)
+                o._pad_width(20)
 
                 i = self.lazy_disasm(x, s.start)
                 o._asm_inst(i)
