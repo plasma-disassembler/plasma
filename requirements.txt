@@ -1,0 +1,4 @@
+capstone>=3.0.4
+pefile
+pyelftools
+msgpack-python>=0.4.6

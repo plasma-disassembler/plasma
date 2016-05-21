@@ -31,9 +31,7 @@ database compatibility could be broken.
 
 ## Installation
 
-    ./requirements.sh
-    python3 setup.py build_ext --inplace
-    python3 setup.py install   # or create an alias to run_plasma.py
+    ./install.sh
 
 Check tests :
 
