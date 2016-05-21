@@ -511,7 +511,8 @@ class Api():
         head = self.mem.get_head_addr(to_ad)
         if head != to_ad and head in self.__db.data_sub_xrefs:
             self.__db.data_sub_xrefs[head][to_ad] = True
-            self.mem.mm[to_ad] = [to_ad - head + 1, MEM_HEAD, head]
+            end = head + self.mem.get_size(head)
+            self.mem.mm[to_ad] = [end - to_ad, MEM_HEAD, head]
 
 
     def add_xrefs_table(self, from_ad, to_ad_list):

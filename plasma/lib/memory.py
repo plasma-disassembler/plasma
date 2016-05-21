@@ -118,7 +118,7 @@ class Memory():
             i += 1
             while i < end:
                 if i in self.xrefs:
-                    self.data_sub_xrefs[ad][i] = 1
+                    self.data_sub_xrefs[ad][i] = True
                 if i in self.mm:
                     self.mm[i] = [end - i, MEM_HEAD, ad]
                 elif i % BLOCK_SIZE == 0:
