@@ -650,7 +650,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     int len_ops = PyList_Size(list_ops);
 
     if (len_ops == 0) {
-        if (id == X86_INS_LEAVE) {
+        switch (id) {
+        case X86_INS_LEAVE:
             if (WORDSIZE == 4) {
                 if (is_reg_defined(regs, X86_REG_EBP)) // should be true
                     reg_mov(regs, X86_REG_ESP, get_reg_value(regs, X86_REG_EBP));
@@ -661,7 +662,56 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                     reg_mov(regs, X86_REG_RSP, get_reg_value(regs, X86_REG_RBP));
                 reg_add(regs, X86_REG_RSP, WORDSIZE);
             }
+            break;
+
+        case X86_INS_POPAW:
+        case X86_INS_POPAL:
+            if (id == X86_INS_POPAW)
+                reg_add(regs, X86_REG_RSP, 8 * 2);
+            else
+                reg_add(regs, X86_REG_RSP, 8 * 4);
+            *(regs->is_def[X86_REG_RAX]) = false;
+            *(regs->is_def[X86_REG_RBX]) = false;
+            *(regs->is_def[X86_REG_RCX]) = false;
+            *(regs->is_def[X86_REG_RDX]) = false;
+            *(regs->is_def[X86_REG_RBP]) = false;
+            *(regs->is_def[X86_REG_RSI]) = false;
+            *(regs->is_def[X86_REG_RDI]) = false;
+            break;
+
+        case X86_INS_POPF:
+            reg_add(regs, X86_REG_RSP, 2);
+            break;
+
+        case X86_INS_POPFD:
+            reg_add(regs, X86_REG_RSP, 4);
+            break;
+
+        case X86_INS_POPFQ:
+            reg_add(regs, X86_REG_RSP, 8);
+            break;
+
+        case X86_INS_PUSHAW:
+            reg_sub(regs, X86_REG_RSP, 8 * 2);
+            break;
+
+        case X86_INS_PUSHAL:
+            reg_sub(regs, X86_REG_RSP, 8 * 4);
+            break;
+
+        case X86_INS_PUSHF:
+            reg_sub(regs, X86_REG_RSP, 2);
+            break;
+
+        case X86_INS_PUSHFD:
+            reg_sub(regs, X86_REG_RSP, 4);
+            break;
+
+        case X86_INS_PUSHFQ:
+            reg_sub(regs, X86_REG_RSP, 8);
+            break;
         }
+
         goto end;
     }
 

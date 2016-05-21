@@ -25,7 +25,7 @@ echo "analyzer tests..."
 ls *.bin | while read file; do
     name=`basename $file .bin`
     echo -e "py ${name}.py\n exit" | \
-        ../../run_plasma.py -i -na -nc ${name}.bin >tmp
+        ../../run_plasma.py -i -na -nc ${name}.bin >tmp 2>/dev/null
 
     diff -q ${name}.rev tmp >/dev/null
     if [ $? -eq 0 ]; then

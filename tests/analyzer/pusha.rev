@@ -1,0 +1,48 @@
+; ---------------------------------------------------------------------
+.text  0x8048098 -> 0x80480c8
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__pusha_func:
+.text 0x8048098: pushaw
+.text 0x804809a: pushal
+.text 0x804809b: pushfd
+.text 0x804809c: popfd
+.text 0x804809d: popal
+.text 0x804809e: popaw
+.text 0x80480a0: ret
+; end function __pusha_func
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__noreturn__ __noreturn:
+.text 0x80480a1: jmp __noreturn
+; end function __noreturn
+
+_start:
+.text 0x80480a3: call main
+.text 0x80480a8: call __noreturn
+
+.text 0x80480ad: .db c3
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+main:
+
+int        var_8     = -0x8
+
+.text 0x80480ae: push ebp
+.text 0x80480af: ebp = esp
+.text 0x80480b1: esp -= 16
+.text 0x80480b4: eax = var_8
+.text 0x80480b7: eax = var_8
+.text 0x80480bb: call __pusha_func
+.text 0x80480c0: eax = var_8
+.text 0x80480c3: eax = var_8
+.text 0x80480c7: pop ebp
+.text 0x80480c8: ret
+; end function main
+
