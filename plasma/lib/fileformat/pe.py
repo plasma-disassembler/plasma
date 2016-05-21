@@ -53,13 +53,15 @@ class PE(Binary):
         base = self.pe.OPTIONAL_HEADER.ImageBase
 
         for s in self.pe.sections:
+            name = s.Name.decode().rstrip(' \0')
             self.add_section(
                 base + s.VirtualAddress,
-                s.Name.decode().rstrip(' \0'),
+                name,
                 s.Misc_VirtualSize,
                 s.SizeOfRawData,
                 self.__section_is_exec(s),
                 self.__section_is_data(s),
+                name == ".bss",
                 s.get_data())
 
 

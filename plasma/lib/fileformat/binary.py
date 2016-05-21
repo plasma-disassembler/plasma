@@ -32,7 +32,7 @@ T_BIN_UNK = 3
 
 class SectionAbs():
     # virt_size: size of the mapped section in memory
-    def __init__(self, name, start, virt_size, real_size, is_exec, is_data, data):
+    def __init__(self, name, start, virt_size, real_size, is_exec, is_data, is_bss, data):
         self.name = name
         self.start = start
         self.virt_size = virt_size
@@ -41,6 +41,7 @@ class SectionAbs():
         self.real_end = start + real_size - 1
         self.is_exec = is_exec
         self.is_data = is_data
+        self.is_bss = is_bss
         self.data = data
         self.big_endian = False # set in lib.disassembler
 
@@ -164,7 +165,7 @@ class Binary(object):
 
 
     def add_section(self, start_address, name, virt_size, real_size,
-                    is_exec, is_data, data):
+                    is_exec, is_data, is_bss, data):
         if is_exec or is_data:
             bisect.insort_left(self._sorted_sections, start_address)
         self._abs_sections[start_address] = SectionAbs(
@@ -174,6 +175,7 @@ class Binary(object):
                 real_size,
                 is_exec,
                 is_data,
+                is_bss,
                 data)
 
 

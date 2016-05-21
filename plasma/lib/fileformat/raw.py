@@ -45,6 +45,7 @@ class Raw(Binary):
             len(self.raw),
             False, # is_exec
             True, # is_data
+            False, # is_bss
             self.raw)
 
 

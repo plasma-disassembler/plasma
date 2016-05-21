@@ -189,8 +189,9 @@ class Analyzer(threading.Thread):
         mem = self.db.mem
         wait = Queue()
 
+
         for s in b.iter_sections():
-            if s.is_exec:
+            if s.is_exec or s.is_bss:
                 continue
 
             ad = s.start
@@ -237,7 +238,7 @@ class Analyzer(threading.Thread):
         mem = self.db.mem
 
         for s in b.iter_sections():
-            if not s.is_exec:
+            if not s.is_exec or s.is_bss:
                 continue
 
             ad = s.start
@@ -277,22 +278,23 @@ class Analyzer(threading.Thread):
         if self.db.mem.exists(ad):
             return
 
-        sz = self.dis.wordsize
+        if not s.is_bss:
+            sz = self.dis.wordsize
 
-        # If *(*ad) is an address
-        deref = s.read_int(ad, sz)
-        if deref is not None and self.dis.binary.is_address(deref):
-            ty = self.db.mem.get_type_from_size(sz)
-            self.api.set_offset(ad, ty, force_analyze=True)
-            return
-
-        # Check if this is an address to a string
-        if ad not in self.db.imports:
-            sz = self.dis.binary.is_string(ad)
-            if sz != 0:
-                ty = MEM_ASCII
-                self.db.mem.add(ad, sz, MEM_ASCII)
+            # If *(*ad) is an address
+            deref = s.read_int(ad, sz)
+            if deref is not None and self.dis.binary.is_address(deref):
+                ty = self.db.mem.get_type_from_size(sz)
+                self.api.set_offset(ad, ty, force_analyze=True)
                 return
+
+            # Check if this is an address to a string
+            if ad not in self.db.imports:
+                sz = self.dis.binary.is_string(ad)
+                if sz != 0:
+                    ty = MEM_ASCII
+                    self.db.mem.add(ad, sz, MEM_ASCII)
+                    return
 
         sz = op.size if self.dis.is_x86 else self.dis.wordsize
         if op.type == self.ARCH_UTILS.OP_MEM:

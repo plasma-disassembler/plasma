@@ -128,6 +128,7 @@ class ELF(Binary):
                 len(data),
                 self.__section_is_exec(s),
                 self.__section_is_data(s),
+                name == ".bss",
                 data)
 
         # Load segments
