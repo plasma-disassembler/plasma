@@ -96,6 +96,12 @@ class OutputAbs():
         self.curr_index += len(string)
 
     def _address(self, addr, print_colon=True, normal_color=False, notprefix=False):
+        if self.gctx.debugsp:
+            from plasma.lib.analyzer import ALL_SP
+            if addr in ALL_SP:
+                self._variable(str(ALL_SP[addr]) + " ")
+                self._pad_width(5)
+
         if self.section_prefix and not notprefix:
             self._comment(self.curr_section.name)
             self._add(" ")
@@ -627,12 +633,6 @@ class OutputAbs():
 
         if i.address in self.ctx.all_fused_inst:
             return
-
-        if self.gctx.debugsp:
-            from plasma.lib.analyzer import ALL_SP
-            if i.address in ALL_SP:
-                self._variable(str(ALL_SP[i.address]) + " ")
-                self._pad_width(5)
 
         if self.print_labels:
             self._label_and_address(i.address, tab)
