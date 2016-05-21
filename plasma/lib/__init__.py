@@ -69,6 +69,7 @@ class GlobalContext():
         self.capstone_string = 0 # See lib.ui.visual.main_cmd_inst_output
         self.show_mangling = True
         self.autoanalyzer = True
+        self.debugsp = False
 
         # Built objects
         self.dis = None # Disassembler
@@ -115,6 +116,8 @@ class GlobalContext():
                 help='If not set it\'s in little endian')
         parser.add_argument('-na', '--noautoanalyzer', action='store_true',
                 help='Disable analysis on the entry point / symbols and don\'t scan memmory. You can force it with the command push_analyze_symbols.')
+        parser.add_argument('--debugsp', action='store_true',
+                help="Print the stack offset on each instructions. Warning: these values will not be saved in the database.")
 
         args = parser.parse_args()
 
@@ -135,6 +138,7 @@ class GlobalContext():
         self.raw_big_endian  = args.rawbe
         self.list_sections   = args.sections
         self.autoanalyzer    = not args.noautoanalyzer
+        self.debugsp         = args.debugsp
 
         if args.nbytes == 0:
             self.nbytes = 4

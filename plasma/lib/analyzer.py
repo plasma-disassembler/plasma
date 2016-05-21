@@ -24,8 +24,7 @@ from plasma.lib.utils import unsigned
 from plasma.lib.fileformat.binary import T_BIN_PE, T_BIN_ELF
 from plasma.lib.consts import *
 
-# debug
-# ALL_SP = {}
+ALL_SP = {}
 
 
 class Analyzer(threading.Thread):
@@ -528,8 +527,8 @@ class Analyzer(threading.Thread):
             if ad in inner_code:
                 continue
 
-            # debug
-            # ALL_SP[ad] = self.arch_analyzer.get_sp(regsctx)
+            if self.gctx.debugsp:
+                ALL_SP[ad] = self.arch_analyzer.get_sp(regsctx)
 
             inner_code[ad] = inst
 
