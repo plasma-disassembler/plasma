@@ -794,6 +794,8 @@ class Console():
         print("addresses remaining to analyze:", n)
 
         if self.analyzer.running_second_pass:
-            print("scanning the whole memory...")
+            print("memory scan...")
             ad = self.analyzer.where
-            print("  -> %s: 0x%x" % (self.gctx.dis.binary.get_section(ad).name, ad))
+            s = self.gctx.dis.binary.get_section(ad)
+            percent = int((ad - s.start) * 100 / s.real_size)
+            print("  -> %s %d%%  (0x%x)" % (s.name, percent, ad))
