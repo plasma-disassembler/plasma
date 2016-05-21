@@ -129,6 +129,8 @@ class Disassembler():
 
         if self.binary.arch == "x86":
             warning("there is a known bug on stack analysis, issue #62")
+            warning("if rsp (rbp is ok) is referenced in the code, the offset may be wrong")
+            warning("you can use the option --debusp to check the stack offset")
 
 
     def instanciate_binary(self, filename, raw_type, raw_base, raw_big_endian):
