@@ -835,8 +835,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
     switch (id) {
         case X86_INS_ADD:
-            if (!(r1 != X86_REG_RSP && r1 != X86_REG_ESP && r1 != X86_REG_SP))
-                reg_add(regs, r1, values[1]);
+            reg_add(regs, r1, values[1]);
             break;
 
         case X86_INS_SUB:

@@ -26,7 +26,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_JP, X86_INS_JRCXZ, X86_INS_JS, X86_INS_MOV, X86_INS_SHL,
         X86_INS_SAL, X86_INS_SAR, X86_OP_IMM, X86_OP_MEM, X86_OP_REG,
         X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_INS_OR, X86_INS_MOVSX,
-        X86_REG_RSP, X86_REG_ESP, X86_REG_SP, X86_INS_PUSH)
+        X86_REG_RSP, X86_REG_ESP, X86_REG_SP, X86_INS_PUSH, X86_INS_LEAVE)
 
 
 OP_IMM = X86_OP_IMM
@@ -159,7 +159,7 @@ def guess_frame_size(analyzer, ad):
                 while 1:
                     i = analyzer.disasm(ad)
                     if i is None or is_ret(i) or is_call(i) or is_jump(i) or \
-                            i.id == X86_INS_PUSH:
+                            i.id == X86_INS_PUSH or i.id == X86_INS_LEAVE:
                         return - analyzer.arch_analyzer.get_sp(regsctx)
                     analyzer.arch_analyzer.analyze_operands(
                             analyzer, regsctx, i, None, True)

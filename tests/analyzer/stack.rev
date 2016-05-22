@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------
-.text  0x4000d4 -> 0x40015e
+.text  0x4000d4 -> 0x40017c
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
@@ -55,11 +55,26 @@ __leave_func:   __cdecl__
 .text 0x4000f4: ret
 ; end function __leave_func
 
-_start:
-.text 0x4000f5: call main
-.text 0x4000fa: call __noreturn
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+test_frame_size:
 
-.text 0x4000ff: .db c3
+frame_size = 40
+.text 0x4000f5: push rbp
+.text 0x4000f6: rbp = rsp
+.text 0x4000f9: rax = 0
+.text 0x4000fc: rax += 32
+.text 0x400100: rsp -= rax
+.text 0x400103: leave
+.text 0x400104: ret
+; end function test_frame_size
+
+_start:
+.text 0x400105: call main
+.text 0x40010a: call __noreturn
+
+.text 0x40010f: .db c3
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
@@ -69,38 +84,41 @@ main:
 frame_size = 24
 long int   var_c     = -0xc
 
-.text 0x400100: push rbp
-.text 0x400101: rbp = rsp
-.text 0x400104: rsp -= 16
-.text 0x400108: rax = var_c
-.text 0x40010c: rax = var_c
-.text 0x400111: push rax
-.text 0x400112: push rbx
-.text 0x400113: push rcx
-.text 0x400114: call __stdcall
-.text 0x400119: rax = var_c
-.text 0x40011d: rax = var_c
-.text 0x400122: push rax
-.text 0x400123: push rbx
-.text 0x400124: push rcx
-.text 0x400125: call __cdecl
-.text 0x40012a: rsp += 24
-.text 0x40012e: rax = var_c
-.text 0x400132: rax = var_c
-.text 0x400137: push rax
-.text 0x400138: push rbx
-.text 0x400139: push rcx
-.text 0x40013a: call __jmp_func
-.text 0x40013f: rax = var_c
-.text 0x400143: rax = var_c
-.text 0x400148: push rax
-.text 0x400149: push rbx
-.text 0x40014a: push rcx
-.text 0x40014b: call __leave_func
-.text 0x400150: rsp += 24
-.text 0x400154: rax = var_c
-.text 0x400158: rax = var_c
-.text 0x40015d: pop rbp
-.text 0x40015e: ret
+.text 0x400110: push rbp
+.text 0x400111: rbp = rsp
+.text 0x400114: rsp -= 16
+.text 0x400118: rax = var_c
+.text 0x40011c: rax = var_c
+.text 0x400121: push rax
+.text 0x400122: push rbx
+.text 0x400123: push rcx
+.text 0x400124: call __stdcall
+.text 0x400129: rax = var_c
+.text 0x40012d: rax = var_c
+.text 0x400132: push rax
+.text 0x400133: push rbx
+.text 0x400134: push rcx
+.text 0x400135: call __cdecl
+.text 0x40013a: rsp += 24
+.text 0x40013e: rax = var_c
+.text 0x400142: rax = var_c
+.text 0x400147: push rax
+.text 0x400148: push rbx
+.text 0x400149: push rcx
+.text 0x40014a: call __jmp_func
+.text 0x40014f: rax = var_c
+.text 0x400153: rax = var_c
+.text 0x400158: push rax
+.text 0x400159: push rbx
+.text 0x40015a: push rcx
+.text 0x40015b: call __leave_func
+.text 0x400160: rsp += 24
+.text 0x400164: rax = var_c
+.text 0x400168: rax = var_c
+.text 0x40016d: call test_frame_size
+.text 0x400172: rax = var_c
+.text 0x400176: rax = var_c
+.text 0x40017b: leave
+.text 0x40017c: ret
 ; end function main
 

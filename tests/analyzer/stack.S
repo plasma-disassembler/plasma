@@ -48,6 +48,15 @@ __leave_func:
     leave
     ret
 
+test_frame_size:
+	push rbp
+	mov rbp, rsp
+    xor rax, rax
+    add rax, 32
+    sub rsp, rax
+    leave
+    ret
+
 // --------------------------------------------------------
 
 _start:
@@ -92,5 +101,9 @@ main:
 
     ACCESS_VARS
 
-	pop rbp
+    call test_frame_size
+
+    ACCESS_VARS
+
+	leave
     ret
