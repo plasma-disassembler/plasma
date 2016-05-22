@@ -4,7 +4,7 @@
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-__noreturn__ _start:
+_start:   __noreturn__
 .text 0x400440: ebp = 0
 .text 0x400442: r9 = rdx
 .text 0x400445: pop rsi
@@ -29,7 +29,7 @@ __noreturn__ _start:
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-deregister_tm_clones:
+deregister_tm_clones:   __cdecl__
 .text 0x400470: eax = unk_600a2f
 .text 0x400475: push rbp
 .text 0x400476: rax -= __TMC_END__
@@ -161,6 +161,7 @@ loc_400520:
 ; ---------------------------------------------------------------------
 main:
 
+frame_size = 56
 long int   var_38    = -0x38
 int        var_2c    = -0x2c
 long int   var_20    = -0x20
@@ -210,6 +211,8 @@ int        var_c     = -0xc
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 __libc_csu_init:
+
+frame_size = 56
 .text 0x4005b0: push r15
 .text 0x4005b2: push r14
 .text 0x4005b4: r15d = edi

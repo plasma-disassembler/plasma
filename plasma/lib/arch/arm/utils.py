@@ -130,3 +130,7 @@ def cond_symbol(ty):
 
 def inst_symbol(i):
     return INST_SYMB.get(i.id, "UNKNOWN")
+
+
+def guess_frame_size(analyzer, ad):
+    return -1

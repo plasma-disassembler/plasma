@@ -129,7 +129,7 @@ static PyObject* get_sp(PyObject *self, PyObject *args)
     return PyLong_FromLong(0);
 }
 
-static PyObject* add_sp(PyObject *self, PyObject *args)
+static PyObject* set_sp(PyObject *self, PyObject *args)
 {
     Py_RETURN_NONE;
 }
@@ -246,8 +246,13 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     PyObject *insn;
     PyObject *func_obj;
 
-    if (!PyArg_ParseTuple(args, "OOOO",
-            &analyzer, &regs, &insn, &func_obj))
+    /* if True: stack variables will not be saved and analysis on immediates
+     * will not be run. It will only simulate registers.
+     */
+    bool only_simulate;
+
+    if (!PyArg_ParseTuple(args, "OOOOb",
+            &analyzer, &regs, &insn, &func_obj, &only_simulate))
         Py_RETURN_NONE;
 
     PyObject *list_ops = PyObject_GetAttrString(insn, "operands");
@@ -295,7 +300,7 @@ static PyMethodDef mod_methods[] = {
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
-    { "add_sp", add_sp, METH_VARARGS },
+    { "set_sp", set_sp, METH_VARARGS },
     { "set_wordsize", set_wordsize, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };

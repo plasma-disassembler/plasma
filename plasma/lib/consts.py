@@ -48,7 +48,7 @@ FUNC_FLAGS = 1
 FUNC_OFF_VARS = 2
 FUNC_ID = 3
 FUNC_INST_ADDR = 4
-FUNC_SP = 5
+FUNC_FRAME_SIZE = 5
 
 # Index of values for each Database.functions[i][FUNC_OFF_VARS][offset]
 VAR_TYPE = 0
@@ -56,7 +56,8 @@ VAR_NAME = 1
 
 
 # List of flags, in Database.functions[i][FUNC_FLAGS]
-FUNC_FLAG_NORETURN = 1
+FUNC_FLAG_NORETURN = 0x1
+FUNC_FLAG_CDECL = 0x2
 
 
 # Known functions which never returns

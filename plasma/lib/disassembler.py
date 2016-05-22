@@ -128,9 +128,11 @@ class Disassembler():
             s.big_endian = cs_mode & CAPSTONE.CS_MODE_BIG_ENDIAN
 
         if self.binary.arch == "x86":
-            warning("there is a known bug on stack analysis, issue #62")
-            warning("if rsp (rbp is ok) is referenced in the code, the offset may be wrong")
-            warning("you can use the option --debusp to check the stack offset")
+            warning("To compute correctly the value of esp, the frame size must")
+            warning("be correct. But the heuristic is very simple actually.")
+            warning("So every references to ebp should be correct but for esp it")
+            warning("may have some errors.")
+            warning("In the visual press I to show original instructions.")
 
 
     def instanciate_binary(self, filename, raw_type, raw_base, raw_big_endian):

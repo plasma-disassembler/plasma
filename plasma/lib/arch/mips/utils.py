@@ -25,7 +25,7 @@ from capstone.mips import (MIPS_INS_BEQ, MIPS_INS_BNE, MIPS_INS_BGTZ,
         MIPS_INS_SLL, MIPS_INS_SRL, MIPS_INS_SRA, MIPS_INS_BLTZAL,
         MIPS_INS_XOR, MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU,
         MIPS_INS_LD, MIPS_INS_LW, MIPS_REG_T9, MIPS_OP_IMM, MIPS_OP_MEM,
-        MIPS_OP_REG)
+        MIPS_OP_REG, MIPS_REG_SP)
 
 # TODO
 # MIPS_INS_BEQC, MIPS_INS_BEQL, MIPS_INS_BEQZALC, MIPS_INS_BEQZC, MIPS_INS_BGEC,
@@ -172,3 +172,26 @@ class NopInst():
     def __init__(self):
         self.id = -1
         self.operands = []
+
+
+def guess_frame_size(analyzer, ad):
+    regsctx = analyzer.arch_analyzer.new_regs_context()
+    if regsctx is None:
+        return -1
+
+    while 1:
+        i = analyzer.disasm(ad)
+        if i is None or is_ret(i) or is_call(i) or is_jump(i):
+            return 0
+
+        # Do only registers simulation
+        analyzer.arch_analyzer.analyze_operands(analyzer, regsctx, i, None, True)
+
+        if i.id == MIPS_INS_ADDIU or i.id == MIPS_INS_ADD or \
+                i.id == MIPS_INS_ADDU or i.id == MIPS_INS_SUB or \
+                i.id == MIPS_INS_SUBU:
+            op = i.operands[0]
+            if op.type == MIPS_OP_REG and op.value.reg == MIPS_REG_SP:
+                return - analyzer.arch_analyzer.get_sp(regsctx)
+
+        ad += i.size

@@ -267,14 +267,19 @@ class OutputAbs():
 
         if tab != -1:
             self._tabs(tab)
-            if ty == MEM_FUNC:
-                flags = self._dis.functions[ad][FUNC_FLAGS]
-                if flags & FUNC_FLAG_NORETURN:
-                    self._comment("__noreturn__ ")
 
         self.token_lines[-1].append((l, col, False))
         self.lines[-1].append(l)
         self.curr_index += len(l)
+
+        if tab != -1 and ty == MEM_FUNC:
+            flags = self._dis.functions[ad][FUNC_FLAGS]
+            if flags != 0:
+                self._comment("  ")
+            if flags & FUNC_FLAG_NORETURN:
+                self._comment(" __noreturn__")
+            if flags & FUNC_FLAG_CDECL:
+                self._comment(" __cdecl__")
 
         # If it's a label
         if print_colon and ty == MEM_ARRAY:
@@ -298,6 +303,13 @@ class OutputAbs():
 
         if not is_first and self._label(ad, tab, print_colon):
             self._new_line()
+
+            if self._dis.mem.is_func(ad):
+                frame_size = self._dis.functions[ad][FUNC_FRAME_SIZE]
+                if frame_size != 0:
+                    self._new_line()
+                    self._comment("frame_size = %d" % frame_size)
+                    self._new_line()
 
             # Print stack variables
             if self._dis.mem.is_func(ad):
@@ -403,8 +415,6 @@ class OutputAbs():
             return
 
         lst.sort()
-        self._new_line()
-
         for off in lst:
             self._tabs(tabs)
             self._type(self.__get_var_type(func_addr, off))
@@ -605,6 +615,15 @@ class OutputAbs():
             self._add(" {")
 
         self._new_line()
+
+        if self._dis.mem.is_func(entry):
+            frame_size = self._dis.functions[entry][FUNC_FRAME_SIZE]
+            if frame_size != 0:
+                self._new_line()
+                self._tabs(1)
+                self._comment("frame_size = %d" % frame_size)
+                self._new_line()
+
         self._all_vars(entry)
         ast.dump(self, 1)
         self._add("}")

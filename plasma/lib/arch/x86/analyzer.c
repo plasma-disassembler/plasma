@@ -403,42 +403,6 @@ static void reg_xor(struct regs_context *self, int r, long v)
     }
 }
 
-static void reg_inc(struct regs_context *self, int r)
-{
-    switch (reg_size(r)) {
-    case 8:
-        *(self->regs[r]) += 1;
-        break;
-    case 4:
-        *((int*) self->regs[r]) += 1;
-        break;
-    case 1:
-        *((char*) self->regs[r]) += 1;
-        break;
-    case 2:
-        *((short*) self->regs[r]) += 1;
-        break;
-    }
-}
-
-static void reg_dec(struct regs_context *self, int r)
-{
-    switch (reg_size(r)) {
-    case 8:
-        *(self->regs[r]) -= 1;
-        break;
-    case 4:
-        *((int*) self->regs[r]) -= 1;
-        break;
-    case 1:
-        *((char*) self->regs[r]) -= 1;
-        break;
-    case 2:
-        *((short*) self->regs[r]) -= 1;
-        break;
-    }
-}
-
 static PyObject* get_sp(PyObject *self, PyObject *args)
 {
     struct regs_context *regs;
@@ -453,18 +417,18 @@ static PyObject* get_sp(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject* add_sp(PyObject *self, PyObject *args)
+static PyObject* set_sp(PyObject *self, PyObject *args)
 {
     struct regs_context *regs;
     long imm;
     if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
         Py_RETURN_NONE;
     if (WORDSIZE == 8)
-        reg_add(regs, X86_REG_RSP, imm);
+        reg_mov(regs, X86_REG_RSP, imm);
     else if (WORDSIZE == 4)
-        reg_add(regs, X86_REG_ESP, (int) imm);
+        reg_mov(regs, X86_REG_ESP, (int) imm);
     else if (WORDSIZE == 2)
-        reg_add(regs, X86_REG_SP, (short) imm);
+        reg_mov(regs, X86_REG_SP, (short) imm);
     Py_RETURN_NONE;
 }
 
@@ -473,7 +437,6 @@ static PyObject* set_wordsize(PyObject *self, PyObject *args)
     PyArg_ParseTuple(args, "i", &WORDSIZE);
     Py_RETURN_NONE;
 }
-
 
 static inline int get_insn_address(PyObject *op)
 {
@@ -641,7 +604,13 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     PyObject *insn;
     PyObject *func_obj;
 
-    if (!PyArg_ParseTuple(args, "OOOO", &analyzer, &regs, &insn, &func_obj))
+    /* if True: stack variables will not be saved and analysis on immediates
+     * will not be run. It will only simulate registers.
+     */
+    bool only_simulate;
+
+    if (!PyArg_ParseTuple(args, "OOOOb",
+                &analyzer, &regs, &insn, &func_obj, &only_simulate))
         Py_RETURN_NONE;
 
     int id = py_aslong2(insn, "id");
@@ -775,9 +744,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 int r = get_op_reg(ops[0]);
                 if (is_reg_defined(regs, r)) {
                     if (id == X86_INS_INC)
-                        reg_inc(regs, r);
+                        reg_add(regs, r, 1);
                     else if (id == X86_INS_DEC)
-                        reg_dec(regs, r);
+                        reg_sub(regs, r, 1);
                 }
                 goto end;
             }
@@ -790,7 +759,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     for (i = 0 ; i < len_ops ; i++) {
         err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i]);
 
-        if (err[i])
+        if (err[i] || only_simulate)
             continue;
 
         if (get_op_type(ops[i]) == X86_OP_MEM) {
@@ -903,7 +872,7 @@ static PyMethodDef mod_methods[] = {
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
-    { "add_sp", add_sp, METH_VARARGS },
+    { "set_sp", set_sp, METH_VARARGS },
     { "set_wordsize", set_wordsize, METH_VARARGS },
     { NULL, NULL, 0, NULL }
 };
