@@ -36,7 +36,6 @@ class OutputAbs():
         self.idx_tok_inline_comm = {} # line -> (char_index, token_index)
         self.curr_index = 0
 
-        self.section_prefix = False
         self.curr_section = None # must be updated at hand !!
         self.print_labels = True
 
@@ -101,10 +100,6 @@ class OutputAbs():
             if addr in ALL_SP:
                 self._variable(str(ALL_SP[addr]) + " ")
                 self._pad_width(5)
-
-        if self.section_prefix and not notprefix:
-            self._comment(self.curr_section.name)
-            self._add(" ")
 
         s = hex(addr)
         if print_colon:

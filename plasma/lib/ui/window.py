@@ -229,14 +229,6 @@ class Window():
         return False
 
 
-    def status_bar(self, s, h, refresh=False):
-        self.screen.move(h, 0)
-        self.screen.clrtoeol()
-        self.screen.addstr(h, 0, s)
-        if refresh:
-            self.screen.refresh()
-
-
     def redraw(self, h, w):
         i = 0
 
@@ -248,10 +240,6 @@ class Window():
                 self.screen.move(i, 0)
             self.screen.clrtoeol()
             i += 1
-
-        if self.has_statusbar:
-            self.screen.move(h, 0)
-            self.screen.clrtoeol()
 
         self.screen.refresh()
 

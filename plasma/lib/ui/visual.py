@@ -43,6 +43,8 @@ class Visual(Window):
         self.last_addr = max(self.output.addr_line)
         self.first_addr = min(self.output.addr_line)
 
+        self.last_cursor_ad = None
+
         self.stack = []
         self.saved_stack = [] # when we enter, go back, then re-enter
 
@@ -143,7 +145,7 @@ class Visual(Window):
             o = self.ctx.dump_asm(until=dump_until)
 
         elif self.mode == MODE_DECOMPILE:
-            self.status_bar("decompiling...", h, True)
+            self.status_bar_message("decompiling...", h, True)
             o = self.ctx.decompile()
 
         if o is not None:
@@ -153,6 +155,40 @@ class Visual(Window):
             self.first_addr = min(o.addr_line)
             return True
         return False
+
+
+    def status_bar_message(self, s, h, refresh=False):
+        self.screen.move(h, 0)
+        self.screen.clrtoeol()
+        self.screen.addstr(h, 0, s)
+        if refresh:
+            self.screen.refresh()
+
+
+    def redraw(self, h, w):
+        # Redraw first the statusbar
+        if self.has_statusbar:
+            self.screen.move(h, 0)
+            self.screen.clrtoeol()
+
+        line = self.win_y + self.cursor_y
+        if line in self.output.line_addr:
+            ad = self.output.line_addr[line]
+            self.last_cursor_ad = ad
+        else:
+            ad = self.last_cursor_ad
+
+        if ad is not None:
+            s = self.dis.binary.get_section(ad)
+            self.screen.addstr(h, 0, s.name, curses.A_BOLD)
+
+            fid = self.db.mem.get_func_id(ad)
+            if fid != -1:
+                func_ad = self.db.func_id[fid]
+                name = self.api.get_symbol(func_ad)
+                self.screen.addstr(h, w - len(name) - 1, name)
+
+        Window.redraw(self, h, w)
 
 
     def main_cmd_rename(self, h, w):
@@ -260,7 +296,7 @@ class Visual(Window):
         s = self.dis.binary.get_section(ad)
 
         if s is None:
-            self.status_bar("not found", h, True)
+            self.status_bar_message("not found", h, True)
             return False
 
         while 1:
@@ -285,14 +321,14 @@ class Visual(Window):
                 else self.dis.binary.get_prev_section(ad)
 
             if s is None:
-                self.status_bar("not found", h, True)
+                self.status_bar_message("not found", h, True)
                 return False
 
             ad = ad = s.start if forward else s.end
 
 
     def main_cmd_search(self, h, w):
-        self.status_bar("/", h, True)
+        self.status_bar_message("/", h, True)
         text = inputbox("", 1, h, w - 1, h)
 
         if not text:
@@ -304,7 +340,7 @@ class Visual(Window):
                 try:
                     textenc.append(int(by, 16))
                 except:
-                    self.status_bar("err search not in hexa", h, True)
+                    self.status_bar_message("err search not in hexa", h, True)
                     return False
             textenc = bytes(textenc)
 
@@ -370,7 +406,7 @@ class Visual(Window):
             text = ""
             is_new_token = True
 
-        self.status_bar("-- INLINE COMMENT --", h)
+        self.status_bar_message("-- INLINE COMMENT --", h)
 
         idx_token = len(tok_line)
         ed = InlineEd(h, w, line, xbegin, idx_token, text,
@@ -721,7 +757,7 @@ class Visual(Window):
             func_id = self.db.mem.get_func_id(ad)
 
             if func_id == -1:
-                self.status_bar("not in a function: create a function or use "
+                self.status_bar_message("not in a function: create a function or use "
                                 "the cmd x in the console", h, True)
                 return False
 
@@ -854,7 +890,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_offset(ad):
-            self.status_bar("not an address", h, True) 
+            self.status_bar_message("not an address", h, True)
             return False
 
         self.reload_output(h)
@@ -876,7 +912,7 @@ class Visual(Window):
             if ty == -1 or ty == MEM_UNK:
                 ty = MEM_BYTE
             if ty < MEM_BYTE or ty > MEM_QOFFSET:
-                self.status_bar("can't create an array here", h, True)
+                self.status_bar_message("can't create an array here", h, True)
                 return False
             sz_entry = self.db.mem.get_size(ad)
 
@@ -916,7 +952,7 @@ class Visual(Window):
             n = int(word)
         except:
             self.redraw(h, w)
-            self.status_bar("error: not an integer", h)
+            self.status_bar_message("error: not an integer", h)
             return False
 
         self.api.set_array(ad, n, ty)
@@ -936,7 +972,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_function(ad):
-            self.status_bar("cannot set a function here", h, True)
+            self.status_bar_message("cannot set a function here", h, True)
             return False
 
         self.reload_output(h)
@@ -955,7 +991,7 @@ class Visual(Window):
         is_array = self.db.mem.is_array(ctx.entry)
         if not ctx or (not is_array and ctx.entry not in self.db.xrefs) or \
                 (is_array and ctx.entry not in self.db.mem.data_sub_xrefs):
-            self.status_bar("no xrefs", h, True)
+            self.status_bar_message("no xrefs", h, True)
             return False
 
         o = ctx.dump_xrefs()

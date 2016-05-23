@@ -314,7 +314,6 @@ class Disassembler():
 
         o = ARCH_OUTPUT.Output(ctx)
         o._new_line()
-        o.section_prefix = True
         o.curr_section = s
         o.mode_dump = True
         l = 0
