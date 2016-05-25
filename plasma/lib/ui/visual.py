@@ -987,6 +987,9 @@ class Visual(Window):
             return None
 
         ctx = self.gctx.get_addr_context(word)
+        if ctx is None:
+            self.status_bar_message("unknown symbol", h, True)
+            return False
 
         is_array = self.db.mem.is_array(ctx.entry)
         if not ctx or (not is_array and ctx.entry not in self.db.xrefs) or \
