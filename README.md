@@ -33,6 +33,10 @@ database compatibility could be broken.
 
     ./install.sh
 
+Or if you have already installed requirements with the previous command :
+
+    ./install.sh --update
+
 Check tests :
 
     make
