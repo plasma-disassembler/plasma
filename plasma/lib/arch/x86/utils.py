@@ -166,3 +166,48 @@ def guess_frame_size(analyzer, ad):
                     ad += i.size
 
         ad += i.size
+
+
+def search_jmptable_addr(analyzer, jump_i, inner_code):
+    jump_ty = jump_i.operands[0].type
+
+    if jump_ty == X86_OP_MEM:
+        op = jump_i.operands[0]
+        if op.mem.index != 0 and analyzer.dis.binary.is_address(op.mem.disp):
+            return op.mem.disp
+        return None
+
+    if jump_ty != X86_OP_REG:
+        return None
+
+    jump_reg = jump_i.operands[0].value.reg
+    ad = jump_i.address - 1
+    n = 0
+    end = ad - 64
+
+    # Search max 5 instructions backward
+    while n < 5 and ad >= end:
+        # We can't check analyzer.db.mem.is_code because when this function
+        # is called, instructions are not pushed in memory. We have only
+        # the set of the function.
+        if ad in inner_code:
+            n -= 1
+            i = inner_code[ad]
+            if i is None:
+                return None
+            if is_jump(i):
+                return None
+            if len(i.operands) >= 1:
+                op1 = i.operands[0]
+                if op1.type == X86_OP_REG and op1.value.reg == jump_reg:
+                    if len(i.operands) != 2:
+                        return None
+                    op2 = i.operands[1]
+                    if op2.type != X86_OP_MEM:
+                        return None
+                    if op2.mem.index != 0 and analyzer.dis.binary.is_address(op2.mem.disp):
+                        return op2.mem.disp
+                    return None
+        ad -= 1
+
+    return None

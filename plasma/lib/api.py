@@ -174,13 +174,13 @@ class Api():
         return True
 
 
-    def set_offset(self, ad, ty=None, force_analyze=False):
+    def set_offset(self, ad, ty=None, async_analysis=True, dont_analyze=False):
         """
         Define ad as an offset. If the value is an address to a
         code location, an analysis will be done. ty should be in
         [WORD, DWORD, QWORD], if not set the type at the address
         ad is retrieved.
-        force_analyze is used internally ONLY.
+        async_analysis and dont_analyze should be used internally ONLY.
 
         returns True if ok
         """
@@ -215,22 +215,26 @@ class Api():
         elif ty == MEM_QWORD:
             self.mem.add(ad, sz, MEM_QOFFSET)
 
+        if dont_analyze:
+            return True
+
         if self.__analyzer.first_inst_are_code(off):
-            if force_analyze:
-                self.__analyzer.analyze_flow(
-                    off, self.__analyzer.has_prolog(off), False, True)
-            else:
+            if async_analysis:
                 self.__analyzer.msg.put(
                     (off, self.__analyzer.has_prolog(off), False, True,
                      self.__queue_wait))
                 self.__queue_wait.get()
+            else:
+                self.__analyzer.analyze_flow(
+                    off, self.__analyzer.has_prolog(off), False, True)
 
         return True
 
 
-    def set_array(self, ad, nb_entries, entry_type):
+    def set_array(self, ad, nb_entries, entry_type, dont_analyze=False):
         """
         returns True if ok.
+        dont_analyze should be used internally ONLY.
         """
         if entry_type < MEM_BYTE or entry_type > MEM_QOFFSET:
             return False
@@ -248,7 +252,7 @@ class Api():
             while i < end:
                 ty = self.mem.get_type(i)
                 if not (MEM_WOFFSET <= ty <= MEM_QOFFSET):
-                    self.set_offset(i, self.mem.get_type_from_size(entry_size))
+                    self.set_offset(i, self.mem.get_type_from_size(entry_size), dont_analyze=dont_analyze)
                 i += entry_size
         else:
             self.__undefine(ad, sz)
@@ -454,13 +458,14 @@ class Api():
             del self.__db.symbols[name]
 
 
-    def create_jmptable(self, inst_addr, table_addr, entry_size, nb_entries):
+    def create_jmptable(self, inst_addr, table_addr, nb_entries, entry_size, dont_analyze=False):
         """
         Create a jump table.
         inst_addr: address of the jump
         table_addr: address of the table
-        entry_size: size of each address in the table
         nb_entries: number of entries to read
+        entry_size: size of each address in the table
+        dont_analyze should be used internally ONLY.
 
         returns True if ok
         """
@@ -469,10 +474,20 @@ class Api():
         if not table:
             return False
 
+        if entry_size == 2:
+            entry_type = MEM_WOFFSET
+        elif entry_size == 4:
+            entry_type = MEM_DOFFSET
+        elif entry_size == 8:
+            entry_type = MEM_QOFFSET
+
+        self.set_array(table_addr, nb_entries, entry_type, dont_analyze=True)
+
         name = "jmptable_%x" % table_addr
         self.add_symbol(table_addr, name, force=True)
         self.__db.jmptables[inst_addr] = Jmptable(inst_addr, table_addr, table, name)
-        self.__db.internal_inline_comments[inst_addr] = "switch statement %s" % name
+        self.__db.internal_inline_comments[inst_addr] = \
+            "switch statement %s[%d]" % (name, nb_entries)
 
         all_cases = {}
         for ad in table:
@@ -490,15 +505,20 @@ class Api():
                     name
                 )]
 
+        if dont_analyze:
+            return True
+
         # If it's inside a function, the analysis is done on the entire function
         func_id = self.mem.get_func_id(inst_addr)
         if func_id == -1:
-            self.__analyzer.msg.put((inst_addr, False, True, False, self.__queue_wait))
+            self.__analyzer.msg.put((inst_addr, False, True, True, self.__queue_wait))
         else:
             ad = self.__db.func_id[func_id]
-            self.__analyzer.msg.put((ad, True, True, False, self.__queue_wait))
+            self.__analyzer.msg.put((ad, True, True, True, self.__queue_wait))
 
         self.__queue_wait.get()
+
+        return True
 
 
     def add_xref(self, from_ad, to_ad):
@@ -516,7 +536,7 @@ class Api():
 
 
     def add_xrefs_table(self, from_ad, to_ad_list):
-        for x in to_ad:
+        for x in to_ad_list:
             self.add_xref(from_ad, x)
 
 

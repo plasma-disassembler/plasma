@@ -322,7 +322,7 @@ class Analyzer(threading.Thread):
             deref = s.read_int(ad, sz)
             if deref is not None and self.dis.binary.is_address(deref):
                 ty = self.db.mem.get_type_from_size(sz)
-                self.api.set_offset(ad, ty, force_analyze=True)
+                self.api.set_offset(ad, ty, async_analysis=False)
                 return
 
             # Check if this is an address to a string
@@ -434,6 +434,41 @@ class Analyzer(threading.Thread):
 
     def is_noreturn(self, ad, entry):
         return ad != entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
+
+
+
+    def auto_jump_table(self, i, inner_code):
+        table_ad = self.ARCH_UTILS.search_jmptable_addr(self, i, inner_code)
+        if table_ad is None:
+            return False
+
+        s_orig = self.dis.binary.get_section(table_ad)
+        nb_entries = 0
+        ad = table_ad
+
+        while 1:
+            val = s_orig.read_int(ad, self.dis.wordsize)
+            if not self.dis.binary.is_address(val):
+                break
+
+            nb_entries += 1
+            ad += self.dis.wordsize
+
+            # TODO : here the program is not completely analyzed, so new xrefs
+            # can appears later.
+            if ad in self.db.xrefs:
+                break
+
+            s = self.dis.binary.get_section(ad)
+
+            if s is None or s.start != s_orig.start:
+                break
+
+        if nb_entries:
+            return self.api.create_jmptable(
+                i.address, table_ad, nb_entries, self.dis.wordsize, dont_analyze=True)
+
+        return False
 
 
     #
@@ -585,21 +620,27 @@ class Analyzer(threading.Thread):
             elif self.is_uncond_jump(inst):
                 self.__add_prefetch(inner_code, inst)
                 op = inst.operands[-1]
+                jmp_ad = None
 
                 if op.type == self.ARCH_UTILS.OP_IMM:
-                    nxt = unsigned(op.value.imm)
-                    self.api.add_xref(ad, nxt)
-                    if self.db.mem.is_func(nxt):
-                        has_ret = not self.is_noreturn(nxt, entry)
-                    else:
-                        stack.append((regsctx, nxt))
-                    if add_if_code:
-                        added_xrefs.append((ad, nxt))
-                else:
-                    self.arch_analyzer.analyze_operands(
-                            self, regsctx, inst, func_obj, False)
+                    jmp_ad = unsigned(op.value.imm)
 
-                    if inst.address in self.jmptables:
+                else:
+                    is_jmptable = inst.address in self.jmptables
+
+                    # Create a jumptable if necessary
+                    if not is_jmptable:
+                        if op.type == self.ARCH_UTILS.OP_REG:
+                            jmp_ad = self.arch_analyzer.reg_value(regsctx, op.value.reg)
+                            if jmp_ad is None:
+                                is_jmptable = self.auto_jump_table(inst, inner_code)
+
+                        elif op.type == self.ARCH_UTILS.OP_MEM:
+                            self.arch_analyzer.analyze_operands(
+                                    self, regsctx, inst, func_obj, False)
+                            is_jmptable = self.auto_jump_table(inst, inner_code)
+
+                    if is_jmptable:
                         table = self.jmptables[inst.address].table
                         for n in table:
                             r = self.arch_analyzer.clone_regs_context(regsctx)
@@ -607,11 +648,23 @@ class Analyzer(threading.Thread):
                         self.api.add_xrefs_table(ad, table)
                         if add_if_code:
                             added_xrefs.append((ad, table))
-                    else:
-                        # TODO : detect jump tables
-                        # This is a register or a memory access
-                        # we can't say if the function really returns
+                        continue
+
+                    self.arch_analyzer.analyze_operands(
+                            self, regsctx, inst, func_obj, False)
+                    # TODO: assume it has a return
+                    if jmp_ad is None:
                         has_ret = True
+                        continue
+
+                self.api.add_xref(ad, jmp_ad)
+                if self.db.mem.is_func(jmp_ad):
+                    has_ret = not self.is_noreturn(jmp_ad, entry)
+                else:
+                    stack.append((regsctx, jmp_ad))
+                if add_if_code:
+                    added_xrefs.append((ad, jmp_ad))
+
 
             ##### CONDITIONAL JUMP #####
             elif self.is_cond_jump(inst):
@@ -679,7 +732,7 @@ class Analyzer(threading.Thread):
                     if frame_size != -1:
                         sp_after_push = self.arch_analyzer.get_sp(regsctx)
                         if frame_size != - sp_after_push:
-                            self.arch_analyzer.set_sp(regsctx, -frame_size) 
+                            self.arch_analyzer.set_sp(regsctx, -frame_size)
 
                     if self.db.mem.is_func(call_ad):
                         if self.is_noreturn(call_ad, entry):

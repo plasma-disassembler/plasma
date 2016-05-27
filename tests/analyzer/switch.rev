@@ -1,0 +1,291 @@
+; ---------------------------------------------------------------------
+.text  0x400410 -> 0x4005f1
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+_start:   __noreturn__
+0x400410: ebp = 0
+0x400412: r9 = rdx
+0x400415: pop rsi
+0x400416: rdx = rsp
+0x400419: rsp &= -16
+0x40041d: push rax
+0x40041e: push rsp
+0x40041f: r8 = __libc_csu_fini
+0x400426: rcx = __libc_csu_init
+0x40042d: rdi = main
+0x400434: call __libc_start_main
+; end function _start
+
+0x400439: .db f4
+0x40043a: .db 66  'f'
+0x40043b: .db 0f
+0x40043c: .db 1f
+0x40043d: .db 44  'D'
+0x40043e: .db 00
+0x40043f: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+deregister_tm_clones:   __cdecl__
+0x400440: eax = unk_6009df
+0x400445: push rbp
+0x400446: rax -= __TMC_END__
+0x40044c: rax cmp '\x0e'
+0x400450: rbp = rsp
+0x400453: jbe loc_400470
+0x400455: eax = 0
+0x40045a: test rax, rax
+0x40045d: je loc_400470
+0x40045f: pop rbp
+0x400460: edi = __TMC_END__
+0x400465: jmp rax
+
+0x400467: .db 66  'f'
+0x400468: .db 0f
+0x400469: .db 1f
+0x40046a: .db 84
+0x40046b: .db 00
+0x40046c: .db 00
+0x40046d: .db 00
+0x40046e: .db 00
+0x40046f: .db 00
+
+loc_400470:
+0x400470: pop rbp
+0x400471: ret
+; end function deregister_tm_clones
+
+0x400472: .db 0f
+0x400473: .db 1f
+0x400474: .db 40  '@'
+0x400475: .db 00
+0x400476: .db 66  'f'
+0x400477: .db 2e  '.'
+0x400478: .db 0f
+0x400479: .db 1f
+0x40047a: .db 84
+0x40047b: .db 00
+0x40047c: .db 00
+0x40047d: .db 00
+0x40047e: .db 00
+0x40047f: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+register_tm_clones:
+0x400480: esi = __TMC_END__
+0x400485: push rbp
+0x400486: rsi -= __TMC_END__
+0x40048d: rsi >>= 3
+0x400491: rbp = rsp
+0x400494: rax = rsi
+0x400497: rax >>= 63
+0x40049b: rsi += rax
+0x40049e: rsi >>= 1
+0x4004a1: je loc_4004b8
+0x4004a3: eax = 0
+0x4004a8: test rax, rax
+0x4004ab: je loc_4004b8
+0x4004ad: pop rbp
+0x4004ae: edi = __TMC_END__
+0x4004b3: jmp rax
+
+0x4004b5: .db 0f
+0x4004b6: .db 1f
+0x4004b7: .db 00
+
+loc_4004b8:
+0x4004b8: pop rbp
+0x4004b9: ret
+
+0x4004ba: .db 66  'f'
+0x4004bb: .db 0f
+0x4004bc: .db 1f
+0x4004bd: .db 44  'D'
+0x4004be: .db 00
+0x4004bf: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__do_global_dtors_aux:
+0x4004c0: *(__TMC_END__) cmp '\0'
+0x4004c7: jne loc_4004da
+0x4004c9: push rbp
+0x4004ca: rbp = rsp
+0x4004cd: call deregister_tm_clones
+0x4004d2: pop rbp
+0x4004d3: *(__TMC_END__) = '\x01'
+
+loc_4004da:
+0x4004da: ret
+; end function __do_global_dtors_aux
+
+0x4004dc: .db 0f
+0x4004dd: .db 1f
+0x4004de: .db 40  '@'
+0x4004df: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+frame_dummy:
+0x4004e0: edi = __JCR_END__
+0x4004e5: *(rdi) cmp 0
+0x4004e9: jne loc_4004f0
+
+loc_4004eb:
+0x4004eb: jmp register_tm_clones
+
+0x4004ed: .db 0f
+0x4004ee: .db 1f
+0x4004ef: .db 00
+
+loc_4004f0:
+0x4004f0: eax = 0
+0x4004f5: test rax, rax
+0x4004f8: je loc_4004eb
+0x4004fa: push rbp
+0x4004fb: rbp = rsp
+0x4004fe: call rax
+0x400500: pop rbp
+0x400501: jmp register_tm_clones
+; end function frame_dummy
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+main:
+
+frame_size = 24
+int        var_c     = -0xc
+
+0x400506: push rbp
+0x400507: rbp = rsp
+0x40050a: rsp -= 16
+0x40050e: var_c = 2
+0x400515: var_c cmp 10
+0x400519: ja loc_400564
+0x40051b: eax = var_c
+0x40051e: rax = *((rax*8) + &jmptable_400620[0])
+0x400526: jmp rax ; switch statement jmptable_400620[11]
+
+; case 2  jmptable_400620
+loc_400528:
+0x400528: edi = unk_400608 "2"
+0x40052d: call puts
+0x400532: jmp loc_40056f
+
+; case 3  jmptable_400620
+loc_400534:
+0x400534: edi = unk_40060a "3"
+0x400539: call puts
+0x40053e: jmp loc_40056f
+
+; case 4  jmptable_400620
+loc_400540:
+0x400540: edi = unk_40060c "4"
+0x400545: call puts
+0x40054a: jmp loc_40056f
+
+; case 5  jmptable_400620
+loc_40054c:
+0x40054c: edi = unk_40060e "5"
+0x400551: call puts
+0x400556: jmp loc_40056f
+
+; case 10  jmptable_400620
+loc_400558:
+0x400558: edi = unk_400610 "10"
+0x40055d: call puts
+0x400562: jmp loc_40056f
+
+; case 0, 1, 6, 7, 8, 9  jmptable_400620
+loc_400564:
+0x400564: edi = asc_400613 "default"
+0x400569: call puts
+0x40056e: nop
+
+loc_40056f:
+0x40056f: eax = 0
+0x400574: leave
+0x400575: ret
+; end function main
+
+0x400576: .db 66  'f'
+0x400577: .db 2e  '.'
+0x400578: .db 0f
+0x400579: .db 1f
+0x40057a: .db 84
+0x40057b: .db 00
+0x40057c: .db 00
+0x40057d: .db 00
+0x40057e: .db 00
+0x40057f: .db 00
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+__libc_csu_init:
+
+frame_size = 56
+0x400580: push r15
+0x400582: push r14
+0x400584: r15d = edi
+0x400587: push r13
+0x400589: push r12
+0x40058b: r12 = __init_array_start
+0x400592: push rbp
+0x400593: rbp = __init_array_end
+0x40059a: push rbx
+0x40059b: r14 = rsi
+0x40059e: r13 = rdx
+0x4005a1: rbp -= r12
+0x4005a4: rsp -= 8
+0x4005a8: rbp >>= 3
+0x4005ac: call _init
+0x4005b1: test rbp, rbp
+0x4005b4: je loc_4005d6
+0x4005b6: ebx = 0
+0x4005b8: nop *(rax + rax)
+
+loc_4005c0:
+0x4005c0: rdx = r13
+0x4005c3: rsi = r14
+0x4005c6: edi = r15d
+0x4005c9: call *(r12 + (rbx*8))
+0x4005cd: rbx += 1
+0x4005d1: rbx cmp rbp
+0x4005d4: jne loc_4005c0
+
+loc_4005d6:
+0x4005d6: rsp += 8
+0x4005da: pop rbx
+0x4005db: pop rbp
+0x4005dc: pop r12
+0x4005de: pop r13
+0x4005e0: pop r14
+0x4005e2: pop r15
+0x4005e4: ret
+; end function __libc_csu_init
+
+0x4005e5: .db 90
+0x4005e6: .db 66  'f'
+0x4005e7: .db 2e  '.'
+0x4005e8: .db 0f
+0x4005e9: .db 1f
+0x4005ea: .db 84
+0x4005eb: .db 00
+0x4005ec: .db 00
+0x4005ed: .db 00
+0x4005ee: .db 00
+0x4005ef: .db 00
+__libc_csu_fini:
+0x4005f0: .db f3
+__libc_csu_fini:
+0x4005f1: .db c3
+

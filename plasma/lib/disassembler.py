@@ -227,7 +227,15 @@ class Disassembler():
         xrefs = list(ctx.gctx.api.xrefsto(ad))
         xrefs.sort()
 
+        seen = set()
+
         for x in xrefs:
+            x = self.mem.get_head_addr(x)
+
+            if x in seen:
+                continue
+
+            seen.add(x)
             s = self.binary.get_section(x)
 
             ty = self.mem.get_type(x)

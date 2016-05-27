@@ -753,7 +753,7 @@ class Console():
             return
 
         self.db.modified = True
-        self.api.create_jmptable(inst_addr, table_addr, entry_size, nb_entries)
+        self.api.create_jmptable(inst_addr, table_addr, nb_entries, entry_size)
 
 
     def __exec_py(self, args):

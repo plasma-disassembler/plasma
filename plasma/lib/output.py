@@ -325,7 +325,7 @@ class OutputAbs():
 
     def _previous_comment(self, i, tab):
         if i.address in self._dis.internal_previous_comments:
-            if self.ctx.is_dump and not self.is_last_2_line_empty():
+            if not self.is_last_2_line_empty():
                 self._new_line()
             for comm in self._dis.internal_previous_comments[i.address]:
                 self._tabs(tab)
