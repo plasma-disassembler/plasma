@@ -492,7 +492,8 @@ def generate_ast(ctx__):
 
             # Check if we enter in a new loop
             if (l_start, curr) in ctx.gph.loops_all:
-                if curr not in ctx.gctx.db.reverse_symbols:
+                if curr not in ctx.gctx.db.reverse_symbols and \
+                        (not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs):
                     name = "loop_0x%x" % curr
                     ctx.gctx.db.symbols[name] = curr
                     ctx.gctx.db.reverse_symbols[curr] = name
@@ -534,7 +535,8 @@ def generate_ast(ctx__):
 
         # Return instruction
         if curr not in ctx.gph.link_out:
-            if curr != ctx.entry and curr not in ctx.gctx.db.reverse_symbols:
+            if curr != ctx.entry and curr not in ctx.gctx.db.reverse_symbols and \
+                    (not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs):
                 name = "ret_0x%x" % curr
                 ctx.gctx.db.symbols[name] = curr
                 ctx.gctx.db.reverse_symbols[curr] = name
