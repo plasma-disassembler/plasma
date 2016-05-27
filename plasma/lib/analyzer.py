@@ -436,7 +436,6 @@ class Analyzer(threading.Thread):
         return ad != entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
-
     def auto_jump_table(self, i, inner_code):
         table_ad = self.ARCH_UTILS.search_jmptable_addr(self, i, inner_code)
         if table_ad is None:
@@ -448,6 +447,9 @@ class Analyzer(threading.Thread):
 
         while 1:
             val = s_orig.read_int(ad, self.dis.wordsize)
+            if val is None:
+                return False
+            
             if not self.dis.binary.is_address(val):
                 break
 
@@ -774,7 +776,10 @@ class Analyzer(threading.Thread):
         # Remove all xrefs, this is not a correct flow
         if add_if_code and has_bad_inst:
             for from_ad, to_ad in added_xrefs:
-                self.api.rm_xref(from_ad, to_ad)
+                if isinstance(to_ad, list):
+                    self.api.rm_xrefs_table(from_ad, to_ad)
+                else:
+                    self.api.rm_xref(from_ad, to_ad)
             return -1
 
         # Set function flags
