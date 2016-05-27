@@ -98,13 +98,11 @@ class Database():
 
             fd = open(self.path, "rb")
 
-            data = self.__check_old_json_db(fd)
-            if data is None:
-                data = fd.read()
-                if data.startswith(b"ZLIB"):
-                    data = zlib.decompress(data[4:])
-                data = msgpack.unpackb(data, encoding="utf-8")
-                fd.close()
+            data = fd.read()
+            if data.startswith(b"ZLIB"):
+                data = zlib.decompress(data[4:])
+            data = msgpack.unpackb(data, encoding="utf-8")
+            fd.close()
 
             self.__load_meta(data)
             self.__load_memory(data)
@@ -143,6 +141,7 @@ class Database():
             "mips_gp": self.mips_gp,
             "mem": self.mem.mm,
             "functions": self.functions,
+            "func_id_counter": self.func_id_counter,
             "func_id": self.func_id,
             "xrefs": self.xrefs,
             "data_sub_xrefs": self.data_sub_xrefs,
@@ -189,14 +188,9 @@ class Database():
 
 
     def __load_labels(self, data):
-        try:
-            for name, ad in self.labels.items():
-                self.reverse_symbols[ad] = name
-                self.symbols[name] = ad
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        for name, ad in self.labels.items():
+            self.reverse_symbols[ad] = name
+            self.symbols[name] = ad
 
 
     def __load_comments(self, data):
@@ -207,47 +201,19 @@ class Database():
 
 
     def __load_jmptables(self, data):
-        try:
-            for j in data["jmptables"]:
-                self.jmptables[j["inst_addr"]] = \
-                    Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        for j in data["jmptables"]:
+            self.jmptables[j["inst_addr"]] = \
+                Jmptable(j["inst_addr"], j["table_addr"], j["table"], j["name"])
 
 
     def __load_meta(self, data):
-        try:
-            self.mips_gp = data["mips_gp"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
-
-        try:
-            self.version = data["version"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            self.version = -1
-            pass
-
-        if self.version >= 1.10:
-            self.raw_base = data["raw_base"]
-            self.raw_type = data["raw_type"]
-            self.raw_is_big_endian = data["raw_is_big_endian"]
+        self.mips_gp = data["mips_gp"]
+        self.version = data["version"]
 
 
     def __load_memory(self, data):
         self.mem = Memory()
-
-        try:
-            self.mem.mm = data["mem"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        self.mem.mm = data["mem"]
 
 
     def __load_history(self, data):
@@ -255,65 +221,29 @@ class Database():
 
 
     def __load_xrefs(self, data):
-        try:
-            self.xrefs = data["xrefs"]
-            self.data_sub_xrefs = data["data_sub_xrefs"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        self.xrefs = data["xrefs"]
+        self.data_sub_xrefs = data["data_sub_xrefs"]
 
 
     def __load_imports(self, data):
-        try:
-            self.imports = data["imports"]
-        except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
+        self.imports = data["imports"]
 
 
     def __load_functions(self, data):
-        try:
-            self.functions = data["functions"]
+        self.functions = data["functions"]
 
-            for fad, value in self.functions.items():
-                # end of the function
+        for fad, value in self.functions.items():
+            # end of the function
+            if value is not None:
                 e = value[0]
                 if e in self.end_functions:
                     self.end_functions[e].append(fad)
                 else:
                     self.end_functions[e] = [fad]
 
-                self.func_id = data["func_id"]
+        self.func_id = data["func_id"]
 
-            self.func_id_counter = max(self.func_id) + 1
-
+        try:
+            self.func_id_counter = data["func_id_counter"]
         except:
-            # Not available in previous versions, this try will be
-            # removed in the future
-            pass
-
-
-    def __check_old_json_db(self, fd):
-        c = fd.read(1)
-        fd.seek(0)
-        if c == b"{":
-            fd = open(self.path, "r")
-            data = json.loads(fd.read())
-            fd.close()
-
-            try:
-                data["user_inline_comments"] = data["inline_comments"]
-                data["user_previous_comments"] = data["previous_comments"]
-                del data["inline_comments"]
-                del data["previous_comments"]
-            except:
-                data["user_inline_comments"] = {}
-                data["user_previous_comments"] = {}
-
-            data["internal_inline_comments"] = {}
-            data["internal_previous_comments"] = {}
-
-            return data
-        return None
+            self.func_id_counter = max(self.func_id.keys()) + 1
