@@ -134,3 +134,6 @@ def inst_symbol(i):
 
 def guess_frame_size(analyzer, ad):
     return -1
+
+def search_jmptable_addr(analyzer, jump_i, inner_code):
+    return None

@@ -195,3 +195,7 @@ def guess_frame_size(analyzer, ad):
                 return - analyzer.arch_analyzer.get_sp(regsctx)
 
         ad += i.size
+
+
+def search_jmptable_addr(analyzer, jump_i, inner_code):
+    return None
