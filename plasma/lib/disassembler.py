@@ -423,10 +423,41 @@ class Disassembler():
                     o.set_line(ad)
                     sz = self.mem.get_size(ad)
                     buf = self.binary.get_string(ad, sz)
+
                     if buf is not None:
                         if ctx.gctx.print_bytes:
                             o._bytes(s.read(ad, sz))
-                        o._string('"' + buf + '"')
+
+                        # Split the string into multi lines
+
+                        splitted = buf.split("\n")
+
+                        j = 0
+                        for i, st in enumerate(splitted):
+                            if i > 0 and len(st) != 0:
+                                o._new_line()
+                                o.set_line(ad + j)
+                                o._address(ad + j)
+
+                            ibs = 0
+                            bs = 65
+                            while ibs < len(st):
+                                if ibs > 0:
+                                    o._new_line()
+                                    o.set_line(ad + j)
+                                    o._address(ad + j)
+
+                                blk = st[ibs:ibs + bs]
+
+                                if i < len(splitted) - 1 and ibs + bs >= len(st):
+                                    o._string('"' + blk + '\\n"')
+                                    j += len(blk) + 1
+                                else:
+                                    o._string('"' + blk + '"')
+                                    j += len(blk)
+
+                                ibs += bs
+
                     o._add(", 0")
                     o._new_line()
                     ad += sz

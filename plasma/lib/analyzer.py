@@ -449,7 +449,7 @@ class Analyzer(threading.Thread):
             val = s_orig.read_int(ad, self.dis.wordsize)
             if val is None:
                 return False
-            
+
             if not self.dis.binary.is_address(val):
                 break
 

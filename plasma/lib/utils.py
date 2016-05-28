@@ -65,7 +65,6 @@ for c in ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLM"
 
 PRINTABLE[0] = r'\0'
 PRINTABLE[9] = r'\t'
-PRINTABLE[10] = r'\n'
 PRINTABLE[13] = r'\r'
 
 get_char = PRINTABLE.__getitem__

@@ -507,6 +507,7 @@ class OutputAbs():
             if not force_dont_print_data and print_data:
                 s = self._binary.get_string(imm, self.gctx.max_data_size)
                 if s is not None:
+                    s = s.replace("\n", "\\n")
                     self._add(" ")
                     self._string('"' + s + '"')
 
@@ -516,7 +517,10 @@ class OutputAbs():
             return
 
         if op_size == 1:
-            self._string("'%s'" % get_char(imm))
+            if imm == 10:
+                self._string("'\\n'")
+            else:
+                self._string("'%s'" % get_char(imm))
         elif hexa:
             self._add(hex(imm))
         else:
