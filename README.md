@@ -27,6 +27,7 @@ database compatibility could be broken.
 * [python-msgpack](https://github.com/msgpack/msgpack-python) >= 0.4.6
 * `c++filt` (available in the binutils Linux package)
 * terminal with 256 colors (if not, use the option `--nocolor`)
+* optional : `python-qt4` used for the memory map
 
 
 ## Installation
@@ -51,6 +52,10 @@ Check tests :
     $ plasma -i tests/server.bin
     >> v main
     # then press tab
+
+Qt memory map :
+
+![plasma](/images/qt_memory.png?raw=true)
 
 ![plasma](/images/screenshot.png?raw=true)
 

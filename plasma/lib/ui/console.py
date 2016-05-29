@@ -65,6 +65,7 @@ COMMANDS_ALPHA = [
     "history",
     "info",
     "jmptable",
+    "memmap",
     "mips_set_gp",
     "py",
     "push_analyze_symbols",
@@ -418,6 +419,16 @@ class Console():
                 [
                 "SYMBOL|0xXXXX|EP",
                 "Print cross references to the specified address."
+                ]
+            ),
+
+            "memmap": Command(
+                0,
+                self.__exec_memmap,
+                None,
+                [
+                "",
+                "Open a qt window to display the memory."
                 ]
             ),
         }
@@ -812,3 +823,9 @@ class Console():
             s = self.gctx.dis.binary.get_section(ad)
             percent = int((ad - s.start) * 100 / s.real_size)
             print("  -> %s %d%%  (0x%x)" % (s.name, percent, ad))
+
+
+    def __exec_memmap(self, args):
+        from plasma.lib.memmap import ThreadMemoryMap
+        t = ThreadMemoryMap(self.db, self.gctx.dis.binary)
+        t.start()
