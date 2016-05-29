@@ -57,6 +57,8 @@ class Api():
         # TODO : check if instructions contains an address with xrefs
         if ad in self.__db.functions:
             # TODO : undefine all instructions of the function
+            # see also in also in lib.disassembler.dump_xrefs and
+            # lib.ui.visual.redraw
             func_obj = self.__db.functions[ad]
             del self.__db.functions[ad]
             if func_obj is not None:

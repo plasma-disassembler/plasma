@@ -28,7 +28,7 @@ from plasma.lib.consts import *
 
 
 class Visual(Window):
-    def __init__(self, gctx, ctx, analyzer, api):
+    def __init__(self, gctx, ctx, analyzer, api, stack, saved_stack):
         Window.__init__(self, ctx.output, has_statusbar=True)
 
         self.ctx = ctx
@@ -45,8 +45,8 @@ class Visual(Window):
 
         self.last_cursor_ad = None
 
-        self.stack = []
-        self.saved_stack = [] # when we enter, go back, then re-enter
+        self.stack = stack
+        self.saved_stack = saved_stack # when we enter, go back, then re-enter
 
         new_mapping = {
             b"z": self.main_cmd_line_middle,
@@ -54,8 +54,6 @@ class Visual(Window):
             b"G": self.main_k_bottom,
             b";": self.view_inline_comment_editor,
             b"%": self.main_cmd_next_bracket,
-            b"\n": self.main_cmd_enter,
-            b"\x1b": self.main_cmd_escape,
             b"\t": self.main_cmd_switch_mode,
             b"{": self.main_k_prev_paragraph,
             b"}": self.main_k_next_paragraph,
@@ -78,6 +76,8 @@ class Visual(Window):
             b"o": self.main_cmd_set_offset,
             b"*": self.main_cmd_set_array,
 
+            b"\n": self.main_cmd_enter,
+            b"\x1b": self.main_cmd_escape,
             # I wanted ctrl-enter but it cannot be mapped on my terminal
             b"u": self.main_cmd_reenter, # u for undo
         }
@@ -91,7 +91,6 @@ class Visual(Window):
 
         (h, w) = self.screen.getmaxyx()
         h -= 1 # status bar
-        self.goto_address(self.first_addr, h, w)
 
         curses.noecho()
         curses.cbreak()
@@ -118,6 +117,10 @@ class Visual(Window):
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, 7, -1) # white
 
+        self.win_y = self.dump_update_up(h, self.win_y)
+        self.goto_address(ctx.entry, h, w)
+        self.main_cmd_line_middle(h, w)
+
         try:
             curses.wrapper(self.start_view)
         except:
@@ -133,9 +136,6 @@ class Visual(Window):
         curses.endwin()
 
         self.gctx.quiet = saved_quiet
-
-        if self.stack:
-            print(hex(self.ctx.entry))
 
 
     def exec_disasm(self, addr, h, dump_until=-1):
@@ -182,11 +182,16 @@ class Visual(Window):
             s = self.dis.binary.get_section(ad)
             self.screen.addstr(h, 0, s.name, curses.A_BOLD)
 
-            fid = self.db.mem.get_func_id(ad)
-            if fid != -1:
-                func_ad = self.db.func_id[fid]
-                name = self.api.get_symbol(func_ad)
-                self.screen.addstr(h, w - len(name) - 1, name)
+            if self.db.mem.is_code(ad):
+                fid = self.db.mem.get_func_id(ad)
+                # TODO: we need to undefine completely a function if we
+                # modify an instruction into bytes or something else.
+                # -> remove fid in all instructions
+                # see also in also in lib.disassembler.dump_xrefs
+                if fid != -1 and fid in self.db.func_id:
+                    func_ad = self.db.func_id[fid]
+                    name = self.api.get_symbol(func_ad)
+                    self.screen.addstr(h, w - len(name) - 1, name)
 
         Window.redraw(self, h, w)
 
@@ -441,14 +446,29 @@ class Visual(Window):
         return True
 
 
-    def dump_update_up(self, wy, h):
+    def dump_update_up(self, h, wy):
         if self.mode != MODE_DUMP or wy > 10:
             return wy
 
         if self.first_addr == self.dis.binary.get_first_addr():
             return wy
 
-        ad = self.dis.find_addr_before(self.first_addr)
+        # Get an address 256 bytes before, we can't guess the number of lines
+        # we wan't to disassemble.
+        ad = self.first_addr
+        s = self.dis.binary.get_section(ad)
+        rest = 256
+        while rest:
+            ad -= rest
+            if ad >= s.start:
+                break
+            rest = s.start - ad
+            start = s.start
+            s = self.dis.binary.get_prev_section(start)
+            if s is None:
+                ad = start
+                break
+            ad = s.end + 1
 
         self.ctx = self.gctx.get_addr_context(ad)
         o = self.ctx.dump_asm(until=self.first_addr)
@@ -493,7 +513,7 @@ class Visual(Window):
         return wy
 
 
-    def dump_update_bottom(self, wy, h):
+    def dump_update_bottom(self, h, wy):
         if self.mode != MODE_DUMP or wy < len(self.token_lines) - h - 10:
             return
 
@@ -578,7 +598,7 @@ class Visual(Window):
 
             if self.last_addr != bottom:
                 self.exec_disasm(bottom, h)
-                self.dump_update_up(self.win_y, h)
+                self.dump_update_up(h, self.win_y)
                 self.win_y = 0
                 self.cursor_y = 0
 
@@ -1029,6 +1049,8 @@ class Visual(Window):
             self.win_y = 0
             self.saved_stack.clear()
             self.stack.append(topush)
+            self.win_y = self.dump_update_up(h, self.win_y)
+            self.main_cmd_line_middle(h, w)
             self.goto_address(ad, h, w)
         return ret
 

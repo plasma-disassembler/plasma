@@ -71,9 +71,10 @@ NORETURN_PE = {
 }
 
 
-# This is the number of lines to disassemble (without comments and newline:
-# it counts only lines which start with an address)
-NB_LINES_TO_DISASM = 256
+# This is the number of lines to disassemble (without comments and newlines:
+# it counts only lines which start with an address). Note: an array or a string
+# on multi-lines is counted for 1.
+NB_LINES_TO_DISASM = 150
 
 # Save disassembled instructions in a cache
 CAPSTONE_CACHE_SIZE = 60000

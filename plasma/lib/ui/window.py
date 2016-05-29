@@ -231,7 +231,6 @@ class Window():
 
     def redraw(self, h, w):
         i = 0
-
         while i < h:
             if self.win_y + i < len(self.token_lines):
                 self.print_line(w, i)
@@ -246,7 +245,6 @@ class Window():
 
     def start_view(self, screen):
         self.screen = screen
-        screen.clear()
         screen.keypad(False)
         refr = True
 
@@ -280,8 +278,10 @@ class Window():
                 break
 
             if self.should_stop:
+                screen.erase()
                 return True
 
+        screen.erase()
         return False
 
 
@@ -338,7 +338,7 @@ class Window():
             y = self.cursor_y + n
             line = self.win_y + self.cursor_y
 
-            wy = self.dump_update_up(wy, h)
+            wy = self.dump_update_up(h, wy)
 
             if wy >= 0:
                 self.win_y = wy
@@ -352,7 +352,7 @@ class Window():
         else:
             # TODO: find another way
             for i in range(n):
-                self.dump_update_up(self.win_y, h)
+                self.dump_update_up(h, self.win_y)
 
                 if self.win_y == 0:
                     if self.cursor_y == 0:
@@ -370,7 +370,7 @@ class Window():
             wy = self.win_y + n
             y = self.cursor_y - n
 
-            self.dump_update_bottom(wy, h)
+            self.dump_update_bottom(h, wy)
 
             if wy > len(self.token_lines) - h:
                 if wy < len(self.token_lines) - 3:
@@ -390,7 +390,7 @@ class Window():
         else:
             # TODO: find another way
             for i in range(n):
-                self.dump_update_bottom(self.win_y, h)
+                self.dump_update_bottom(h, self.win_y)
 
                 if self.win_y >= len(self.token_lines) - h:
                     if self.win_y + self.cursor_y == len(self.token_lines) - 1:
@@ -403,11 +403,11 @@ class Window():
                         self.cursor_y += 1
 
 
-    def dump_update_up(self, wy, h):
+    def dump_update_up(self, h, wy):
         return wy
 
 
-    def dump_update_bottom(self, wy, h):
+    def dump_update_bottom(self, h, wy):
         return
 
 

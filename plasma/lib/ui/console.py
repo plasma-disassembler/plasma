@@ -184,6 +184,11 @@ class Console():
         self.db = gctx.db
         gctx.vim = False
 
+        # After exiting the visual mode we copy last addresses we have visited.
+        # Then we can just enter 'v' and we go where we were.
+        self.last_entry = None
+        self.last_stack = []
+        self.last_saved_stack = []
 
         self.COMMANDS = {
             "analyzer": Command(
@@ -254,7 +259,9 @@ class Console():
                 self.__complete_x,
                 [
                 "[SYMBOL|0xXXXX|EP]",
-                "Visual mode",
+                "Visual mode: if no address or symbol is given, you go at the",
+                "previous address before exiting the visual mode.",
+                "",
                 "Note: there is no undefine function for the moment. You can instead",
                 "create bytes but there is no garranty that it works correctly.",
                 "",
@@ -284,7 +291,7 @@ class Console():
                 "tab     switch between dump/decompilation",
                 "enter   follow address",
                 "escape  go back",
-                "u       re-enter (for undo)",
+                "u       re-enter",
                 ]
             ),
 
@@ -675,12 +682,18 @@ class Console():
 
 
     def __exec_v(self, args):
-        ad = None if len(args) == 1 else args[1]
+        if len(args) != 1:
+            ad = args[1]
+        else:
+            ad = self.last_entry
         ctx = self.gctx.get_addr_context(ad)
         if ctx:
             o = ctx.dump_asm(NB_LINES_TO_DISASM)
             if o is not None:
-                Visual(self.gctx, ctx, self.analyzer, self.api)
+                v = Visual(self.gctx, ctx, self.analyzer, self.api,
+                       self.last_stack, self.last_saved_stack)
+                if v.last_cursor_ad is not None:
+                    self.last_entry = v.last_cursor_ad
 
 
     def __exec_help(self, args):

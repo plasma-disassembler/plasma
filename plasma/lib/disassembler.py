@@ -244,8 +244,12 @@ class Disassembler():
             if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
                    and (ty == MEM_FUNC or ty == MEM_CODE):
 
+                # TODO: we need to undefine completely a function if we
+                # modify an instruction into bytes or something else.
+                # -> remove fid in all instructions
+                # see also in also in lib.ui.visual.redraw
                 func_id = self.mem.get_func_id(x)
-                if func_id != -1:
+                if func_id != -1 and func_id in self.func_id:
                     fad = self.func_id[func_id]
                     o._label(fad)
                     diff = x - fad
@@ -544,28 +548,6 @@ class Disassembler():
         o.join_lines()
 
         return o
-
-
-    def find_addr_before(self, ad):
-        l = 0
-        s = self.binary.get_section(ad)
-
-        while l < NB_LINES_TO_DISASM:
-            if self.mem.is_code(ad):
-                size = self.mem.mm[ad][0]
-                l += 1
-                l -= size
-            else:
-                l += 1
-
-            if ad == s.start:
-                s = self.binary.get_prev_section(ad)
-                if s is None:
-                    return ad
-                ad = s.end
-            ad -= 1
-
-        return ad
 
 
     def hexdump(self, ctx, lines):
