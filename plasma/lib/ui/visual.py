@@ -785,7 +785,7 @@ class Visual(Window):
             self.mode = MODE_DECOMPILE
 
         else:
-            ad_disasm = self.ctx.entry
+            ad_disasm = ad
             self.mode = MODE_DUMP
 
         ret = self.exec_disasm(ad_disasm, h)
@@ -794,7 +794,9 @@ class Visual(Window):
             self.cursor_x = 0
             self.win_y = 0
             self.cursor_y = 0
+            self.win_y = self.dump_update_up(h, self.win_y)
             self.goto_address(ad, h, w)
+            self.main_cmd_line_middle(h, w)
 
         return ret
 
