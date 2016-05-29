@@ -218,7 +218,6 @@ class Analyzer(threading.Thread):
         mem = self.db.mem
         wait = Queue()
 
-
         for s in b.iter_sections():
             if s.is_exec or s.is_bss:
                 continue
@@ -329,7 +328,6 @@ class Analyzer(threading.Thread):
             if ad not in self.db.imports:
                 sz = self.dis.binary.is_string(ad)
                 if sz != 0:
-                    ty = MEM_ASCII
                     self.db.mem.add(ad, sz, MEM_ASCII)
                     return
 

@@ -991,8 +991,9 @@ class Visual(Window):
             self.status_bar_message("unknown symbol", h, True)
             return False
 
-        if not ctx or (ctx.entry not in self.db.xrefs and \
-                ctx.entry not in self.db.mem.data_sub_xrefs):
+        if not ctx or (ctx.entry not in self.db.xrefs and
+                (ctx.entry not in self.db.mem.data_sub_xrefs or
+                not self.db.mem.data_sub_xrefs[ctx.entry])):
             self.status_bar_message("no xrefs", h, True)
             return False
 

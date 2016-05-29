@@ -123,7 +123,7 @@ class Api():
         returns True if ok
         """
         self.__undefine(ad, 1)
-        if ad in self.__db.xrefs or ad in self.__db.data_sub_xrefs:
+        if ad in self.__db.xrefs:
             self.mem.add(ad, 1, MEM_BYTE)
         else:
             # not useful to store it in the database
