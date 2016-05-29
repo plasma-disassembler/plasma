@@ -63,14 +63,14 @@ class MemoryMap(QtGui.QWidget):
     def update_sections_coords(self):
         total = 0
         for s in self.binary.iter_sections():
-            total += s.real_size
+            total += s.virt_size
 
         # width = self.width()
         width = 1000
         self.section_coords = {} # ad -> [coord_x, size_in_window]
         x = 0
         for s in self.binary.iter_sections():
-            sz = int((s.real_size * width) / total)
+            sz = int((s.virt_size * width) / total)
             self.section_coords[s.start] = [x, sz]
             x += sz
 
@@ -78,8 +78,8 @@ class MemoryMap(QtGui.QWidget):
     def conv_ad_to_x(self, ad, nbytes):
         s = self.binary.get_section(ad)
         co = self.section_coords[s.start]
-        x = (ad - s.start) * co[1] / s.real_size + co[0]
-        sz = int(nbytes * co[1] / s.real_size)
+        x = (ad - s.start) * co[1] / s.virt_size + co[0]
+        sz = int(nbytes * co[1] / s.virt_size)
         if sz == 0:
             sz = 1
         return (x, sz)
