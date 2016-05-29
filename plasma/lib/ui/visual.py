@@ -991,9 +991,8 @@ class Visual(Window):
             self.status_bar_message("unknown symbol", h, True)
             return False
 
-        is_array = self.db.mem.is_array(ctx.entry)
-        if not ctx or (not is_array and ctx.entry not in self.db.xrefs) or \
-                (is_array and ctx.entry not in self.db.mem.data_sub_xrefs):
+        if not ctx or (ctx.entry not in self.db.xrefs and \
+                ctx.entry not in self.db.mem.data_sub_xrefs):
             self.status_bar_message("no xrefs", h, True)
             return False
 

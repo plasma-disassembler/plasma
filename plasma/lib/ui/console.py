@@ -785,7 +785,7 @@ class Console():
     def __exec_xrefs(self, args):
         ad = None if len(args) == 1 else args[1]
         ctx = self.gctx.get_addr_context(ad)
-        if ctx and ctx.entry in self.gctx.dis.xrefs:
+        if ctx and ctx.entry in self.gctx.db.xrefs or self.gctx.db.data_sub_xrefs:
             ctx.dump_xrefs().print()
 
 
