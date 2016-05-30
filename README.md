@@ -7,7 +7,7 @@ The old project name was **Reverse**.
 assembly (pseudo code) with colored syntax. You can write scripts with the
 available Python api (see an example below). The project is still in big development.
 
-[wiki](https://github.com/joelpx/plasma/wiki) : TODO list and some documentaton.
+[wiki](https://github.com/joelpx/plasma/wiki) : TODO list and some documentation.
 
 It supports :
 * architectures : x86, ARM, MIPS{64} (partially for ARM and MIPS)
@@ -53,13 +53,15 @@ Check tests :
     >> v main
     # then press tab
 
-Qt memory map :
-
-![plasma](/images/qt_memory.png?raw=true)
-
 ![plasma](/images/screenshot.png?raw=true)
 
 ![plasma](/images/visual.png?raw=true)
+
+## Qt memory map (memmap)
+
+This image is the result of the libc :
+
+![plasma](/images/qt_memory.png?raw=true)
 
 
 ## Python API example test
