@@ -24,7 +24,7 @@ RUN ln /usr/bin/python3.4 /usr/local/bin/python && \
 ADD . /plasma
 
 RUN pip3 install future
-RUN /plasma/requirements.sh
+RUN /plasma/install.sh
 
 WORKDIR /plasma
 CMD python3 /plasma/plasma.py -i
