@@ -1,8 +1,7 @@
-# Usage: docker run -h plasma -t -i plasma:latest
-# >> load tests/nestedloop1.bin
-# >> x
+# docker build -t plasma:latest .
+# docker run --rm -ti plasma:latest
 
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 MAINTAINER netantho@gmail.com
 
 ENV LC_ALL C
@@ -16,16 +15,15 @@ RUN apt-get -y install --no-install-recommends python3-pip \
     git \
     make \
     gcc \
-    build-essential
+    build-essential \
+    sudo \
+    python3-setuptools \
+    python3-wheel
 
-RUN ln /usr/bin/python3.4 /usr/local/bin/python && \
+RUN ln /usr/bin/python3.5 /usr/local/bin/python && \
     ln /usr/bin/pip3 /usr/local/bin/pip
 
 ADD . /plasma
-
-RUN pip3 install future
-RUN /plasma/install.sh
+RUN cd /plasma && /plasma/install.sh
 
 WORKDIR /plasma
-CMD python3 /plasma/plasma.py -i
-

@@ -44,7 +44,16 @@ if [ "$1" != "--update" ]; then
     sudo -H ./make.sh install
     popd
 
-    sudo -H pip3 install -r requirements.txt
+    # Waiting that the package pip pefile contains any errors
+    # https://github.com/erocarrera/pefile/issues/105
+    cat requirements.txt | grep -v pefile >req
+    sudo -H pip3 install -r req 
+    rm req
+    sudo -H pip3 install future
+    git clone -b fix-issue-105 --depth 1 https://github.com/AndCycle/pefile
+    cd pefile
+    python3 setup.py install
+    cd ..
 fi
 
 python3 setup.py build_ext --inplace
