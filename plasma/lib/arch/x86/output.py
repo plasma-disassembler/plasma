@@ -70,8 +70,6 @@ REP_PREFIX = {X86_PREFIX_REPNE, X86_PREFIX_REP}
 
 
 class Output(OutputAbs):
-    # Return True if the operand is a variable (because the output is
-    # modified, we reprint the original instruction later)
     def _operand(self, i, num_op, hexa=False, show_deref=True,
                  force_dont_print_data=False):
         def inv(n):

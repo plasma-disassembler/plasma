@@ -17,6 +17,9 @@
  */
 
 
+// TODO MIPS64: warning to all casts to int
+
+
 typedef char bool;
 #define true 1
 #define false 0
@@ -475,12 +478,12 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     bool is_stack[3] = {false, false, false};
     bool err[3];
 
-    // The first operand is always a register and always the destination
+    // The first operand is always a register and always the destination (except st* ?)
     int r1 = get_op_reg(ops[0]);
     err[0] = !is_reg_supported(r1);
 
+    // Start to the second op !
     for (i = 1 ; i < len_ops ; i++) {
-
         err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i]);
 
         if (err[i] || only_simulate)

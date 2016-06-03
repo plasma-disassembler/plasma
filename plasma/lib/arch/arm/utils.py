@@ -24,7 +24,7 @@ from capstone.arm import (ARM_CC_EQ, ARM_CC_NE, ARM_CC_HS, ARM_CC_LO,
         ARM_INS_EOR, ARM_INS_ADD, ARM_INS_ORR, ARM_INS_AND, ARM_INS_MOV,
         ARM_INS_CMP, ARM_INS_SUB, ARM_INS_LDR, ARM_INS_B, ARM_INS_BLX,
         ARM_INS_BL, ARM_INS_BX, ARM_REG_LR, ARM_OP_REG, ARM_REG_PC, ARM_INS_POP,
-        ARM_OP_IMM, ARM_OP_MEM)
+        ARM_OP_IMM, ARM_OP_MEM, ARM_REG_SP)
 
 
 JUMPS = {ARM_INS_B, ARM_INS_BX}
@@ -133,6 +133,25 @@ def inst_symbol(i):
 
 
 def guess_frame_size(analyzer, ad):
+    regsctx = analyzer.arch_analyzer.new_regs_context()
+    if regsctx is None:
+        return -1
+
+    while 1:
+        i = analyzer.disasm(ad)
+        if i is None or is_ret(i) or is_call(i) or is_jump(i):
+            return 0
+
+        # Do only registers simulation
+        analyzer.arch_analyzer.analyze_operands(analyzer, regsctx, i, None, True)
+
+        if i.id == ARM_INS_SUB:
+            op = i.operands[0]
+            if op.type == ARM_OP_REG and op.value.reg == ARM_REG_SP:
+                return - analyzer.arch_analyzer.get_sp(regsctx)
+
+        ad += i.size
+
     return -1
 
 def search_jmptable_addr(analyzer, jump_i, inner_code):

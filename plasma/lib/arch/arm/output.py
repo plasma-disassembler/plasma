@@ -94,8 +94,6 @@ class Output(OutputAbs):
             self._add(" rrx>> %s)" % i.reg_name(shift.value))
 
 
-    # Return True if the operand is a variable (because the output is
-    # modified, we reprint the original instruction later)
     def _operand(self, i, num_op, hexa=False, show_deref=True,
                  force_dont_print_data=False):
         def inv(n):
@@ -141,6 +139,13 @@ class Output(OutputAbs):
                     return
 
             printed = False
+
+            ret = self.get_var_offset(i, num_op)
+            if ret is not None:
+                func_addr, off = ret
+                self._variable(self.get_var_name(func_addr, off))
+                return
+
             if show_deref:
                 self._add("*(")
 
@@ -210,7 +215,7 @@ class Output(OutputAbs):
             self._add(" ")
             self._operand(fused_inst, 1)
             self._add(") ")
-            self._add(cond_symbol(jump_cond))
+            self._add(cond_symbol(cond))
         else:
             self._add(cond_symbol(cond))
             self._add(" ")

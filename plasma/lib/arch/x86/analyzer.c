@@ -754,7 +754,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         }
     }
 
-    // Save operands values and search stack variables
+    // Save operand values and search stack variables
 
     for (i = 0 ; i < len_ops ; i++) {
         err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i]);

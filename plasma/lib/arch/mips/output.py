@@ -67,8 +67,6 @@ INST_CHECK = {MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
 
 
 class Output(OutputAbs):
-    # Return True if the operand is a variable (because the output is
-    # modified, we reprint the original instruction later)
     def _operand(self, i, num_op, hexa=False, show_deref=True,
                  force_dont_print_data=False):
         def inv(n):
