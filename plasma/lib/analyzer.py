@@ -242,9 +242,11 @@ class Analyzer(threading.Thread):
                         self.db.mem.add(ad, self.dis.wordsize, self.OFFSET_TYPE)
                         ad += self.dis.wordsize
 
-                        if not self.db.mem.exists(val):
+                        # is_inside_mem is sufficient but exists is faster
+                        # and should be check first.
+                        if not self.db.mem.exists(val) and \
+                                not self.db.mem.is_inside_mem(val):
                             self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
-
                             # Do an analysis on this value.
                             if self.first_inst_are_code(val):
                                 self.analyze_flow(
@@ -252,12 +254,17 @@ class Analyzer(threading.Thread):
                                         entry_is_func=self.has_prolog(val),
                                         force=False,
                                         add_if_code=True)
+
                         continue
 
                 # Detect if it's a string
                 n = b.is_string(ad, s=s)
                 if n != 0:
-                    if ad not in self.db.imports:
+                    # is_inside_mem is sufficient but exists is faster
+                    # and should be check first.
+                    if ad not in self.db.imports and \
+                            not self.db.mem.exists(ad) and \
+                            not self.db.mem.is_inside_mem(ad):
                         self.db.mem.add(ad, n, MEM_ASCII)
                     ad += n
                     continue
@@ -311,7 +318,9 @@ class Analyzer(threading.Thread):
         self.api.add_xref(i.address, imm)
         ad = imm
 
-        if self.db.mem.exists(ad):
+        # is_inside_mem is sufficient but exists is faster
+        # and should be check first.
+        if self.db.mem.exists(ad) or self.db.mem.is_inside_mem(ad):
             return
 
         if not s.is_bss:

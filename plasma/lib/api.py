@@ -204,9 +204,11 @@ class Api():
         if s is None:
             return False
 
-        self.add_xref(ad, off)
-        if not self.mem.exists(off):
+        head = self.mem.get_head_addr(off)
+        if not self.mem.exists(head):
             self.mem.add(off, 1, MEM_UNK)
+
+        self.add_xref(ad, off)
 
         self.__undefine(ad, sz)
 
