@@ -19,9 +19,6 @@ RUN apt-get update --fix-missing && apt-get -y install --no-install-recommends \
     python3-setuptools \
     python3-wheel
 
-RUN ln /usr/bin/python3.5 /usr/local/bin/python && \
-    ln /usr/bin/pip3 /usr/local/bin/pip
-
 ADD . /plasma
 RUN cd /plasma && /plasma/install.sh
 
