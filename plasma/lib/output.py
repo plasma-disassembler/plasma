@@ -482,6 +482,10 @@ class OutputAbs():
             ty = self._dis.mem.get_type(imm)
             # ty == -1 : from the terminal (with -x) there are no xrefs if
             # the file was loaded without a database.
+            if ty == MEM_HEAD and self._dis.mem.get_type(
+                    self._dis.mem.get_head_addr(imm)) == MEM_ASCII:
+                ty = MEM_ASCII
+
             if imm in self._dis.xrefs and ty != MEM_UNK and \
                     ty != MEM_ASCII or ty == -1:
                 return

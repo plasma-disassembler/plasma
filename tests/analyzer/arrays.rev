@@ -181,7 +181,7 @@ int        var_c     = -0xc
 0x400554: var_10 = eax
 0x400557: eax = *(&global_array[9])
 0x40055d: var_14 = eax
-0x400560: eax = (zero ext) *(&global_string[7])
+0x400560: eax = (zero ext) *(&global_string[7] " a string.\n")
 0x400567: var_15 = al
 0x40056a: rax = *(&global_ptr[0])
 0x400571: var_20 = rax
@@ -192,7 +192,7 @@ int        var_c     = -0xc
 0x400587: call printf
 0x40058c: edi = global_string "this is a string.\n"
 0x400591: call puts
-0x400596: eax = &global_string[3]
+0x400596: eax = &global_string[3] "s is a string.\n"
 0x40059b: rdi = rax
 0x40059e: call puts
 0x4005a3: eax = 0
@@ -332,5 +332,5 @@ global_string:
 0x600a0e: .db 00
 0x600a0f: .db 00
 global_ptr: ; [3]
-0x600a10: .dq &global_array[0], global_string "this is a string.\n", &global_string[4]
+0x600a10: .dq &global_array[0], global_string "this is a string.\n", &global_string[4] " is a string.\n"
 
