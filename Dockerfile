@@ -21,3 +21,4 @@ ADD . /plasma
 RUN cd /plasma && /plasma/install.sh
 
 WORKDIR /plasma
+ENTRYPOINT ["/plasma/run_plasma.py"]
