@@ -11,13 +11,11 @@ ENV TERM xterm-256color
 RUN apt-get update --fix-missing && apt-get -y install --no-install-recommends \
     python3-pip \
     python3-dev \
-    git \
-    make \
-    gcc \
-    build-essential \
-    sudo \
     python3-setuptools \
-    python3-wheel
+    python3-wheel \
+    git \
+    build-essential \
+    sudo
 
 ADD . /plasma
 RUN cd /plasma && /plasma/install.sh
