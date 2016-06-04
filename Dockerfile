@@ -8,9 +8,8 @@ ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm-256color
 
-RUN apt-get update --fix-missing
-
-RUN apt-get -y install --no-install-recommends python3-pip \
+RUN apt-get update --fix-missing && apt-get -y install --no-install-recommends \
+    python3-pip \
     python3-dev \
     git \
     make \
