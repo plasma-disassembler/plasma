@@ -277,5 +277,5 @@ class Memory():
         return ad
 
 
-    def is_inside_mem(self, ad):
+    def is_overlapping(self, ad):
         return ad != self.get_head_addr(ad)

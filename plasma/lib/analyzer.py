@@ -242,10 +242,10 @@ class Analyzer(threading.Thread):
                         self.db.mem.add(ad, self.dis.wordsize, self.OFFSET_TYPE)
                         ad += self.dis.wordsize
 
-                        # is_inside_mem is sufficient but exists is faster
+                        # is_overlapping is sufficient but exists is faster
                         # and should be check first.
                         if not self.db.mem.exists(val) and \
-                                not self.db.mem.is_inside_mem(val):
+                                not self.db.mem.is_overlapping(val):
                             self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
                             # Do an analysis on this value.
                             if self.first_inst_are_code(val):
@@ -260,11 +260,11 @@ class Analyzer(threading.Thread):
                 # Detect if it's a string
                 n = b.is_string(ad, s=s)
                 if n != 0:
-                    # is_inside_mem is sufficient but exists is faster
+                    # is_overlapping is sufficient but exists is faster
                     # and should be check first.
                     if ad not in self.db.imports and \
                             not self.db.mem.exists(ad) and \
-                            not self.db.mem.is_inside_mem(ad):
+                            not self.db.mem.is_overlapping(ad):
                         self.db.mem.add(ad, n, MEM_ASCII)
                     ad += n
                     continue
@@ -318,9 +318,9 @@ class Analyzer(threading.Thread):
         self.api.add_xref(i.address, imm)
         ad = imm
 
-        # is_inside_mem is sufficient but exists is faster
+        # is_overlapping is sufficient but exists is faster
         # and should be check first.
-        if self.db.mem.exists(ad) or self.db.mem.is_inside_mem(ad):
+        if self.db.mem.exists(ad) or self.db.mem.is_overlapping(ad):
             return
 
         if not s.is_bss:
@@ -518,7 +518,7 @@ class Analyzer(threading.Thread):
 
         mem = self.db.mem
 
-        if mem.is_inside_mem(entry):
+        if mem.is_overlapping(entry):
             return
 
         self.pending.add(entry)

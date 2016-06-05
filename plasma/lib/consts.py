@@ -36,9 +36,10 @@ MEM_ARRAY = 12
 
 # For big strings or data we put a MEM_HEAD every BLOCK_SIZE bytes and at
 # the end of the data. It allows to scroll up correctly in the visual mode.
+# BLOCK_SIZE should not be too big otherwise performance will decrease.
 MEM_HEAD = 50
-BLOCK_SIZE = 128 # should be a power of 2
-BLOCK_SIZE_MASK = 128-1
+BLOCK_SIZE = 64 # should be a power of 2
+BLOCK_SIZE_MASK = 64-1
 
 
 
