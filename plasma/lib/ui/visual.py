@@ -75,6 +75,7 @@ class Visual(Window):
             b"a": self.main_cmd_set_ascii,
             b"o": self.main_cmd_set_offset,
             b"*": self.main_cmd_set_array,
+            b"U": self.main_cmd_undefine,
 
             b"\n": self.main_cmd_enter,
             b"\x1b": self.main_cmd_escape,
@@ -184,11 +185,7 @@ class Visual(Window):
 
             if self.db.mem.is_code(ad):
                 fid = self.db.mem.get_func_id(ad)
-                # TODO: we need to undefine completely a function if we
-                # modify an instruction into bytes or something else.
-                # -> remove fid in all instructions
-                # see also in also in lib.disassembler.dump_xrefs
-                if fid != -1 and fid in self.db.func_id:
+                if fid != -1:
                     func_ad = self.db.func_id[fid]
                     name = self.api.get_symbol(func_ad)
                     self.screen.addstr(h, w - len(name) - 1, name)
@@ -831,6 +828,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_byte(ad):
+            self.status_bar_message("undefine first", h, True)
             return False
 
         self.reload_output(h)
@@ -845,6 +843,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_word(ad):
+            self.status_bar_message("undefine first", h, True)
             return False
 
         # TODO: add it for 16 bits
@@ -864,6 +863,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_dword(ad):
+            self.status_bar_message("undefine first", h, True)
             return False
 
         # TODO: check architecture first
@@ -881,6 +881,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_qword(ad):
+            self.status_bar_message("undefine first", h, True)
             return False
 
         # TODO: check architecture first
@@ -898,6 +899,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_ascii(ad):
+            self.status_bar_message("undefine first", h, True)
             return False
 
         self.reload_output(h)
@@ -915,6 +917,20 @@ class Visual(Window):
             self.status_bar_message("not an address", h, True)
             return False
 
+        self.reload_output(h)
+        self.db.modified = True
+        return True
+
+
+    def main_cmd_undefine(self, h, w):
+        if self.mode == MODE_DECOMPILE:
+            return False
+
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        self.api.undefine(ad)
         self.reload_output(h)
         self.db.modified = True
         return True

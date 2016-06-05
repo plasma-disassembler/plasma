@@ -28,16 +28,16 @@ MAX_NODES = 800
 class Graph:
     def __init__(self, dis, entry_point_addr):
         # Each node contains a block (list) of instructions.
-        self.nodes = {}
+        self.nodes = {} # ad -> [instruction, (prefetch)]
 
         # For each address block, we store a list of next blocks.
         # If there are 2 elements it means that the precedent instruction
         # was a conditional jump :
         # 1st : direct next instruction
         # 2nd : for conditional jump : address of the jump
-        self.link_out = {}
+        self.link_out = {} # ad -> [nxt1, nxt2]
         
-        self.link_in = {}
+        self.link_in = {} # ad -> [prev, ...]
 
         self.entry_point_addr = entry_point_addr
         self.dis = dis

@@ -244,12 +244,8 @@ class Disassembler():
             if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
                    and (ty == MEM_FUNC or ty == MEM_CODE):
 
-                # TODO: we need to undefine completely a function if we
-                # modify an instruction into bytes or something else.
-                # -> remove fid in all instructions
-                # see also in also in lib.ui.visual.redraw
                 func_id = self.mem.get_func_id(x)
-                if func_id != -1 and func_id in self.func_id:
+                if func_id != -1:
                     fad = self.func_id[func_id]
                     o._label(fad)
                     diff = x - fad

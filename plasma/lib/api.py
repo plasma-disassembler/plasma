@@ -49,21 +49,15 @@ class Api():
         return self.__binary.get_entry_point()
 
 
-    def __undefine(self, ad, min_end_range):
-        # TODO : better undefine !
-        # -> some undefine stuff is also done in the function rm_range
-        # called by self.mem.add.
+    # This function remove all xrefs for arrays and offsets.
+    # It's called only from set_* functions to create data
+    # For security, we must run explicitly the "undefine" function
+    # on code and function to create bytes or something else.
+    def __undefine(self, ad, force=False):
+        # TODO: remove comments
 
-        # TODO : check if instructions contains an address with xrefs
-        if ad in self.__db.functions:
-            # TODO : undefine all instructions of the function
-            # see also in also in lib.disassembler.dump_xrefs and
-            # lib.ui.visual.redraw
-            func_obj = self.__db.functions[ad]
-            del self.__db.functions[ad]
-            if func_obj is not None:
-                del self.__db.end_functions[func_obj[FUNC_END]]
-                del self.__db.func_id[func_obj[FUNC_ID]]
+        if not force and self.mem.is_code(ad):
+            return False
 
         # Remove xrefs if we erased offsets.
 
@@ -86,6 +80,46 @@ class Api():
             off = s.read_int(ad, entry_size)
             self.rm_xref(ad, off)
 
+        return True
+
+
+    def undefine(self, ad):
+        """
+        Undefine data/code/function.
+        returns True if ok
+        """
+        self.__undefine(ad, force=True)
+        entry = ad
+
+        # Clear all instructions
+        fid = self.mem.get_func_id(ad)
+        is_code = self.mem.is_code(ad)
+
+        if fid != -1:
+            entry = self.__db.func_id[fid]
+            func_obj = self.__db.functions[entry]
+            del self.__db.functions[entry]
+            if func_obj is not None:
+                del self.__db.end_functions[func_obj[FUNC_END]]
+                del self.__db.func_id[fid]
+
+        if entry in self.__db.xrefs:
+            self.mem.add(entry, 1, MEM_BYTE)
+        else:
+            # not useful to store it in the database
+            self.mem.rm_range(entry, max(self.mem.get_size(entry), 1))
+
+        if is_code:
+            # TODO: manage overlapping by calling mem.rm_range ?
+            gph, _ = self.__dis.get_graph(entry)
+            # TODO: check code xrefs before deleting it in the memory
+            del gph.nodes[entry]
+            for n in gph.nodes:
+                if n in self.mem.mm:
+                    del self.mem.mm[n]
+
+        return True
+
 
     def set_code(self, ad):
         """
@@ -93,7 +127,7 @@ class Api():
         TODO: check if nothing is erased before.
         returns True if ok
         """
-        if self.mem.is_code(ad):
+        if self.mem.is_overlapping(ad):
             return False
         self.__analyzer.msg.put((ad, False, False, False, self.__queue_wait))
         self.__queue_wait.get()
@@ -106,9 +140,8 @@ class Api():
         TODO: check if nothing is erased before.
         returns True if ok
         """
-        if self.mem.is_func(ad):
-            return False
-        if self.mem.get_func_id(ad) != -1:
+        if self.mem.is_func(ad) or self.mem.get_func_id(ad) != -1 or \
+                self.mem.is_overlapping(ad):
             return False
         self.__analyzer.msg.put((ad, True, True, False, self.__queue_wait))
         self.__queue_wait.get()
@@ -124,7 +157,8 @@ class Api():
         deleted from memory.
         returns True if ok
         """
-        self.__undefine(ad, 1)
+        if not self.__undefine(ad):
+            return False
         if ad in self.__db.xrefs:
             self.mem.add(ad, 1, MEM_BYTE)
         else:
@@ -138,7 +172,8 @@ class Api():
         Define a word at ad (2 bytes).
         returns True if ok
         """
-        self.__undefine(ad, 2)
+        if not self.__undefine(ad):
+            return False
         self.mem.add(ad, 2, MEM_WORD)
         return True
 
@@ -148,7 +183,8 @@ class Api():
         Define a double word at ad (4 bytes).
         returns True if ok
         """
-        self.__undefine(ad, 4)
+        if not self.__undefine(ad):
+            return False
         self.mem.add(ad, 4, MEM_DWORD)
         return True
 
@@ -158,7 +194,8 @@ class Api():
         Define a qword at ad (8 bytes).
         returns True if ok
         """
-        self.__undefine(ad, 8)
+        if not self.__undefine(ad):
+            return False
         self.mem.add(ad, 8, MEM_QWORD)
         return True
 
@@ -171,7 +208,8 @@ class Api():
         sz = self.__binary.is_string(ad, min_bytes=1)
         if not sz:
             return False
-        self.__undefine(ad, sz)
+        if not self.__undefine(ad):
+            return False
         self.mem.add(ad, sz, MEM_ASCII)
         return True
 
@@ -210,7 +248,8 @@ class Api():
 
         self.add_xref(ad, off)
 
-        self.__undefine(ad, sz)
+        if not self.__undefine(ad):
+            return False
 
         if ty == MEM_WORD:
             self.mem.add(ad, sz, MEM_WOFFSET)
@@ -258,8 +297,8 @@ class Api():
                 if not (MEM_WOFFSET <= ty <= MEM_QOFFSET):
                     self.set_offset(i, self.mem.get_type_from_size(entry_size), dont_analyze=dont_analyze)
                 i += entry_size
-        else:
-            self.__undefine(ad, sz)
+        elif not self.__undefine(ad):
+            return False
 
         self.mem.add(ad, sz, MEM_ARRAY, entry_type)
         return True
