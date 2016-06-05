@@ -279,7 +279,7 @@ class Api():
         returns True if ok.
         dont_analyze should be used internally ONLY.
         """
-        if entry_type < MEM_BYTE or entry_type > MEM_QOFFSET:
+        if entry_type < MEM_BYTE or entry_type > MEM_QOFFSET or nb_entries <= 0:
             return False
 
         entry_size = self.mem.get_size_from_type(entry_type)
