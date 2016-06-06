@@ -37,6 +37,9 @@ COLOR_DATA = QtGui.QColor(255, 255, 215)
 COLOR_SEP = QtGui.QColor(50, 50, 50)
 
 
+is_open = False
+
+
 class MemoryMap(QtGui.QWidget):
     def __init__(self, db, binary):
         QtGui.QWidget.__init__(self)
@@ -117,6 +120,11 @@ class ThreadMemoryMap(threading.Thread):
 
 
     def run(self):
+        global is_open
+        if is_open:
+            return
+        is_open = True
         app = QtGui.QApplication([])
         ex = MemoryMap(self.db, self.binary)
         app.exec_()
+        is_open = False
