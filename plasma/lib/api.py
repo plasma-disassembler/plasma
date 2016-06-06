@@ -71,14 +71,16 @@ class Api():
                 end = min(ad + total_size, s.end + 1)
                 while i < end:
                     off = s.read_int(i, entry_size)
-                    self.rm_xref(i, off)
+                    if off is not None and off in self.__db.xrefs:
+                        self.rm_xref(i, off)
                     i += entry_size
 
         elif self.mem.is_offset(ad):
             entry_size = self.mem.get_size(ad)
             s = self.__binary.get_section(ad)
             off = s.read_int(ad, entry_size)
-            self.rm_xref(ad, off)
+            if off is not None and off in self.__db.xrefs:
+                self.rm_xref(ad, off)
 
         return True
 
