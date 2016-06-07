@@ -1,0 +1,37 @@
+function main (.text) {
+
+    frame_size = 24
+    int        var_10    = -0x10
+    int        var_c     = -0xc
+
+    0x400536: push rbp
+    0x400537: rbp = rsp
+    0x40053a: rsp -= 16
+    # 0x40053e: cmp dword ptr [rbp - 4], 0
+    # 0x400542: jne 0x40057b
+    if (var_c == 0) {
+        # 0x400544: cmp dword ptr [rbp - 8], 0
+        # 0x400548: jne 0x40055e
+        if (var_10 == 0) {
+            0x40054a: edi = asc_400614 "exit"
+            0x40054f: call puts
+            0x400554: edi = 0
+            0x400559: call exit
+        }
+        0x40055e: var_c = 0
+        0x400565: jmp loop_0x400575
+        loop {
+            loop_0x400575:
+            # 0x400575: cmp dword ptr [rbp - 4], 9
+            # 0x400579: jle 0x400567
+            if (var_c > 9)  goto ret_0x40057b
+            0x400567: edi = asc_400619 "loop"
+            0x40056c: call puts
+            0x400571: var_c += 1
+        }
+    }
+    ret_0x40057b:
+    0x40057b: eax = 0
+    0x400580: leave
+    0x400581: ret
+}

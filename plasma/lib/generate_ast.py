@@ -302,6 +302,12 @@ def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
         # remaining dependencies and it was moved in stack.
         if len(stack) == 1 and not waiting:
             endp = stack[0][1]
+            # Check to be sure, see tests/analyzer/ifexit.c
+            v = True
+            for n in first_nxt:
+                v &= ctx.gph.path_exists(n, endp, l_start)
+            if not v:
+                return -1
             return endp
 
         if not stack:

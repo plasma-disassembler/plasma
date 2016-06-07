@@ -687,6 +687,15 @@ class Api():
         return ctx.dump_asm(lines=nb_lines, until=until)
 
 
+    def decompile(self, ad):
+        """
+        Returns an Output object. You can then call the function print.
+        until is an end address, if it's set nb_lines is ignored.
+        """
+        ctx = self.__gctx.get_addr_context(ad)
+        return ctx.decompile()
+
+
     def get_func_addr(self, ad):
         """
         Returns the function address where ad is. It returns None if
