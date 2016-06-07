@@ -1,0 +1,43 @@
+function main (.text) {
+    0x4004e6: push rbp
+    0x4004e7: rbp = rsp
+    0x4004ea: rsp -= 16
+    0x4004ee: jmp loop_0x400534
+    loop {
+        loop_0x400534:
+        # 0x400534: cmp dword ptr [rbp - 4], 0x1d
+        # 0x400538: jle 0x4004f0
+        if (*(rbp - 4) > 29)  goto ret_0x40053a
+        0x4004f0: eax = *(rbp - 4)
+        # 0x4004f3: cmp eax, dword ptr [rbp - 8]
+        # 0x4004f6: jne 0x400504
+        if (eax == *(rbp - 8)) {
+            0x4004f8: edi = 0x4005d4 "3"
+            0x4004fd: call puts
+            0x400502: jmp 0x40052a
+        } else {
+            0x400504: eax = *(rbp - 8)
+            # 0x400507: cmp eax, dword ptr [rbp - 0xc]
+            # 0x40050a: jne 0x400518
+            if (eax == *(rbp - 12)) {
+                0x40050c: edi = 0x4005d6 "4"
+                0x400511: call puts
+                0x400516: jmp 0x40052a
+            } else {
+                0x400518: eax = *(rbp - 4)
+                # 0x40051b: cmp eax, dword ptr [rbp - 0xc]
+                # 0x40051e: jne 0x40052a
+                if (eax == *(rbp - 12)) {
+                    0x400520: edi = 0x4005d8 "5"
+                    0x400525: call puts
+                }
+            }
+        }
+        0x40052a: edi = 0x4005da "6"
+        0x40052f: call puts
+    }
+    ret_0x40053a:
+    0x40053a: eax = 0
+    0x40053f: leave
+    0x400540: ret
+}

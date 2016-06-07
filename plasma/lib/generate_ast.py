@@ -219,14 +219,25 @@ def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
     return endp
 
 
+def __push_empty_waiting(stack, waiting, done):
+    for ad in list(waiting):
+        if len(waiting[ad]) > 0:
+            continue
+        del waiting[ad]
+        done.add(ad)
+        stack.append((-1, ad))
+
+
 def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
     waiting = {}
     visited = set()
     done = set()
-
     stack = []
+    first_nxt = []
+
     for n in ctx.gph.link_out[entry]:
         stack.append((entry, n))
+        first_nxt.append(n)
 
     while 1:
         while stack:
@@ -237,11 +248,11 @@ def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
             if l_prev_loop != -1 and ad not in l_set:
                 continue
 
-            # If "ad" is in last_loop_node we are sure that the path
+            # If "ad" is in last_node_loop we are sure that the path
             # will loop. So don't keep it if it's a subloop.
 
-            if ad in ctx.gph.last_loop_node and \
-                    (l_prev_loop, l_start) not in ctx.gph.last_loop_node[ad]:
+            if ad in ctx.gph.last_node_loop and \
+                    (l_prev_loop, l_start) not in ctx.gph.last_node_loop[ad]:
                 continue
 
             # If endpoint == loop : maybe the endpoint is at the end of the loop
@@ -273,44 +284,30 @@ def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
         if not waiting:
             return -1
 
-        if len(waiting) == 1:
-            ad = next(iter(waiting.keys()))
-            return ad
+        # Now the stack is empty, but there are still some waiting nodes.
 
-        stack = []
+        __push_empty_waiting(stack, waiting, done)
 
-        restart = True
-        while restart:
-            restart = False
+        # If the stack is still empty but if we have still some waiting
+        # nodes, search if paths are really possible. If not, delete
+        # a dependence.
+        if not stack and waiting:
+            for ad in set(waiting):
+                for i in set(waiting[ad]):
+                    if not ctx.gph.path_exists(entry, i, l_start):
+                        waiting[ad].remove(i)
+            __push_empty_waiting(stack, waiting, done)
 
-            for ad in list(waiting):
-                if len(waiting[ad]) > 0:
-                    continue
-
-                del waiting[ad]
-                done.add(ad)
-                stack.append((-1, ad))
-
-            # If the stack is still empty but if we have still some waiting
-            # nodes, search if paths are really possible. If not, delete
-            # a dependence.
-
-            if not stack and waiting:
-                for ad in set(waiting):
-                    for i in set(waiting[ad]):
-                        if not ctx.gph.path_exists(entry, i):
-                            waiting[ad].remove(i)
-                            if len(waiting[ad]) > 0:
-                                restart = True
-                            else:
-                                del waiting[ad]
-
-                if len(waiting) == 1:
-                    ad = next(iter(waiting.keys()))
-                    return ad
+        # It means that there was still one node in waiting without
+        # remaining dependencies and it was moved in stack.
+        if len(stack) == 1 and not waiting:
+            endp = stack[0][1]
+            return endp
 
         if not stack:
             return -1
+
+    # the while 1 continue...
 
 
 def get_unseen_links_in(ad, l_set, l_prev_loop, l_start):

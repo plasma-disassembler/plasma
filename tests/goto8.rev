@@ -1,0 +1,26 @@
+function main (.text) {
+    0x4004a6: push rbp
+    0x4004a7: rbp = rsp
+    loop {
+        loop_0x4004aa:
+        # 0x4004aa: cmp dword ptr [rbp - 4], 0
+        # 0x4004ae: jle 0x4004b8
+        if (*(rbp - 4) > 0) {
+            # 0x4004b0: cmp dword ptr [rbp - 4], 5
+            # 0x4004b4: jne 0x4004aa
+            if (*(rbp - 4) == 5)  goto 0x4004b6
+        } else {
+            # 0x4004b8: cmp dword ptr [rbp - 4], -5
+            # 0x4004bc: je 0x4004c0
+            if (*(rbp - 4) == -5)  goto 0x4004c0
+            0x4004be: jmp loop_0x4004aa
+        }
+    }
+    0x4004c0: nop
+    goto ret_0x4004c1
+    0x4004b6: jmp ret_0x4004c1
+    ret_0x4004c1:
+    0x4004c1: eax = 0
+    0x4004c6: pop rbp
+    0x4004c7: ret
+}

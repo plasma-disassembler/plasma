@@ -68,7 +68,7 @@ class Graph:
 
         # For each loop we search the last node that if we enter in it,
         # we are sure to return to the loop.
-        self.last_loop_node = {}
+        self.last_node_loop = {}
 
         self.all_deep_equiv = set()
 
@@ -218,31 +218,55 @@ class Graph:
         output.close()
 
 
-    def __search_last_loop_node(self, visited, l_prev_loop, l_start, l_set):
-        def __rec_search(ad):
-            for prev in self.link_in[ad]:
-                nxt = self.link_out[prev]
-                for n in nxt:
-                    if n not in l_set:
-                        if ad not in self.last_loop_node:
-                            self.last_loop_node[ad] = set()
-                        self.last_loop_node[ad].add((l_prev_loop, l_start))
-                        return
+    def __search_last_node_loop(self, l_prev_loop, l_start, l_set):
+        def __rec_branch_go_out(ad):
+            stack = [ad]
+            visited = set()
+            while stack:
+                ad = stack.pop(-1)
+                if ad not in l_set:
+                    return True
+                if ad == l_start or ad in visited:
+                    continue
+                visited.add(ad)
+                for n in self.link_out[ad]:
+                    stack.append(n)
+            return False
 
-            if ad in visited:
-                return
+        # Start from the end of the loop
 
+        stack = []
+        visited = {l_start}
+        for prev in self.link_in[l_start]:
+            if prev in l_set:
+                stack.append(prev)
+
+        res = []
+
+        while stack:
+            ad = stack.pop(-1)
+            if ad in visited or ad not in l_set:
+                continue
             visited.add(ad)
 
             for prev in self.link_in[ad]:
-                __rec_search(prev)
+                if prev == l_start:
+                    continue
 
-        # start from the end of the loop
-        ad = l_start
-        visited.add(ad)
-        for prev in self.link_in[l_start]:
-            if prev in l_set:
-                __rec_search(prev)
+                go_out = False
+
+                for n in self.link_out[prev]:
+                    if n not in l_set:
+                        res.append(ad)
+                        go_out = True
+
+                if not go_out:
+                    stack.append(prev)
+
+        for ad in res:
+            if ad not in self.last_node_loop:
+                self.last_node_loop[ad] = set()
+            self.last_node_loop[ad].add((l_prev_loop, l_start))
 
 
     def __is_inf_loop(self, l_set):
@@ -254,12 +278,11 @@ class Graph:
         return True
 
 
-
-
-
-    def path_exists(self, from_addr, to_addr):
-        def __rec_path_exists(curr, local_visited):
-            stack = [curr]
+    def path_exists(self, from_addr, to_addr, loop_start):
+        def __path_exists(curr, local_visited):
+            stack = []
+            for n in self.link_out[from_addr]:
+                stack.append(n)
             while stack:
                 curr = stack.pop(-1)
                 if curr == to_addr:
@@ -267,41 +290,41 @@ class Graph:
                 if curr in local_visited:
                     continue
                 local_visited.add(curr)
-                if curr not in self.link_out:
+                if curr not in self.link_out or curr == loop_start:
                     continue
                 for n in self.link_out[curr]:
                     stack.append(n)
+            return False
+
+        if from_addr == to_addr:
+            return True
+
+        if from_addr not in self.link_out:
             return False
 
         if (from_addr, to_addr) in self.cache_path_exists:
             return self.cache_path_exists[(from_addr, to_addr)]
 
         local_visited = set()
-        res = __rec_path_exists(from_addr, local_visited)
+        res = __path_exists(from_addr, local_visited)
         self.cache_path_exists[(from_addr, to_addr)] = res
         return res
 
 
-    # Returns a set containing every address which are in paths from
+    # Returns a set containing every addresses which are in paths from
     # 'from_addr' to 'to_addr'.
     def find_paths(self, from_addr, to_addr, global_visited):
         def __rec_find_paths(curr, local_visited, path_set):
             nonlocal isfirst
-
             if curr == to_addr and not isfirst:
                 path_set.add(curr)
                 return
-
             isfirst = False
-
             if curr in local_visited:
                 return
-
             local_visited.add(curr)
-
             if curr in global_visited or curr not in self.link_out:
                 return
-
             for n in self.link_out[curr]:
                 __rec_find_paths(n, local_visited, path_set)
 
@@ -831,10 +854,10 @@ class Graph:
 
         # For each loop we search the last node that if we enter in it,
         # we are sure to return to the loop.
-        self.last_loop_node = {}
+        self.last_node_loop = {}
         for (l_prev_loop, l_start), l_set in self.loops_all.items():
-            self.last_loop_node[(l_prev_loop, l_start)] = set()
-            self.__search_last_loop_node(set(), l_prev_loop, l_start, l_set)
+            if (l_prev_loop, l_start) not in self.infinite_loop:
+                self.__search_last_node_loop(l_prev_loop, l_start, l_set)
 
         elapsed = time()
         elapsed = elapsed - start
