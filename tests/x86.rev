@@ -50,14 +50,14 @@ function main (.text) {
     0x4004d6: rax cmp *(rdi)
     0x4004d6: rdi += D
     0x4004d8: 
-    while (!rcx)) {
+    while (!rcx) {
         0x4004d8: al cmp *(rdi)
         0x4004d8: rdi += D
         0x4004d8: rcx--
         if (!Z) break
     }
     0x4004da: 
-    while (!rcx)) {
+    while (!rcx) {
         0x4004da: *(rdi) = al
         0x4004da: rdi += D
         0x4004da: rcx--

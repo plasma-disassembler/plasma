@@ -209,7 +209,7 @@ class Output(OutputAbs):
             self._tabs(tab)
             self._keyword("while")
             # TODO: for 16 and 32 bits
-            self._add(" (!rcx)) {")
+            self._add(" (!rcx) {")
             self._new_line()
             self._tabs(tab + 1)
             self._address(i.address)
