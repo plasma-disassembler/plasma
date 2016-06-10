@@ -33,7 +33,7 @@ from plasma.lib.api import Api
 from plasma.lib.analyzer import Analyzer
 
 import plasma
-PLASMA_SCRIPTS_DIR = os.path.dirname(plasma.__file__) + "/../scripts"
+PLASMA_SCRIPTS_DIR = os.path.dirname(plasma.__file__) + "/scripts"
 
 MAX_PRINT_COMPLETE = 300
 SHOULD_EXIT = False

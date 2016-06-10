@@ -52,7 +52,9 @@ setup(
               'plasma.lib.arch.arm',
               'plasma.lib.ui',
               'plasma.lib.fileformat',
-              'plasma.lib.fileformat.relocations'],
+              'plasma.lib.fileformat.relocations',
+              'plasma.scripts',
+    ],
     package_dir={'plasma':'plasma'},
     install_requires=requires,
     entry_points = {
