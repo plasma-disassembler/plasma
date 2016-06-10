@@ -191,6 +191,12 @@ class Console():
         self.last_stack = []
         self.last_saved_stack = []
 
+        # A hack to allow window resizing
+        os.environ['LINES']="blah"
+        del os.environ['LINES']
+        os.environ['COLUMNS']="blah"
+        del os.environ['COLUMNS']
+
         self.COMMANDS = {
             "analyzer": Command(
                 0,

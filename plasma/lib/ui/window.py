@@ -248,8 +248,17 @@ class Window():
         screen.keypad(False)
         refr = True
 
+        (last_h, last_w) = screen.getmaxyx()
+
         while 1:
             (h, w) = screen.getmaxyx()
+
+            if h != last_h or w != last_w:
+                screen.erase()
+                curses.resizeterm(h, w)
+                last_h = h
+                last_w = w
+                refr = True
 
             if self.has_statusbar:
                 h -= 1
