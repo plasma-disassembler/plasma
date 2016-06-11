@@ -126,6 +126,10 @@ class Ast_Ifelse:
     def dump(self, o, tab=0, print_else_keyword=False):
         ARCH_UTILS = o.gctx.libarch.utils
 
+        if o.last_inst_exit_or_ret:
+            o.last_inst_exit_or_ret = False
+            o._new_line()
+
         #
         # if cond {
         # } else {
@@ -255,6 +259,10 @@ class Ast_Loop:
         self.branch = b
 
     def dump(self, o, tab=0):
+        if o.last_inst_exit_or_ret:
+            o.last_inst_exit_or_ret = False
+            o._new_line()
+
         o._tabs(tab)
         if self.is_infinite:
             o._keyword("for")
@@ -270,6 +278,7 @@ class Ast_Loop:
 
 
 # ONLY FOR DEBUG !!
+# Because some functions checks the previous ast instance
 class Ast_Comment:
     def __init__(self, text):
         self.text = text

@@ -48,6 +48,10 @@ class OutputAbs():
             self.OP_IMM = self.gctx.libarch.utils.OP_IMM
             self.ARCH_UTILS = self.gctx.libarch.utils
 
+        # Only at the decompilation, it's used to add a newline after
+        # a call exit / ret (or equivalent).
+        self.last_inst_exit_or_ret = False
+
 
     # All functions which start with a '_' add a new token/string on
     # the current line.
@@ -62,7 +66,7 @@ class OutputAbs():
         line = len(self.token_lines)-1
         self.idx_tok_inline_comm[line] = self.curr_index
 
-    def is_last_2_line_empty(self):
+    def last_2_lines_are_empty(self):
         if len(self.lines) < 2:
             return True
         return len(self.lines[-1]) == 0 and len(self.lines[-2]) == 0
@@ -331,7 +335,7 @@ class OutputAbs():
 
     def _previous_comment(self, i, tab):
         if i.address in self._dis.internal_previous_comments:
-            if not self.is_last_2_line_empty():
+            if not self.last_2_lines_are_empty():
                 self._new_line()
             for comm in self._dis.internal_previous_comments[i.address]:
                 self._tabs(tab)
@@ -339,7 +343,7 @@ class OutputAbs():
                 self._new_line()
 
         if i.address in self._dis.user_previous_comments:
-            if self.ctx.is_dump and not self.is_last_2_line_empty():
+            if self.ctx.is_dump and not self.last_2_lines_are_empty():
                 self._new_line()
             for comm in self._dis.user_previous_comments[i.address]:
                 self._tabs(tab)
@@ -649,6 +653,9 @@ class OutputAbs():
 
 
     def _asm_inst(self, i, tab=0, prefix=""):
+        if self.last_inst_exit_or_ret:
+            self._new_line()
+
         self._previous_comment(i, tab)
 
         if prefix == "# ":
@@ -719,6 +726,9 @@ class OutputAbs():
 
         self._inline_comment(i)
         self._new_line()
+
+        self.last_inst_exit_or_ret = \
+            not self.ctx.is_dump and i.address in self.ctx.gph.exit_or_ret
 
 
     def print(self):

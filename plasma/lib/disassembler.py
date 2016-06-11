@@ -333,7 +333,7 @@ class Disassembler():
 
         while 1:
             if ad == s.start:
-                if not o.is_last_2_line_empty():
+                if not o.last_2_lines_are_empty():
                     o._new_line()
                 o._dash()
                 o._section(s.name)
@@ -353,7 +353,7 @@ class Disassembler():
                     is_func = ad in self.functions
 
                     if is_func:
-                        if not o.is_last_2_line_empty():
+                        if not o.last_2_lines_are_empty():
                             o._new_line()
                         o._dash()
                         o._user_comment("; SUBROUTINE")
@@ -363,7 +363,7 @@ class Disassembler():
                     i = self.lazy_disasm(ad, s.start)
 
                     if not is_func and ad in self.xrefs and \
-                            not o.is_last_2_line_empty():
+                            not o.last_2_lines_are_empty():
                         o._new_line()
 
                     o._asm_inst(i)
@@ -534,7 +534,7 @@ class Disassembler():
         if until == ad:
             if self.mem.is_code(ad) and ad in self.xrefs or \
                     s is not None and ad == s.start:
-                if not o.is_last_2_line_empty():
+                if not o.last_2_lines_are_empty():
                     o._new_line()
 
         # remove the last empty line
@@ -800,12 +800,16 @@ class Disassembler():
 
             else:
                 if ad != entry and ARCH_UTILS.is_call(inst):
+                    # TODO: like in the analyzer, simulate registers
+                    # -> during the analysis, save in the database
+                    # the immediate value.
                     op = inst.operands[0]
                     if op.type == self.capstone.CS_OP_IMM:
                         imm = unsigned(op.value.imm)
                         if imm in self.functions and self.is_noreturn(imm):
                             prefetch = self.__add_prefetch(addresses, inst)
                             gph.new_node(inst, prefetch, None)
+                            gph.exit_or_ret.add(ad)
                             continue
 
                 nxt = inst.address + inst.size

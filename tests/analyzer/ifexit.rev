@@ -18,6 +18,7 @@ function main (.text) {
             0x400554: edi = 0
             0x400559: call exit
         }
+
         0x40055e: var_c = 0
         0x400565: jmp loop_0x400575
         loop {

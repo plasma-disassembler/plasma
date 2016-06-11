@@ -25,6 +25,9 @@ from plasma.lib.utils import BRANCH_NEXT, BRANCH_NEXT_JUMP, debug__, list_starts
 MAX_NODES = 800
 
 
+# This class is used only for the decompilation mode. The analyzer create
+# also a graph but only on-the-fly.
+
 class Graph:
     def __init__(self, dis, entry_point_addr):
         # Each node contains a block (list) of instructions.
@@ -73,6 +76,8 @@ class Graph:
         self.all_deep_equiv = set()
 
         self.skipped_loops_analysis = False
+
+        self.exit_or_ret = set()
 
 
     # A jump is normally alone in a block, but for some architectures
