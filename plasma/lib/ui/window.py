@@ -233,14 +233,23 @@ class Window():
         i = 0
         while i < h:
             if self.win_y + i < len(self.token_lines):
-                self.print_line(w, i)
+                self.print_line(w - 1, i)
             else:
                 # force to clear the entire line
                 self.screen.move(i, 0)
             self.screen.clrtoeol()
             i += 1
 
+        # Print the cursor on the right
+        self.screen.addstr(self.get_y_cursor(h), w - 1, " ", color_pair(1))
+
         self.screen.refresh()
+
+
+    # Based on the number of lines, this function is rewritten in the visual
+    # mode because the disassembled code is updated after scrolling.
+    def get_y_cursor(self, h):
+        return int((self.win_y * h) / len(self.token_lines))
 
 
     def start_view(self, screen):

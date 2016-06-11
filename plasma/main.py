@@ -24,18 +24,11 @@ from plasma.lib import GlobalContext
 from plasma.lib.utils import info, die
 from plasma.lib.ui.vim import generate_vim_syntax
 from plasma.lib.api import Api
-import plasma.lib.colors
 
 
 def console_entry():
     gctx = GlobalContext()
     gctx.parse_args()
-
-    if gctx.color and plasma.lib.colors.VERSION < plasma.lib.colors.CURR_VERSION:
-        info("There is a new version of custom_colors.py. If you did any")
-        info("modifications you can delete it. Otherwise you can copy it")
-        info("somewhere, run again your command then merge the file at hand.")
-        die()
 
     if gctx.filename is None:
         die()

@@ -711,8 +711,8 @@ class Console():
             if o is not None:
                 v = Visual(self.gctx, ctx, self.analyzer, self.api,
                        self.last_stack, self.last_saved_stack)
-                if v.last_cursor_ad is not None:
-                    self.last_entry = v.last_cursor_ad
+                if v.last_curr_line_ad is not None:
+                    self.last_entry = v.last_curr_line_ad
 
 
     def __exec_help(self, args):

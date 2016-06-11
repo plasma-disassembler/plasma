@@ -19,48 +19,7 @@
 
 from textwrap import dedent
 from pathlib import Path
-
-
-CURR_VERSION = 1.4
-
-
-def default_custom_file():
-    filename = str(Path(__file__).parent / "custom_colors.py")
-    with open(filename, "w+") as fd:
-        fd.write(dedent("""\
-            VERSION = %.1f
-
-            class COLOR:
-                def __init__(self, val, bold):
-                    self.val  = val
-                    self.bold = bold
-
-            COLOR_SECTION        = COLOR(81, False)
-            COLOR_KEYWORD        = COLOR(161, True)
-            COLOR_VAR            = COLOR(208, True)
-            COLOR_TYPE           = COLOR(81, False)
-            COLOR_COMMENT        = COLOR(242, False)
-            COLOR_ADDR           = COLOR(242, False)
-            COLOR_STRING         = COLOR(144, False)
-            COLOR_SYMBOL         = COLOR(144, False)
-            COLOR_RETCALL        = COLOR(161, False)
-            COLOR_INTERN_COMMENT = COLOR(217, False)
-            COLOR_CODE_ADDR      = COLOR(220, False)
-            COLOR_USER_COMMENT   = COLOR(38, False)
-            COLOR_UNK            = COLOR(154, False)
-            COLOR_DATA           = COLOR(230, False)
-            """ % CURR_VERSION))
-
-
 from plasma.lib.custom_colors import *
-
-
-# Old versions of custom_colors.py
-try:
-    COLOR_INTERN_COMMENT
-    VERSION
-except:
-    VERSION = 0
 
 
 gctx = None

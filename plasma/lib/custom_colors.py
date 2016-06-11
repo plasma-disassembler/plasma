@@ -1,4 +1,5 @@
-VERSION = 1.5
+# Warning: don't use colors 1-16, they will be used to redefine colors
+# with background.
 
 class COLOR:
     def __init__(self, val, bold):
@@ -26,3 +27,7 @@ COLOR_DATA           = COLOR(230, False)
 COLOR_STRING         = COLOR(154, False)
 COLOR_OFFSET_NOT_FOUND = COLOR(196, False)
 COLOR_PUSHPOP        = COLOR(171, False)
+
+# This couple will redefine the color 1
+COLOR_SEARCH_BG = 66
+COLOR_SEARCH_FG = 253

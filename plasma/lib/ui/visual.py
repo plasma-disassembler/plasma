@@ -43,7 +43,7 @@ class Visual(Window):
         self.last_addr = max(self.output.addr_line)
         self.first_addr = min(self.output.addr_line)
 
-        self.last_cursor_ad = None
+        self.last_curr_line_ad = None
 
         self.stack = stack
         self.saved_stack = saved_stack # when we enter, go back, then re-enter
@@ -90,9 +90,6 @@ class Visual(Window):
 
         self.screen = curses.initscr()
 
-        (h, w) = self.screen.getmaxyx()
-        h -= 1 # status bar
-
         curses.noecho()
         curses.cbreak()
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
@@ -105,8 +102,7 @@ class Visual(Window):
                 curses.init_pair(i, i, -1)
 
             try:
-                curses.init_pair(1, 253, 66) # for the highlight search
-                curses.init_pair(2, 255, 238) # for the status bar
+                curses.init_pair(1, COLOR_SEARCH_FG, COLOR_SEARCH_BG)
             except:
                 curses.nocbreak()
                 curses.echo()
@@ -117,6 +113,12 @@ class Visual(Window):
         else:
             for i in range(0, curses.COLORS):
                 curses.init_pair(i, 7, -1) # white
+
+        (h, w) = self.screen.getmaxyx()
+        h -= 1 # status bar
+
+        # Init some y coordinate, used to compute the cursor position
+        self.init_section_coords()
 
         self.win_y = self.dump_update_up(h, self.win_y)
         self.goto_address(ctx.entry, h, w)
@@ -137,6 +139,24 @@ class Visual(Window):
         curses.endwin()
 
         self.gctx.quiet = saved_quiet
+
+
+    def init_section_coords(self):
+        self.section_normalized = {}
+        self.total_size = 0
+        for s in self.api.iter_sections():
+            self.section_normalized[s.start] = self.total_size
+            self.total_size += s.virt_size
+
+
+    def get_y_cursor(self, h):
+        if self.mode == MODE_DECOMPILE or self.last_curr_line_ad is None:
+            return Window.get_y_cursor(self, h)
+
+        ad = self.last_curr_line_ad
+        s = self.api.get_section(ad)
+        ad_normalized = self.section_normalized[s.start] + ad - s.start
+        return int(ad_normalized * h / self.total_size)
 
 
     def exec_disasm(self, addr, h, dump_until=-1):
@@ -175,9 +195,9 @@ class Visual(Window):
         line = self.win_y + self.cursor_y
         if line in self.output.line_addr:
             ad = self.output.line_addr[line]
-            self.last_cursor_ad = ad
+            self.last_curr_line_ad = ad
         else:
-            ad = self.last_cursor_ad
+            ad = self.last_curr_line_ad
 
         if ad is not None:
             s = self.dis.binary.get_section(ad)
@@ -581,6 +601,7 @@ class Visual(Window):
                 self.exec_disasm(top, h)
 
         Window.k_top(self, h, w)
+        self.last_curr_line_ad = self.first_addr
         return True
 
 
@@ -600,6 +621,7 @@ class Visual(Window):
                 self.cursor_y = 0
 
         Window.k_bottom(self, h, w)
+        self.last_curr_line_ad = self.last_addr
         return True
 
 
