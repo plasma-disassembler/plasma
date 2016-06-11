@@ -40,12 +40,13 @@ class OutputAbs():
         self.print_labels = True
 
         # Easy accesses
-        self._dis = ctx.gctx.dis
-        self._binary = self._dis.binary
-        self.gctx = ctx.gctx
-        self.ctx = ctx
-        self.OP_IMM = self.gctx.libarch.utils.OP_IMM
-        self.ARCH_UTILS = self.gctx.libarch.utils
+        if ctx is not None:
+            self._dis = ctx.gctx.dis
+            self._binary = self._dis.binary
+            self.gctx = ctx.gctx
+            self.ctx = ctx
+            self.OP_IMM = self.gctx.libarch.utils.OP_IMM
+            self.ARCH_UTILS = self.gctx.libarch.utils
 
 
     # All functions which start with a '_' add a new token/string on
@@ -159,6 +160,11 @@ class OutputAbs():
 
     def _data(self, string):
         self.token_lines[-1].append((string, COLOR_DATA.val, COLOR_DATA.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
+
+    def _pushpop(self, string):
+        self.token_lines[-1].append((string, COLOR_PUSHPOP.val, COLOR_PUSHPOP.bold))
         self.lines[-1].append(string)
         self.curr_index += len(string)
 

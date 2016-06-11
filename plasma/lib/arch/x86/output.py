@@ -34,7 +34,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
-    is_uncond_jump, cond_symbol)
+    is_uncond_jump, cond_symbol, is_pushpop)
 
 
 ASSIGNMENT_OPS = {X86_INS_XOR, X86_INS_AND, X86_INS_OR,
@@ -128,18 +128,18 @@ class Output(OutputAbs):
                 self._add("*(")
 
             if not inv(mm.base):
-                self._add("%s" % i.reg_name(mm.base))
+                self._add(i.reg_name(mm.base))
                 printed = True
 
             elif not inv(mm.segment):
-                self._add("%s" % i.reg_name(mm.segment))
+                self._add(i.reg_name(mm.segment))
                 printed = True
 
             if not inv(mm.index):
                 if printed:
                     self._add(" + ")
                 if mm.scale == 1:
-                    self._add("%s" % i.reg_name(mm.index))
+                    self._add(i.reg_name(mm.index))
                 else:
                     self._add("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
                 printed = True
@@ -400,7 +400,11 @@ class Output(OutputAbs):
 
         if not modified:
             if len(i.operands) > 0:
-                self._add("%s " % i.mnemonic)
+                if is_pushpop(i):
+                    self._pushpop(i.mnemonic)
+                    self._add(" ")
+                else:
+                    self._add("%s " % i.mnemonic)
                 self._operand(i, 0)
                 k = 1
                 while k < len(i.operands):
@@ -408,4 +412,7 @@ class Output(OutputAbs):
                     self._operand(i, k)
                     k += 1
             else:
-                self._add(i.mnemonic)
+                if is_pushpop(i):
+                    self._pushpop(i.mnemonic)
+                else:
+                    self._add(i.mnemonic)

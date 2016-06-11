@@ -150,11 +150,11 @@ class Output(OutputAbs):
                 self._add("*(")
 
             if not inv(mm.base):
-                self._add("%s" % i.reg_name(mm.base))
+                self._add(i.reg_name(mm.base))
                 printed = True
 
             elif not inv(mm.segment):
-                self._add("%s" % i.reg_name(mm.segment))
+                self._add(i.reg_name(mm.segment))
                 printed = True
 
             if not inv(mm.index):
@@ -162,7 +162,7 @@ class Output(OutputAbs):
                     self._add(" + ")
 
                 if mm.scale == 1:
-                    self._add("%s" % i.reg_name(mm.index))
+                    self._add(i.reg_name(mm.index))
                 else:
                     self._add("(%s*%d)" % (i.reg_name(mm.index), mm.scale))
 
