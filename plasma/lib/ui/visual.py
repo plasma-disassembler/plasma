@@ -208,7 +208,10 @@ class Visual(Window):
                 if fid != -1:
                     func_ad = self.db.func_id[fid]
                     name = self.api.get_symbol(func_ad)
-                    self.screen.addstr(h, w - len(name) - 1, name)
+                    if w - len(name) - 1 < 0:
+                        self.screen.insstr(h, 0, name)
+                    else:
+                        self.screen.insstr(h, w - len(name) - 1, name)
 
         Window.redraw(self, h, w)
 
