@@ -31,3 +31,5 @@ COLOR_PUSHPOP        = COLOR(171, False)
 # This couple will redefine the color 1
 COLOR_SEARCH_BG = 66
 COLOR_SEARCH_FG = 253
+
+COLOR_SCROLL_CURSOR = 236

@@ -149,14 +149,14 @@ class Visual(Window):
             self.total_size += s.virt_size
 
 
-    def get_y_cursor(self, h):
+    def get_y_cursor(self, h8, h):
         if self.mode == MODE_DECOMPILE or self.last_curr_line_ad is None:
-            return Window.get_y_cursor(self, h)
+            return Window.get_y_cursor(self, h8, h)
 
         ad = self.last_curr_line_ad
         s = self.api.get_section(ad)
         ad_normalized = self.section_normalized[s.start] + ad - s.start
-        return int(ad_normalized * h / self.total_size)
+        return int(ad_normalized * h8 / self.total_size)
 
 
     def exec_disasm(self, addr, h, dump_until=-1):
@@ -1042,6 +1042,11 @@ class Visual(Window):
 
 
     def main_cmd_xrefs(self, h, w):
+        num_line = self.win_y + self.cursor_y
+        line = self.output.lines[num_line]
+        if self.cursor_x >= len(line):
+            self.cursor_x = len(line) - 1
+
         word = self.get_word_under_cursor()
         if word is None:
             return None

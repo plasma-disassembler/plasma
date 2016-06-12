@@ -18,7 +18,7 @@
 #
 
 import curses
-from curses import A_UNDERLINE, color_pair
+from curses import A_UNDERLINE, color_pair, A_REVERSE
 from time import time
 
 from plasma.lib.custom_colors import *
@@ -126,6 +126,17 @@ class Window():
             b"\x1b\x5b\x31\x3b\x35\x44": self.k_ctrl_left,
             b"\x1b\x5b\x31\x3b\x35\x43": self.k_ctrl_right,
             b"\n": self.k_enter,
+        }
+
+        self.cursor_position_utf8 = {
+            0: "█",
+            1: "▇",
+            2: "▆",
+            3: "▅",
+            4: "▄",
+            5: "▃",
+            6: "▂",
+            7: "▁",
         }
 
 
@@ -240,16 +251,34 @@ class Window():
             self.screen.clrtoeol()
             i += 1
 
-        # Print the cursor on the right
-        self.screen.addstr(self.get_y_cursor(h), w - 1, " ", color_pair(1))
+        # Print the scroll cursor on the right. It uses utf-8 block characters.
+
+        y = self.get_y_cursor(h * 8, h)
+        i = y % 8
+        y = int(y / 8)
+
+        self.screen.insstr(y, w - 1,
+            self.cursor_position_utf8[i],
+            color_pair(COLOR_SCROLL_CURSOR))
+
+        if i != 0 and y + 1 < h:
+            self.screen.insstr(y + 1, w - 1,
+                self.cursor_position_utf8[i],
+                color_pair(COLOR_SCROLL_CURSOR) | A_REVERSE)
 
         self.screen.refresh()
 
 
     # Based on the number of lines, this function is rewritten in the visual
-    # mode because the disassembled code is updated after scrolling.
-    def get_y_cursor(self, h):
-        return int((self.win_y * h) / len(self.token_lines))
+    # mode because the disassembled code is updated after scrolling, so
+    # we don't the total number of lines.
+    def get_y_cursor(self, h8, h):
+        if len(self.token_lines) <= h:
+            return 0
+        y = int(self.win_y * h8 / (len(self.token_lines) - h))
+        if y >= h8 - 8:
+            return h8 - 8
+        return y
 
 
     def start_view(self, screen):
@@ -493,7 +522,7 @@ class Window():
 
             self.cursor_x = x
             self.goto_line(self.win_y + y, h)
-            self.cmd_highlight_current_word(h, w)
+            self.cmd_highlight_current_word(h, w, True)
             self.check_cursor_x()
 
         elif button == 0x60: # scroll up
@@ -594,7 +623,15 @@ class Window():
         return True
 
 
-    def cmd_highlight_current_word(self, h, w):
+    def cmd_highlight_current_word(self, h, w, from_mouse_event=False):
+        # When we click on a word with the mouse, we must be explicitly
+        # on the word.
+        if not from_mouse_event:
+            num_line = self.win_y + self.cursor_y
+            line = self.output.lines[num_line]
+            if self.cursor_x >= len(line):
+                self.cursor_x = len(line) - 1
+
         w = self.get_word_under_cursor()
         if w is None:
             return False
