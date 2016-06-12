@@ -127,6 +127,7 @@ class SegmentAbs(SectionAbs):
         self.file_offset = file_offset
         self.data = data
         self.big_endian = big_endian
+        self.is_bss = False
 
 
 
