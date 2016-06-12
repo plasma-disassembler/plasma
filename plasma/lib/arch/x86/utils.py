@@ -217,7 +217,7 @@ def search_jmptable_addr(analyzer, jump_i, inner_code):
                     op2 = i.operands[1]
                     if op2.type != X86_OP_MEM:
                         return None
-                    if op2.mem.index != 0 and analyzer.dis.binary.is_address(op2.mem.disp):
+                    if analyzer.dis.binary.is_address(op2.mem.disp):
                         return op2.mem.disp
                     return None
         ad -= 1
