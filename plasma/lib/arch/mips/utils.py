@@ -181,7 +181,7 @@ def guess_frame_size(analyzer, ad):
 
     while 1:
         i = analyzer.disasm(ad)
-        if i is None or is_ret(i) or is_call(i) or is_jump(i):
+        if i is None or is_ret(i) or is_call(i) or is_cond_jump(i):
             return 0
 
         # Do only registers simulation
