@@ -174,6 +174,8 @@ class PE(Binary):
         self.reverse_symbols[first_inst.address] = name
         self.symbols[name] = first_inst.address
 
+        self.api.add_xref(first_inst.address, ptr)
+
         if ty != -1:
             self.db.mem.add(first_inst.address, 1, ty)
 

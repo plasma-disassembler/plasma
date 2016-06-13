@@ -153,6 +153,9 @@ class Binary(object):
         self.wordsize = 0
         self.type = -1
 
+        # It will be set in Console !
+        self.api = None
+
 
     def get_section(self, ad):
         i = bisect.bisect_right(self._sorted_sections, ad)

@@ -455,6 +455,8 @@ class Console():
         gctx.api = self.api
         self.analyzer.set(gctx, arch_analyzer)
 
+        self.gctx.dis.binary.api = self.api
+
         if gctx.dis.is_mips and gctx.dis.mips_gp == -1:
             print("please run first these commands :")
             print("mips_set_gp 0xADDRESS")
