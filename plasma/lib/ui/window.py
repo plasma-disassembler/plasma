@@ -297,6 +297,10 @@ class Window():
                 last_h = h
                 last_w = w
                 refr = True
+                if self.cursor_y > h:
+                    self.cursor_y = h - 5
+                    if self.cursor_y < 0:
+                        self.cursor_y = 0
 
             if self.has_statusbar:
                 h -= 1
