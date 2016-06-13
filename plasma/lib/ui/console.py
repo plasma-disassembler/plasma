@@ -789,7 +789,7 @@ class Console():
 
 
     def __exec_py(self, args):
-        ns = {"api": self.api, "args": args[1:]}
+        ns = {"api": self.api, "args": args[1:], "analyzer": self.analyzer}
         ns.update(EXPORTED_SYMBOLS)
         if len(args) > 1:
             if args[1].startswith("!"):
