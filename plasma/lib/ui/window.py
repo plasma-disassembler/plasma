@@ -103,7 +103,7 @@ class Window():
 
         self.search_hi = None
         self.search_bin = None
-        self.word_accepted_chars = ["_", "@", ".", "$", ":"]
+        self.word_accepted_chars = ["_", "@", ".", "$", ":", "?"]
 
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
         self.set_key_timeout = True
