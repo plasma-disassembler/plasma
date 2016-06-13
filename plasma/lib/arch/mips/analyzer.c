@@ -31,6 +31,7 @@ typedef char bool;
 // Same as lib.consts
 #define FUNC_OFF_VARS 2
 #define FUNC_INST_ADDR 4
+#define FUNC_FRAME_SIZE 5
 
 
 // It supports only the most common registers (see capstone.mips)
@@ -495,7 +496,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             err[i] = true;
 
             // Check if there is a stack reference
-            if (is_stack[i] && func_obj != Py_None) {
+            if (is_stack[i] && func_obj != Py_None &&
+                PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE)) != -1) {
+
                 // ty = analyzer.db.mem.get_type_from_size(op_size)
                 PyObject *tmp;
                 PyObject *db = PyObject_GetAttrString(analyzer, "db");
