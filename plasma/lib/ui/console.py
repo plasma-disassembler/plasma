@@ -290,6 +290,7 @@ class Console():
                 "Navigation:",
                 "/       binary search: if the first char is ! you can put an",
                 "        hexa string example: /!ab 13 42",
+                "        the search is case sensitive.",
                 "n/N     next/previous search occurence",
                 "g       top",
                 "G       bottom",
