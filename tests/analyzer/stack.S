@@ -105,5 +105,11 @@ main:
 
     ACCESS_VARS
 
+	push rax
+	call __cdecl
+    pop rax
+
+    ACCESS_VARS
+
 	leave
     ret

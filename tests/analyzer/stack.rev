@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------
-.text  0x4000d4 -> 0x40017c
+.text  0x4000d4 -> 0x40018c
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
@@ -118,7 +118,12 @@ long int   var_c     = -0xc
 0x40016d: call test_frame_size
 0x400172: rax = var_c
 0x400176: rax = var_c
-0x40017b: leave
-0x40017c: ret
+0x40017b: push rax
+0x40017c: call __cdecl
+0x400181: pop rax
+0x400182: rax = var_c
+0x400186: rax = var_c
+0x40018b: leave
+0x40018c: ret
 ; end function main
 

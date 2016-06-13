@@ -759,13 +759,18 @@ class Analyzer(threading.Thread):
                 self.arch_analyzer.analyze_operands(
                         self, regsctx, inst, func_obj, False)
 
+                # FIXME: reload after the previous call to handle correctly
+                # the cdecl.
+
+                # See also FIXME in handle_cdecl
+
                 # Restore the stack pointer to sp_after_push to handle cdecl.
                 if frame_size != -1:
                     curr_sp = self.arch_analyzer.get_sp(regsctx)
                     if curr_sp != sp_before and \
                             self.handle_cdecl(frame_size, sp_after_push, curr_sp):
 
-                        new_sp = sp_after_push - sp_before - curr_sp
+                        new_sp = sp_after_push - (sp_before - curr_sp)
                         self.arch_analyzer.set_sp(regsctx, new_sp)
 
                         if last_call is not None and self.db.mem.is_func(last_call):
