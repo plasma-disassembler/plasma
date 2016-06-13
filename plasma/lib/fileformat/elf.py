@@ -112,7 +112,10 @@ class ELF(Binary):
             if s.header.sh_flags & 0xf == 0:
                 continue
 
-            name = s.name.decode()
+            name = s.name
+            if isinstance(name, bytes):
+                name = name.decode()
+
             start = s.header.sh_addr
 
             if start == 0:
@@ -123,7 +126,7 @@ class ELF(Binary):
 
             self.add_section(
                 start,
-                s.name.decode(),
+                name,
                 s.header.sh_size,
                 len(data),
                 self.__section_is_exec(s),
