@@ -301,6 +301,8 @@ class Window():
                     self.cursor_y = h - 5
                     if self.cursor_y < 0:
                         self.cursor_y = 0
+                if self.cursor_x > w:
+                    self.cursor_x = w - 3
 
             if self.has_statusbar:
                 h -= 1
