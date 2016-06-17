@@ -227,7 +227,7 @@ class Output(OutputAbs):
             if i.prefix[0] == X86_PREFIX_REPNE:
                 self._tabs(tab)
                 self._keyword("if")
-                self._add(" (!Z) ")
+                self._add(" (Z) ")
                 self._keyword("break")
                 self._new_line()
             tab -= 1
@@ -341,7 +341,7 @@ class Output(OutputAbs):
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 1, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 modified = True
 
             elif i.id in INST_STOS:
@@ -352,7 +352,7 @@ class Output(OutputAbs):
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 0, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 modified = True
 
             elif i.id in INST_LODS:
@@ -363,7 +363,7 @@ class Output(OutputAbs):
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 1, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 modified = True
 
             elif i.id in INST_CMPS:
@@ -374,12 +374,12 @@ class Output(OutputAbs):
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 0, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 self._new_line()
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 1, show_deref=False)
-                self._add("' += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 modified = True
 
             elif i.id in INST_MOVS:
@@ -390,12 +390,12 @@ class Output(OutputAbs):
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 0, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 self._new_line()
                 self._tabs(tab)
                 self._address(i.address)
                 self._operand(i, 1, show_deref=False)
-                self._add(" += D")
+                self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 modified = True
 
         if not modified:
