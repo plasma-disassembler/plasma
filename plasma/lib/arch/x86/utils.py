@@ -112,13 +112,13 @@ INST_SYMB = {
     X86_INS_JB: "(unsigned) <",
 
     # other flags
-    X86_INS_JNS: ">",
+    X86_INS_JNS: ">=",
     X86_INS_JS: "<",
     X86_INS_JP: "% 2 ==",
     X86_INS_JNP: "% 2 !=",
     X86_INS_JCXZ: "cx ==",
     X86_INS_JECXZ: "ecx ==",
-    X86_INS_JRCXZ: "rxc ==",
+    X86_INS_JRCXZ: "rcx ==",
     X86_INS_JNO: "overflow",
     X86_INS_JO: "!overflow",
 

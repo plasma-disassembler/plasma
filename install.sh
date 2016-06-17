@@ -42,7 +42,7 @@ if [ "$1" != "--update" ]; then
     fi
     ./make.sh
     sudo -H ./make.sh install
-    popd
+    popd > /dev/null
 
     # Waiting that the package pip pefile contains any errors
     # https://github.com/erocarrera/pefile/issues/105
