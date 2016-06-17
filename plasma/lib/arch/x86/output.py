@@ -227,7 +227,7 @@ class Output(OutputAbs):
             if i.prefix[0] == X86_PREFIX_REPNE:
                 self._tabs(tab)
                 self._keyword("if")
-                self._add(" (!Z) ")
+                self._add(" (Z) ")
                 self._keyword("break")
                 self._new_line()
             tab -= 1

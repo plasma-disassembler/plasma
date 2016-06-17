@@ -28,7 +28,7 @@ if [ "$1" != "--update" ]; then
     fi
 
     # Capstone
-    pushd .
+    pushd . > /dev/null
     mkdir -p build
     cd build
     CAPSTONE_VERSION=3.0.4
