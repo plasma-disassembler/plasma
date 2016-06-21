@@ -241,7 +241,7 @@ class Disassembler():
             ty = self.mem.get_type(x)
 
             # A PE import should not be displayed as a subroutine
-            if not(self.binary.type == T_BIN_PE and ad in self.binary.imports) \
+            if not(self.binary.type == T_BIN_PE and x in self.binary.imports) \
                    and (ty == MEM_FUNC or ty == MEM_CODE):
 
                 func_id = self.mem.get_func_id(x)
