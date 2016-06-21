@@ -310,13 +310,17 @@ class Visual(Window):
             line += 1
             moved = True
 
+
         # Goto next line
         if forward and not moved:
             line += 1
             while line not in self.output.line_addr:
                 line += 1
+            ad = self.db.mem.get_head_addr(self.output.line_addr[line])
+            ad += self.db.mem.get_size(ad)
+        else:
+            ad = self.output.line_addr[line]
 
-        ad = self.output.line_addr[line]
 
         s = self.dis.binary.get_section(ad)
 
