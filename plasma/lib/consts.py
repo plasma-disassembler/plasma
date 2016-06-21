@@ -33,6 +33,7 @@ MEM_DOFFSET = 9
 MEM_QOFFSET = 10
 MEM_ASCII = 11
 MEM_ARRAY = 12
+MEM_STRUCT = 13
 
 # For big strings or data we put a MEM_HEAD every BLOCK_SIZE bytes and at
 # the end of the data. It allows to scroll up correctly in the visual mode.
@@ -40,7 +41,6 @@ MEM_ARRAY = 12
 MEM_HEAD = 50
 BLOCK_SIZE = 64 # should be a power of 2
 BLOCK_SIZE_MASK = 64-1
-
 
 
 # Index of values for each Database.functions[i]
@@ -64,11 +64,14 @@ FUNC_FLAG_CDECL = 0x2
 # Known functions which never returns
 NORETURN_ELF = {
     "exit", "_exit", "__stack_chk_fail", "err", "verr", "errx", "verrx",
-    "abort", "__assert_fail", "__libc_start_main", "perror",
+    "abort", "__assert_fail", "__libc_start_main", "perror", "__cxa_rethrow",
+    "__cxa_throw", "__cxa_call_terminate", "__cxa_bad_cast", "__cxa_call_unexpected",
+    "__cxa_call_unexpected", "__terminate", "__unexpected",
 }
 
 NORETURN_PE = {
-    "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort"
+    "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort",
+    "_CxxThrowException", "quick_exit", "RaiseException",
 }
 
 
