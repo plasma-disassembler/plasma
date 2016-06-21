@@ -40,7 +40,7 @@ class Visual(Window):
         self.api = api
 
         # Last/first address printed (only in MODE_DUMP)
-        self.last_addr = max(self.output.addr_line)
+        self.set_last_addr()
         self.first_addr = min(self.output.addr_line)
 
         self.last_curr_line_ad = None
@@ -159,11 +159,22 @@ class Visual(Window):
         return int(ad_normalized * h8 / self.total_size)
 
 
+    def set_last_addr(self):
+        ad = self.db.mem.get_head_addr(max(self.output.addr_line))
+        ad += self.db.mem.get_size(ad)
+        self.last_addr = ad
+
+
     def exec_disasm(self, addr, h, dump_until=-1):
         self.ctx = self.gctx.get_addr_context(addr)
 
         if self.mode == MODE_DUMP:
-            o = self.ctx.dump_asm(until=dump_until)
+            if dump_until == -1:
+                o = self.ctx.dump_asm()
+            else:
+                ad = self.db.mem.get_head_addr(dump_until)
+                ad += self.db.mem.get_size(ad)
+                o = self.ctx.dump_asm(until=ad)
 
         elif self.mode == MODE_DECOMPILE:
             self.status_bar_message("decompiling...", h, True)
@@ -172,7 +183,7 @@ class Visual(Window):
         if o is not None:
             self.output = o
             self.token_lines = o.token_lines
-            self.last_addr = max(o.addr_line)
+            self.set_last_addr()
             self.first_addr = min(o.addr_line)
             return True
         return False
@@ -541,14 +552,10 @@ class Visual(Window):
         if self.mode != MODE_DUMP or wy < len(self.token_lines) - h - 10:
             return
 
-        if self.last_addr == self.dis.binary.get_last_addr():
+        if self.last_addr - 1 == self.dis.binary.get_last_addr():
             return
 
-        if self.db.mem.is_code(self.last_addr):
-            inst = self.dis.lazy_disasm(self.last_addr)
-            ad = self.last_addr + inst.size
-        else:
-            ad = self.last_addr + 1
+        ad = self.last_addr
 
         self.ctx = self.gctx.get_addr_context(ad)
         o = self.ctx.dump_asm()
@@ -558,7 +565,6 @@ class Visual(Window):
 
             self.output.lines += o.lines
             self.output.token_lines += o.token_lines
-            self.last_addr = max(o.addr_line)
 
             for l in o.line_addr:
                 self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
@@ -566,6 +572,8 @@ class Visual(Window):
                 if l in self.output.idx_tok_inline_comm:
                     self.output.idx_tok_inline_comm[nb_new_lines + l] = \
                             o.idx_tok_inline_comm[l]
+
+            self.set_last_addr()
 
 
     # New mappings
@@ -621,14 +629,14 @@ class Visual(Window):
         if self.mode == MODE_DUMP:
             bottom = self.dis.binary.get_last_addr()
 
-            if self.last_addr != bottom:
+            if self.last_addr - 1 != bottom:
                 self.exec_disasm(bottom, h)
                 self.dump_update_up(h, self.win_y)
                 self.win_y = 0
                 self.cursor_y = 0
 
         Window.k_bottom(self, h, w)
-        self.last_curr_line_ad = self.last_addr
+        self.last_curr_line_ad = self.last_addr - 1
         return True
 
 
@@ -828,7 +836,7 @@ class Visual(Window):
 
 
     def reload_output(self, h):
-        self.exec_disasm(self.first_addr, h, dump_until=self.last_addr)
+        self.exec_disasm(self.first_addr, h, dump_until=self.last_addr-1)
 
 
     def main_cmd_set_code(self, h, w):
