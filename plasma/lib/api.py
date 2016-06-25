@@ -105,20 +105,18 @@ class Api():
                 del self.__db.end_functions[func_obj[FUNC_END]]
                 del self.__db.func_id[fid]
 
+        self.mem.rm_range(entry, max(self.mem.get_size(entry), 1))
         if entry in self.__db.xrefs:
             self.mem.add(entry, 1, MEM_BYTE)
-        else:
-            # not useful to store it in the database
-            self.mem.rm_range(entry, max(self.mem.get_size(entry), 1))
 
         if is_code:
             # TODO: manage overlapping by calling mem.rm_range ?
             gph, _ = self.__dis.get_graph(entry)
-            # TODO: check code xrefs before deleting it in the memory
             del gph.nodes[entry]
             for n in gph.nodes:
-                if n in self.mem.mm:
-                    del self.mem.mm[n]
+                self.mem.rm_range(n, max(self.mem.get_size(n), 1))
+                if entry in self.__db.xrefs:
+                    self.mem.add(entry, 1, MEM_BYTE)
 
         return True
 
@@ -705,3 +703,32 @@ class Api():
         if func_id == -1:
             return None
         return self.__db.func_id[func_id]
+
+
+    def insert_struct(self, name, s):
+        """
+        Create a structure. It returns the struct id or -1 if an error occurs.
+
+        attrs is a list to define each attribute, example :
+        [
+            ["attr1", MEM_POINTER(MEM_BYTE)],
+            ["attr2", MEM_DWORD],
+            ["attr3", MEM_ARRAY, nb_entries],
+        ]
+        """
+        if name in self.__db.structs_name2id:
+            return -1
+
+        id = self.__db.struct_id_counter
+        self.__db.struct_id_counter += 1
+
+        self.__db.structure[id] = s
+        self.__db.structs_name2id[name] = id
+        return id
+
+
+    def get_struct_id(self, name):
+        """
+        Returns the id or -1 if name is unknown.
+        """
+        return self.__db.structs_name2id.get(name, -1)
