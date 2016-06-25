@@ -20,6 +20,7 @@
 typedef char bool;
 #define true 1
 #define false 0
+#define MEM_ACCESS_NOT_COMPLETED 2
 
 #include <Python.h>
 #include <stdlib.h>
@@ -561,7 +562,7 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
                     if (!is_reg_defined(regs, base)) {
                         // just analyze the disp value
                         *value = disp;
-                        return false;
+                        return MEM_ACCESS_NOT_COMPLETED;
                     }
                     imm += get_reg_value(regs, base);
                     *is_stack = regs->is_stack[base];
@@ -577,7 +578,7 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
                     if (!is_reg_defined(regs, index)) {
                         // just analyze the disp value
                         *value = disp;
-                        return false;
+                        return MEM_ACCESS_NOT_COMPLETED;
                     }
                     imm += get_reg_value(regs, index) * scale;
                     *is_stack |= regs->is_stack[index];
@@ -599,11 +600,12 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
 
 static PyObject* analyze_operands(PyObject *self, PyObject *args)
 {
-    int i;
+    int i, r1;
     PyObject *analyzer;
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
+    PyObject *db, *tmp, *mem, *ty;
 
     /* if True: stack variables will not be saved and analysis on immediates
      * will not be run. It will only simulate registers.
@@ -690,12 +692,12 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     ops[0] = len_ops >= 1 ? PyList_GET_ITEM(list_ops, 0) : NULL;
     ops[1] = len_ops == 2 ? PyList_GET_ITEM(list_ops, 1) : NULL;
 
-    // TODO : not supported
+    // FIXME : not supported
     if (len_ops > 2) {
         if (get_op_type(ops[0]) != X86_OP_REG)
             goto end;
 
-        int r1 = get_op_reg(ops[0]);
+        r1 = get_op_reg(ops[0]);
 
         if (!is_reg_supported(r1))
             goto end;
@@ -708,14 +710,14 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         if (get_op_type(ops[0]) != X86_OP_REG)
             goto end;
 
-        int r1 = get_op_reg(ops[0]);
+        r1 = get_op_reg(ops[0]);
 
         if (!is_reg_supported(r1))
             goto end;
 
         if (r1 == get_op_reg(ops[1])) {
             reg_mov(regs, r1, 0);
-            goto end;
+            goto save_imm;
         }
     }
 
@@ -729,7 +731,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         case X86_INS_POP:
             reg_add(regs, X86_REG_RSP, get_op_size(ops[0]));
             if (get_op_type(ops[0]) == X86_OP_REG) {
-                int r1 = get_op_reg(ops[0]);
+                r1 = get_op_reg(ops[0]);
                 if (is_reg_supported(r1))
                     *(regs->is_def[r1]) = false;
             }
@@ -742,14 +744,14 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         case X86_INS_INC:
         case X86_INS_DEC:
             if (get_op_type(ops[0]) == X86_OP_REG) {
-                int r = get_op_reg(ops[0]);
-                if (is_reg_defined(regs, r)) {
+                r1 = get_op_reg(ops[0]);
+                if (is_reg_defined(regs, r1)) {
                     if (id == X86_INS_INC)
-                        reg_add(regs, r, 1);
+                        reg_add(regs, r1, 1);
                     else if (id == X86_INS_DEC)
-                        reg_sub(regs, r, 1);
+                        reg_sub(regs, r1, 1);
                 }
-                goto end;
+                goto save_imm;
             }
             break;
         }
@@ -760,25 +762,37 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     for (i = 0 ; i < len_ops ; i++) {
         err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i]);
 
-        if (err[i] || only_simulate)
+        if (only_simulate) {
+            if (get_op_type(ops[i]) == X86_OP_MEM) {
+                if (err[i] == MEM_ACCESS_NOT_COMPLETED)
+                    err[i] = true;
+                else
+                    err[i] = id != X86_INS_LEA;
+            }
+            continue;
+        }
+
+        if (err[i] == true)
             continue;
 
         if (get_op_type(ops[i]) == X86_OP_MEM) {
             // Pointers are not dereferenced actually.
             // So it means that we will not simulate this instruction.
-            err[i] = true;
+            if (err[i] == MEM_ACCESS_NOT_COMPLETED)
+                err[i] = true;
+            else
+                err[i] = id != X86_INS_LEA;
 
             // Check if there is a stack reference
             if (is_stack[i] && func_obj != Py_None &&
                 PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE)) != -1) {
 
                 // ty = analyzer.db.mem.get_type_from_size(op_size)
-                PyObject *tmp;
-                PyObject *db = PyObject_GetAttrString(analyzer, "db");
-                PyObject *mem = PyObject_GetAttrString(db, "mem");
+                db = PyObject_GetAttrString(analyzer, "db");
+                mem = PyObject_GetAttrString(db, "mem");
 
-                PyObject *ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
-                                                   get_op_size(ops[i]));
+                ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
+                                         get_op_size(ops[i]));
 
                 // The second item is the name of the variable
                 // func_obj[FUNC_OFF_VARS][v] = [ty, None]
@@ -797,41 +811,38 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                                PyLong_FromLong(values[i]));
                 Py_DECREF(tmp);
 
-                Py_DECREF(db);
                 Py_DECREF(mem);
+                Py_DECREF(db);
                 continue;
             }
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOi",
-                            insn, ops[i], values[i]);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
+                            insn, ops[i], values[i], false);
     }
 
-    if (len_ops == 1)
+    if (len_ops != 2 || get_op_type(ops[0]) != X86_OP_REG)
         goto end;
 
-    if (get_op_type(ops[0]) != X86_OP_REG)
-        goto end;
+    r1 = get_op_reg(ops[0]);
 
-    int r1 = get_op_reg(ops[0]);
-
-    if (!is_reg_supported(r1))
-        goto end;
-
-    if (id == X86_INS_MOV) {
-        if (err[1]) {
+    if (id == X86_INS_MOV || id == X86_INS_LEA) {
+        if (!is_reg_supported(r1))
+            goto end;
+        if (err[1] == true) {
             // Unset the first register which is the destination in x86
             *(regs->is_def[r1]) = false;
             goto end;
         }
         reg_mov(regs, r1, values[1]);
         regs->is_stack[r1] = is_stack[1];
-        goto end;
+        goto save_imm;
     }
 
-    if (err[0] || err[1]) {
-        // Unset the first register which is the destination in x86
-        *(regs->is_def[r1]) = false;
+    if (err[0] == true || err[1] == true) {
+        if (is_reg_supported(r1))
+            // Unset the first register which is the destination in x86
+            *(regs->is_def[r1]) = false;
         goto end;
     }
 
@@ -861,6 +872,30 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         default:
             // Can't simulate this instruction, so unset the value of the register
             *(regs->is_def[r1]) = false;
+            goto end;
+    }
+
+save_imm:
+    if (!regs->is_stack[r1]) {
+        long v = get_reg_value(regs, r1);
+        bool save;
+
+        if (id != X86_INS_MOV && id != X86_INS_LEA) {
+            PyObject *ret = PyObject_CallMethod(
+                    analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+            save = ret == Py_True;
+        } else {
+            save = false;
+        }
+
+        if (save) {
+            db = PyObject_GetAttrString(analyzer, "db");
+            tmp = PyObject_GetAttrString(db, "immediates");
+            PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
+                           PyLong_FromLong(v));
+            Py_DECREF(tmp);
+            Py_DECREF(db);
+        }
     }
 
 end:

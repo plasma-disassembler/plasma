@@ -36,7 +36,7 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.5
+VERSION = 2.6
 
 
 class Database():
@@ -56,7 +56,7 @@ class Database():
         self.user_previous_comments = {}
         self.internal_previous_comments = {}
         self.jmptables = {}
-        self.mips_gp = -1
+        self.mips_gp = 0
         self.modified = False
         self.loaded = False
         self.mem = None # see lib.memory
@@ -74,6 +74,8 @@ class Database():
         # For big data (arrays/strings) we save all addresses with an xrefs
         self.data_sub_xrefs = {} # data_address -> {addresses_with_xrefs: True}
         self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
+        self.immediates = {} # insn_ad -> immediate result
+
         self.raw_base = 0
         self.raw_type = None
         self.raw_is_big_endian = None
@@ -113,6 +115,7 @@ class Database():
             self.__load_history(data)
             self.__load_xrefs(data)
             self.__load_imports(data)
+            self.__load_immediates(data)
 
             if self.version <= 1.5:
                 self.__load_labels(data)
@@ -149,6 +152,7 @@ class Database():
             "raw_type": self.raw_type,
             "raw_is_big_endian": self.raw_is_big_endian,
             "imports": self.imports,
+            "immediates": self.immediates,
         }
 
         for j in self.jmptables.values():
@@ -218,6 +222,10 @@ class Database():
 
     def __load_history(self, data):
         self.history = data["history"]
+
+
+    def __load_immediates(self, data):
+        self.immediates = data["immediates"]
 
 
     def __load_xrefs(self, data):

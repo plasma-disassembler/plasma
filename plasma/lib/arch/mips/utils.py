@@ -140,40 +140,6 @@ def inst_symbol(i):
     return INST_SYMB.get(i.id, "UNKNOWN")
 
 
-class PseudoValue():
-    def __init__(self, val):
-        self.imm = val
-        self.reg = val
-
-
-class PseudoOp():
-    def __init__(self, type, value):
-        self.value = PseudoValue(value)
-        self.type = type
-
-
-class PseudoInst():
-    def __init__(self, address, mnemonic, op_str, real_inst_list):
-        self.real_inst_list = real_inst_list
-        self.mnemonic = mnemonic
-        self.id = -1
-        self.address = address
-        self.operands = []
-        self.size = 0
-        self.bytes = b""
-        self.op_str = op_str
-        for i in real_inst_list:
-            self.size += i.size
-            self.bytes += i.bytes
-        self.reg_name = real_inst_list[0].reg_name
-
-
-class NopInst():
-    def __init__(self):
-        self.id = -1
-        self.operands = []
-
-
 def guess_frame_size(analyzer, ad):
     regsctx = analyzer.arch_analyzer.new_regs_context()
     if regsctx is None:

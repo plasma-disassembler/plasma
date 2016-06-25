@@ -230,9 +230,18 @@ class Output(OutputAbs):
 
     def _sub_asm_inst(self, i, tab=0):
         modified = False
+        is_imm = i.address in self.gctx.db.immediates
 
         if self.gctx.capstone_string == 0:
-            if i.id in LDR_CHECK:
+            if is_imm:
+                self._section("!")
+                self._operand(i, 0)
+                self._add(" = ")
+                self._imm(self.gctx.db.immediates[i.address],
+                          self._dis.wordsize, False)
+                modified = True
+
+            elif i.id in LDR_CHECK:
                 self._operand(i, 0)
                 self._add(" = (")
                 self._type(LDR_TYPE[i.id])
@@ -265,14 +274,22 @@ class Output(OutputAbs):
                 modified = True
 
         if not modified:
-            self._add("%s " % i.mnemonic)
-            if len(i.operands) > 0:
+            if is_imm:
+                self._section("!")
+                self._add("mov ")
                 self._operand(i, 0)
-                k = 1
-                while k < len(i.operands):
-                    self._add(", ")
-                    self._operand(i, k)
-                    k += 1
+                self._add(", ")
+                self._imm(self.gctx.db.immediates[i.address],
+                          self._dis.wordsize, True)
+            else:
+                self._add("%s " % i.mnemonic)
+                if len(i.operands) > 0:
+                    self._operand(i, 0)
+                    k = 1
+                    while k < len(i.operands):
+                        self._add(", ")
+                        self._operand(i, k)
+                        k += 1
 
         if i.update_flags and i.id != ARM_INS_CMP and i.id != ARM_INS_TST:
             self._add(" ")

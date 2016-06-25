@@ -71,7 +71,7 @@ class Disassembler():
         self.instanciate_binary(filename, raw_type, raw_base, raw_big_endian)
 
         if self.binary.arch not in ("x86", "x64", "MIPS32", "MIPS64", "ARM"):
-            raise ExcArch(arch)
+            raise ExcArch(self.binary.arch)
 
         self.wordsize = word_size_lookup.get(self.binary.arch, None)
         self.binary.wordsize = self.wordsize

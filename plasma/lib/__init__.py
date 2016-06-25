@@ -270,7 +270,7 @@ class AddrContext():
                          self.gctx.db.symbols.get("_main", None)
 
             if self.entry is None:
-                error("symbol main or _main not found")
+                error("symbol main or _main not found, try with EP")
                 if self.gctx.interactive_mode:
                     return False
                 die()

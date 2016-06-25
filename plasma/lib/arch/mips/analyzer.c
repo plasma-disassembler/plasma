@@ -350,13 +350,17 @@ static inline int get_op_mem_disp(PyObject *op)
 
 static inline long get_op_imm(PyObject *op)
 {
+    if (WORDSIZE == 4)
+        return (int) py_aslong3(op, "value", "imm");
     return py_aslong3(op, "value", "imm");
 }
 
-static long get_reg_value(struct regs_context *regs, int r)
+static long get_reg_value(struct regs_context *regs, int r, bool use_real_gp)
 {
-    if (r == MIPS_REG_GP)
+    if (use_real_gp && r == MIPS_REG_GP)
         return GP;
+    if (WORDSIZE == 4)
+        return (int) regs->regs[r];
     return (long) regs->regs[r];
 }
 
@@ -364,7 +368,8 @@ static long get_reg_value(struct regs_context *regs, int r)
 // return true if there is an error (example: a register is invalid or
 // not defined)
 static bool get_op_value(struct regs_context *regs, PyObject *insn, 
-                         PyObject *op, long *value, bool *is_stack)
+                         PyObject *op, long *value, bool *is_stack,
+                         bool use_real_gp)
 {
     int r, base;
     long imm;
@@ -376,9 +381,11 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
 
         case MIPS_OP_REG:
             r = get_op_reg(op);
-            if (!is_reg_defined(regs, r))
+            if (use_real_gp && !GP && r == MIPS_REG_GP)
                 return true;
-            *value = get_reg_value(regs, r);
+            else if (!is_reg_defined(regs, r))
+                return true;
+            *value = get_reg_value(regs, r, use_real_gp);
             *is_stack = regs->is_stack[r];
             break;
 
@@ -389,12 +396,14 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
             base = get_op_mem_base(op);
             if (base) {
                 if (base == MIPS_REG_GP) {
+                    if (!GP)
+                        return true;
                     imm += GP;
                 }
                 else {
                     if (!is_reg_defined(regs, base))
                         return true;
-                    imm += get_reg_value(regs, base);
+                    imm += get_reg_value(regs, base, false);
                     *is_stack = regs->is_stack[base];
                 }
             }
@@ -420,6 +429,8 @@ static PyObject* reg_value(PyObject *self, PyObject *args)
     if (!is_reg_defined(regs, r))
         Py_RETURN_NONE;
 
+    if (WORDSIZE == 4)
+        return PyLong_FromLong((int) regs->regs[r]);
     return PyLong_FromLong(regs->regs[r]);
 }
 
@@ -430,6 +441,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
+    PyObject *db, *tmp, *mem, *ty;
 
     /* if True: stack variables will not be saved and analysis on immediates
      * will not be run. It will only simulate registers.
@@ -449,7 +461,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     int len_ops = PyList_Size(list_ops);
 
     // FIXME
-    if (len_ops <= 1)
+    if (len_ops <= 1 || len_ops > 3)
         goto end;
 
     PyObject *ops[3];
@@ -481,11 +493,13 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
     // The first operand is always a register and always the destination (except st* ?)
     int r1 = get_op_reg(ops[0]);
+    bool use_real_gp = r1 != MIPS_REG_GP;
     err[0] = !is_reg_supported(r1);
 
-    // Start to the second op !
+    // Start to the second operand !
     for (i = 1 ; i < len_ops ; i++) {
-        err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i]);
+        err[i] = get_op_value(regs, insn, ops[i], &values[i], &is_stack[i],
+                              use_real_gp);
 
         if (err[i] || only_simulate)
             continue;
@@ -500,11 +514,10 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE)) != -1) {
 
                 // ty = analyzer.db.mem.get_type_from_size(op_size)
-                PyObject *tmp;
-                PyObject *db = PyObject_GetAttrString(analyzer, "db");
-                PyObject *mem = PyObject_GetAttrString(db, "mem");
-                PyObject *ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
-                                                   get_op_mem_size(id));
+                db = PyObject_GetAttrString(analyzer, "db");
+                mem = PyObject_GetAttrString(db, "mem");
+                ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
+                                         get_op_mem_size(id));
 
                 // The second item is the name of the variable
                 // func_obj[FUNC_OFF_VARS][v] = [ty, None]
@@ -523,47 +536,46 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                                PyLong_FromLong((int) values[i]));
                 Py_DECREF(tmp);
 
-                Py_DECREF(db);
                 Py_DECREF(mem);
+                Py_DECREF(db);
                 continue;
             }
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOi",
-                            insn, ops[i], values[i]);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
+                            insn, ops[i], values[i], false);
     }
 
-    if (!is_reg_supported(r1))
+    // err[0] = !is_reg_supported(r1)
+
+    if (err[0])
         goto end;
 
     if (len_ops == 2) {
         if (id == MIPS_INS_MOVE) {
-            int r2 = get_op_reg(ops[1]);
+            if (!err[1]) {
+                reg_mov(regs, r1, values[1]);
+                regs->is_stack[r1] = is_stack[1];
+                goto save_imm;
+            }
+        }
 
-            if (!is_reg_defined(regs, r2))
-                goto end;
-
-            reg_mov(regs, r1, get_reg_value(regs, r2));
-            regs->is_stack[r1] = regs->is_stack[r2];
-            goto end;
+        else if (id == MIPS_INS_LUI) {
+            reg_mov(regs, r1, values[1] << 16);
+            regs->is_stack[r1] = false;
+            goto save_imm;
         }
 
         // Undefine the register if it's a load
-        if (is_load(id)) {
-            int r1 = get_op_reg(ops[0]);
-
-            if (!is_reg_supported(r1) || r1 == MIPS_REG_GP)
-                goto end;
-
+        else if (is_load(id)) {
             regs->is_def[r1] = false;
-            goto end;
         }
 
         // Do nothing for all others 2 operands instructions
         goto end;
     }
 
-    if (err[0] || err[1] || err[2]) {
+    if (err[1] || err[2]) {
         // Unset the first register which is the destination in MIPS
         regs->is_def[r1] = false;
         goto end;
@@ -600,6 +612,32 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         default:
             // Can't simulate this instruction, so unset the value of the register
             regs->is_def[r1] = false;
+            goto end;
+    }
+
+save_imm:
+    if (!regs->is_stack[r1]) {
+        long v = get_reg_value(regs, r1, use_real_gp);
+        bool save;
+
+        if (use_real_gp) {
+            PyObject *ret = PyObject_CallMethod(
+                    analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+            save = ret == Py_True;
+        }
+        else {
+            // r1 == GP
+            save = len_ops == 3;
+        }
+
+        if (save) {
+            db = PyObject_GetAttrString(analyzer, "db");
+            tmp = PyObject_GetAttrString(db, "immediates");
+            PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
+                           PyLong_FromLong(v));
+            Py_DECREF(tmp);
+            Py_DECREF(db);
+        }
     }
 
 end:

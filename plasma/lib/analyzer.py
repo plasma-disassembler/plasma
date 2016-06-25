@@ -248,7 +248,7 @@ class Analyzer(threading.Thread):
                                 not self.db.mem.is_overlapping(val):
                             self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
                             # Do an analysis on this value.
-                            if self.first_inst_are_code(val):
+                            if s.is_exec and self.first_inst_are_code(val):
                                 self.analyze_flow(
                                         val,
                                         entry_is_func=self.has_prolog(val),
@@ -305,23 +305,27 @@ class Analyzer(threading.Thread):
 
 
     # Do an analysis if the immediate is an address
-    def analyze_imm(self, i, op, imm):
-        if op.type != self.ARCH_UTILS.OP_MEM and \
+    def analyze_imm(self, i, op, imm, is_register):
+        if imm <= 1024:
+            return False
+
+        if not is_register and op.type != self.ARCH_UTILS.OP_MEM and \
                 op.type != self.ARCH_UTILS.OP_IMM:
-            return
+            return False
+
 
         # imm must be an address
         s = self.dis.binary.get_section(imm)
         if s is None or s.start == 0:
-            return
+            return False
 
         self.api.add_xref(i.address, imm)
         ad = imm
 
         # is_overlapping is sufficient but exists is faster
-        # and should be check first.
+        # and should be checked first.
         if self.db.mem.exists(ad) or self.db.mem.is_overlapping(ad):
-            return
+            return True
 
         if not s.is_bss:
             sz = self.dis.wordsize
@@ -331,14 +335,14 @@ class Analyzer(threading.Thread):
             if deref is not None and self.dis.binary.is_address(deref):
                 ty = self.db.mem.get_type_from_size(sz)
                 self.api.set_offset(ad, ty, async_analysis=False)
-                return
+                return True
 
             # Check if this is an address to a string
             if ad not in self.db.imports:
                 sz = self.dis.binary.is_string(ad)
                 if sz != 0:
                     self.db.mem.add(ad, sz, MEM_ASCII)
-                    return
+                    return True
 
         sz = op.size if self.dis.is_x86 else self.dis.wordsize
         if op.type == self.ARCH_UTILS.OP_MEM:
@@ -351,12 +355,14 @@ class Analyzer(threading.Thread):
         if ty == MEM_UNK:
             # Do an analysis on this value, if this is not code
             # nothing will be done.
-            if self.first_inst_are_code(ad):
+            if s.is_exec and self.first_inst_are_code(ad):
                 self.analyze_flow(
                         ad,
                         entry_is_func=self.has_prolog(ad),
                         force=True,
                         add_if_code=True)
+
+        return True
 
 
     # Check if the five first instructions can be disassembled.

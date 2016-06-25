@@ -407,7 +407,8 @@ class Console():
                 None,
                 [
                 "ADDR",
-                "Set the register $gp to a fixed value."
+                "Set the register $gp to a fixed value. Note that it will",
+                "erase all defined memory."
                 ]
             ),
 
@@ -458,7 +459,7 @@ class Console():
 
         self.gctx.dis.binary.api = self.api
 
-        if gctx.dis.is_mips and gctx.dis.mips_gp == -1:
+        if gctx.dis.is_mips and not gctx.dis.mips_gp:
             print("please run first these commands :")
             print("mips_set_gp 0xADDRESS")
             print("push_analyze_symbols")
@@ -808,6 +809,10 @@ class Console():
         try:
             self.gctx.dis.mips_gp = int(args[1], 16)
             self.db.mips_gp = self.gctx.dis.mips_gp
+            self.db.mem.mm.clear()
+            self.db.xrefs.clear()
+            self.db.data_sub_xrefs.clear()
+            self.db.immediates.clear()
         except:
             error("bad address")
         self.db.modified = True

@@ -378,6 +378,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
+    PyObject *db, *tmp, *mem, *ty;
 
     /* if True: stack variables will not be saved and analysis on immediates
      * will not be run. It will only simulate registers.
@@ -442,11 +443,10 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE)) != -1) {
 
                 // ty = analyzer.db.mem.get_type_from_size(op_size)
-                PyObject *tmp;
-                PyObject *db = PyObject_GetAttrString(analyzer, "db");
-                PyObject *mem = PyObject_GetAttrString(db, "mem");
-                PyObject *ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
-                                                   get_op_mem_size(id));
+                db = PyObject_GetAttrString(analyzer, "db");
+                mem = PyObject_GetAttrString(db, "mem");
+                ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
+                                         get_op_mem_size(id));
 
                 // The second item is the name of the variable
                 // func_obj[FUNC_OFF_VARS][v] = [ty, None]
@@ -465,48 +465,42 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                                PyLong_FromLong((int) values[i]));
                 Py_DECREF(tmp);
 
-                Py_DECREF(db);
                 Py_DECREF(mem);
+                Py_DECREF(db);
                 continue;
             }
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOi",
-                            insn, ops[i], values[i]);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
+                            insn, ops[i], values[i], false);
     }
 
+    // err[0] = !is_reg_supported(r1)
+
+    if (err[0])
+        goto end;
 
     if (len_ops == 2) {
         if (id == ARM_INS_MOV || id == ARM_INS_MVN) {
-            int r2 = get_op_reg(ops[1]);
-
-            if (!is_reg_defined(regs, r2))
-                goto end;
-
-            long v = get_reg_value(regs, r2);
-            if (id == ARM_INS_MVN)
-                v = ~v;
-            reg_mov(regs, r1, v);
-            regs->is_stack[r1] = regs->is_stack[r2];
-            goto end;
+            if (!err[1]) {
+                if (id == ARM_INS_MVN)
+                    values[1] = ~values[1];
+                reg_mov(regs, r1, values[1]);
+                regs->is_stack[r1] = is_stack[1];
+                goto save_imm;
+            }
         }
 
         // Undefine the register if it's a load
         if (is_load(id)) {
-            int r1 = get_op_reg(ops[0]);
-
-            if (!is_reg_supported(r1))
-                goto end;
-
             regs->is_def[r1] = false;
-            goto end;
         }
 
         // Do nothing for all others 2 operands instructions
         goto end;
     }
 
-    if (err[0] || err[1] || err[2]) {
+    if (err[1] || err[2]) {
         // Unset the first register which is the destination in ARM
         regs->is_def[r1] = false;
         goto end;
@@ -530,6 +524,24 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         default:
             // Can't simulate this instruction, so unset the value of the register
             regs->is_def[r1] = false;
+            goto end;
+    }
+
+save_imm:
+    if (!regs->is_stack[r1]) {
+        long v = get_reg_value(regs, r1);
+
+        PyObject *ret = PyObject_CallMethod(
+                analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+
+        if (ret == Py_True) {
+            db = PyObject_GetAttrString(analyzer, "db");
+            tmp = PyObject_GetAttrString(db, "immediates");
+            PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
+                           PyLong_FromLong(v));
+            Py_DECREF(tmp);
+            Py_DECREF(db);
+        }
     }
 
 end:

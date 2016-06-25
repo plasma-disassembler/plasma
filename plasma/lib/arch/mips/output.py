@@ -30,7 +30,7 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
-    is_uncond_jump, cond_symbol, PseudoInst, NopInst)
+    is_uncond_jump, cond_symbol)
 
 
 # ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
@@ -93,7 +93,7 @@ class Output(OutputAbs):
                 self._variable(self.get_var_name(func_addr, off))
                 return
 
-            if mm.base == MIPS_REG_GP and self._dis.mips_gp != -1:
+            if mm.base == MIPS_REG_GP and self._dis.mips_gp:
                 ad = self._dis.mips_gp + mm.disp
 
                 if self.deref_if_offset(ad):
@@ -144,20 +144,16 @@ class Output(OutputAbs):
         # TODO: fusion for MIPS
 
 
-    def _asm_inst(self, i, tab=0, prefix=""):
-        if isinstance(i, NopInst):
-            return
-        OutputAbs._asm_inst(self, i, tab, prefix)
-
-
     def _sub_asm_inst(self, i, tab=0):
+        is_imm = i.address in self.gctx.db.immediates
+
         if self.gctx.capstone_string == 0:
-            # Pseudo instructions
-            if i.id == -1:
-                if i.mnemonic == "li":
-                    self._operand(i, 0)
-                    self._add(" = ")
-                    self._operand(i, 1)
+            if is_imm:
+                self._section("!")
+                self._operand(i, 0)
+                self._add(" = ")
+                self._imm(self.gctx.db.immediates[i.address],
+                          self._dis.wordsize, False)
                 return
 
             if i.id in LD_CHECK:
@@ -204,6 +200,15 @@ class Output(OutputAbs):
                     self._operand(i, 2)
 
                 return
+
+        if is_imm:
+            self._section("!")
+            self._add("li ")
+            self._operand(i, 0)
+            self._add(", ")
+            self._imm(self.gctx.db.immediates[i.address],
+                      self._dis.wordsize, True)
+            return
 
         self._add("%s " % i.mnemonic)
         if len(i.operands) > 0:
