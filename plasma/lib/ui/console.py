@@ -468,6 +468,10 @@ class Console():
             if gctx.autoanalyzer and len(self.db.mem) == 0:
                 self.push_analyze_symbols(None)
 
+        print("new feature: an instruction preceded by ! means that the analyzer")
+        print("has computed an immediate value. In the visual mode, use the shortcut")
+        print("I to show origin instructions.")
+
         self.comp = Completer(self)
         self.comp.set_history(self.db.history)
 
