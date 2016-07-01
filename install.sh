@@ -45,18 +45,17 @@ if [ "$1" != "--update" ]; then
     popd > /dev/null
 
     # Waiting that the package pip pefile contains any errors
-    # https://github.com/erocarrera/pefile/issues/105
     cat requirements.txt | grep -v pefile >req
     sudo -H pip3 install -r req 
     rm req
     sudo -H pip3 install future
-    git clone -b fix-issue-105 --depth 1 https://github.com/AndCycle/pefile
+    git clone -b fix-issue-105 --depth 1 https://github.com/erocarrera/pefile
     cd pefile
     python3 setup.py install
     cd ..
 fi
 
-python3 setup.py build_ext --inplace
+# python3 setup.py build_ext --inplace
 
 # Or create an alias to run_plasma.py
-sudo -H python3 setup.py install
+# sudo -H python3 setup.py install
