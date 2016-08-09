@@ -342,7 +342,9 @@ class ELF(Binary):
         if ad == 0:
             return
 
-        name = rel.symbol.name.decode()
+        name = rel.symbol.name
+        if isinstance(name, bytes):
+            name = name.decode()
 
         if name in self.symbols:
             name = self.rename_sym(name)
@@ -436,7 +438,9 @@ class ELF(Binary):
 
             ad = sy.entry.st_value
             if ad != 0 and sy.name != b"":
-                name = sy.name.decode()
+                name = sy.name
+                if isinstance(name, bytes):
+                    name = name.decode()
 
                 if self.is_address(ad):
                     if name in self.symbols:
