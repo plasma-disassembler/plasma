@@ -131,6 +131,7 @@ class PE(Binary):
                 self.symbols[name] = imp.address
 
                 # TODO: always a function ?
+                # set the index, but the object is currently None
                 self.db.functions[imp.address] = None
 
 

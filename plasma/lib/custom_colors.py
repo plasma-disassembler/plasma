@@ -27,6 +27,7 @@ COLOR_DATA           = COLOR(230, False)
 COLOR_STRING         = COLOR(154, False)
 COLOR_OFFSET_NOT_FOUND = COLOR(196, False)
 COLOR_PUSHPOP        = COLOR(171, False)
+COLOR_ERROR          = COLOR(161, True)
 
 # This couple will redefine the color 1
 COLOR_SEARCH_BG = 66

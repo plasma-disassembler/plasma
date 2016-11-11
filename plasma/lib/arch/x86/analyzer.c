@@ -43,9 +43,11 @@ struct regs_context {
     PyObject_HEAD
     long **regs; // each reg point inside the reg_values array
     bool **is_def; // same thing for is_def_values
+    bool **is_set;
     bool *is_stack;
     long *reg_values;
     bool *is_def_values;
+    bool *is_set_values;
 };
 
 
@@ -148,9 +150,12 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     r->is_stack = (bool*) malloc(NB_REGS * sizeof(bool));
     r->is_def = (bool**) malloc(NB_REGS * sizeof(bool*));
     r->is_def_values = (bool*) malloc(NB_REGS * sizeof(bool));
+    r->is_set = (bool**) malloc(NB_REGS * sizeof(bool*));
+    r->is_set_values = (bool*) malloc(NB_REGS * sizeof(bool));
 
     if (r == NULL || r->regs == NULL || r->reg_values == NULL ||
-        r->is_stack == NULL || r->is_def == NULL || r->is_def_values == NULL) {
+        r->is_stack == NULL || r->is_def == NULL || r->is_def_values == NULL ||
+        r->is_set == NULL || r->is_set_values == NULL) {
         // fatal error, but don't quit to let the user save the database
         fprintf(stderr, "error: no more memory !!\n");
         Py_RETURN_NONE;
@@ -159,7 +164,9 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     for (i = 0 ; i <= LAST_REG ; i++) {
         r->is_stack[i] = false;
         r->is_def_values[i] = false;
+        r->is_set_values[i] = false;
         r->is_def[i] = &r->is_def_values[i];
+        r->is_set[i] = &r->is_set_values[i];
         r->regs[i] = &r->reg_values[i];
     }
 
@@ -231,8 +238,43 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     r->is_def[X86_REG_EBP] = &r->is_def_values[X86_REG_RBP];
     r->is_def[X86_REG_ESP] = &r->is_def_values[X86_REG_RSP];
 
+    r->is_set[X86_REG_AL] = &r->is_set_values[X86_REG_RAX];
+    r->is_set[X86_REG_AH] = &r->is_set_values[X86_REG_RAX];
+    r->is_set[X86_REG_BL] = &r->is_set_values[X86_REG_RBX];
+    r->is_set[X86_REG_BH] = &r->is_set_values[X86_REG_RBX];
+    r->is_set[X86_REG_CL] = &r->is_set_values[X86_REG_RCX];
+    r->is_set[X86_REG_CH] = &r->is_set_values[X86_REG_RCX];
+    r->is_set[X86_REG_DL] = &r->is_set_values[X86_REG_RDX];
+    r->is_set[X86_REG_DH] = &r->is_set_values[X86_REG_RDX];
+
+    r->is_set[X86_REG_DIL] = &r->is_set_values[X86_REG_RDI];
+    r->is_set[X86_REG_SIL] = &r->is_set_values[X86_REG_RSI];
+    r->is_set[X86_REG_SPL] = &r->is_set_values[X86_REG_RSP];
+    r->is_set[X86_REG_BPL] = &r->is_set_values[X86_REG_RBP];
+
+    r->is_set[X86_REG_AX] = &r->is_set_values[X86_REG_RAX];
+    r->is_set[X86_REG_BX] = &r->is_set_values[X86_REG_RBX];
+    r->is_set[X86_REG_CX] = &r->is_set_values[X86_REG_RCX];
+    r->is_set[X86_REG_DX] = &r->is_set_values[X86_REG_RDX];
+    r->is_set[X86_REG_DI] = &r->is_set_values[X86_REG_RDI];
+    r->is_set[X86_REG_SI] = &r->is_set_values[X86_REG_RSI];
+    r->is_set[X86_REG_IP] = &r->is_set_values[X86_REG_RIP];
+    r->is_set[X86_REG_BP] = &r->is_set_values[X86_REG_RBP];
+    r->is_set[X86_REG_SP] = &r->is_set_values[X86_REG_RSP];
+
+    r->is_set[X86_REG_EAX] = &r->is_set_values[X86_REG_RAX];
+    r->is_set[X86_REG_EBX] = &r->is_set_values[X86_REG_RBX];
+    r->is_set[X86_REG_ECX] = &r->is_set_values[X86_REG_RCX];
+    r->is_set[X86_REG_EDX] = &r->is_set_values[X86_REG_RDX];
+    r->is_set[X86_REG_EDI] = &r->is_set_values[X86_REG_RDI];
+    r->is_set[X86_REG_ESI] = &r->is_set_values[X86_REG_RSI];
+    r->is_set[X86_REG_EIP] = &r->is_set_values[X86_REG_RIP];
+    r->is_set[X86_REG_EBP] = &r->is_set_values[X86_REG_RBP];
+    r->is_set[X86_REG_ESP] = &r->is_set_values[X86_REG_RSP];
+
     *(r->regs[X86_REG_RSP]) = 0;
     *(r->is_def[X86_REG_RSP]) = true;
+    *(r->is_set[X86_REG_RSP]) = true;
     r->is_stack[X86_REG_RSP] = true;
     r->is_stack[X86_REG_ESP] = true;
     r->is_stack[X86_REG_SP] = true;
@@ -253,6 +295,7 @@ static PyObject *clone_regs_context(PyObject *self, PyObject *args)
     for (i = 0 ; i <= LAST_REG ; i++) {
         new->reg_values[i] = regs->reg_values[i];
         new->is_def_values[i] = regs->is_def_values[i];
+        new->is_set_values[i] = regs->is_set_values[i];
         new->is_stack[i] = regs->is_stack[i];
     }
 
@@ -265,6 +308,8 @@ static void regs_context_dealloc(PyObject *self)
     free(r->regs);
     free(r->is_def);
     free(r->is_def_values);
+    free(r->is_set);
+    free(r->is_set_values);
     free(r->is_stack);
     free(r->reg_values);
 }
@@ -279,18 +324,37 @@ static inline int is_reg_defined(struct regs_context *self, int r)
     return is_reg_supported(r) && *(self->is_def[r]);
 }
 
+static inline int is_reg_setted(struct regs_context *self, int r)
+{
+    return is_reg_supported(r) && *(self->is_set[r]);
+}
+
 static PyObject* reg_value(PyObject *self, PyObject *args)
 {
     struct regs_context *regs;
     int r;
 
-    if (!PyArg_ParseTuple(args, "OB", &regs, &r))
+    if (!PyArg_ParseTuple(args, "Oi", &regs, &r))
         Py_RETURN_NONE;
 
     if (!is_reg_defined(regs, r))
         Py_RETURN_NONE;
 
     return PyLong_FromLong(*(regs->regs[r]));
+}
+
+static PyObject* reg_is_setted(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    int r;
+
+    if (!PyArg_ParseTuple(args, "Oi", &regs, &r))
+        Py_RETURN_NONE;
+
+    if (is_reg_setted(regs, r))
+        Py_RETURN_TRUE;
+
+    Py_RETURN_FALSE;
 }
 
 static void reg_mov(struct regs_context *self, int r, long v)
@@ -715,6 +779,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         if (!is_reg_supported(r1))
             goto end;
 
+        *(regs->is_set[r1]) = true;
+
         if (r1 == get_op_reg(ops[1])) {
             reg_mov(regs, r1, 0);
             goto save_imm;
@@ -732,8 +798,10 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             reg_add(regs, X86_REG_RSP, get_op_size(ops[0]));
             if (get_op_type(ops[0]) == X86_OP_REG) {
                 r1 = get_op_reg(ops[0]);
-                if (is_reg_supported(r1))
+                if (is_reg_supported(r1)) {
                     *(regs->is_def[r1]) = false;
+                    *(regs->is_set[r1]) = true;
+                }
             }
             goto end;
 
@@ -829,6 +897,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     if (id == X86_INS_MOV || id == X86_INS_LEA) {
         if (!is_reg_supported(r1))
             goto end;
+
+        *(regs->is_set[r1]) = true;
+
         if (err[1] == true) {
             // Unset the first register which is the destination in x86
             *(regs->is_def[r1]) = false;
@@ -847,6 +918,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     }
 
     regs->is_stack[r1] = is_stack[0] | is_stack[1];
+
+    *(regs->is_set[r1]) = true;
 
     switch (id) {
         case X86_INS_ADD:
@@ -909,6 +982,7 @@ static PyMethodDef mod_methods[] = {
     { "clone_regs_context", clone_regs_context, METH_VARARGS },
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
+    { "reg_is_setted", reg_is_setted, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
     { "set_sp", set_sp, METH_VARARGS },
     { "set_wordsize", set_wordsize, METH_VARARGS },

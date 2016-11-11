@@ -99,6 +99,11 @@ class OutputAbs():
         self.lines[-1].append(string)
         self.curr_index += len(string)
 
+    def _error(self, string):
+        self.token_lines[-1].append((string, COLOR_ERROR.val, COLOR_ERROR.bold))
+        self.lines[-1].append(string)
+        self.curr_index += len(string)
+
     def _address(self, addr, print_colon=True, normal_color=False, notprefix=False):
         if self.gctx.debugsp:
             from plasma.lib.analyzer import ALL_SP
@@ -283,8 +288,8 @@ class OutputAbs():
                 self._comment("  ")
             if flags & FUNC_FLAG_NORETURN:
                 self._comment(" __noreturn__")
-            if flags & FUNC_FLAG_CDECL:
-                self._comment(" __cdecl__")
+            elif flags & FUNC_FLAG_STDCALL:
+                self._comment(" __stdcall__")
 
         # If it's a label
         if print_colon and ty == MEM_ARRAY:
@@ -310,6 +315,11 @@ class OutputAbs():
             self._new_line()
 
             if self._dis.mem.is_func(ad):
+                if self._dis.functions[ad][FUNC_FLAGS] & \
+                        FUNC_FLAG_ERR_STACK_ANALYSIS:
+                    self._error("stack analysis error, frame size incorrect ?")
+                    self._new_line()
+
                 frame_size = self._dis.functions[ad][FUNC_FRAME_SIZE]
                 if frame_size != 0:
                     self._new_line()
@@ -630,6 +640,12 @@ class OutputAbs():
         self._new_line()
 
         if self._dis.mem.is_func(entry):
+            self._tabs(1)
+            if self._dis.functions[entry][FUNC_FLAGS] & \
+                    FUNC_FLAG_ERR_STACK_ANALYSIS:
+                self._error("stack analysis error, frame size incorrect ?")
+                self._new_line()
+
             frame_size = self._dis.functions[entry][FUNC_FRAME_SIZE]
             if frame_size != 0:
                 self._new_line()

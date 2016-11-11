@@ -43,7 +43,7 @@ int        var_8     = -0x8
 0x80480bb: call __pusha_func
 0x80480c0: eax = var_8
 0x80480c3: eax = var_8
-0x80480c7: pop ebp
+0x80480c7: leave
 0x80480c8: ret
 ; end function main
 

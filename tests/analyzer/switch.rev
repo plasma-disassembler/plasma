@@ -5,6 +5,8 @@
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 _start:   __noreturn__
+
+frame_size = 8
 0x400410: ebp = 0
 0x400412: r9 = rdx
 0x400415: pop rsi
@@ -29,7 +31,9 @@ _start:   __noreturn__
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-deregister_tm_clones:   __cdecl__
+deregister_tm_clones:
+
+frame_size = 8
 0x400440: eax = unk_6009df
 0x400445: push rbp
 0x400446: rax -= __TMC_END__

@@ -1,59 +1,88 @@
 ; ---------------------------------------------------------------------
-.text  0x4000d4 -> 0x40018c
+.text  0x4000d4 -> 0x4001c2
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-__stdcall:
+__stdcall:   __stdcall__
+
+frame_size = 8
 long int   var_4     = -0x4
 
 0x4000d4: push rbp
 0x4000d5: rbp = rsp
 0x4000d8: rax = var_4
-0x4000dc: pop rbp
-0x4000dd: pop rax
-0x4000de: pop rax
-0x4000df: pop rax
-0x4000e0: ret
+0x4000dc: leave
+0x4000dd: ret 0x18
 ; end function __stdcall
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-__cdecl:   __cdecl__
-0x4000e1: push rbp
-0x4000e2: rbp = rsp
-0x4000e5: pop rbp
-0x4000e6: ret
+__cdecl:
+0x4000e0: push rbp
+0x4000e1: rbp = rsp
+0x4000e4: pop rbp
+0x4000e5: ret
 ; end function __cdecl
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-__jmp_func:
-0x4000e7: jmp __stdcall
+__jmp_func:   __stdcall__
+
+frame_size = 8
+0x4000e6: jmp __stdcall
 ; end function __jmp_func
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 __noreturn:   __noreturn__
-0x4000e9: jmp __noreturn
+
+frame_size = 8
+0x4000e8: jmp __noreturn
 ; end function __noreturn
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
-__leave_func:   __cdecl__
-0x4000eb: push rbp
-0x4000ec: rbp = rsp
+__leave_func:
+
+frame_size = 8
+0x4000ea: push rbp
+0x4000eb: rbp = rsp
+0x4000ee: nop
 0x4000ef: nop
 0x4000f0: nop
 0x4000f1: nop
-0x4000f2: nop
-0x4000f3: leave
-0x4000f4: ret
+0x4000f2: leave
+0x4000f3: ret
 ; end function __leave_func
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+error_stack_analysis_1:   __stdcall__
+stack analysis error, frame size incorrect ?
+0x4000f4: call __stdcall
+0x4000f9: ret 8
+; end function error_stack_analysis_1
+
+; ---------------------------------------------------------------------
+; SUBROUTINE
+; ---------------------------------------------------------------------
+error_stack_analysis_2:  
+stack analysis error, frame size incorrect ?
+
+frame_size = 24
+0x4000fc: push rax
+0x4000fd: push rax
+0x4000fe: push rax
+0x4000ff: call __cdecl
+0x400104: rsp += 2
+0x400108: ret
+; end function error_stack_analysis_2
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
@@ -61,20 +90,20 @@ __leave_func:   __cdecl__
 test_frame_size:
 
 frame_size = 40
-0x4000f5: push rbp
-0x4000f6: rbp = rsp
-0x4000f9: rax = 0
-0x4000fc: rax += 32
-0x400100: rsp -= rax
-0x400103: leave
-0x400104: ret
+0x400109: push rbp
+0x40010a: rbp = rsp
+0x40010d: rax = 0
+0x400110: rax += 32
+0x400114: rsp -= rax
+0x400117: leave
+0x400118: ret
 ; end function test_frame_size
 
 _start:
-0x400105: call main
-0x40010a: call __noreturn
+0x400119: call main
+0x40011e: call __noreturn
 
-0x40010f: .db c3
+0x400123: .db c3
 
 ; ---------------------------------------------------------------------
 ; SUBROUTINE
@@ -84,46 +113,54 @@ main:
 frame_size = 24
 long int   var_c     = -0xc
 
-0x400110: push rbp
-0x400111: rbp = rsp
-0x400114: rsp -= 16
-0x400118: rax = var_c
-0x40011c: rax = var_c
-0x400121: push rax
-0x400122: push rbx
-0x400123: push rcx
-0x400124: call __stdcall
-0x400129: rax = var_c
-0x40012d: rax = var_c
-0x400132: push rax
-0x400133: push rbx
-0x400134: push rcx
-0x400135: call __cdecl
-0x40013a: rsp += 24
-0x40013e: rax = var_c
-0x400142: rax = var_c
-0x400147: push rax
-0x400148: push rbx
-0x400149: push rcx
-0x40014a: call __jmp_func
-0x40014f: rax = var_c
-0x400153: rax = var_c
-0x400158: push rax
-0x400159: push rbx
-0x40015a: push rcx
-0x40015b: call __leave_func
-0x400160: rsp += 24
-0x400164: rax = var_c
-0x400168: rax = var_c
-0x40016d: call test_frame_size
-0x400172: rax = var_c
-0x400176: rax = var_c
-0x40017b: push rax
-0x40017c: call __cdecl
-0x400181: pop rax
-0x400182: rax = var_c
-0x400186: rax = var_c
-0x40018b: leave
-0x40018c: ret
+0x400124: push rbp
+0x400125: rbp = rsp
+0x400128: rsp -= 16
+0x40012c: rax = var_c
+0x400130: rax = var_c
+0x400135: push rax
+0x400136: push rbx
+0x400137: push rcx
+0x400138: call __stdcall
+0x40013d: rax = var_c
+0x400141: rax = var_c
+0x400146: push rax
+0x400147: call error_stack_analysis_1
+0x40014c: rax = var_c
+0x400150: rax = var_c
+0x400155: call error_stack_analysis_2
+0x40015a: rax = var_c
+0x40015e: rax = var_c
+0x400163: push rax
+0x400164: push rbx
+0x400165: push rcx
+0x400166: call __cdecl
+0x40016b: rax = var_c
+0x400170: rsp += 24
+0x400174: rax = var_c
+0x400178: rax = var_c
+0x40017d: push rax
+0x40017e: push rbx
+0x40017f: push rcx
+0x400180: call __jmp_func
+0x400185: rax = var_c
+0x400189: rax = var_c
+0x40018e: push rax
+0x40018f: push rbx
+0x400190: push rcx
+0x400191: call __leave_func
+0x400196: rsp += 24
+0x40019a: rax = var_c
+0x40019e: rax = var_c
+0x4001a3: call test_frame_size
+0x4001a8: rax = var_c
+0x4001ac: rax = var_c
+0x4001b1: push rax
+0x4001b2: call __cdecl
+0x4001b7: pop rax
+0x4001b8: rax = var_c
+0x4001bc: rax = var_c
+0x4001c1: leave
+0x4001c2: ret
 ; end function main
 

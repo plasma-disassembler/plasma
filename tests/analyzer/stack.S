@@ -20,11 +20,8 @@ __stdcall:
 	push rbp
 	mov rbp, rsp
     mov rax, [rbp + 4]
-    pop rbp
-    pop rax
-    pop rax
-    pop rax
-    ret
+    leave
+    ret 3 * 8
 
 __cdecl:
 	push rbp
@@ -47,6 +44,20 @@ __leave_func:
     nop
     leave
     ret
+
+error_stack_analysis_1:
+    call __stdcall
+    ret 8
+
+
+error_stack_analysis_2:
+    push rax
+    push rax
+    push rax
+    call __cdecl
+    add rsp, 2
+    ret
+    
 
 test_frame_size:
 	push rbp
@@ -78,10 +89,20 @@ main:
 
     ACCESS_VARS
 
+    push rax
+    call error_stack_analysis_1
+
+    ACCESS_VARS
+
+    call error_stack_analysis_2
+
+    ACCESS_VARS
+
 	push rax
 	push rbx
 	push rcx
 	call __cdecl
+    mov rax, [rsp - 4 + 16 + 3 * 8]
 	add rsp, 8*3
 
     ACCESS_VARS

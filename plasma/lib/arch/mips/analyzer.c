@@ -49,6 +49,7 @@ struct regs_context {
     long *regs;
     bool *is_stack;
     bool *is_def;
+    bool *is_set;
 };
 
 static PyTypeObject regs_context_T = {
@@ -95,6 +96,33 @@ static inline bool is_load(int insn_id)
     return false;
 }
 
+static inline bool is_store(int insn_id)
+{
+    switch (insn_id) {
+    case MIPS_INS_SB:
+    case MIPS_INS_SH:
+    case MIPS_INS_SW:
+    case MIPS_INS_SWC1:
+    case MIPS_INS_SWC2:
+    case MIPS_INS_SWC3:
+    case MIPS_INS_SWL:
+    case MIPS_INS_SWR:
+    case MIPS_INS_SWXC1:
+    case MIPS_INS_SC:
+    case MIPS_INS_SD:
+    case MIPS_INS_SDC1:
+    case MIPS_INS_SDC2:
+    case MIPS_INS_SDC3:
+    case MIPS_INS_SDL:
+    case MIPS_INS_SDR:
+    case MIPS_INS_SDXC1:
+    case MIPS_INS_SUXC1:
+    case MIPS_INS_SCD:
+        return true;
+    }
+    return false;
+}
+
 static inline long py_aslong2(PyObject *obj, const char *name)
 {
     PyObject *tmp = PyObject_GetAttrString(obj, name);
@@ -122,8 +150,10 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     r->regs = (long*) malloc(NB_REGS * sizeof(long));
     r->is_stack = (bool*) malloc(NB_REGS * sizeof(bool));
     r->is_def = (bool*) malloc(NB_REGS * sizeof(bool));
+    r->is_set = (bool*) malloc(NB_REGS * sizeof(bool));
 
-    if (r == NULL || r->regs == NULL || r->is_stack == NULL || r->is_def == NULL) {
+    if (r == NULL || r->regs == NULL || r->is_stack == NULL ||
+        r->is_def == NULL || r->is_set == NULL) {
         // fatal error, but don't quit to let the user save the database
         fprintf(stderr, "error: no more memory !!\n");
         Py_RETURN_NONE;
@@ -132,13 +162,16 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     for (i = 0 ; i <= LAST_REG ; i++) {
         r->is_stack[i] = false;
         r->is_def[i] = false;
+        r->is_set[i] = false;
     }
 
     r->regs[MIPS_REG_ZERO] = 0;
     r->is_def[MIPS_REG_ZERO] = true;
+    r->is_set[MIPS_REG_ZERO] = true;
 
     r->regs[MIPS_REG_SP] = 0;
     r->is_def[MIPS_REG_SP] = true;
+    r->is_set[MIPS_REG_SP] = true;
     r->is_stack[MIPS_REG_SP] = true;
 
     return (PyObject*) r;
@@ -157,6 +190,7 @@ static PyObject *clone_regs_context(PyObject *self, PyObject *args)
     for (i = 0 ; i <= LAST_REG ; i++) {
         new->regs[i] = regs->regs[i];
         new->is_def[i] = regs->is_def[i];
+        new->is_set[i] = regs->is_set[i];
         new->is_stack[i] = regs->is_stack[i];
     }
 
@@ -168,6 +202,7 @@ static void regs_context_dealloc(PyObject *self)
     struct regs_context *r = (struct regs_context*) self;
     free(r->regs);
     free(r->is_def);
+    free(r->is_set);
     free(r->is_stack);
 }
 
@@ -179,6 +214,11 @@ static inline int is_reg_supported(int r)
 static inline int is_reg_defined(struct regs_context *self, int r)
 {
     return is_reg_supported(r) && self->is_def[r];
+}
+
+static inline int is_reg_setted(struct regs_context *self, int r)
+{
+    return is_reg_supported(r) && self->is_set[r];
 }
 
 static inline void reg_mov(struct regs_context *self, int r, long v)
@@ -423,7 +463,7 @@ static PyObject* reg_value(PyObject *self, PyObject *args)
     struct regs_context *regs;
     int r;
 
-    if (!PyArg_ParseTuple(args, "OB", &regs, &r))
+    if (!PyArg_ParseTuple(args, "Oi", &regs, &r))
         Py_RETURN_NONE;
 
     if (!is_reg_defined(regs, r))
@@ -432,6 +472,20 @@ static PyObject* reg_value(PyObject *self, PyObject *args)
     if (WORDSIZE == 4)
         return PyLong_FromLong((int) regs->regs[r]);
     return PyLong_FromLong(regs->regs[r]);
+}
+
+static PyObject* reg_is_setted(PyObject *self, PyObject *args)
+{
+    struct regs_context *regs;
+    int r;
+
+    if (!PyArg_ParseTuple(args, "Oi", &regs, &r))
+        Py_RETURN_NONE;
+
+    if (is_reg_setted(regs, r))
+        Py_RETURN_TRUE;
+
+    Py_RETURN_FALSE;
 }
 
 static PyObject* analyze_operands(PyObject *self, PyObject *args)
@@ -553,6 +607,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
     if (len_ops == 2) {
         if (id == MIPS_INS_MOVE) {
+            regs->is_set[r1] = true;
             if (!err[1]) {
                 reg_mov(regs, r1, values[1]);
                 regs->is_stack[r1] = is_stack[1];
@@ -561,6 +616,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         }
 
         else if (id == MIPS_INS_LUI) {
+            regs->is_set[r1] = true;
             reg_mov(regs, r1, values[1] << 16);
             regs->is_stack[r1] = false;
             goto save_imm;
@@ -568,6 +624,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
         // Undefine the register if it's a load
         else if (is_load(id)) {
+            regs->is_set[r1] = true;
             regs->is_def[r1] = false;
         }
 
@@ -582,6 +639,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     }
 
     regs->is_stack[r1] = is_stack[1] | is_stack[2];
+
+    if (only_simulate && !is_store(id))
+        regs->is_set[r1] = true;
 
     switch (id) {
         case MIPS_INS_ADDIU:
@@ -651,6 +711,7 @@ static PyMethodDef mod_methods[] = {
     { "clone_regs_context", clone_regs_context, METH_VARARGS },
     { "analyze_operands", analyze_operands, METH_VARARGS },
     { "reg_value", reg_value, METH_VARARGS },
+    { "reg_is_setted", reg_is_setted, METH_VARARGS },
     { "get_sp", get_sp, METH_VARARGS },
     { "set_sp", set_sp, METH_VARARGS },
     { "set_wordsize", set_wordsize, METH_VARARGS },

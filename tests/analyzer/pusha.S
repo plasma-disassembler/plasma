@@ -40,5 +40,5 @@ main:
 
     ACCESS_VARS
 
-	pop ebp
+    leave
     ret
