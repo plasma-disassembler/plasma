@@ -84,8 +84,9 @@ def yellow(text):
 
 
 class Command():
-    def __init__(self, max_args, callback_exec, callback_complete, desc):
+    def __init__(self, max_args, min_args, callback_exec, callback_complete, desc):
         self.max_args = max_args
+        self.min_args = min_args
         self.callback_complete = callback_complete
         self.callback_exec = callback_exec
         self.desc = desc
@@ -199,7 +200,7 @@ class Console():
 
         self.COMMANDS = {
             "analyzer": Command(
-                0,
+                0, 0,
                 self.__exec_analyzer,
                 None,
                 [
@@ -209,7 +210,7 @@ class Console():
             ),
 
             "push_analyze_symbols": Command(
-                0,
+                0, 0,
                 self.push_analyze_symbols,
                 None,
                 [
@@ -219,7 +220,7 @@ class Console():
             ),
 
             "help": Command(
-                0,
+                0, 0,
                 self.__exec_help,
                 None,
                 [
@@ -229,7 +230,7 @@ class Console():
             ),
 
             "history": Command(
-                0,
+                0, 0,
                 self.__exec_history,
                 None,
                 [
@@ -239,7 +240,7 @@ class Console():
             ),
 
             "save": Command(
-                0,
+                0, 0,
                 self.__exec_save,
                 None,
                 [
@@ -249,7 +250,7 @@ class Console():
             ),
 
             "x": Command(
-                1,
+                1, 0,
                 self.__exec_x,
                 self.__complete_x,
                 [
@@ -261,7 +262,7 @@ class Console():
             ),
 
             "v": Command(
-                1,
+                1, 0,
                 self.__exec_v,
                 self.__complete_x,
                 [
@@ -306,7 +307,7 @@ class Console():
             ),
 
             "hexdump": Command(
-                2,
+                2, 1,
                 self.__exec_hexdump,
                 self.__complete_x,
                 [
@@ -317,7 +318,7 @@ class Console():
 
             # by default it will be gctx.nb_lines
             "dump": Command(
-                2,
+                2, 1,
                 self.__exec_dump,
                 self.__complete_x,
                 [
@@ -327,7 +328,7 @@ class Console():
             ),
 
             "sym": Command(
-                3,
+                3, 0,
                 self.__exec_sym,
                 self.__complete_x,
                 [
@@ -339,7 +340,7 @@ class Console():
             ),
 
             "rename": Command(
-                2,
+                2, 2,
                 self.__exec_rename,
                 self.__complete_x,
                 [
@@ -349,7 +350,7 @@ class Console():
             ),
 
             "exit": Command(
-                0,
+                0, 0,
                 self.__exec_exit,
                 None,
                 [
@@ -359,7 +360,7 @@ class Console():
             ),
 
             "sections": Command(
-                0,
+                0, 0,
                 self.__exec_sections,
                 None,
                 [
@@ -369,7 +370,7 @@ class Console():
             ),
 
             "info": Command(
-                0,
+                0, 0,
                 self.__exec_info,
                 None,
                 [
@@ -379,7 +380,7 @@ class Console():
             ),
 
             "jmptable": Command(
-                4,
+                4, 4,
                 self.__exec_jmptable,
                 None,
                 [
@@ -390,7 +391,7 @@ class Console():
             ),
 
             "py": Command(
-                -1,
+                -1, 0,
                 self.__exec_py,
                 self.__complete_file,
                 [
@@ -402,7 +403,7 @@ class Console():
             ),
 
             "mips_set_gp": Command(
-                1,
+                1, 1,
                 self.__exec_mips_set_gp,
                 None,
                 [
@@ -413,7 +414,7 @@ class Console():
             ),
 
             "functions": Command(
-                1,
+                0, 0,
                 self.__exec_functions,
                 None,
                 [
@@ -423,7 +424,7 @@ class Console():
             ),
 
             "xrefs": Command(
-                1,
+                1, 1,
                 self.__exec_xrefs,
                 self.__complete_x,
                 [
@@ -433,7 +434,7 @@ class Console():
             ),
 
             "memmap": Command(
-                0,
+                0, 0,
                 self.__exec_memmap,
                 None,
                 [
@@ -577,6 +578,10 @@ class Console():
             error("%s takes max %d args" % (args[0], c.max_args))
             return
 
+        if len(args) - 1 < c.min_args:
+            error("%s takes at least %d args" % (args[0], c.min_args))
+            return
+
         if c.callback_exec is not None:
             try:
                 c.callback_exec(args)
@@ -605,10 +610,6 @@ class Console():
 
     def __exec_hexdump(self, args):
         nb_lines = self.gctx.nb_lines
-        if len(args) <= 1:
-            self.gctx.entry = None
-            error("no address in parameter")
-            return
 
         if len(args) == 3:
             try:
@@ -664,10 +665,6 @@ class Console():
                 error("bad arguments (warn: need spaces between |)")
                 return
             self.gctx.dis.print_symbols(args[2])
-            return
-
-        if len(args) > 3:
-            error("bad arguments")
             return
 
         if len(args) == 2:
@@ -806,15 +803,12 @@ class Console():
 
 
     def __exec_mips_set_gp(self, args):
-        try:
-            self.gctx.dis.mips_gp = int(args[1], 16)
-            self.db.mips_gp = self.gctx.dis.mips_gp
-            self.db.mem.mm.clear()
-            self.db.xrefs.clear()
-            self.db.data_sub_xrefs.clear()
-            self.db.immediates.clear()
-        except:
-            error("bad address")
+        self.gctx.dis.mips_gp = int(args[1], 16)
+        self.db.mips_gp = self.gctx.dis.mips_gp
+        self.db.mem.mm.clear()
+        self.db.xrefs.clear()
+        self.db.data_sub_xrefs.clear()
+        self.db.immediates.clear()
         self.db.modified = True
 
 
