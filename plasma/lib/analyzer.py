@@ -74,18 +74,6 @@ class Analyzer(threading.Thread):
         return None
 
 
-    def import_flags(self, ad):
-        # Check all known functions which never return
-        if ad not in self.dis.binary.imports:
-            return 0
-        name = self.db.reverse_symbols[ad]
-        if self.dis.binary.type == T_BIN_PE:
-            return FUNC_FLAG_NORETURN if name in NORETURN_PE else 0
-        elif self.dis.binary.type == T_BIN_ELF:
-            return FUNC_FLAG_NORETURN if name in NORETURN_ELF else 0
-        return 0
-
-
     def run(self):
         while 1:
             item = self.msg.get()
@@ -532,6 +520,19 @@ class Analyzer(threading.Thread):
                 #  args_restore]
                 func_obj = [-1, 0, {}, self.db.func_id_counter, {}, -1, 0]
                 self.db.func_id_counter += 1
+
+            # Check if it's a jump to an imported symbol : jmp|call *(IMPORT)
+            if self.dis.binary.type == T_BIN_PE:
+                if entry in self.dis.binary.imports:
+                    is_pe_import = True
+                    func_obj[FUNC_FLAGS] = self.dis.import_flags(entry)
+                else:
+                    inst = self.dis.lazy_disasm(entry)
+                    if inst is not None:
+                        ptr = self.dis.binary.reverse_stripped(self.dis, inst)
+                        if ptr != -1:
+                            inner_code[inst.address] = inst
+                            func_obj[FUNC_FLAGS] = self.dis.import_flags(ptr)
         else:
             func_obj = None
 
@@ -644,7 +645,7 @@ class Analyzer(threading.Thread):
                             self, regsctx, inst, func_obj, False)
                     # TODO: assume it has a return
                     if jmp_ad is None:
-                        ret_found = self.import_flags(entry) == 0
+                        ret_found = self.dis.import_flags(entry) == 0
                         continue
 
                 self.api.add_xref(ad, jmp_ad)
@@ -712,6 +713,9 @@ class Analyzer(threading.Thread):
                 else:
                     self.arch_analyzer.analyze_operands(
                             self, regsctx, inst, func_obj, False)
+                    if self.dis.import_flags(op.mem.disp) == FUNC_FLAG_NORETURN:
+                        self.__add_prefetch(inner_code, inst)
+                        continue
 
                 if call_ad is not None:
                     self.api.add_xref(ad, call_ad)
@@ -760,7 +764,7 @@ class Analyzer(threading.Thread):
             return False
 
         if func_obj is not None:
-            ret = self.import_flags(entry)
+            ret = self.dis.import_flags(entry)
             if ret == FUNC_FLAG_NORETURN or not ret_found:
                 flags |= FUNC_FLAG_NORETURN
 
