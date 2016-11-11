@@ -65,7 +65,7 @@ class Database():
         #    flags,
         #    dict vars_off -> [type, name],
         #    func_id,
-        #    dict inst.address -> [var_off],
+        #    dict inst.address -> vars_off,
         #    frame_size,
         #    args_restore,
         #  ]

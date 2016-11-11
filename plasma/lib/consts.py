@@ -46,13 +46,13 @@ BLOCK_SIZE_MASK = 64-1
 # Index of values for each Database.functions[i]
 FUNC_END = 0
 FUNC_FLAGS = 1
-FUNC_OFF_VARS = 2
+FUNC_VARS = 2
 FUNC_ID = 3
-FUNC_INST_ADDR = 4
+FUNC_INST_VARS_OFF = 4
 FUNC_FRAME_SIZE = 5
 FUNC_ARGS_RESTORE = 6  # for stdcall
 
-# Index of values for each Database.functions[i][FUNC_OFF_VARS][offset]
+# Index of values for each Database.functions[i][FUNC_VARS][offset]
 VAR_TYPE = 0
 VAR_NAME = 1
 

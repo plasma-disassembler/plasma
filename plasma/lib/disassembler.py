@@ -183,7 +183,7 @@ class Disassembler():
         func_obj = self.functions[func_ad]
         if func_obj is None:
             return None
-        for off, val in func_obj[FUNC_OFF_VARS].items():
+        for off, val in func_obj[FUNC_VARS].items():
             if val[VAR_NAME] == name:
                 return off
         return None
@@ -195,7 +195,7 @@ class Disassembler():
         func_obj = self.functions[func_ad]
         if func_obj is None:
             return
-        func_obj[FUNC_OFF_VARS][off][VAR_NAME] = name
+        func_obj[FUNC_VARS][off][VAR_NAME] = name
 
 
     def load_arch_module(self):

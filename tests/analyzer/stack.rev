@@ -64,7 +64,7 @@ frame_size = 8
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 error_stack_analysis_1:   __stdcall__
-stack analysis error, frame size incorrect ?
+stack analysis error
 0x4000f4: call __stdcall
 0x4000f9: ret 8
 ; end function error_stack_analysis_1
@@ -73,7 +73,7 @@ stack analysis error, frame size incorrect ?
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 error_stack_analysis_2:  
-stack analysis error, frame size incorrect ?
+stack analysis error
 
 frame_size = 24
 0x4000fc: push rax

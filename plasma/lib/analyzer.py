@@ -508,28 +508,30 @@ class Analyzer(threading.Thread):
         is_pe_import = False
 
 
-
         # Create a function object (see in Database)
 
         if entry_is_func:
             # It can be None because when symbols are loaded functions are
             # set to None initially.
             if is_def and self.functions[entry] is not None:
-                last_end = self.functions[entry][FUNC_END]
+                func_obj = self.functions[entry]
+                last_end = func_obj[FUNC_END]
                 self.db.end_functions[last_end].remove(entry)
                 if not self.db.end_functions[last_end]:
                     del self.db.end_functions[last_end]
-
-            # [func_end,
-            #  flags,
-            #  var_offsets,
-            #  func_id,
-            #  inst.addresses,
-            #  stack_offset,
-            #  frame_size,
-            #  args_restore]
-            func_obj = [-1, 0, {}, self.db.func_id_counter, {}, 0, -1, 0]
-            self.db.func_id_counter += 1
+                func_obj[FUNC_VARS].clear()
+                func_obj[FUNC_INST_VARS_OFF].clear()
+            else:
+                # [func_end,
+                #  flags,
+                #  var_offsets,
+                #  func_id,
+                #  inst.addresses,
+                #  stack_offset,
+                #  frame_size,
+                #  args_restore]
+                func_obj = [-1, 0, {}, self.db.func_id_counter, {}, -1, 0]
+                self.db.func_id_counter += 1
         else:
             func_obj = None
 
@@ -563,7 +565,11 @@ class Analyzer(threading.Thread):
         stack_err = False
         args_restore = 0
         if func_obj is not None:
-            frame_size = self.ARCH_UTILS.guess_frame_size(self, entry)
+            frame_size = func_obj[FUNC_FRAME_SIZE]
+            if frame_size == -1:
+                frame_size = self.ARCH_UTILS.guess_frame_size(self, entry)
+                # used in arch/*/analyzer.c
+                func_obj[FUNC_FRAME_SIZE] = frame_size
         else:
             frame_size = -1
 

@@ -732,3 +732,16 @@ class Api():
         Returns the id or -1 if name is unknown.
         """
         return self.__db.structs_name2id.get(name, -1)
+
+
+    def set_frame_size(self, func_ad, frame_size):
+        """
+        Set a new frame size for the function at address `func_ad'.
+        frame_size must be >= 0
+        """
+        if frame_size < 0 or func_ad not in self.__db.functions:
+            return False
+        self.__db.functions[func_ad][FUNC_FRAME_SIZE] = frame_size
+        self.__analyzer.msg.put((func_ad, True, True, False, self.__queue_wait))
+        self.__queue_wait.get()
+        return True

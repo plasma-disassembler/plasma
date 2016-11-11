@@ -59,6 +59,7 @@ COMMANDS_ALPHA = [
     "analyzer",
     "dump",
     "exit",
+    "frame_size",
     "functions",
     "help",
     "hexdump",
@@ -442,6 +443,17 @@ class Console():
                 "Open a qt window to display the memory."
                 ]
             ),
+
+            "frame_size": Command(
+                2, 2,
+                self.__exec_frame_size,
+                self.__complete_x,
+                [
+                "[SYMBOL|0xXXXX|EP] frame_size",
+                "Change the frame size of a function, the function will be re-analyzed."
+                ]
+            ),
+
         }
 
         if gctx.dis.is_x86:
@@ -839,3 +851,10 @@ class Console():
         from plasma.lib.memmap import ThreadMemoryMap
         t = ThreadMemoryMap(self.db, self.gctx.dis.binary)
         t.start()
+
+
+    def __exec_frame_size(self, args):
+        ctx = self.gctx.get_addr_context(args[1])
+        frame_size = int(args[2])
+        if ctx:
+            self.api.set_frame_size(ctx.entry, frame_size)

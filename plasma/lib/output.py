@@ -317,11 +317,11 @@ class OutputAbs():
             if self._dis.mem.is_func(ad):
                 if self._dis.functions[ad][FUNC_FLAGS] & \
                         FUNC_FLAG_ERR_STACK_ANALYSIS:
-                    self._error("stack analysis error, frame size incorrect ?")
+                    self._error("stack analysis error")
                     self._new_line()
 
                 frame_size = self._dis.functions[ad][FUNC_FRAME_SIZE]
-                if frame_size != 0:
+                if frame_size > 0:
                     self._new_line()
                     self._comment("frame_size = %d" % frame_size)
                     self._new_line()
@@ -424,7 +424,7 @@ class OutputAbs():
             return
 
         tabs = 0 if self.ctx.is_dump else 1
-        lst = list(self._dis.functions[func_addr][FUNC_OFF_VARS].keys())
+        lst = list(self._dis.functions[func_addr][FUNC_VARS].keys())
 
         if not lst:
             return
@@ -591,14 +591,14 @@ class OutputAbs():
         func_id  = self._dis.mem.get_func_id(i.address)
         if func_id != -1 and func_id in self._dis.func_id:
             func_addr = self._dis.func_id[func_id]
-            tmp = self._dis.functions[func_addr][FUNC_INST_ADDR]
+            tmp = self._dis.functions[func_addr][FUNC_INST_VARS_OFF]
             if i.address in tmp:
                 return func_addr, tmp[i.address]
         return None
 
 
     def get_var_name(self, func_addr, off):
-        name = self._dis.functions[func_addr][FUNC_OFF_VARS][off][VAR_NAME]
+        name = self._dis.functions[func_addr][FUNC_VARS][off][VAR_NAME]
         if name is None:
             if off < 0:
                 return "var_%x" % (-off)
@@ -607,7 +607,7 @@ class OutputAbs():
 
 
     def __get_var_type(self, func_addr, off):
-        ty = self._dis.functions[func_addr][FUNC_OFF_VARS][off][VAR_TYPE]
+        ty = self._dis.functions[func_addr][FUNC_VARS][off][VAR_TYPE]
         if ty == MEM_BYTE:
             t = "char"
         elif ty == MEM_WORD:
@@ -643,11 +643,11 @@ class OutputAbs():
             self._tabs(1)
             if self._dis.functions[entry][FUNC_FLAGS] & \
                     FUNC_FLAG_ERR_STACK_ANALYSIS:
-                self._error("stack analysis error, frame size incorrect ?")
+                self._error("stack analysis error")
                 self._new_line()
 
             frame_size = self._dis.functions[entry][FUNC_FRAME_SIZE]
-            if frame_size != 0:
+            if frame_size > 0:
                 self._new_line()
                 self._tabs(1)
                 self._comment("frame_size = %d" % frame_size)

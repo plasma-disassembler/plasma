@@ -27,8 +27,8 @@ typedef char bool;
 #include <capstone/x86.h>
 
 // Same as lib.consts
-#define FUNC_OFF_VARS 2
-#define FUNC_INST_ADDR 4
+#define FUNC_VARS 2
+#define FUNC_INST_VARS_OFF 4
 #define FUNC_FRAME_SIZE 5
 
 
@@ -853,7 +853,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
             // Check if there is a stack reference
             if (is_stack[i] && func_obj != Py_None &&
-                PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE)) != -1) {
+                -values[i] <= PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE))) {
 
                 // ty = analyzer.db.mem.get_type_from_size(op_size)
                 db = PyObject_GetAttrString(analyzer, "db");
@@ -863,8 +863,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                                          get_op_size(ops[i]));
 
                 // The second item is the name of the variable
-                // func_obj[FUNC_OFF_VARS][v] = [ty, None]
-                tmp = PyList_GET_ITEM(func_obj, FUNC_OFF_VARS);
+                // func_obj[FUNC_VARS][v] = [ty, None]
+                tmp = PyList_GET_ITEM(func_obj, FUNC_VARS);
                 Py_INCREF(tmp);
                 PyObject *l = PyList_New(2);
                 PyList_SET_ITEM(l, 0, ty);
@@ -872,8 +872,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                 PyDict_SetItem(tmp, PyLong_FromLong(values[i]), l);
                 Py_DECREF(tmp);
 
-                // func_obj[FUNC_INST_ADDR][i.address] = v
-                tmp = PyList_GET_ITEM(func_obj, FUNC_INST_ADDR);
+                // func_obj[FUNC_INST_VARS_OFF][i.address] = v
+                tmp = PyList_GET_ITEM(func_obj, FUNC_INST_VARS_OFF);
                 Py_INCREF(tmp);
                 PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
                                PyLong_FromLong(values[i]));
