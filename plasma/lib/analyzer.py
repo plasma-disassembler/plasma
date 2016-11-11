@@ -733,9 +733,11 @@ class Analyzer(threading.Thread):
                     # we don't have a computed args size
                     # Reset the stack pointer to frame_size to handle stdcall.
                     if frame_size != -1 and call_ad in self.functions:
-                        n = self.functions[call_ad][FUNC_ARGS_RESTORE]
-                        if n:
-                            self.arch_analyzer.set_sp(regsctx, sp_before + n)
+                        fo = self.functions[call_ad]
+                        if fo is not None:
+                            n = fo[FUNC_ARGS_RESTORE]
+                            if n:
+                                self.arch_analyzer.set_sp(regsctx, sp_before + n)
 
                     if self.db.mem.is_func(call_ad):
                         if self.is_noreturn(call_ad, entry):
