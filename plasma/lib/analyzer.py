@@ -268,14 +268,14 @@ class Analyzer(threading.Thread):
 
 
     # Do an analysis if the immediate is an address
-    def analyze_imm(self, i, op, imm, is_register):
+    # If from_save_imm is true, op is the destination where we save imm
+    # -> inst op, computed_imm
+    def analyze_imm(self, i, op, imm, from_save_imm):
         if imm <= 1024:
             return False
 
-        if not is_register and op.type != self.ARCH_UTILS.OP_MEM and \
-                op.type != self.ARCH_UTILS.OP_IMM:
+        if not from_save_imm and op.type == self.ARCH_UTILS.OP_REG:
             return False
-
 
         # imm must be an address
         s = self.dis.binary.get_section(imm)
@@ -312,6 +312,7 @@ class Analyzer(threading.Thread):
             ty = self.db.mem.get_type_from_size(sz)
         else:
             ty = MEM_UNK
+            sz = 1
 
         self.db.mem.add(ad, sz, ty)
 

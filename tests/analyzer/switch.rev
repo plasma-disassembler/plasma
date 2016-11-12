@@ -204,7 +204,7 @@ loc_40054c:
 
 ; case 10  jmptable_400620
 loc_400558:
-0x400558: edi = unk_400610 "10"
+0x400558: edi = asc_400610 "10"
 0x40055d: call puts
 0x400562: jmp loc_40056f
 
@@ -290,6 +290,5 @@ loc_4005d6:
 0x4005ef: .db 00
 __libc_csu_fini:
 0x4005f0: .db f3
-__libc_csu_fini:
 0x4005f1: .db c3
 
