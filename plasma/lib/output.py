@@ -672,7 +672,8 @@ class OutputAbs():
         if self.last_inst_exit_or_ret:
             self._new_line()
 
-        self._previous_comment(i, tab)
+        if self.print_labels:
+            self._previous_comment(i, tab)
 
         if prefix == "# ":
             # debug
