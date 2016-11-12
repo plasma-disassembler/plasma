@@ -653,7 +653,7 @@ class Visual(Window):
         if char == "}":
             l = line - 1
             while l >= 0:
-                if self.output.lines[l][x] != " ":
+                if x < len(self.output.lines[l]) and self.output.lines[l][x] != " ":
                     new_line = l
                     break
                 l -= 1
@@ -676,7 +676,7 @@ class Visual(Window):
 
             l = line + 1
             while l < len(self.output.lines):
-                if self.output.lines[l][x] != " ":
+                if x < len(self.output.lines[l]) and self.output.lines[l][x] != " ":
                     new_line = l
                     break
                 l += 1
