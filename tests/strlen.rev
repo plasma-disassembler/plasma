@@ -10,7 +10,7 @@ function main (.text) {
         if (Z) break
     }
     0x4003cb: rax = rcx
-    0x4003ce: rax ^= -1
+    0x4003ce: rax ~= rax
     0x4003d1: rax--
     0x4003d4: ret
 }

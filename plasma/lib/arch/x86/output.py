@@ -339,7 +339,8 @@ class Output(OutputAbs):
 
             if i.id == X86_INS_NOT:
                 self._operand(i, 0)
-                self._add(' ^= -1')
+                self._add(' ~= ')
+                self._operand(i, 0)
                 return
 
             if i.id in INST_SCAS:
