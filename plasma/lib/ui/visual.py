@@ -48,6 +48,10 @@ class Visual(Window):
         self.stack = stack
         self.saved_stack = saved_stack # when we enter, go back, then re-enter
 
+        # Note: all these functions should return a boolean. The value is true
+        # if the screen must be refreshed (not re-drawn, in this case call
+        # explictly self.redraw or self.reload_output if the output changed).
+
         new_mapping = {
             b"z": self.main_cmd_line_middle,
             b"g": self.main_k_top,
@@ -76,6 +80,7 @@ class Visual(Window):
             b"o": self.main_cmd_set_offset,
             b"*": self.main_cmd_set_array,
             b"U": self.main_cmd_undefine,
+            b"S": self.main_cmd_set_frame_size,
 
             b"\n": self.main_cmd_enter,
             b"\x1b": self.main_cmd_escape,
@@ -380,7 +385,7 @@ class Visual(Window):
                 try:
                     textenc.append(int(by, 16))
                 except:
-                    self.status_bar_message("err search not in hexa", h, True)
+                    self.status_bar_message("error: search not in hexa", h, True)
                     return False
             textenc = bytes(textenc)
 
@@ -811,8 +816,9 @@ class Visual(Window):
             func_id = self.db.mem.get_func_id(ad)
 
             if func_id == -1:
-                self.status_bar_message("not in a function: create a function or use "
-                                "the cmd x in the console", h, True)
+                self.status_bar_message(
+                    "error: not in a function, create a function or use "
+                    "the cmd x in the console", h, True)
                 return False
 
             ad_disasm = self.db.func_id[func_id]
@@ -951,7 +957,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_offset(ad):
-            self.status_bar_message("not an address", h, True)
+            self.status_bar_message("error: not an address", h, True)
             return False
 
         self.reload_output(h)
@@ -987,7 +993,7 @@ class Visual(Window):
             if ty == -1 or ty == MEM_UNK:
                 ty = MEM_BYTE
             if ty < MEM_BYTE or ty > MEM_QOFFSET:
-                self.status_bar_message("can't create an array here", h, True)
+                self.status_bar_message("error: can't create an array here", h, True)
                 return False
             sz_entry = self.db.mem.get_size(ad)
 
@@ -1047,7 +1053,7 @@ class Visual(Window):
         ad = self.output.line_addr[line]
 
         if not self.api.set_function(ad):
-            self.status_bar_message("cannot set a function here", h, True)
+            self.status_bar_message("error: cannot set a function here", h, True)
             return False
 
         self.reload_output(h)
@@ -1068,7 +1074,7 @@ class Visual(Window):
 
         ctx = self.gctx.get_addr_context(word)
         if ctx is None:
-            self.status_bar_message("unknown symbol", h, True)
+            self.status_bar_message("error: unknown symbol", h, True)
             return False
 
         if not ctx or (ctx.entry not in self.db.xrefs and
@@ -1117,3 +1123,38 @@ class Visual(Window):
 
     def mouse_double_left_click(self, h, w):
         return self.main_cmd_enter(h, w)
+
+
+    def main_cmd_set_frame_size(self, h, w):
+        line = self.win_y + self.cursor_y
+        if line not in self.output.line_addr:
+            return False
+        ad = self.output.line_addr[line]
+        ad = self.api.get_func_addr(ad)
+
+        if ad is None:
+            self.status_bar_message("error: not in a function", h, True)
+            return False
+
+        frame_size = self.db.functions[ad][FUNC_FRAME_SIZE]
+
+        text = popup_inputbox("frame size", str(frame_size), h, w)
+        try:
+            new_frame_size = int(text)
+        except:
+            self.redraw(h, w)
+            self.status_bar_message("error: not an integer", h)
+            return False
+
+        if new_frame_size == frame_size:
+            return True
+
+        if not self.api.set_frame_size(ad, new_frame_size):
+            self.redraw(h, w)
+            self.status_bar_message("error: bad integer", h)
+            return False
+
+        self.reload_output(h)
+        self.db.modified = True
+
+        return True

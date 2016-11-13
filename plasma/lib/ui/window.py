@@ -108,6 +108,10 @@ class Window():
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
         self.set_key_timeout = True
 
+        # Note: all these functions should return a boolean. The value is true
+        # if the screen must be refreshed (not re-drawn, in this case call
+        # explictly self.redraw or self.reload_output if the output changed).
+
         self.mapping = {
             b"\x1b\x5b\x44": self.k_left,
             b"\x1b\x5b\x43": self.k_right,
