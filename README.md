@@ -10,7 +10,7 @@ available Python api (see an example below). The project is still in big develop
 [wiki](https://github.com/joelpx/plasma/wiki) : TODO list and some documentation.
 
 It supports :
-* architectures : x86, ARM, MIPS{64} (partially for ARM and MIPS)
+* architectures : x86{64}, ARM, MIPS{64} (partially for ARM and MIPS)
 * formats : ELF, PE, RAW
 
 
@@ -44,7 +44,7 @@ Check tests :
     ....................................................................................
     84/84 tests passed successfully in 2.777975s
     analyzer tests...
-    stack [OK]
+    ...
 
 
 ## Pseudo-decompilation of functions
@@ -59,24 +59,17 @@ Check tests :
 
 ## Qt memory map (memmap)
 
-This image is the result of the libc :
-
+The image is actually static.
 ![plasma](/images/qt_memory.png?raw=true)
 
 
-## Python API example test
+## Scripting (Python API)
 
-See more on the [wiki](https://github.com/joelpx/plasma/wiki/api).
+See more on the [wiki](https://github.com/joelpx/plasma/wiki/api) for the API.
 
-Print all ascii strings :
+Some examples (these scripts are placed in plasma/scripts) :
 
-    echo "py scripts/strings.py" | plasma -i tests/server.bin
-    0x400200  "/lib64/ld-linux-x86-64.so.2"
-    0x400228  "GNU"
-    0x400248  "GNU"
-    0x400481  "libpthread.so.0"
-    0x400491  "_ITM_deregisterTMCloneTable"
-    0x4004ad  "_Jv_RegisterClasses"
-    0x4004c1  "_ITM_registerTMCloneTable"
-    0x4004db  "write"
-    ...
+    $ plasma -i FILE
+    plasma> py !strings.py             # print all strings
+    plasma> py !xrefsto.py FUNCTION    # xdot call graph
+    plasma> py !crypto.py              # detect some crypto constants
