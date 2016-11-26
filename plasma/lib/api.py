@@ -721,3 +721,16 @@ class Api():
         self.__analyzer.msg.put((func_ad, True, True, False, self.__queue_wait))
         self.__queue_wait.get()
         return True
+
+
+    def set_noreturn(self, func_ad, val):
+        """
+        val is a boolean. It sets the function as noreturn or not
+        TODO: reload the analyzer
+        """
+        if func_ad not in self.__db.functions:
+            return False
+        if val:
+            self.__db.functions[func_ad][FUNC_FLAGS] |= FUNC_FLAG_NORETURN
+        else:
+            self.__db.functions[func_ad][FUNC_FLAGS] &= ~FUNC_FLAG_NORETURN
