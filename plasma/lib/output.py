@@ -492,9 +492,11 @@ class OutputAbs():
     # print_data  print the string at the address `imm` only if `imm` is not a symbol
     # force_dont_print_data  really don't print data even if it's not a symbol
     #                        it's used for jump/call
+    # is_from_jump   used to print an error if the jump address is unknown (not in
+    #                        the binary)
     #
     def _imm(self, imm, op_size, hexa, section=None, print_data=True,
-             force_dont_print_data=False):
+             force_dont_print_data=False, is_from_jump=False):
 
         if self.gctx.capstone_string != 0:
             hexa = True
@@ -552,7 +554,10 @@ class OutputAbs():
             else:
                 self._string("'%s'" % get_char(imm))
         elif hexa:
-            self._error(hex(imm))
+            if is_from_jump:
+                self._error(hex(imm))
+            else:
+                self._add(hex(imm))
         else:
             if op_size == 4:
                 self._add(str(c_int(imm).value))
@@ -740,7 +745,8 @@ class OutputAbs():
                             self._add(" ")
                             self._comment("# STOPPED")
                     else:
-                        self._operand(i, -1, hexa=True, force_dont_print_data=True)
+                        self._operand(i, -1, hexa=True, force_dont_print_data=True,
+                                      is_from_jump=True)
 
             else:
                 self._sub_asm_inst(i, tab)

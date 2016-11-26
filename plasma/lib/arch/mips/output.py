@@ -68,7 +68,7 @@ INST_CHECK = {MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
 
 class Output(OutputAbs):
     def _operand(self, i, num_op, hexa=False, show_deref=True,
-                 force_dont_print_data=False):
+                 force_dont_print_data=False, is_from_jump=False):
         def inv(n):
             return n == MIPS_OP_INVALID
 
@@ -76,7 +76,8 @@ class Output(OutputAbs):
 
         if op.type == MIPS_OP_IMM:
             self._imm(op.value.imm, self._dis.wordsize, hexa,
-                      force_dont_print_data=force_dont_print_data)
+                      force_dont_print_data=force_dont_print_data,
+                      is_from_jump=is_from_jump)
 
         elif op.type == MIPS_OP_REG:
             self._add("$")

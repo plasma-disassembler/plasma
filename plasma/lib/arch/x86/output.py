@@ -71,7 +71,7 @@ REP_PREFIX = {X86_PREFIX_REPNE, X86_PREFIX_REP}
 
 class Output(OutputAbs):
     def _operand(self, i, num_op, hexa=False, show_deref=True,
-                 force_dont_print_data=False):
+                 force_dont_print_data=False, is_from_jump=False):
         def inv(n):
             return n == X86_OP_INVALID
 
@@ -79,7 +79,8 @@ class Output(OutputAbs):
 
         if op.type == X86_OP_IMM:
             self._imm(op.value.imm, op.size, hexa,
-                      force_dont_print_data=force_dont_print_data)
+                      force_dont_print_data=force_dont_print_data,
+                      is_from_jump=is_from_jump)
 
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
