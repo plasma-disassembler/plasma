@@ -344,7 +344,7 @@ class Binary(object):
             return
 
         # http://stackoverflow.com/questions/6526500/c-name-mangling-library-for-python
-        args = ['c++filt']
+        args = ["c++filt", "-p"]
         args.extend(lookup_names)
         pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout, _ = pipe.communicate()
@@ -354,10 +354,6 @@ class Binary(object):
 
         for ad, n in self.reverse_demangled.items():
             n = n.decode()
-            i = n.find("(")
-            # remove the protoype
-            if i != -1:
-                n = n[:i]
             self.reverse_demangled[ad] = n
             self.demangled[n] = ad
 
