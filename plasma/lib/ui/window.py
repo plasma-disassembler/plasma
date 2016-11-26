@@ -22,14 +22,11 @@ from curses import A_UNDERLINE, color_pair, A_REVERSE
 from time import time
 
 from plasma.lib.custom_colors import *
+from plasma.lib.consts import *
 
 
 MOUSE_EVENT = [0x1b, 0x5b, 0x4d]
 MOUSE_INTERVAL = 200
-
-MODE_DUMP = 1
-MODE_DECOMPILE = 2
-MODE_OTHER = 3
 
 
 def popup_text(title, output, h_par, w_par):

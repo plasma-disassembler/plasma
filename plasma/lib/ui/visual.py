@@ -28,16 +28,45 @@ from plasma.lib.consts import *
 
 
 class Visual(Window):
-    def __init__(self, gctx, ctx, analyzer, api, stack, saved_stack):
-        Window.__init__(self, ctx.output, has_statusbar=True)
+    def __init__(self, gctx, ad, analyzer, api, stack, saved_stack,
+                 mode=MODE_DUMP):
 
-        self.ctx = ctx
         self.gctx = gctx
-        self.mode = MODE_DUMP
         self.dis = gctx.dis
         self.db = gctx.db
         self.analyzer = analyzer
         self.api = api
+
+        # Disassemble
+
+        self.ctx = self.gctx.get_addr_context(ad)
+        if not self.ctx:
+            print("error: can't disassemble at address", ad)
+            return False
+
+        ad = self.ctx.entry
+        ad_disasm = ad
+
+        if mode == MODE_DECOMPILE:
+            if self.db.mem.is_code(ad_disasm):
+                fid = self.db.mem.get_func_id(ad_disasm)
+                if fid != -1:
+                    self.ctx.entry = self.db.func_id[fid]
+                else:
+                    mode = MODE_DUMP
+            else:
+                mode = MODE_DUMP
+
+        if mode == MODE_DUMP:
+            self.ctx.output = self.ctx.dump_asm()
+        else:
+            self.ctx.output = self.ctx.decompile()
+
+
+        # Some init...
+
+        Window.__init__(self, self.ctx.output, has_statusbar=True)
+        self.mode = mode
 
         # Last/first address printed (only in MODE_DUMP)
         self.set_last_addr()
@@ -47,6 +76,9 @@ class Visual(Window):
 
         self.stack = stack
         self.saved_stack = saved_stack # when we enter, go back, then re-enter
+
+        saved_quiet = self.gctx.quiet
+        self.gctx.quiet = True
 
         # Note: all these functions should return a boolean. The value is true
         # if the screen must be refreshed (not re-drawn, in this case call
@@ -90,11 +122,10 @@ class Visual(Window):
 
         self.mapping.update(new_mapping)
 
-        saved_quiet = self.gctx.quiet
-        self.gctx.quiet = True
+
+        # Start curses
 
         self.screen = curses.initscr()
-
         curses.noecho()
         curses.cbreak()
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
@@ -125,8 +156,9 @@ class Visual(Window):
         # Init some y coordinate, used to compute the cursor position
         self.init_section_coords()
 
+
         self.win_y = self.dump_update_up(h, self.win_y)
-        self.goto_address(ctx.entry, h, w)
+        self.goto_address(ad, h, w)
         self.main_cmd_line_middle(h, w)
 
         try:
@@ -172,6 +204,9 @@ class Visual(Window):
 
     def exec_disasm(self, addr, h, dump_until=-1):
         self.ctx = self.gctx.get_addr_context(addr)
+
+        if self.ctx is None:
+            return False
 
         if self.mode == MODE_DUMP:
             if dump_until == -1:

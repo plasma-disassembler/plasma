@@ -189,9 +189,10 @@ class Console():
 
         # After exiting the visual mode we copy last addresses we have visited.
         # Then we can just enter 'v' and we go where we were.
-        self.last_entry = None
-        self.last_stack = []
-        self.last_saved_stack = []
+        self.visual_last_entry = None
+        self.visual_last_stack = []
+        self.visual_last_saved_stack = []
+        self.visual_last_mode = MODE_DUMP
 
         # A hack to allow window resizing
         os.environ['LINES']="blah"
@@ -717,15 +718,13 @@ class Console():
         if len(args) != 1:
             ad = args[1]
         else:
-            ad = self.last_entry
-        ctx = self.gctx.get_addr_context(ad)
-        if ctx:
-            o = ctx.dump_asm(NB_LINES_TO_DISASM)
-            if o is not None:
-                v = Visual(self.gctx, ctx, self.analyzer, self.api,
-                       self.last_stack, self.last_saved_stack)
-                if v.last_curr_line_ad is not None:
-                    self.last_entry = v.last_curr_line_ad
+            ad = self.visual_last_entry
+        v = Visual(self.gctx, ad, self.analyzer, self.api,
+               self.visual_last_stack, self.visual_last_saved_stack,
+               self.visual_last_mode)
+        self.visual_last_mode = v.mode
+        if v.last_curr_line_ad is not None:
+            self.visual_last_entry = v.last_curr_line_ad
 
 
     def __exec_help(self, args):
