@@ -289,7 +289,7 @@ class Api():
         if ad + sz > s.end + 1:
             return False
 
-        if MEM_QOFFSET <= entry_type <= MEM_QOFFSET:
+        if MEM_WOFFSET <= entry_type <= MEM_QOFFSET:
             end = ad + sz
             i = ad
             while i < end:
