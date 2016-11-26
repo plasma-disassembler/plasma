@@ -74,27 +74,30 @@ class InlineEd(Window):
             if self.cursor_x >= w:
                 self.cursor_x = w - 1
             screen.move(y, self.cursor_x)
-            k = self.read_escape_keys()
 
-            if k == b"\x1b": # escape = cancel
+            keys = self.read_escape_keys()
+
+            if keys == b"\x1b": # escape = cancel
                 self.text = "".join(self.text)
                 break
 
-            if k == b"\n":
+            if keys == b"\n":
                 self.text = "".join(self.text)
                 return True
 
-            if k in self.mapping:
-                i = self.mapping[k](i, w)
+            if keys in self.mapping:
+                i = self.mapping[keys](i, w)
 
-            # Ascii characters
-            elif k and k[0] >= 32 and k[0] <= 126 and self.cursor_x < w - 1:
-                # TODO: fix cursor_x >= w
-                # TODO: utf-8
-                c = chr(k[0])
-                self.text.insert(i, c)
-                i += 1
-                self.cursor_x += 1
+            else:
+                # Ascii characters
+                for k in keys:
+                    if k >= 32 and k <= 126 and self.cursor_x < w - 1:
+                        # TODO: fix cursor_x >= w
+                        # TODO: utf-8
+                        c = chr(k)
+                        self.text.insert(i, c)
+                        i += 1
+                        self.cursor_x += 1
 
         self.text = "".join(self.text)
 
