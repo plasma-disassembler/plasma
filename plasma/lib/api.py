@@ -705,35 +705,6 @@ class Api():
         return self.__db.func_id[func_id]
 
 
-    def insert_struct(self, name, s):
-        """
-        Create a structure. It returns the struct id or -1 if an error occurs.
-
-        attrs is a list to define each attribute, example :
-        [
-            ["attr1", MEM_POINTER(MEM_BYTE)],
-            ["attr2", MEM_DWORD],
-            ["attr3", MEM_ARRAY, nb_entries],
-        ]
-        """
-        if name in self.__db.structs_name2id:
-            return -1
-
-        id = self.__db.struct_id_counter
-        self.__db.struct_id_counter += 1
-
-        self.__db.structure[id] = s
-        self.__db.structs_name2id[name] = id
-        return id
-
-
-    def get_struct_id(self, name):
-        """
-        Returns the id or -1 if name is unknown.
-        """
-        return self.__db.structs_name2id.get(name, -1)
-
-
     def set_frame_size(self, func_ad, frame_size):
         """
         Set a new frame size for the function at address `func_ad'.
