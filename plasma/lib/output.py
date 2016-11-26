@@ -546,7 +546,7 @@ class OutputAbs():
             else:
                 self._string("'%s'" % get_char(imm))
         elif hexa:
-            self._add(hex(imm))
+            self._error(hex(imm))
         else:
             if op_size == 4:
                 self._add(str(c_int(imm).value))
