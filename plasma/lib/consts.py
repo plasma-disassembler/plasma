@@ -68,12 +68,14 @@ NORETURN_ELF = {
     "exit", "_exit", "__stack_chk_fail", "err", "verr", "errx", "verrx",
     "abort", "__assert_fail", "__libc_start_main", "perror", "__cxa_rethrow",
     "__cxa_throw", "__cxa_call_terminate", "__cxa_bad_cast", "__cxa_call_unexpected",
-    "__cxa_call_unexpected", "__terminate", "__unexpected",
+    "__cxa_call_unexpected", "__terminate", "__unexpected", "_ZSt9terminatev",
+    "_ZSt16__throw_bad_castv",
 }
 
 NORETURN_PE = {
     "exit", "ExitProcess", "_exit", "quick_exit", "_Exit", "abort",
     "_CxxThrowException", "quick_exit", "RaiseException", "_ExitProcess",
+    "_ZSt9terminatev", "_ZSt16__throw_bad_castv",
 }
 
 
