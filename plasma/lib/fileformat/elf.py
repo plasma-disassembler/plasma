@@ -231,6 +231,11 @@ class ELF(Binary):
             "sh_entsize": self.dtags["DT_SYMENT"],
             "sh_size": 0
         } # bogus size: no iteration allowed
+
+        # ...
+        # Here in CLE : creation of hash section
+        # ...
+
         self.dynsym = SymbolTableSection(
                 fakesymtabheader, "symtab_plasma", self.elf.stream,
                 self.elf, strtab)
@@ -426,31 +431,32 @@ class ELF(Binary):
 
 
     def load_static_sym(self):
-        symtab = self.elf.get_section_by_name(b".symtab")
-        if symtab is None:
-            return
         dont_save = [b"$a", b"$t", b"$d"]
         is_arm = self.arch == "ARM"
 
-        for sy in symtab.iter_symbols():
-            if is_arm and sy.name in dont_save:
+        for s in self.elf.iter_sections():
+            if not isinstance(s, SymbolTableSection):
                 continue
 
-            ad = sy.entry.st_value
-            if ad != 0 and sy.name != b"":
-                name = sy.name
-                if isinstance(name, bytes):
-                    name = name.decode()
+            for sy in s.iter_symbols():
+                if is_arm and sy.name in dont_save:
+                    continue
 
-                if self.is_address(ad):
-                    if name in self.symbols:
-                        name = self.rename_sym(name)
+                ad = sy.entry.st_value
+                if ad != 0 and sy.name != b"":
+                    name = sy.name
+                    if isinstance(name, bytes):
+                        name = name.decode()
 
-                    self.reverse_symbols[ad] = name
-                    self.symbols[name] = ad
+                    if self.is_address(ad):
+                        if name in self.symbols:
+                            name = self.rename_sym(name)
 
-                    if self.is_function(sy):
-                        self.db.functions[ad] = None
+                        self.reverse_symbols[ad] = name
+                        self.symbols[name] = ad
+
+                        if self.is_function(sy):
+                            self.db.functions[ad] = None
 
 
     def __section_is_data(self, s):

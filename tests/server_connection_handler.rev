@@ -54,7 +54,7 @@ function connection_handler (.text) {
     if (*(rbp - 20) == 0) {
         0x400bde: edi = 0x400dc6 "Client disconnected"
         0x400be3: call puts
-        0x400be8: rax = *(stdout)
+        0x400be8: rax = *(stdout_0)
         0x400bef: rdi = rax
         0x400bf2: call fflush
         0x400bf7: jmp ret_0x400c09
