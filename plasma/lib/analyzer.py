@@ -209,7 +209,7 @@ class Analyzer(threading.Thread):
                         # and should be check first.
                         if not self.db.mem.exists(val) and \
                                 not self.db.mem.is_overlapping(val):
-                            self.db.mem.add(val, self.dis.wordsize, MEM_UNK)
+                            self.db.mem.add(val, 1, MEM_UNK)
                             # Do an analysis on this value.
                             if s.is_exec and self.first_inst_are_code(val):
                                 self.analyze_flow(
