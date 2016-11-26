@@ -70,7 +70,7 @@ class Visual(Window):
 
         # Last/first address printed (only in MODE_DUMP)
         self.set_last_addr()
-        self.first_addr = min(self.output.addr_line)
+        self.set_first_addr()
 
         self.last_curr_line_ad = None
 
@@ -202,6 +202,13 @@ class Visual(Window):
         self.last_addr = ad
 
 
+    def set_first_addr(self):
+        if self.mode == MODE_DUMP:
+            self.first_addr = min(self.output.addr_line)
+        else:
+            self.first_addr = self.ctx.entry
+
+
     def exec_disasm(self, addr, h, dump_until=-1):
         self.ctx = self.gctx.get_addr_context(addr)
 
@@ -224,7 +231,7 @@ class Visual(Window):
             self.output = o
             self.token_lines = o.token_lines
             self.set_last_addr()
-            self.first_addr = min(o.addr_line)
+            self.set_first_addr()
             return True
         return False
 
@@ -573,7 +580,7 @@ class Visual(Window):
 
             self.output.lines = o.lines + self.output.lines
             self.output.token_lines = o.token_lines + self.output.token_lines
-            self.first_addr = min(o.addr_line)
+            self.set_first_addr()
 
             for ad, l in self.output.addr_line.items():
                 o.line_addr[nb_new_lines + l] = ad
@@ -877,7 +884,6 @@ class Visual(Window):
             self.win_y = self.dump_update_up(h, self.win_y)
             self.goto_address(ad, h, w)
             self.main_cmd_line_middle(h, w)
-
         return ret
 
 

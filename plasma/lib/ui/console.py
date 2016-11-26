@@ -717,12 +717,12 @@ class Console():
     def __exec_v(self, args):
         if len(args) != 1:
             ad = args[1]
+            self.visual_last_mode = MODE_DUMP
         else:
             ad = self.visual_last_entry
         v = Visual(self.gctx, ad, self.analyzer, self.api,
                self.visual_last_stack, self.visual_last_saved_stack,
                self.visual_last_mode)
-        self.visual_last_mode = v.mode
         if v.last_curr_line_ad is not None:
             self.visual_last_entry = v.last_curr_line_ad
 
