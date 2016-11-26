@@ -460,8 +460,8 @@ class Api():
 
     def add_symbol(self, ad, name, force=False):
         """
-        Match the symbol name to ad. If ad has already a symbol
-        or if name is already defined, it's erased first.
+        Match the symbol name to ad. If ad has already a symbol, it's
+        renamed. If name exists, a suffix '_counter' is added.
 
         force could be set to True if the name starts with a
         reserved prefix (sub_, loc_, ret_, loop_, ...). Use it if
@@ -473,8 +473,12 @@ class Api():
             return False
 
         if name in self.__db.symbols:
-            last = self.__db.symbols[name]
-            del self.__db.reverse_symbols[last]
+            i = 0
+            while 1:
+                name = "%s_%d" % (name, i)
+                i += 1
+                if name not in self.__db.symbols:
+                    break
 
         if ad in self.__db.reverse_symbols:
             last = self.__db.reverse_symbols[ad]

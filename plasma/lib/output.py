@@ -646,9 +646,9 @@ class OutputAbs():
         self._new_line()
 
         if self._dis.mem.is_func(entry):
-            self._tabs(1)
             if self._dis.functions[entry][FUNC_FLAGS] & \
                     FUNC_FLAG_ERR_STACK_ANALYSIS:
+                self._tabs(1)
                 self._error("stack analysis error")
                 self._new_line()
 
