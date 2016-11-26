@@ -580,7 +580,6 @@ class Visual(Window):
 
             self.output.lines = o.lines + self.output.lines
             self.output.token_lines = o.token_lines + self.output.token_lines
-            self.set_first_addr()
 
             for ad, l in self.output.addr_line.items():
                 o.line_addr[nb_new_lines + l] = ad
@@ -596,6 +595,7 @@ class Visual(Window):
             self.output.addr_line = o.addr_line
             self.output.idx_tok_inline_comm = o.idx_tok_inline_comm
             self.token_lines = self.output.token_lines
+            self.set_first_addr()
 
         return wy
 
