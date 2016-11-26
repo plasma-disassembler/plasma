@@ -394,15 +394,21 @@ class OutputAbs():
         if self.gctx.print_bytes:
             i = 0
             for c in by:
+                if i == 0:
+                    self._comment("%.2x" % c)
+                else:
+                    self._comment(" %.2x" % c)
                 i += 1
-                self._comment("%.2x " % c)
                 if i == self.gctx.nbytes:
                     break
 
             if i != self.gctx.nbytes:
                 self._add("   " * (self.gctx.nbytes - i))
 
-            self._add("   ")
+            if self.gctx.nbytes < len(by):
+                self._comment(".  ")
+            else:
+                self._comment("   ")
 
 
     def _comment_fused(self, jump_inst, fused_inst, tab):
