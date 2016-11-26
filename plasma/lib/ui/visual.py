@@ -41,8 +41,7 @@ class Visual(Window):
 
         self.ctx = self.gctx.get_addr_context(ad)
         if not self.ctx:
-            print("error: can't disassemble at address", ad)
-            return False
+            return
 
         ad = self.ctx.entry
         ad_disasm = ad
