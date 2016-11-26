@@ -36,6 +36,7 @@ class Visual(Window):
         self.db = gctx.db
         self.analyzer = analyzer
         self.api = api
+        self.last_curr_line_ad = None
 
         # Disassemble
 
@@ -70,8 +71,6 @@ class Visual(Window):
         # Last/first address printed (only in MODE_DUMP)
         self.set_last_addr()
         self.set_first_addr()
-
-        self.last_curr_line_ad = None
 
         self.stack = stack
         self.saved_stack = saved_stack # when we enter, go back, then re-enter
