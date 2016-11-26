@@ -280,7 +280,12 @@ class Visual(Window):
 
         text = popup_inputbox("rename", word, h, w).replace(" ", "_")
 
-        if word == text or not text or self.api.is_reserved_prefix(text):
+        if self.api.is_reserved_prefix(text):
+            self.redraw(h, w)
+            self.status_bar_message("error: reserved prefix", h)
+            return False
+
+        if word == text or not text:
             return True
 
         if is_var:
