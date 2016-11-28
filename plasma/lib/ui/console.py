@@ -579,7 +579,11 @@ class Console():
 
 
     def exec_command(self, line):
-        args = shlex.split(line)
+        try:
+            args = shlex.split(line)
+        except Exception as e:
+            print("error:", e)
+            return
         if not args:
             return
         if args[0] not in self.COMMANDS:
