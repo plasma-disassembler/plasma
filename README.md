@@ -27,7 +27,11 @@ database compatibility could be broken.
 * [python-msgpack](https://github.com/msgpack/msgpack-python) >= 0.4.6
 * `c++filt` (available in the binutils Linux package)
 * terminal should support UTF8 and 256 colors (if not, use the option `--nocolor`)
-* optional : `python-qt4` used for the memory map
+
+Optional :
+* `python-qt4` used for the memory map
+* [keystone](https://github.com/keystone-engine/keystone) for the script asm.py
+
 
 
 ## Installation
@@ -73,3 +77,5 @@ Some examples (these scripts are placed in plasma/scripts) :
     plasma> py !strings.py             # print all strings
     plasma> py !xrefsto.py FUNCTION    # xdot call graph
     plasma> py !crypto.py              # detect some crypto constants
+    plasma> py !asm.py CODE            # assemble with keystone
+    plasma> py !diasm.py HEX_STRING    # diassemble a buffer
