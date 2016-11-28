@@ -28,7 +28,7 @@ endianness = {
 
 if len(args) != 2:
     print("usage: diasm.py HEX_FORMAT")
-    print("HEX_FORMAT can contains or not")
+    print("HEX_FORMAT can contain spaces or not")
     print("example disasm.py '80 3d 24 e9 04 08 00'")
 else:
     buf = binascii.unhexlify(args[1].replace(" ", ""))

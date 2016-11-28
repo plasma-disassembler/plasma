@@ -78,4 +78,4 @@ Some examples (these scripts are placed in plasma/scripts) :
     plasma> py !xrefsto.py FUNCTION    # xdot call graph
     plasma> py !crypto.py              # detect some crypto constants
     plasma> py !asm.py CODE            # assemble with keystone
-    plasma> py !diasm.py HEX_STRING    # diassemble a buffer
+    plasma> py !disasm.py HEX_STRING   # disassemble a buffer
