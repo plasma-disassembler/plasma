@@ -40,6 +40,8 @@ class Api():
         self.__db = gctx.db
         self.mem = gctx.db.mem
         self.__queue_wait = Queue()
+        self.arch = gctx.dis.binary.arch
+        self.is_big_endian = gctx.dis.binary.is_big_endian()
 
 
     def entry_point(self):
