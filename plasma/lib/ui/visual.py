@@ -19,6 +19,7 @@
 
 import curses
 import traceback
+import binascii
 
 from plasma.lib.utils import error, die
 from plasma.lib.custom_colors import *
@@ -425,15 +426,11 @@ class Visual(Window):
             return True
 
         if text[0] == "!":
-            textenc = []
-            for by in text[1:].split():
-                try:
-                    textenc.append(int(by, 16))
-                except:
-                    self.status_bar_message("error: search not in hexa", h, True)
-                    return False
-            textenc = bytes(textenc)
-
+            try:
+                textenc = binascii.unhexlify(text[1:].replace(" ", ""))
+            except:
+                self.status_bar_message("error: search not in hexa", h, True)
+                return False
         else:
             textenc = text.encode()
 
