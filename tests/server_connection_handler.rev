@@ -38,7 +38,7 @@ function connection_handler (.text) {
         0x400bcf: *(rbp - 20) = eax
         # 0x400bd2: cmp dword ptr [rbp - 0x14], 0
         # 0x400bd6: jg 0x400b8e
-        if (*(rbp - 20) <= 0)  goto 0x400bd8
+        if (*(rbp - 20) <= 0)  goto break_0x400bd8
         0x400b8e: rax = rbp - 2032
         0x400b95: rdi = rax
         0x400b98: call strlen
@@ -49,6 +49,7 @@ function connection_handler (.text) {
         0x400bad: edi = eax
         0x400baf: call write
     }
+    break_0x400bd8:
     # 0x400bd8: cmp dword ptr [rbp - 0x14], 0
     # 0x400bdc: jne 0x400bf9
     if (*(rbp - 20) == 0) {

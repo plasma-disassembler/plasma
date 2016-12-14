@@ -21,12 +21,12 @@ function main (.text) {
             loop_0x400583:
             # 0x400583: cmp dword ptr [rbp - 0xc], 0x1c7
             # 0x40058a: jle 0x400570
-            if (*(rbp - 12) > 455)  goto 0x40058c
+            if (*(rbp - 12) > 455)  goto break_0x40058c
             loop {
                 loop_0x400570:
                 # 0x400570: cmp dword ptr [rbp - 8], 0x314
                 # 0x400577: jle 0x40052c
-                if (*(rbp - 8) > 788)  goto 0x400579
+                if (*(rbp - 8) > 788)  goto break_0x400579
                 0x40052c: eax = *(rbp - 4)
                 # 0x40052f: cmp eax, dword ptr [rbp - 0xc]
                 # 0x400532: jne 0x400540
@@ -55,9 +55,11 @@ function main (.text) {
                 0x400566: edi = 0x40063e "6"
                 0x40056b: call puts
             }
+            break_0x400579:
             0x400579: edi = 0x400640 "7"
             0x40057e: call puts
         }
+        break_0x40058c:
         0x40058c: edi = 0x400642 "8"
         0x400591: call puts
     }

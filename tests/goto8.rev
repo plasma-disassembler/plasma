@@ -8,16 +8,18 @@ function main (.text) {
         if (*(rbp - 4) > 0) {
             # 0x4004b0: cmp dword ptr [rbp - 4], 5
             # 0x4004b4: jne 0x4004aa
-            if (*(rbp - 4) == 5)  goto 0x4004b6
+            if (*(rbp - 4) == 5)  goto break_0x4004b6
         } else {
             # 0x4004b8: cmp dword ptr [rbp - 4], -5
             # 0x4004bc: je 0x4004c0
-            if (*(rbp - 4) == -5)  goto 0x4004c0
+            if (*(rbp - 4) == -5)  goto break_0x4004c0
             0x4004be: jmp loop_0x4004aa
         }
     }
+    break_0x4004c0:
     0x4004c0: nop
     goto ret_0x4004c1
+    break_0x4004b6:
     0x4004b6: jmp ret_0x4004c1
     ret_0x4004c1:
     0x4004c1: eax = 0

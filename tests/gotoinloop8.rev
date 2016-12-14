@@ -17,18 +17,20 @@ function main (.text) {
                 loop_0x40053c:
                 # 0x40053c: cmp dword ptr [rbp - 8], 0x18
                 # 0x400540: jle 0x40051c
-                if (*(rbp - 8) > 24)  goto 0x400542
+                if (*(rbp - 8) > 24)  goto break_0x400542
                 # 0x40051c: cmp dword ptr [rbp - 4], 1
                 # 0x400520: jne 0x40052e
-                if (*(rbp - 4) == 1)  goto 0x400522
+                if (*(rbp - 4) == 1)  goto break_0x400522
                 0x40052e: edi = 0x4005e8 "3"
                 0x400533: call puts
                 0x400538: *(rbp - 8) += 1
             }
+            break_0x400522:
             0x400522: edi = 0x4005e6 "2"
             0x400527: call puts
             0x40052c: jmp loop_0x40051a
         }
+        break_0x400542:
         0x400542: *(rbp - 4) += 1
     }
     ret_0x40054c:

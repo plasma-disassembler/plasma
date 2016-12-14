@@ -1,4 +1,4 @@
-function 0x0 (raw) {
+function _start (raw) {
     0x0: eax = 0
     0x2: al = '\x0b'
     0x4: cdq

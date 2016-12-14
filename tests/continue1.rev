@@ -25,13 +25,14 @@ function main (.text) {
                 loop_0x400543:
                 # 0x400543: cmp dword ptr [rbp - 8], 3
                 # 0x400547: jle 0x400530
-                if (*(rbp - 8) > 3)  goto 0x400549
+                if (*(rbp - 8) > 3)  goto break_0x400549
                 0x400530: eax = *(rbp - 4)
                 0x400533: eax += 10
                 0x400536: *(rbp - 8) += eax
                 0x400539: edi = 0x400616 "2"
                 0x40053e: call puts
             }
+            break_0x400549:
             0x400549: edx = *(rbp - 4)
             0x40054c: eax = edx
             0x40054e: eax <<= 3

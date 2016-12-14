@@ -90,7 +90,7 @@ CAPSTONE_CACHE_SIZE = 60000
 
 RESERVED_PREFIX = ["loc_", "sub_", "unk_", "byte_", "word_",
                    "dword_", "qword_", "asc_", "off_", "ret_", "loop_",
-                   "var_"]
+                   "var_", "break_"]
 
 MODE_DUMP = 1
 MODE_DECOMPILE = 2

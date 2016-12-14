@@ -16,12 +16,12 @@ function main (.text) {
             loop_0x40055d:
             # 0x40055d: cmp dword ptr [rbp - 4], 9
             # 0x400561: jg 0x40056d
-            if (*(rbp - 4) > 9)  goto 0x40056d
+            if (*(rbp - 4) > 9)  goto break_0x40056d
             0x400563: eax = *(rbp - 4)
             0x400566: eax += eax
             # 0x400568: cmp eax, dword ptr [rbp - 8]
             # 0x40056b: jne 0x400527
-            if (eax == *(rbp - 8))  goto 0x40056d
+            if (eax == *(rbp - 8))  goto break_0x40056d
             0x400527: edi = 0x400634 "1"
             0x40052c: call puts
             # 0x400531: cmp dword ptr [rbp - 4], 8
@@ -38,6 +38,7 @@ function main (.text) {
                 0x400559: *(rbp - 8) += 1
             }
         }
+        break_0x40056d:
         # 0x40056d: cmp dword ptr [rbp - 0xc], 0xf
         # 0x400571: jne 0x40057f
         if (*(rbp - 12) == 15) {

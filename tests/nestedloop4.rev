@@ -16,21 +16,23 @@ function main (.text) {
             loop_0x400535:
             # 0x400535: cmp dword ptr [rbp - 8], 9
             # 0x400539: jle 0x400527
-            if (*(rbp - 8) > 9)  goto 0x40053b
+            if (*(rbp - 8) > 9)  goto break_0x40053b
             0x400527: edi = 0x4005f4 "1"
             0x40052c: call puts
             0x400531: *(rbp - 8) += 1
         }
+        break_0x40053b:
         0x40053b: jmp loop_0x40054b
         loop {
             loop_0x40054b:
             # 0x40054b: cmp dword ptr [rbp - 8], 0x13
             # 0x40054f: jle 0x40053d
-            if (*(rbp - 8) > 19)  goto 0x400551
+            if (*(rbp - 8) > 19)  goto break_0x400551
             0x40053d: edi = 0x4005f6 "2"
             0x400542: call puts
             0x400547: *(rbp - 8) += 1
         }
+        break_0x400551:
         0x400551: *(rbp - 4) += 1
     }
     ret_0x40055b:

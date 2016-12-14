@@ -473,6 +473,12 @@ def generate_ast(ctx__):
             if curr not in l_set:
                 loops_stack.pop(-1)
                 ast = l_ast.parent
+
+                if curr not in ctx.gctx.db.reverse_symbols:
+                    name = "break_0x%x" % curr
+                    ctx.gctx.db.symbols[name] = curr
+                    ctx.gctx.db.reverse_symbols[curr] = name
+                    ctx.gctx.db.modified = True
             else:
                 break
 
@@ -495,12 +501,18 @@ def generate_ast(ctx__):
 
             # Check if we enter in a new loop
             if (l_start, curr) in ctx.gph.loops_all:
-                if curr not in ctx.gctx.db.reverse_symbols and \
-                        (not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs):
-                    name = "loop_0x%x" % curr
-                    ctx.gctx.db.symbols[name] = curr
-                    ctx.gctx.db.reverse_symbols[curr] = name
-                    ctx.gctx.db.modified = True
+                if not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs:
+                    do = True
+
+                    if curr in ctx.gctx.db.reverse_symbols:
+                        if not ctx.gctx.db.reverse_symbols[curr].startswith("break_"):
+                            do = False
+
+                    if do:
+                        name = "loop_0x%x" % curr
+                        ctx.gctx.db.symbols[name] = curr
+                        ctx.gctx.db.reverse_symbols[curr] = name
+                        ctx.gctx.db.modified = True
 
                 level += 1
                 a = Ast_Loop()
@@ -538,12 +550,19 @@ def generate_ast(ctx__):
 
         # Return instruction
         if curr not in ctx.gph.link_out:
-            if curr != ctx.entry and curr not in ctx.gctx.db.reverse_symbols and \
+            if curr != ctx.entry and \
                     (not ctx.gctx.is_interactive or curr in ctx.gctx.db.xrefs):
-                name = "ret_0x%x" % curr
-                ctx.gctx.db.symbols[name] = curr
-                ctx.gctx.db.reverse_symbols[curr] = name
-                ctx.gctx.db.modified = True
+                do = True
+
+                if curr in ctx.gctx.db.reverse_symbols:
+                    if not ctx.gctx.db.reverse_symbols[curr].startswith("break_"):
+                        do = False
+
+                if do:
+                    name = "ret_0x%x" % curr
+                    ctx.gctx.db.symbols[name] = curr
+                    ctx.gctx.db.reverse_symbols[curr] = name
+                    ctx.gctx.db.modified = True
             ast.add(blk)
             continue
 
@@ -603,8 +622,12 @@ def generate_ast(ctx__):
                     ast.add(a)
                     ast.add(Ast_Goto(nxt[BRANCH_NEXT]))
 
-                    # Add a fake branch, with this in the manage function
-                    # all gotos to the else_addr will be invisible.
+                    # Add a fake branch: when the manage_endpoint function will 
+                    # choose a branch to continue an endpoint (it means that
+                    # all branchs to this endpoint have been reached), it will
+                    # never take the fake_br because the level is set to maxint.
+                    # The fake_br will be invisible
+
                     stack.append((fake_br, list(loops_stack), curr,
                                   nxt[BRANCH_NEXT_JUMP], else_addr))
 

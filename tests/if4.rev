@@ -16,12 +16,13 @@ function main (.text) {
                 0x400532: eax = *(rbp - 12)
                 # 0x400535: cmp eax, dword ptr [rbp - 4]
                 # 0x400538: jl 0x400524
-                if (eax >= *(rbp - 4))  goto 0x40053a
+                if (eax >= *(rbp - 4))  goto break_0x40053a
                 0x400524: edi = 0x4005e4 "1"
                 0x400529: call puts
                 0x40052e: *(rbp - 4) += 1
             }
         }
+        break_0x40053a:
         # 0x40053a: cmp dword ptr [rbp - 8], 2
         # 0x40053e: jne 0x40054a
         if (*(rbp - 8) == 2) {

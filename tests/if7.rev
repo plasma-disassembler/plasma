@@ -11,10 +11,11 @@ function main (.text) {
         loop_0x40052b:
         # 0x40052b: cmp dword ptr [rbp - 4], 0x13
         # 0x40052f: jle 0x400521
-        if (*(rbp - 4) > 19)  goto 0x400531
+        if (*(rbp - 4) > 19)  goto break_0x400531
         0x400521: edi = 0x4005f6 "1"
         0x400526: call puts
     }
+    break_0x400531:
     # 0x400531: cmp dword ptr [rbp - 8], 0
     # 0x400535: jne 0x400543
     if (*(rbp - 8) == 0) {

@@ -29,19 +29,21 @@ function main (.text) {
                     loop_0x400570:
                     # 0x400570: cmp dword ptr [rbp - 8], 0x19
                     # 0x400574: je 0x40052c
-                    if (*(rbp - 8) != 25)  goto 0x400576
+                    if (*(rbp - 8) != 25)  goto break_0x400576
                     0x40052c: nop
                     0x40052d: edi = 0x400618 "3"
                     0x400532: call puts
                     # 0x400537: cmp dword ptr [rbp - 4], 0xf
                     # 0x40053b: je 0x400565
-                    if (*(rbp - 4) != 15)  goto 0x40053d
+                    if (*(rbp - 4) != 15)  goto break_0x40053d
                     0x400565: nop
                     0x400566: edi = 0x40061e "6"
                     0x40056b: call puts
                 }
+                break_0x400576:
                 0x400576: *(rbp - 8) += 1
             }
+            break_0x40053d:
             0x40053d: *(rbp - 4) += 1
             goto loop_0x400541
         }

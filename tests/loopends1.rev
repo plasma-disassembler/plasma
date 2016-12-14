@@ -7,14 +7,16 @@ function main (.text) {
         loop_0x400522:
         # 0x400522: cmp dword ptr [rbp - 4], 9
         # 0x400526: jle 0x400510
-        if (*(rbp - 4) > 9)  goto 0x400528
+        if (*(rbp - 4) > 9)  goto break_0x400528
         0x400510: edi = 0x4005d4 "1"
         0x400515: call puts
         # 0x40051a: cmp dword ptr [rbp - 4], 1
         # 0x40051e: jne 0x400522
-        if (*(rbp - 4) == 1)  goto 0x400520
+        if (*(rbp - 4) == 1)  goto break_0x400520
     }
-    0x400520: jmp 0x400528
+    break_0x400520:
+    0x400520: jmp break_0x400528
+    break_0x400528:
     0x400528: jmp loop_0x400534
     loop {
         loop_0x400534:

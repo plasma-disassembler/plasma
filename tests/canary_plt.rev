@@ -11,11 +11,12 @@ function main (.text) {
         loop_0x40055c:
         # 0x40055c: cmp dword ptr [rbp - 0x94], 0x63
         # 0x400563: jle 0x40054c
-        if (*(rbp - 148) > 99)  goto 0x400565
+        if (*(rbp - 148) > 99)  goto break_0x400565
         0x40054c: eax = *(rbp - 148)
         0x400552: rax = eax
         0x400554: *(rbp + rax - 144) = 'a'
     }
+    break_0x400565:
     0x400565: eax = 0
     0x40056a: rdx = *(rbp - 8)
     # 0x40056e: xor rdx, qword ptr fs:[0x28]

@@ -11,8 +11,9 @@ function main (.text) {
             0x4004cc: *(rbp - 8) += 1
             # 0x4004d0: cmp dword ptr [rbp - 8], 4
             # 0x4004d4: jle 0x4004cc
-            if (*(rbp - 8) > 4)  goto 0x4004d6
+            if (*(rbp - 8) > 4)  goto break_0x4004d6
         }
+        break_0x4004d6:
         # 0x4004d6: cmp dword ptr [rbp - 4], 9
         # 0x4004da: jle 0x4004c8
         if (*(rbp - 4) > 9)  goto ret_0x4004dc

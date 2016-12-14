@@ -15,12 +15,14 @@ function main (.text) {
                 0x4004d7: *(rbp - 12) += 1
                 # 0x4004db: cmp dword ptr [rbp - 0xc], 3
                 # 0x4004df: jle 0x4004d7
-                if (*(rbp - 12) > 3)  goto 0x4004e1
+                if (*(rbp - 12) > 3)  goto break_0x4004e1
             }
+            break_0x4004e1:
             # 0x4004e1: cmp dword ptr [rbp - 8], 1
             # 0x4004e5: jle 0x4004d3
-            if (*(rbp - 8) > 1)  goto 0x4004e7
+            if (*(rbp - 8) > 1)  goto break_0x4004e7
         }
+        break_0x4004e7:
         # 0x4004e7: cmp dword ptr [rbp - 4], 4
         # 0x4004eb: jle 0x4004cf
         if (*(rbp - 4) > 4)  goto ret_0x4004ed

@@ -24,7 +24,7 @@ function main (.text) {
             loop_0x40055f:
             # 0x40055f: cmp dword ptr [rbp - 0xc], 0x18
             # 0x400563: jle 0x400538
-            if (*(rbp - 12) > 24)  goto 0x400565
+            if (*(rbp - 12) > 24)  goto break_0x400565
             0x400538: *(rbp - 8) = 0
             0x40053f: jmp loop_0x400559
             loop {
@@ -39,6 +39,7 @@ function main (.text) {
                 0x400555: *(rbp - 8) += 1
             }
         }
+        break_0x400565:
         0x400565: *(rbp - 4) += 1
     }
     ret_0x40056f:

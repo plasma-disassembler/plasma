@@ -15,8 +15,9 @@ function main (.text) {
             if (*(rbp - 4) > 9)  goto ret_0x40052c
             # 0x400520: cmp dword ptr [rbp - 4], 2
             # 0x400524: je 0x400539
-            if (*(rbp - 4) == 2)  goto 0x400539
+            if (*(rbp - 4) == 2)  goto break_0x400539
         }
+        break_0x400539:
         0x400539: nop
         goto 0x40053a
         ret_0x40052c:

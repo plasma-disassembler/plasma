@@ -16,11 +16,12 @@ function main (.text) {
         0x400570: *(rbp - 8) = eax
         # 0x400573: cmp dword ptr [rbp - 8], 1
         # 0x400577: jne 0x4005db
-        if (*(rbp - 8) == 1)  goto 0x400579
+        if (*(rbp - 8) == 1)  goto break_0x400579
         0x4005db: edi = 0x4006ab "5"
         0x4005e0: call puts
         0x4005e5: *(rbp - 4) += 1
     }
+    break_0x400579:
     # 0x400579: cmp dword ptr [rbp - 4], 0x1f3
     # 0x400580: jg 0x4005cf
     if (*(rbp - 4) <= 499) {

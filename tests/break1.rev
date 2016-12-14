@@ -19,22 +19,24 @@ function main (.text) {
         0x400523: call puts
         # 0x400528: cmp dword ptr [rbp - 4], 8
         # 0x40052c: jne 0x400558
-        if (*(rbp - 4) == 8)  goto 0x40052e
+        if (*(rbp - 4) == 8)  goto break_0x40052e
         0x400558: *(rbp - 4) += 1
         0x40055c: *(rbp - 8) += 1
     }
+    break_0x40052e:
     0x40052e: jmp loop_0x400543
     loop {
         loop_0x400543:
         # 0x400543: cmp dword ptr [rbp - 8], 3
         # 0x400547: jle 0x400530
-        if (*(rbp - 8) > 3)  goto 0x400549
+        if (*(rbp - 8) > 3)  goto break_0x400549
         0x400530: eax = *(rbp - 4)
         0x400533: eax += 10
         0x400536: *(rbp - 8) += eax
         0x400539: edi = 0x400616 "2"
         0x40053e: call puts
     }
+    break_0x400549:
     0x400549: edx = *(rbp - 4)
     0x40054c: eax = edx
     0x40054e: eax <<= 3

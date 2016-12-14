@@ -59,7 +59,7 @@ function main (.text) {
                 0x400af7: *(rbp - 8) = eax
                 # 0x400afa: cmp dword ptr [rbp - 8], 0
                 # 0x400afe: jne 0x400a85
-                if (*(rbp - 8) == 0)  goto 0x400b00
+                if (*(rbp - 8) == 0)  goto break_0x400b00
                 0x400a85: edi = 0x400d14 "Connection accepted"
                 0x400a8a: call puts
                 0x400a8f: edi = 1
@@ -77,14 +77,16 @@ function main (.text) {
                 0x400abe: call pthread_create
                 # 0x400ac3: test eax, eax
                 # 0x400ac5: jns 0x400ad8
-                if (eax < 0)  goto 0x400ac7
+                if (eax < 0)  goto break_0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned"
                 0x400add: call puts
             }
+            break_0x400ac7:
             0x400ac7: edi = 0x400d28 "could not create thread"
             0x400acc: call perror
             0x400ad1: eax = 1
             0x400ad6: jmp ret_0x400b1c
+            break_0x400b00:
             # 0x400b00: cmp dword ptr [rbp - 8], 0
             # 0x400b04: jns 0x400b17
             if (*(rbp - 8) < 0) {

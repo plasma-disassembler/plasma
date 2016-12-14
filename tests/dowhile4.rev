@@ -27,8 +27,9 @@ function main (.text) {
             0x400543: *(rbp - 8) += 1
             # 0x400547: cmp dword ptr [rbp - 8], 0x13
             # 0x40054b: jle 0x400539
-            if (*(rbp - 8) > 19)  goto 0x40054d
+            if (*(rbp - 8) > 19)  goto break_0x40054d
         }
+        break_0x40054d:
         0x40054d: *(rbp - 4) += 1
     }
     ret_0x400557:

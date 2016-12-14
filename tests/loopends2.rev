@@ -7,22 +7,22 @@ function main (.text) {
         loop_0x4005eb:
         # 0x4005eb: cmp dword ptr [rbp - 4], 0x6e
         # 0x4005ef: jle 0x400513
-        if (*(rbp - 4) > 110)  goto 0x4005f5
+        if (*(rbp - 4) > 110)  goto break_0x4005f5
         # 0x400513: cmp dword ptr [rbp - 4], 0
         # 0x400517: jne 0x40053d
-        if (*(rbp - 4) == 0)  goto 0x400519
+        if (*(rbp - 4) == 0)  goto break_0x400519
         # 0x40053d: cmp dword ptr [rbp - 4], 0xa
         # 0x400541: jne 0x400567
-        if (*(rbp - 4) == 10)  goto 0x400543
+        if (*(rbp - 4) == 10)  goto break_0x400543
         # 0x400567: cmp dword ptr [rbp - 4], 0xf
         # 0x40056b: jne 0x400579
-        if (*(rbp - 4) == 15)  goto 0x40056d
+        if (*(rbp - 4) == 15)  goto break_0x40056d
         # 0x400579: cmp dword ptr [rbp - 4], 0x14
         # 0x40057d: jne 0x40059d
-        if (*(rbp - 4) == 20)  goto 0x40057f
+        if (*(rbp - 4) == 20)  goto break_0x40057f
         # 0x40059d: cmp dword ptr [rbp - 4], 0x1e
         # 0x4005a1: jne 0x4005c7
-        if (*(rbp - 4) == 30)  goto 0x4005a3
+        if (*(rbp - 4) == 30)  goto break_0x4005a3
         # 0x4005c7: cmp dword ptr [rbp - 4], 0x28
         # 0x4005cb: jne 0x4005eb
         if (*(rbp - 4) == 40)  goto loop_0x4005cd
@@ -41,18 +41,20 @@ function main (.text) {
         }
         0x4005e9: jmp loop_0x4005cd
     }
+    break_0x4005a3:
     # 0x4005a3: cmp dword ptr [rbp - 8], 1
     # 0x4005a7: jne 0x4005b8
     if (*(rbp - 8) == 1) {
         0x4005a9: edi = 0x400736 "3 1"
         0x4005ae: call puts
-        0x4005b3: jmp 0x40065f
+        0x4005b3: jmp break_0x40065f
     } else {
         0x4005b8: edi = 0x40073a "3 2"
         0x4005bd: call puts
-        0x4005c2: jmp 0x40065f
+        0x4005c2: jmp break_0x40065f
     }
-    goto 0x40065f
+    goto break_0x40065f
+    break_0x40057f:
     # 0x40057f: cmp dword ptr [rbp - 8], 1
     # 0x400583: jne 0x400591
     if (*(rbp - 8) == 1) {
@@ -64,24 +66,27 @@ function main (.text) {
         0x400596: call puts
     }
     goto ret_0x40059b
+    break_0x40056d:
     0x40056d: edi = 0x400724 "goto exit"
     0x400572: call puts
     0x400577: jmp ret_0x40059b
     ret_0x40059b:
     0x40059b: leave
     0x40059c: ret
+    break_0x400543:
     # 0x400543: cmp dword ptr [rbp - 8], 1
     # 0x400547: jne 0x400558
     if (*(rbp - 8) == 1) {
         0x400549: edi = 0x40071c "1 1"
         0x40054e: call puts
-        0x400553: jmp 0x4005f5
+        0x400553: jmp break_0x4005f5
     } else {
         0x400558: edi = 0x400720 "1 2"
         0x40055d: call puts
-        0x400562: jmp 0x4005f5
+        0x400562: jmp break_0x4005f5
     }
-    goto 0x4005f5
+    goto break_0x4005f5
+    break_0x400519:
     # 0x400519: cmp dword ptr [rbp - 8], 1
     # 0x40051d: jne 0x40052e
     if (*(rbp - 8) == 1) {
@@ -94,6 +99,7 @@ function main (.text) {
         0x400538: jmp 0x400614
     }
     goto 0x400614
+    break_0x4005f5:
     0x4005f5: edi = 0x40074e "end"
     0x4005fa: call puts
     # 0x4005ff: cmp dword ptr [rbp - 4], 0x539
@@ -122,7 +128,7 @@ function main (.text) {
         loop_0x400659:
         # 0x400659: cmp dword ptr [rbp - 4], 0x63
         # 0x40065d: jle 0x400639
-        if (*(rbp - 4) > 99)  goto 0x40065f
+        if (*(rbp - 4) > 99)  goto break_0x40065f
         # 0x400639: cmp dword ptr [rbp - 4], 0x32
         # 0x40063d: jne 0x40064b
         if (*(rbp - 4) == 50) {
@@ -135,6 +141,7 @@ function main (.text) {
         }
         0x400655: *(rbp - 4) += 1
     }
+    break_0x40065f:
     # 0x40065f: cmp dword ptr [rbp - 8], 1
     # 0x400663: jne 0x400671
     if (*(rbp - 8) == 1) {

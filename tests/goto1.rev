@@ -19,7 +19,7 @@ function main (.text) {
             loop_0x4005d5:
             # 0x4005d5: cmp dword ptr [rbp - 4], 0x63
             # 0x4005d9: jle 0x400574
-            if (*(rbp - 4) > 99)  goto 0x4005db
+            if (*(rbp - 4) > 99)  goto break_0x4005db
             0x400574: edi = 0x400699 "1"
             0x400579: call puts
             0x40057e: edi = 0x40069b "2"
@@ -30,28 +30,32 @@ function main (.text) {
                 loop_0x4005cb:
                 # 0x4005cb: cmp dword ptr [rbp - 8], 0x31
                 # 0x4005cf: jle 0x400591
-                if (*(rbp - 8) > 49)  goto 0x4005d1
+                if (*(rbp - 8) > 49)  goto break_0x4005d1
                 0x400591: edi = 0x40069d "3"
                 0x400596: call puts
                 0x40059b: call rand
                 0x4005a0: *(rbp - 12) = eax
                 # 0x4005a3: cmp dword ptr [rbp - 0xc], 1
                 # 0x4005a7: jne 0x4005b5
-                if (*(rbp - 12) == 1)  goto 0x4005a9
+                if (*(rbp - 12) == 1)  goto break_0x4005a9
                 # 0x4005b5: cmp dword ptr [rbp - 0xc], 2
                 # 0x4005b9: jne 0x4005c7
-                if (*(rbp - 12) == 2)  goto 0x4005bb
+                if (*(rbp - 12) == 2)  goto break_0x4005bb
                 0x4005c7: *(rbp - 8) += 1
             }
+            break_0x4005d1:
             0x4005d1: *(rbp - 4) += 1
         }
+        break_0x4005a9:
         0x4005a9: edi = 0x40069f "restart!"
         0x4005ae: call puts
         0x4005b3: jmp loop_0x40056b
     }
+    break_0x4005bb:
     0x4005bb: edi = 0x4006a8 "stop"
     0x4005c0: call puts
     0x4005c5: jmp 0x4005f6
+    break_0x4005db:
     0x4005db: edi = 0x4006ad "4"
     0x4005e0: call puts
     0x4005e5: edi = 0x4006af "5"

@@ -9,14 +9,14 @@ function main (.text) {
         if (*(rbp - 4) > 0) {
             # 0x4004f4: cmp dword ptr [rbp - 4], 5
             # 0x4004f8: je 0x400522
-            if (*(rbp - 4) == 5)  goto 0x400522
+            if (*(rbp - 4) == 5)  goto break_0x400522
             0x4004fa: edi = 0x4005b4 "123"
             0x4004ff: call puts
             0x400504: jmp 0x400516
         } else {
             # 0x400506: cmp dword ptr [rbp - 4], -5
             # 0x40050a: je 0x400525
-            if (*(rbp - 4) == -5)  goto 0x400525
+            if (*(rbp - 4) == -5)  goto break_0x400525
             0x40050c: edi = 0x4005b8 "456"
             0x400511: call puts
         }
@@ -24,8 +24,10 @@ function main (.text) {
         0x40051b: call puts
         0x400520: jmp loop_0x4004ee
     }
+    break_0x400525:
     0x400525: nop
     goto ret_0x400526
+    break_0x400522:
     0x400522: nop
     0x400523: jmp ret_0x400526
     ret_0x400526:

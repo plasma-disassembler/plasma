@@ -60,7 +60,7 @@ function _main (.text) {
                     0x401380: eax = *(ebp - 32)
                     # 0x401383: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x401386: jge 0x4013a3
-                    if (eax >= *(ebp - 28))  goto 0x4013a3
+                    if (eax >= *(ebp - 28))  goto break_0x4013a3
                     0x401388: eax = *(ebp - 32)
                     0x40138b: edx = (eax*4)
                     0x401392: eax = *(ebp - 24)
@@ -69,6 +69,7 @@ function _main (.text) {
                     0x40139f: *(eax)++
                     0x4013a1: jmp loop_0x401380
                 }
+                break_0x4013a3:
                 0x4013a3: eax = *(ebp - 16)
                 0x4013a6: *(ebp - 12) = eax
                 loop {
@@ -76,10 +77,10 @@ function _main (.text) {
                     0x4013a9: eax = *(ebp - 36)
                     # 0x4013ac: cmp eax, dword ptr [ebp - 0x1c]
                     # 0x4013af: jge 0x4014ba
-                    if (eax >= *(ebp - 28))  goto 0x4014ba
+                    if (eax >= *(ebp - 28))  goto break_0x4014ba
                     # 0x4013b5: cmp dword ptr [ebp - 0xc], 0
                     # 0x4013b9: jle 0x4014ba
-                    if (*(ebp - 12) <= 0)  goto 0x4014ba
+                    if (*(ebp - 12) <= 0)  goto break_0x4014ba
                     0x4013bf: *(esp) = 0x40306f "Mot secret : "
                     0x4013c6: call _printf
                     0x4013cb: *(ebp - 32) = 0
@@ -88,7 +89,7 @@ function _main (.text) {
                         0x4013d2: eax = *(ebp - 32)
                         # 0x4013d5: cmp eax, dword ptr [ebp - 0x1c]
                         # 0x4013d8: jge 0x401420
-                        if (eax >= *(ebp - 28))  goto 0x401420
+                        if (eax >= *(ebp - 28))  goto break_0x401420
                         0x4013da: eax = *(ebp - 32)
                         0x4013dd: edx = (eax*4)
                         0x4013e4: eax = *(ebp - 24)
@@ -111,6 +112,7 @@ function _main (.text) {
                         0x40141c: *(eax)++
                         0x40141e: jmp loop_0x4013d2
                     }
+                    break_0x401420:
                     0x401420: eax = *(ebp - 12)
                     0x401423: *(esp + 4) = eax
                     0x401427: *(esp) = 0x403082 "\nChance(s) : %ld"
@@ -127,9 +129,10 @@ function _main (.text) {
                         0x401459: *(ebp - 169) = al
                         # 0x40145f: cmp byte ptr [ebp - 0xa9], 0xa
                         # 0x401466: jne 0x40146a
-                        if (*(ebp - 169) != '\n')  goto 0x40146a
+                        if (*(ebp - 169) != '\n')  goto break_0x40146a
                         0x401468: jmp loop_0x40143f
                     }
+                    break_0x40146a:
                     0x40146a: *(esp) = 0x40309e "\n"
                     0x401471: call _printf
                     0x401476: eax = *(ebp - 36)
@@ -151,6 +154,7 @@ function _main (.text) {
                     0x4014b2: *(ebp - 12) = eax
                     0x4014b5: jmp loop_0x4013a9
                 }
+                break_0x4014ba:
                 0x4014ba: eax = *(ebp - 36)
                 # 0x4014bd: cmp eax, dword ptr [ebp - 0x1c]
                 # 0x4014c0: jne 0x4014de
@@ -190,9 +194,10 @@ function _main (.text) {
                     0x401528: call _scanf
                     # 0x40152d: cmp dword ptr [ebp - 0xc], 0
                     # 0x401531: jg 0x401535
-                    if (*(ebp - 12) > 0)  goto 0x401535
+                    if (*(ebp - 12) > 0)  goto break_0x401535
                     0x401533: jmp loop_0x40150e
                 }
+                break_0x401535:
                 0x401535: eax = *(ebp - 12)
                 0x401538: *(ebp - 16) = eax
             }

@@ -16,29 +16,31 @@ function main (.text) {
             loop_0x40055d:
             # 0x40055d: cmp dword ptr [rbp - 4], 9
             # 0x400561: jg 0x40056d
-            if (*(rbp - 4) > 9)  goto 0x40056d
+            if (*(rbp - 4) > 9)  goto break_0x40056d
             0x400563: eax = *(rbp - 4)
             0x400566: eax += eax
             # 0x400568: cmp eax, dword ptr [rbp - 8]
             # 0x40056b: jne 0x400527
-            if (eax == *(rbp - 8))  goto 0x40056d
+            if (eax == *(rbp - 8))  goto break_0x40056d
             0x400527: edi = 0x400634 "1"
             0x40052c: call puts
             # 0x400531: cmp dword ptr [rbp - 4], 8
             # 0x400535: jne 0x400543
-            if (*(rbp - 4) == 8)  goto 0x400537
+            if (*(rbp - 4) == 8)  goto break_0x400537
             # 0x400543: cmp dword ptr [rbp - 8], 5
             # 0x400547: jne 0x400555
             if (*(rbp - 8) == 5)  goto loop_0x400549
             0x400555: *(rbp - 4) += 1
             0x400559: *(rbp - 8) += 1
         }
+        break_0x400537:
         0x400537: edi = 0x400636 "2"
         0x40053c: call puts
-        0x400541: jmp 0x40056d
+        0x400541: jmp break_0x40056d
+        break_0x40056d:
         # 0x40056d: cmp dword ptr [rbp - 0xc], 0xf
         # 0x400571: jne 0x40057f
-        if (*(rbp - 12) == 15)  goto 0x400573
+        if (*(rbp - 12) == 15)  goto break_0x400573
         0x40057f: edi = 0x40063c "5"
         0x400584: call puts
         0x400589: *(rbp - 12) += 1
@@ -49,6 +51,7 @@ function main (.text) {
         0x40054e: call puts
         0x400553: jmp loop_0x400549
     }
+    break_0x400573:
     0x400573: edi = 0x40063a "4"
     0x400578: call puts
     0x40057d: jmp ret_0x400593
