@@ -596,8 +596,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             }
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
-                            insn, ops[i], values[i], false);
+        if (id != MIPS_INS_LUI)
+            PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
+                                insn, ops[i], values[i], false);
     }
 
     // err[0] = !is_reg_supported(r1)
