@@ -474,13 +474,12 @@ class Api():
         if not force and self.is_reserved_prefix(name):
             return False
 
-        if name in self.__db.symbols:
-            i = 0
-            while 1:
-                name = "%s_%d" % (name, i)
-                i += 1
-                if name not in self.__db.symbols:
-                    break
+        n = name
+        i = 0
+        while n in self.__db.symbols:
+            n = "%s_%d" % (name, i)
+            i += 1
+        name = n
 
         if ad in self.__db.reverse_symbols:
             last = self.__db.reverse_symbols[ad]

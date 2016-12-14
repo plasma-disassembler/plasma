@@ -159,6 +159,20 @@ class Disassembler():
         self.binary.load_static_sym()
         self.binary.load_dyn_sym()
         self.binary.demangle_symbols()
+
+        ep = self.binary.get_entry_point()
+        if ep not in self.binary.reverse_symbols:
+            name = "_start"
+            n = name
+            i = 0
+            while n in self.binary.symbols:
+                n = "%s_%d" % (name, i)
+                i += 1
+            name = n
+
+            self.binary.symbols[name] = ep
+            self.binary.reverse_symbols[ep] = name
+
         elapsed = time()
         elapsed = elapsed - start
         debug__("Found %d symbols in %fs" % (len(self.binary.symbols), elapsed))
