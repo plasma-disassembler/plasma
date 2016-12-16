@@ -596,9 +596,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             }
         }
 
-        if (id != MIPS_INS_LUI)
-            PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
-                                insn, ops[i], values[i], false);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
+                            insn, ops[i], values[i], false);
     }
 
     // err[0] = !is_reg_supported(r1)
@@ -679,12 +678,14 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 save_imm:
     if (!regs->is_stack[r1]) {
         long v = get_reg_value(regs, r1, use_real_gp);
-        bool save;
+        bool save = false;
 
         if (use_real_gp) {
-            PyObject *ret = PyObject_CallMethod(
-                    analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
-            save = ret == Py_True;
+            if (id != MIPS_INS_LUI) {
+                PyObject *ret = PyObject_CallMethod(
+                        analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+                save = ret == Py_True;
+            }
         }
         else {
             // r1 == GP

@@ -26,7 +26,7 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
         MIPS_INS_SUBU, MIPS_INS_BGTZ, MIPS_INS_LH, MIPS_INS_LHU,
         MIPS_INS_SH, MIPS_INS_SD, MIPS_INS_LD, MIPS_GRP_MIPS64,
         MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
-        MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP)
+        MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP, MIPS_INS_NEG)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -61,9 +61,12 @@ COND_ADD_ZERO = {MIPS_INS_BGTZ, MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ,
 LD_CHECK = {MIPS_INS_LW, MIPS_INS_LB, MIPS_INS_LBU}
 ST_CHECK = {MIPS_INS_SW, MIPS_INS_SB}
 
-INST_CHECK = {MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
-    MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_SUB, MIPS_INS_SUBU,
+INST_CHECK = {MIPS_INS_AND, MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL,
     MIPS_INS_MOVE, MIPS_INS_LUI}
+
+ADD_CHECK = {MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU}
+
+SUB_CHECK = {MIPS_INS_SUB, MIPS_INS_SUBU}
 
 
 class Output(OutputAbs):
@@ -171,6 +174,60 @@ class Output(OutputAbs):
                 self._type(ST_TYPE[i.id])
                 self._add(") ")
                 self._operand(i, 0)
+                return
+
+            if i.id == MIPS_INS_NEG:
+                self._operand(i, 0)
+                self._add(" = -")
+                self._operand(i, 1)
+                return
+
+            if i.id in ADD_CHECK:
+                op = i.operands
+                self._operand(i, 0)
+                is_neg = op[2].type == MIPS_OP_IMM and op[2].value.imm < 0
+
+                if op[0].type == op[1].type == MIPS_OP_REG and \
+                        op[0].value.reg == op[1].value.reg:
+                    if is_neg:
+                        self._add(" -= ")
+                        self._add(str(-op[2].value.imm))
+                        return
+
+                    self._add(" += ")
+                else:
+                    self._add(" = ")
+                    if op[1].type == MIPS_OP_REG and \
+                            op[1].value.reg == MIPS_REG_ZERO:
+                        self._operand(i, 2)
+                        return
+
+                    self._operand(i, 1)
+                    if is_neg:
+                        self._add(" - ")
+                        self._add(str(-op[2].value.imm))
+                        return
+
+                    self._add(" + ")
+
+                self._operand(i, 2)
+                return
+
+            if i.id in SUB_CHECK:
+                op = i.operands
+                self._operand(i, 0)
+
+                if op[0].type == op[1].type == MIPS_OP_REG and \
+                        op[0].value.reg == op[1].value.reg:
+                    self._add(" -= ")
+                else:
+                    self._add(" = ")
+                    if not (op[1].type == MIPS_OP_REG and \
+                            op[1].value.reg == MIPS_REG_ZERO):
+                        self._operand(i, 1)
+                        self._add(" - ")
+
+                self._operand(i, 2)
                 return
 
             if i.id in INST_CHECK:
