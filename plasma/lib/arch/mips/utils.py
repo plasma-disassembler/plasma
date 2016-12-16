@@ -77,7 +77,13 @@ def is_cond_jump(i):
     return i.id in JUMPS_COND
 
 def is_uncond_jump(i):
-    return i.id in JUMPS_UNCOND
+    if i.id in JUMPS_UNCOND:
+        return True
+    if i.id == MIPS_INS_JR:
+        op = i.operands[0]
+        if op.value.reg != MIPS_REG_RA:
+            return True
+    return False
 
 def is_ret(i):
     if i.id == MIPS_INS_JR:
