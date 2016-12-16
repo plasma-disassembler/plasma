@@ -404,7 +404,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
-    PyObject *db, *tmp, *mem, *ty;
+    PyObject *tmp, *db;
 
     /* if True: stack variables will not be saved and analysis on immediates
      * will not be run. It will only simulate registers.
@@ -467,32 +467,9 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             // Check if there is a stack reference
             if (is_stack[i] && func_obj != Py_None &&
                 -values[i] <= PyLong_AsLong(PyList_GET_ITEM(func_obj, FUNC_FRAME_SIZE))) {
-
-                // ty = analyzer.db.mem.get_type_from_size(op_size)
-                db = PyObject_GetAttrString(analyzer, "db");
-                mem = PyObject_GetAttrString(db, "mem");
-                ty = PyObject_CallMethod(mem, "get_type_from_size", "i",
-                                         get_op_mem_size(id));
-
-                // The second item is the name of the variable
-                // func_obj[FUNC_VARS][v] = [ty, None]
-                tmp = PyList_GET_ITEM(func_obj, FUNC_VARS);
-                Py_INCREF(tmp);
-                PyObject *l = PyList_New(2);
-                PyList_SET_ITEM(l, 0, ty);
-                PyList_SET_ITEM(l, 1, Py_None);
-                PyDict_SetItem(tmp, PyLong_FromLong((int) values[i]), l);
-                Py_DECREF(tmp);
-
-                // func_obj[FUNC_INST_VARS_OFF][i.address] = v
-                tmp = PyList_GET_ITEM(func_obj, FUNC_INST_VARS_OFF);
-                Py_INCREF(tmp);
-                PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
-                               PyLong_FromLong((int) values[i]));
-                Py_DECREF(tmp);
-
-                Py_DECREF(mem);
-                Py_DECREF(db);
+                PyObject_CallMethod(analyzer, "add_stack_variable", "OOii",
+                                    func_obj, insn, values[i],
+                                    get_op_mem_size(id));
                 continue;
             }
         }

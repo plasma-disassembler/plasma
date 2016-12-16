@@ -267,6 +267,12 @@ class Analyzer(threading.Thread):
                 ad += 1
 
 
+    def add_stack_variable(self, func_obj, inst, offset, op_size):
+        ty = self.db.mem.get_type_from_size(op_size)
+        func_obj[FUNC_VARS][offset] = [ty, None]
+        func_obj[FUNC_INST_VARS_OFF][inst.address] = offset
+
+
     # Do an analysis if the immediate is an address
     # If from_save_imm is true, op is the destination where we save imm
     # -> inst op, computed_imm

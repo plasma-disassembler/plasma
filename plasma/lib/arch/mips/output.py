@@ -185,6 +185,14 @@ class Output(OutputAbs):
             if i.id in ADD_CHECK:
                 op = i.operands
                 self._operand(i, 0)
+
+                ret = self.get_var_offset(i, 0)
+                if ret is not None:
+                    self._add(" = ")
+                    func_addr, off = ret
+                    self._variable(self.get_var_name(func_addr, off))
+                    return
+
                 is_neg = op[2].type == MIPS_OP_IMM and op[2].value.imm < 0
 
                 if op[0].type == op[1].type == MIPS_OP_REG and \
