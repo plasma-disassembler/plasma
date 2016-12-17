@@ -203,15 +203,6 @@ class Disassembler():
         return None
 
 
-    def var_rename(self, func_ad, off, name):
-        if func_ad not in self.functions:
-            return
-        func_obj = self.functions[func_ad]
-        if func_obj is None:
-            return
-        func_obj[FUNC_VARS][off][VAR_NAME] = name
-
-
     def load_arch_module(self):
         if self.binary.arch in ("x86", "x64"):
             import plasma.lib.arch.x86 as ARCH

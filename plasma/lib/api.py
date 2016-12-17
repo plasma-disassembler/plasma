@@ -735,3 +735,34 @@ class Api():
             self.__db.functions[func_ad][FUNC_FLAGS] |= FUNC_FLAG_NORETURN
         else:
             self.__db.functions[func_ad][FUNC_FLAGS] &= ~FUNC_FLAG_NORETURN
+
+
+    def var_rename(self, func_ad, off, name):
+        """
+        Rename a stack variable with the offset `off' from the function
+        `func_ad'. If the name already exists a suffix _COUNTER will be
+        added.
+        """
+        if func_ad not in self.__db.functions:
+            return
+        func_obj = self.__db.functions[func_ad]
+        if func_obj is None:
+            return
+
+        n = name
+        i = 0
+        for v in func_obj[FUNC_VARS].values():
+            if v[VAR_NAME] == name:
+                while 1:
+                    ok = True
+                    n = "%s_%d" % (name, i)
+                    for v in func_obj[FUNC_VARS].values():
+                        if v[VAR_NAME] == n:
+                            ok = False
+                            break
+                    if ok:
+                        break
+                    i += 1
+                break
+
+        func_obj[FUNC_VARS][off][VAR_NAME] = n

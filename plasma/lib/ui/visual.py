@@ -330,7 +330,7 @@ class Visual(Window):
             return True
 
         if is_var:
-            self.dis.var_rename(func_ad, off, text)
+            self.api.var_rename(func_ad, off, text)
         else:
             self.api.add_symbol(ad, text)
 
