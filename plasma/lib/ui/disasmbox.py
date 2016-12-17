@@ -412,13 +412,13 @@ class Disasmbox(Listbox):
     def main_cmd_search_forward(self):
         if self.search_bin is None:
             return False
-        return self.__search(self.search_bin, self.height, self.width, forward=True)
+        return self.__search(self.search_bin, forward=True)
 
 
     def main_cmd_search_backward(self):
         if self.search_bin is None:
             return False
-        return self.__search(self.search_bin, self.height, self.width, forward=False)
+        return self.__search(self.search_bin, forward=False)
 
 
     def view_inline_comment_editor(self):
