@@ -474,9 +474,10 @@ class Console():
         self.gctx.dis.binary.api = self.api
 
         if gctx.dis.is_mips and not gctx.dis.mips_gp:
-            print("please run first these commands :")
-            print("mips_set_gp 0xADDRESS")
-            print("push_analyze_symbols")
+            if sys.stdin.isatty():
+                print("please run first these commands :")
+                print("mips_set_gp 0xADDRESS")
+                print("push_analyze_symbols")
         else:
             # If false it means that the first analysis was already done
             if gctx.autoanalyzer and len(self.db.mem) == 0:

@@ -65,11 +65,13 @@ class Analyzer(threading.Thread):
             self.OFFSET_TYPE = MEM_QOFFSET
 
 
-    def __add_prefetch(self, addr_set, inst):
+    def __add_prefetch(self, regsctx, inst, func_obj, addr_set):
         if self.dis.is_mips:
             prefetch = self.disasm(inst.address + inst.size)
             if prefetch is not None:
                 addr_set[prefetch.address] = prefetch
+                self.arch_analyzer.analyze_operands(
+                        self, regsctx, prefetch, func_obj, False)
             return prefetch
         return None
 
@@ -604,7 +606,7 @@ class Analyzer(threading.Thread):
 
             ##### RETURN #####
             if self.is_ret(inst):
-                self.__add_prefetch(inner_code, inst)
+                self.__add_prefetch(regsctx, inst, func_obj, inner_code)
                 ret_found = True
 
                 if self.dis.is_x86 and len(inst.operands) == 1:
@@ -616,7 +618,7 @@ class Analyzer(threading.Thread):
 
             ##### UNCONDITIONAL JUMP #####
             elif self.is_uncond_jump(inst):
-                self.__add_prefetch(inner_code, inst)
+                self.__add_prefetch(regsctx, inst, func_obj, inner_code)
                 op = inst.operands[-1]
                 jmp_ad = None
 
@@ -669,7 +671,7 @@ class Analyzer(threading.Thread):
 
             ##### CONDITIONAL JUMP #####
             elif self.is_cond_jump(inst):
-                prefetch = self.__add_prefetch(inner_code, inst)
+                prefetch = self.__add_prefetch(regsctx, inst, func_obj, inner_code)
 
                 op = inst.operands[-1]
                 if op.type == self.ARCH_UTILS.OP_IMM:
@@ -721,7 +723,7 @@ class Analyzer(threading.Thread):
                     self.arch_analyzer.analyze_operands(
                             self, regsctx, inst, func_obj, False)
                     if self.dis.import_flags(op.mem.disp) == FUNC_FLAG_NORETURN:
-                        self.__add_prefetch(inner_code, inst)
+                        self.__add_prefetch(regsctx, inst, func_obj, inner_code)
                         continue
 
                 if call_ad is not None:
@@ -748,9 +750,10 @@ class Analyzer(threading.Thread):
 
                     if self.db.mem.is_func(call_ad):
                         if self.is_noreturn(call_ad, entry):
-                            self.__add_prefetch(inner_code, inst)
+                            self.__add_prefetch(regsctx, inst, func_obj, inner_code)
                             continue
 
+                # It seems it doesn't matter for the prefetched instruction
                 nxt = inst.address + inst.size
                 stack.append((regsctx, nxt))
 

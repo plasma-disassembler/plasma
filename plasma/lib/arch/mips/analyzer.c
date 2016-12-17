@@ -624,7 +624,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         case MIPS_INS_ADDIU:
         case MIPS_INS_ADD:
             reg_add(regs, r1, values[1], values[2]);
-            if (r1 != MIPS_REG_SP && is_stack[r1] && func_obj != Py_None)
+            if (r1 != MIPS_REG_SP && regs->is_stack[r1] && func_obj != Py_None)
                 PyObject_CallMethod(analyzer, "add_stack_variable", "OOii",
                                     func_obj, insn,
                                     get_reg_value(regs, r1, use_real_gp),
