@@ -97,6 +97,7 @@ class Disasmbox(Listbox):
             b"/": self.main_cmd_search,
             b"n": self.main_cmd_search_forward,
             b"N": self.main_cmd_search_backward,
+            b"j": self.main_cmd_jump_to,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -1167,3 +1168,23 @@ class Disasmbox(Listbox):
         self.db.modified = True
         return True
 
+
+    def main_cmd_jump_to(self):
+        text = popup_inputbox("jump to", "", self)
+        if text == "":
+            return True
+
+        ctx = self.gctx.get_addr_context(text)
+        if not ctx:
+            self.status_bar_message("error: not an address or unknown symbol")
+            return False
+
+        self.mode = MODE_DUMP
+
+        if self.exec_disasm(ctx.entry):
+            self.cursor_y = 0
+            self.win_y = 0
+            self.goto_address(ctx.entry)
+            self.main_cmd_line_middle()
+
+        return True

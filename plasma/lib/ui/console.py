@@ -291,6 +291,7 @@ class Console():
                 "B       show/hide bytes",
                 "",
                 "Navigation:",
+                "j       jump to an address or a symbol",
                 "/       binary search: if the first char is ! you can put an",
                 "        hexa string example: /!ab 13 42",
                 "        the search is case sensitive.",
