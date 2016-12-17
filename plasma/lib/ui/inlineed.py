@@ -23,14 +23,14 @@ from plasma.lib.custom_colors import *
 from plasma.lib.ui.window import Window
 
 
-# TODO: not very clean class...
+# TODO: not a very clean class...
 
 
 class InlineEd(Window):
-    def __init__(self, h, w, line, xbegin, idx_token, text,
+    def __init__(self, line, xbegin, idx_token, text,
                  color, tok_line):
-        # The window class is only used for the read_escape_keys
-        Window.__init__(self, None, has_statusbar=True)
+        # Only for the read_escape_keys function
+        Window.__init__(self)
 
         self.mapping = {
             b"\x1b\x5b\x44": self.k_left,
@@ -54,6 +54,7 @@ class InlineEd(Window):
 
 
     def start_view(self, screen):
+        screen.move(0, 1)
         self.screen = screen
         y = self.cursor_y
 
@@ -63,9 +64,6 @@ class InlineEd(Window):
 
         while 1:
             (h, w) = screen.getmaxyx()
-
-            if self.has_statusbar:
-                h -= 1 # status bar
 
             self.screen.move(y, 0)
             self.screen.clrtoeol()

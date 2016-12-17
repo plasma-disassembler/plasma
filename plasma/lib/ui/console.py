@@ -728,8 +728,10 @@ class Console():
         v = Visual(self.gctx, ad, self.analyzer, self.api,
                self.visual_last_stack, self.visual_last_saved_stack,
                self.visual_last_mode)
-        if v.last_curr_line_ad is not None:
-            self.visual_last_entry = v.last_curr_line_ad
+        # TODO
+        n = v.widgets[0].last_curr_line_ad
+        if n is not None:
+            self.visual_last_entry = n
 
 
     def __exec_help(self, args):
