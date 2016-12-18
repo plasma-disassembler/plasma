@@ -849,17 +849,36 @@ class Disasmbox(Listbox):
 
 
     def reload_asm(self):
-        if self.mode == MODE_DECOMPILE:
-            ad = self.first_addr
-        else:
+        line = self.win_y + self.cursor_y
+        while line not in self.output.line_addr:
+            if line >= len(self.output.lines):
+                break
+            line += 1
+
+        if line == len(self.output.lines):
             line = self.win_y + self.cursor_y
             while line not in self.output.line_addr:
-                line += 1
-            ad = self.output.line_addr[line]
-        self.exec_disasm(ad)
-        self.win_y = self.dump_update_up(0)
-        self.goto_address(ad)
-        self.main_cmd_line_middle()
+                if line == -1:
+                    return
+                line -= 1
+
+        ad_disasm = self.output.line_addr[line]
+        ad_goto = ad_disasm
+        win_y = self.win_y
+        cursor_y = self.cursor_y
+
+        if self.mode == MODE_DECOMPILE:
+            ad_disasm = self.first_addr
+
+        self.exec_disasm(ad_disasm)
+
+        if self.mode == MODE_DECOMPILE:
+            self.win_y = win_y
+            self.cursor_y = cursor_y
+        else:
+            self.win_y = self.dump_update_up(0)
+            self.goto_address(ad_goto)
+            self.main_cmd_line_middle()
 
 
     def main_cmd_set_code(self):
