@@ -252,8 +252,11 @@ class Window():
                       until=until,
                       update_position=False)
 
-        d.stack = list(w.stack),
-        d.saved_stack = list(w.saved_stack),
+        for v in w.stack:
+            d.stack.append(tuple(v))
+        for v in w.saved_stack:
+            d.saved_stack.append(tuple(v))
+
         d.cursor_x = w.cursor_x
         d.cursor_y = w.cursor_y
         d.win_y = w.win_y
