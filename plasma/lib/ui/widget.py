@@ -18,12 +18,10 @@
 #
 
 import curses
+from curses import color_pair, A_REVERSE
 from time import time
 
-from plasma.lib.custom_colors import *
-from plasma.lib.consts import *
-
-
+from plasma.lib.custom_colors import COLOR_COMMENT
 
 
 class Widget():
@@ -37,6 +35,7 @@ class Widget():
         self.screen = curses.newwin(h, w, y, x)
         self.should_stop = False
         self.value_selected = False
+        self.is_passive = False
 
 
     def draw(self):
@@ -64,3 +63,15 @@ class Widget():
 
 
 
+class VertivalSep(Widget):
+    def __init__(self, x, y, h):
+        w = 2
+        Widget.__init__(self, x, y, w, h)
+        self.is_passive = True
+        self.mapping = {}
+
+
+    def draw(self):
+        c = color_pair(COLOR_COMMENT.val) #| A_REVERSE
+        for i in range(self.height):
+            self.screen.addstr(i, 0, "▕", c)

@@ -57,8 +57,6 @@ Check tests :
     >> v main
     # then press tab
 
-![plasma](/images/screenshot.png?raw=true)
-
 ![plasma](/images/visual.png?raw=true)
 
 ## Qt memory map (memmap)

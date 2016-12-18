@@ -23,16 +23,13 @@ import binascii
 
 from plasma.lib.utils import error, die
 from plasma.lib.custom_colors import *
-from plasma.lib.ui.window import Window
-from plasma.lib.ui.listbox import *
-from plasma.lib.ui.disasmbox import Disasmbox
-from plasma.lib.ui.inlineed import InlineEd
 from plasma.lib.consts import *
+from plasma.lib.ui.window import Window
+from plasma.lib.ui.disasmbox import Disasmbox
 
 
 class Visual(Window):
-    def __init__(self, gctx, ad, analyzer, api, stack,
-                 saved_stack, mode=MODE_DUMP):
+    def __init__(self, gctx, ad, analyzer, api, last_widgets=None):
         Window.__init__(self)
 
         saved_quiet = gctx.quiet
@@ -70,10 +67,14 @@ class Visual(Window):
 
         (h, w) = self.screen.getmaxyx()
 
-        self.widgets = [
-            Disasmbox(0, 0, w, h, gctx, ad, analyzer,
-                      api, stack, saved_stack, mode),
-        ]
+        if last_widgets is not None:
+            self.widgets = last_widgets
+            for wdgt in self.widgets:
+                wdgt.has_focus = False
+                if isinstance(wdgt, Disasmbox):
+                    wdgt.reload_asm()
+        else:
+            self.widgets = [Disasmbox(0, 0, w, h, gctx, ad, analyzer, api, mode=MODE_DUMP)]
 
         self.widgets[0].has_focus = True
 
@@ -85,11 +86,11 @@ class Visual(Window):
             curses.endwin()
             gctx.quiet = saved_quiet
             traceback.print_exc()
+            self.error_occurs = True
             return
 
+        self.error_occurs = False
         curses.nocbreak()
         curses.echo()
         curses.endwin()
         gctx.quiet = saved_quiet
-
-

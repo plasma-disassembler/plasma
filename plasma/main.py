@@ -19,7 +19,6 @@
 
 import os
 import sys
-import plasma
 from plasma.lib import GlobalContext
 from plasma.lib.utils import info, die
 from plasma.lib.ui.vim import generate_vim_syntax

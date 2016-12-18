@@ -17,7 +17,6 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
-from textwrap import dedent
 from pathlib import Path
 from plasma.lib.custom_colors import *
 

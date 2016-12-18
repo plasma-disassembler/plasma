@@ -29,8 +29,6 @@ except:
     print("pip3 install msgpack-python")
     sys.exit(0)
 
-import json
-
 from plasma.lib.api import Jmptable
 from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory

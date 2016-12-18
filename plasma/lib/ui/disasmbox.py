@@ -23,15 +23,16 @@ import binascii
 
 from plasma.lib.utils import error, die
 from plasma.lib.custom_colors import *
-from plasma.lib.ui.window import *
+from plasma.lib.consts import *
+from plasma.lib.ui.utils import *
 from plasma.lib.ui.listbox import Listbox
 from plasma.lib.ui.inlineed import InlineEd
-from plasma.lib.consts import *
 
 
 class Disasmbox(Listbox):
     def __init__(self, x, y, w, h, gctx, ad, analyzer, api,
-                 stack, saved_stack, mode=MODE_DUMP):
+                 mode=MODE_DUMP, until=-1,
+                 update_position=True):
 
         self.gctx = gctx
         self.dis = gctx.dis
@@ -60,7 +61,7 @@ class Disasmbox(Listbox):
                 mode = MODE_DUMP
 
         if mode == MODE_DUMP:
-            self.ctx.output = self.ctx.dump_asm()
+            self.ctx.output = self.ctx.dump_asm(until=until)
         else:
             self.ctx.output = self.ctx.decompile()
 
@@ -73,8 +74,8 @@ class Disasmbox(Listbox):
         self.set_last_addr()
         self.set_first_addr()
 
-        self.stack = stack
-        self.saved_stack = saved_stack # when we enter, go back, then re-enter
+        self.stack = []
+        self.saved_stack = []
 
         # Note: all these functions should return a boolean. The value is true
         # if the screen must be refreshed (not re-drawn, in this case call
@@ -122,9 +123,10 @@ class Disasmbox(Listbox):
         # Init some y coordinate, used to compute the cursor position
         self.init_section_coords()
 
-        self.win_y = self.dump_update_up(self.win_y)
-        self.goto_address(ad)
-        self.main_cmd_line_middle()
+        if update_position:
+            self.win_y = self.dump_update_up(self.win_y)
+            self.goto_address(ad)
+            self.main_cmd_line_middle()
 
 
     # If the address is already in the output, we only move the cursor.
@@ -848,7 +850,15 @@ class Disasmbox(Listbox):
 
 
     def reload_asm(self):
-        self.exec_disasm(self.first_addr, dump_until=self.last_addr-1)
+        line = self.win_y + self.cursor_y
+        while line not in self.output.line_addr:
+            line += 1
+        y = self.cursor_y
+        ad = self.output.line_addr[line]
+        self.exec_disasm(ad)
+        self.win_y = self.dump_update_up(0)
+        self.goto_address(ad)
+        self.main_cmd_line_middle()
 
 
     def main_cmd_set_code(self):

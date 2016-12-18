@@ -22,7 +22,7 @@ from curses import A_UNDERLINE, color_pair, A_REVERSE
 
 from plasma.lib.custom_colors import *
 from plasma.lib.consts import *
-from plasma.lib.ui.widget import *
+from plasma.lib.ui.widget import Widget
 
 
 class Listbox(Widget):
