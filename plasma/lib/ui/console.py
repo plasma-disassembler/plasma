@@ -480,6 +480,7 @@ class Console():
         else:
             # If false it means that the first analysis was already done
             if gctx.autoanalyzer and len(self.db.mem) == 0:
+                print("analyzer is running... check the command analyzer to see the status")
                 self.push_analyze_symbols(None)
 
         self.comp = Completer(self)
