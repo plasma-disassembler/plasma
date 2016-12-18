@@ -75,6 +75,14 @@ class Visual(Window):
                     wdgt.reload_asm()
         else:
             self.widgets = [Disasmbox(0, 0, w, h, gctx, ad, analyzer, api, mode=MODE_DUMP)]
+            if self.widgets[0].ctx is None:
+                self.error_occurs = True
+                curses.nocbreak()
+                curses.echo()
+                curses.endwin()
+                gctx.quiet = saved_quiet
+                print("error: bad address or symbol")
+                return
 
         self.widgets[0].has_focus = True
 

@@ -267,7 +267,8 @@ class AddrContext():
                 return True
 
             self.entry = self.gctx.db.symbols.get("main", None) or \
-                         self.gctx.db.symbols.get("_main", None)
+                         self.gctx.db.symbols.get("_main", None) or \
+                         self.gctx.dis.binary.get_entry_point()
 
             if self.entry is None:
                 error("symbol main or _main not found, try with EP")

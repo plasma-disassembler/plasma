@@ -266,7 +266,7 @@ class Console():
                 [
                 "[SYMBOL|0xXXXX|EP|%VISUAL]",
                 "Visual mode: if no address is given, previous visual is",
-                "reopen. You can keep up to 3 visual. Use %1, %2 or %3",
+                "reopen. You can keep up to 3 visuals. Use %1, %2 or %3",
                 "to select the visual.",
                 "",
                 "Main shortcuts:",

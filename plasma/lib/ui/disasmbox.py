@@ -33,7 +33,6 @@ class Disasmbox(Listbox):
     def __init__(self, x, y, w, h, gctx, ad, analyzer, api,
                  mode=MODE_DUMP, until=-1,
                  update_position=True):
-
         self.gctx = gctx
         self.dis = gctx.dis
         self.db = gctx.db
