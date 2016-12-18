@@ -849,11 +849,13 @@ class Disasmbox(Listbox):
 
 
     def reload_asm(self):
-        line = self.win_y + self.cursor_y
-        while line not in self.output.line_addr:
-            line += 1
-        y = self.cursor_y
-        ad = self.output.line_addr[line]
+        if self.mode == MODE_DECOMPILE:
+            ad = self.first_addr
+        else:
+            line = self.win_y + self.cursor_y
+            while line not in self.output.line_addr:
+                line += 1
+            ad = self.output.line_addr[line]
         self.exec_disasm(ad)
         self.win_y = self.dump_update_up(0)
         self.goto_address(ad)
