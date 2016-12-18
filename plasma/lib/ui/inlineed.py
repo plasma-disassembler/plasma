@@ -34,6 +34,8 @@ class InlineEd():
                  color, tok_line):
         self.set_key_timeout = True
         self.time_last_mouse_key = MOUSE_INTERVAL + 1
+        self.cursor_y = 0
+        self.cursor_x = 0
 
         self.mapping = {
             b"\x1b\x5b\x44": self.k_left,
