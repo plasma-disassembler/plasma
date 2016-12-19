@@ -30,7 +30,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ, X86_INS_LODSB,
         X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ, X86_INS_CMPSB,
         X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ, X86_INS_SCASB,
-        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ, X86_INS_XADD)
+        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ, X86_INS_XADD, X86_PREFIX_LOCK)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -238,6 +238,9 @@ class Output(OutputAbs):
 
 
     def _pre_asm_inst(self, i, tab):
+        if i.prefix[0] == X86_PREFIX_LOCK:
+            self._add("lock ")
+            return tab
         return self._rep_begin(i, tab)
 
 
