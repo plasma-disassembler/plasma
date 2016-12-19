@@ -865,6 +865,12 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                             insn, ops[i], values[i], false);
     }
 
+    if (id == X86_INS_XADD && get_op_type(ops[1]) == X86_OP_REG) {
+        // TODO : unsupported
+        int r2 = get_op_reg(ops[1]);
+        *(regs->is_def[r2]) = false;
+    }
+
     if (len_ops != 2 || get_op_type(ops[0]) != X86_OP_REG)
         goto end;
 

@@ -30,7 +30,7 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ, X86_INS_LODSB,
         X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ, X86_INS_CMPSB,
         X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ, X86_INS_SCASB,
-        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ)
+        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ, X86_INS_XADD)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -56,7 +56,7 @@ COND_ADD_ZERO = {
 
 INST_CHECK = {X86_INS_SUB, X86_INS_ADD, X86_INS_MOV, X86_INS_CMP,
     X86_INS_XOR, X86_INS_AND, X86_INS_SHR, X86_INS_SHL, X86_INS_IMUL,
-    X86_INS_SAR, X86_INS_SAL, X86_INS_MOVZX,
+    X86_INS_SAR, X86_INS_SAL, X86_INS_MOVZX, X86_INS_XADD,
     X86_INS_DEC, X86_INS_INC, X86_INS_LEA, X86_INS_MOVSX, X86_INS_OR}
 
 
@@ -311,6 +311,19 @@ class Output(OutputAbs):
                         elif sz == 8:
                             self._add("rdx:rax = rax * ")
                         self._operand(i, 0)
+
+                elif i.id == X86_INS_XADD:
+                    self._add("tmp = ")
+                    self._operand(i, 0)
+                    self._add("; ")
+
+                    self._operand(i, 0)
+                    self._add(" += ")
+                    self._operand(i, 1)
+                    self._add("; ")
+
+                    self._operand(i, 1)
+                    self._add(" = tmp")
 
                 else:
                     self._operand(i, 0)
