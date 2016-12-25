@@ -27,6 +27,7 @@ import pefile
 from capstone.x86 import (X86_OP_INVALID, X86_OP_MEM, X86_REG_RIP, X86_REG_EIP)
 from ctypes import sizeof
 
+from plasma.lib.consts import *
 from plasma.lib.exceptions import ExcPEFail
 from plasma.lib.fileformat.pefile2 import PE2, SymbolEntry, PE_DT_FCN, PE_DT_PTR
 from plasma.lib.fileformat.binary import Binary
@@ -122,16 +123,17 @@ class PE(Binary):
                 if isinstance(name, bytes):
                     name = name.decode()
 
+                n = name
+
                 if name in self.symbols:
-                    continue
                     name = self.rename_sym(name)
 
-                self.imports[imp.address] = True
                 self.reverse_symbols[imp.address] = name
                 self.symbols[name] = imp.address
 
                 # TODO: always a function ?
                 # set the index, but the object is currently None
+                self.func_add_flag(imp.address, n)
                 self.db.functions[imp.address] = None
 
 
@@ -220,6 +222,12 @@ class PE(Binary):
 
         if self.pe.FILE_HEADER.Machine == 0x8664:
             self.arch = "x64"
+
+
+    def func_add_flag(self, ad, name):
+        self.imports[ad] = 0
+        if name in NORETURN_PE:
+            self.imports[ad] = FUNC_FLAG_NORETURN
 
 
     def is_big_endian(self):

@@ -34,7 +34,8 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.7
+VERSION = 2.8
+LAST_COMPATIBLE = 2.7
 
 
 class Database():
@@ -72,7 +73,7 @@ class Database():
         self.xrefs = {} # addr -> list addr
         # For big data (arrays/strings) we save all addresses with an xrefs
         self.data_sub_xrefs = {} # data_address -> {addresses_with_xrefs: True}
-        self.imports = {} # ad -> True (the bool is just for msgpack to save the database)
+        self.imports = {} # ad -> flags
         self.immediates = {} # insn_ad -> immediate result
 
         self.raw_base = 0
@@ -106,6 +107,12 @@ class Database():
             fd.close()
 
             self.__load_meta(data)
+
+            if self.version == LAST_COMPATIBLE:
+                warning("the database version is old, some information may be missing")
+            elif self.version < LAST_COMPATIBLE:
+                die("the database is too old")
+
             self.__load_memory(data)
             self.__load_symbols(data)
             self.__load_jmptables(data)
@@ -115,14 +122,6 @@ class Database():
             self.__load_xrefs(data)
             self.__load_imports(data)
             self.__load_immediates(data)
-
-            if self.version <= 1.5:
-                self.__load_labels(data)
-
-            if self.version < VERSION:
-                die("your version of plasma is too old")
-            elif self.version != VERSION:
-                warning("the database version is old, some information may be missing")
 
             self.loaded = True
 
@@ -190,12 +189,6 @@ class Database():
             self.symbols[name] = ad
 
 
-    def __load_labels(self, data):
-        for name, ad in self.labels.items():
-            self.reverse_symbols[ad] = name
-            self.symbols[name] = ad
-
-
     def __load_comments(self, data):
         self.user_inline_comments = data["user_inline_comments"]
         self.internal_inline_comments = data["internal_inline_comments"]
@@ -234,6 +227,12 @@ class Database():
 
     def __load_imports(self, data):
         self.imports = data["imports"]
+        if self.version <= 2.7:
+            for ad in self.imports:
+                # TODO ?? check separatly pe/elf
+                name = self.reverse_symbols[ad]
+                if name in NORETURN_ELF or name in NORETURN_PE:
+                    self.imports[ad] = FUNC_FLAG_NORETURN
 
 
     def __load_functions(self, data):

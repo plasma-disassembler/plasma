@@ -36,6 +36,7 @@ from elftools.elf.elffile import (ELFFile, SymbolTableSection,
 from elftools.elf.sections import NullSection
 from elftools.elf.constants import SH_FLAGS, P_FLAGS
 
+from plasma.lib.consts import *
 from plasma.lib.utils import warning, die
 from plasma.lib.fileformat.binary import SegmentAbs, Binary
 from plasma.lib.exceptions import ExcElf
@@ -351,17 +352,25 @@ class ELF(Binary):
         if isinstance(name, bytes):
             name = name.decode()
 
+        n = name
+
         if name in self.symbols:
             name = self.rename_sym(name)
 
         if rel.is_import:
-            self.imports[ad] = True
+            self.imports[ad] = 0
 
         if self.is_function(rel.symbol):
+            self.func_add_flag(ad, n)
             self.db.functions[ad] = None
 
         self.reverse_symbols[ad] = name
         self.symbols[name] = ad
+
+
+    def func_add_flag(self, ad, name):
+        if name in NORETURN_ELF:
+            self.imports[ad] = FUNC_FLAG_NORETURN
 
 
     def __register_relocs(self, section):

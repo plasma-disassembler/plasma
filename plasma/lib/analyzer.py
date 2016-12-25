@@ -416,8 +416,14 @@ class Analyzer(threading.Thread):
                     self.api.rm_symbol(ad)
 
 
-    def is_noreturn(self, ad, entry):
-        return ad != entry and self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
+    # Before calling this function, check self.db.mem.is_func
+    def is_func_noreturn(self, ad, entry):
+        if ad in self.db.imports:
+            return self.db.imports[ad] & FUNC_FLAG_NORETURN
+        if ad == entry:
+            # Can't say during the analysis
+            return False
+        return self.functions[ad][FUNC_FLAGS] & FUNC_FLAG_NORETURN
 
 
     def auto_jump_table(self, i, inner_code):
@@ -532,16 +538,16 @@ class Analyzer(threading.Thread):
 
             # Check if it's a jump to an imported symbol : jmp|call *(IMPORT)
             if self.dis.binary.type == T_BIN_PE:
-                if entry in self.dis.binary.imports:
+                if entry in self.db.imports:
                     is_pe_import = True
-                    func_obj[FUNC_FLAGS] = self.dis.import_flags(entry)
+                    func_obj[FUNC_FLAGS] = self.db.imports[entry]
                 else:
                     inst = self.dis.lazy_disasm(entry)
                     if inst is not None:
                         ptr = self.dis.binary.reverse_stripped(self.dis, inst)
                         if ptr != -1:
                             inner_code[inst.address] = inst
-                            func_obj[FUNC_FLAGS] = self.dis.import_flags(ptr)
+                            func_obj[FUNC_FLAGS] = self.db.imports[ptr]
         else:
             func_obj = None
 
@@ -652,14 +658,17 @@ class Analyzer(threading.Thread):
 
                     self.arch_analyzer.analyze_operands(
                             self, regsctx, inst, func_obj, False)
-                    # TODO: assume it has a return
+                    # TODO: assume there is return
                     if jmp_ad is None:
-                        ret_found = self.dis.import_flags(entry) == 0
+                        if entry in self.db.imports:
+                            ret_found |= self.db.imports[entry] & FUNC_FLAG_NORETURN
+                        else:
+                            ret_found = True
                         continue
 
                 self.api.add_xref(ad, jmp_ad)
                 if self.db.mem.is_func(jmp_ad):
-                    ret_found = not self.is_noreturn(jmp_ad, entry)
+                    ret_found |= not self.is_func_noreturn(jmp_ad, entry)
                     fo = self.functions[jmp_ad]
                     flags = fo[FUNC_FLAGS]
                     frame_size = max(fo[FUNC_FRAME_SIZE], frame_size)
@@ -684,7 +693,7 @@ class Analyzer(threading.Thread):
                     self.api.add_xref(ad, nxt_jmp)
 
                     if self.db.mem.is_func(direct_nxt):
-                        ret_found = not self.is_noreturn(direct_nxt, entry)
+                        ret_found |= not self.is_func_noreturn(direct_nxt, entry)
                         fo = self.functions[direct_nxt]
                         flags = fo[FUNC_FLAGS]
                         frame_size = max(fo[FUNC_FRAME_SIZE], frame_size)
@@ -696,7 +705,7 @@ class Analyzer(threading.Thread):
                         added_xrefs.append((ad, nxt_jmp))
 
                     if self.db.mem.is_func(nxt_jmp):
-                        ret_found = not self.is_noreturn(nxt_jmp, entry)
+                        ret_found |= not self.is_func_noreturn(nxt_jmp, entry)
                     else:
                         newctx = self.arch_analyzer.clone_regs_context(regsctx)
                         stack.append((newctx, nxt_jmp))
@@ -722,7 +731,8 @@ class Analyzer(threading.Thread):
                 else:
                     self.arch_analyzer.analyze_operands(
                             self, regsctx, inst, func_obj, False)
-                    if self.dis.import_flags(op.mem.disp) == FUNC_FLAG_NORETURN:
+                    if self.db.mem.is_func(op.mem.disp) and \
+                            self.is_func_noreturn(op.mem.disp, entry):
                         self.__add_prefetch(regsctx, inst, func_obj, inner_code)
                         continue
 
@@ -748,10 +758,10 @@ class Analyzer(threading.Thread):
                             if n:
                                 self.arch_analyzer.set_sp(regsctx, sp_before + n)
 
-                    if self.db.mem.is_func(call_ad):
-                        if self.is_noreturn(call_ad, entry):
-                            self.__add_prefetch(regsctx, inst, func_obj, inner_code)
-                            continue
+                    if self.db.mem.is_func(call_ad) and \
+                            self.is_func_noreturn(call_ad, entry):
+                        self.__add_prefetch(regsctx, inst, func_obj, inner_code)
+                        continue
 
                 # It seems it doesn't matter for the prefetched instruction
                 nxt = inst.address + inst.size
@@ -776,8 +786,10 @@ class Analyzer(threading.Thread):
             return False
 
         if func_obj is not None:
-            ret = self.dis.import_flags(entry)
-            if ret == FUNC_FLAG_NORETURN or not ret_found:
+            if entry in self.db.imports:
+                if self.db.imports[entry] & FUNC_FLAG_NORETURN:
+                    flags |= FUNC_FLAG_NORETURN
+            elif not ret_found:
                 flags |= FUNC_FLAG_NORETURN
 
             func_obj[FUNC_FLAGS] = flags
