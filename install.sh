@@ -31,7 +31,7 @@ if [ "$1" != "--update" ]; then
     pushd . > /dev/null
     mkdir -p build
     cd build
-    CAPSTONE_VERSION=3.0.4
+    CAPSTONE_VERSION="3.0.5-rc2"
     if [ -d capstone_$CAPSTONE_VERSION ]; then
         cd capstone_$CAPSTONE_VERSION
         make clean

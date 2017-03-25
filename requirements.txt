@@ -1,4 +1,4 @@
-capstone>=3.0.4
+capstone==3.0.5-rc2
 pefile
 pyelftools
 msgpack-python>=0.4.6
