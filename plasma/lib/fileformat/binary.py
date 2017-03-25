@@ -345,9 +345,8 @@ class Binary(object):
 
         # http://stackoverflow.com/questions/6526500/c-name-mangling-library-for-python
         args = ["c++filt", "-p"]
-        args.extend(lookup_names)
         pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        stdout, _ = pipe.communicate()
+        stdout, _ = pipe.communicate('\n'.join(lookup_names).encode('utf-8'))
         demangled = stdout.split(b"\n")[:-1]
 
         self.reverse_demangled = dict(zip(addr, demangled))
