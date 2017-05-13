@@ -1,0 +1,33 @@
+function overlap_1 (.text) {
+    0x4000d5: eax = -1144978688
+    0x4000da: ecx = 83886080
+    0x4000df: eax += ecx
+    0x4000e1: jmp ret_0x4000d7
+    ret_0x4000d7:
+    0x4000d7: eax += ecx
+    0x4000d9: ebx = 185
+    0x4000de: eax += -185874431
+    0x4000e3: eax += ebx
+    0x4000e5: ret
+}
+function overlap_2 (.text) {
+    0x4000e6: ecx = 0
+    0x4000e8: ecx--
+    0x4000ea: ecx++
+    # 0x4000ec: jne 0x4000ef
+    if == {
+        0x4000ee: eax = -555169487
+    }
+    unk_4000ef:
+    0x4000ef: ecx = 0
+    loop {
+        loop:
+        0x4000f1: call obfuscated_call
+        0x4000f6: ecx++
+        # 0x4000f8: cmp ecx, 0xf
+        # 0x4000fb: jle 0x4000f1
+        if (ecx > '\x0f')  goto break_0x4000fd
+    }
+    break_0x4000fd:
+    0x4000fd: ret
+}
