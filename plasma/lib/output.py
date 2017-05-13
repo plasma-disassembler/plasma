@@ -211,7 +211,7 @@ class OutputAbs():
 
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
         # Check if ad is inside an array, in this case we should print
-        # something link "((byte*) &label[idx]) + offset)".
+        # something like "((byte*) &label[idx]) + offset)".
         tmp_ad = self._dis.mem.get_head_addr(ad)
         ty = self._dis.mem.get_type(tmp_ad)
         if ty == MEM_ASCII:

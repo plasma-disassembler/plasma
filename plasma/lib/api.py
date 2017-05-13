@@ -58,7 +58,7 @@ class Api():
     def __undefine(self, ad, force=False):
         # TODO: remove comments
 
-        if not force and self.mem.is_code(ad):
+        if not force and (self.mem.is_code(ad) or self.mem.is_array(ad)):
             return False
 
         # Remove xrefs if we erased offsets.
@@ -92,6 +92,8 @@ class Api():
         Undefine data/code/function.
         returns True if ok
         """
+        ad = self.mem.get_head_addr(ad)
+
         self.__undefine(ad, force=True)
         entry = ad
 
@@ -109,7 +111,7 @@ class Api():
 
         self.mem.rm_range(entry, max(self.mem.get_size(entry), 1))
         if entry in self.__db.xrefs:
-            self.mem.add(entry, 1, MEM_BYTE)
+            self.mem.add(entry, 1, MEM_UNK)
 
         if is_code:
             # TODO: manage overlapping by calling mem.rm_range ?
@@ -118,7 +120,7 @@ class Api():
             for n in gph.nodes:
                 self.mem.rm_range(n, max(self.mem.get_size(n), 1))
                 if entry in self.__db.xrefs:
-                    self.mem.add(entry, 1, MEM_BYTE)
+                    self.mem.add(entry, 1, MEM_UNK)
 
         return True
 
@@ -159,7 +161,8 @@ class Api():
         deleted from memory.
         returns True if ok
         """
-        if not self.__undefine(ad):
+        ad2 = self.mem.get_head_addr(ad)
+        if not self.__undefine(ad2):
             return False
         if ad in self.__db.xrefs:
             self.mem.add(ad, 1, MEM_BYTE)
@@ -174,7 +177,8 @@ class Api():
         Define a word at ad (2 bytes).
         returns True if ok
         """
-        if not self.__undefine(ad):
+        ad2 = self.mem.get_head_addr(ad)
+        if not self.__undefine(ad2):
             return False
         self.mem.add(ad, 2, MEM_WORD)
         return True
@@ -185,7 +189,8 @@ class Api():
         Define a double word at ad (4 bytes).
         returns True if ok
         """
-        if not self.__undefine(ad):
+        ad2 = self.mem.get_head_addr(ad)
+        if not self.__undefine(ad2):
             return False
         self.mem.add(ad, 4, MEM_DWORD)
         return True
@@ -196,7 +201,8 @@ class Api():
         Define a qword at ad (8 bytes).
         returns True if ok
         """
-        if not self.__undefine(ad):
+        ad2 = self.mem.get_head_addr(ad)
+        if not self.__undefine(ad2):
             return False
         self.mem.add(ad, 8, MEM_QWORD)
         return True
@@ -207,10 +213,11 @@ class Api():
         Define an ascii string at ad (null terminated).
         returns True if ok
         """
+        ad2 = self.mem.get_head_addr(ad)
         sz = self.__binary.is_string(ad, min_bytes=1)
         if not sz:
             return False
-        if not self.__undefine(ad):
+        if not self.__undefine(ad2):
             return False
         self.mem.add(ad, sz, MEM_ASCII)
         return True
