@@ -790,6 +790,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     long values[2] = {0, 0};
     bool is_stack[2] = {false, false};
     bool err[2];
+    bool is_deref_pointer;
 
     if (len_ops == 1) {
         // Stack simualation not supported, just update the stack register
@@ -843,6 +844,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         if (err[i] == true)
             continue;
 
+
         if (get_op_type(ops[i]) == X86_OP_MEM) {
             // Pointers are not dereferenced actually.
             // So it means that we will not simulate this instruction.
@@ -859,10 +861,15 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
                                     get_op_size(ops[i]));
                 continue;
             }
+
+            is_deref_pointer = id != X86_INS_LEA;
+        }
+        else {
+            is_deref_pointer = false;
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
-                            insn, ops[i], values[i], false);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiBB",
+                            insn, ops[i], values[i], false, is_deref_pointer);
     }
 
     if (id == X86_INS_XADD && get_op_type(ops[1]) == X86_OP_REG) {
@@ -937,7 +944,7 @@ save_imm:
 
         if (id != X86_INS_MOV && id != X86_INS_LEA) {
             PyObject *ret = PyObject_CallMethod(
-                    analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+                    analyzer, "analyze_imm", "OOiBB", insn, ops[0], v, true, false);
             save = ret == Py_True;
         } else {
             save = false;

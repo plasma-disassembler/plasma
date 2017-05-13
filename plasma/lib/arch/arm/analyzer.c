@@ -456,6 +456,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     int values[3] = {0, 0, 0};
     bool is_stack[3] = {false, false, false};
     bool err[3];
+    bool is_load_insn = len_ops == 2 && is_load(id);
 
     // The first operand is always a register and always the destination (except st* ?)
     int r1 = get_op_reg(ops[0]);
@@ -483,8 +484,8 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
             }
         }
 
-        PyObject_CallMethod(analyzer, "analyze_imm", "OOiB",
-                            insn, ops[i], values[i], false);
+        PyObject_CallMethod(analyzer, "analyze_imm", "OOiBB",
+                            insn, ops[i], values[i], false, is_load_insn);
     }
 
     // err[0] = !is_reg_supported(r1)
@@ -506,7 +507,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
         }
 
         // Undefine the register if it's a load
-        if (is_load(id)) {
+        if (is_load_insn) {
             regs->is_def[r1] = false;
         }
 
@@ -551,7 +552,8 @@ save_imm:
         int v = get_reg_value(regs, r1);
 
         PyObject *ret = PyObject_CallMethod(
-                analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
+                analyzer, "analyze_imm", "OOiBB",
+                insn, ops[0], v, true, is_load_insn);
 
         if (ret == Py_True) {
             db = PyObject_GetAttrString(analyzer, "db");
