@@ -314,10 +314,16 @@ static bool get_op_value(struct regs_context *regs, PyObject *insn,
 
         case ARM_OP_REG:
             r = get_op_reg(op);
-            if (!is_reg_defined(regs, r))
-                return true;
-            *value = get_reg_value(regs, r);
-            *is_stack = regs->is_stack[r];
+            if (r == ARM_REG_PC) {
+                *value = get_insn_address(insn) + get_insn_size(insn) * 2;
+                *is_stack = false;
+            }
+            else {
+                if (!is_reg_defined(regs, r))
+                    return true;
+                *value = get_reg_value(regs, r);
+                *is_stack = regs->is_stack[r];
+            }
             break;
 
         case ARM_OP_MEM:
