@@ -45,7 +45,7 @@ static int WORDSIZE = 0;
 
 struct regs_context {
     PyObject_HEAD
-    long *regs;
+    int *regs;
     bool *is_stack;
     bool *is_def;
     bool *is_set;
@@ -96,19 +96,19 @@ static inline bool is_load(int insn_id)
 }
 
 
-static inline long py_aslong2(PyObject *obj, const char *name)
+static inline int py_aslong2(PyObject *obj, const char *name)
 {
     PyObject *tmp = PyObject_GetAttrString(obj, name);
-    long n = PyLong_AsUnsignedLongMask(tmp);
+    int n = PyLong_AsUnsignedLongMask(tmp);
     Py_DECREF(tmp);
     return n;
 }
 
-static inline long py_aslong3(PyObject *obj, const char *name1, const char *name2)
+static inline int py_aslong3(PyObject *obj, const char *name1, const char *name2)
 {
     PyObject *tmp = PyObject_GetAttrString(obj, name1);
     PyObject *tmp2 = PyObject_GetAttrString(tmp, name2);
-    long n = PyLong_AsUnsignedLongMask(tmp2);
+    int n = PyLong_AsUnsignedLongMask(tmp2);
     Py_DECREF(tmp);
     Py_DECREF(tmp2);
     return n;
@@ -120,7 +120,7 @@ static PyObject *new_regs_context(PyObject *self, PyObject *args)
     struct regs_context *r;
     r = PyObject_NEW(struct regs_context, &regs_context_T);
 
-    r->regs = (long*) malloc(NB_REGS * sizeof(long));
+    r->regs = (int*) malloc(NB_REGS * sizeof(int));
     r->is_stack = (bool*) malloc(NB_REGS * sizeof(bool));
     r->is_def = (bool*) malloc(NB_REGS * sizeof(bool));
     r->is_set = (bool*) malloc(NB_REGS * sizeof(bool));
@@ -196,9 +196,9 @@ static inline int is_reg_setted(struct regs_context *self, int r)
     return is_reg_supported(r) && self->is_set[r];
 }
 
-static inline void reg_mov(struct regs_context *self, int r, long v)
+static inline void reg_mov(struct regs_context *self, int r, int v)
 {
-    self->regs[r] = (long) v;
+    self->regs[r] = (int) v;
     self->is_def[r] = true;
 }
 
@@ -231,7 +231,7 @@ static PyObject* get_sp(PyObject *self, PyObject *args)
 static PyObject* set_sp(PyObject *self, PyObject *args)
 {
     struct regs_context *regs;
-    long imm;
+    int imm;
     if (!PyArg_ParseTuple(args, "Ol", &regs, &imm))
         Py_RETURN_NONE;
     reg_mov(regs, ARM_REG_SP, (int) imm);
@@ -243,9 +243,9 @@ static inline int get_insn_address(PyObject *op)
     return py_aslong2(op, "address");
 }
 
-static long get_reg_value(struct regs_context *regs, int r)
+static int get_reg_value(struct regs_context *regs, int r)
 {
-    return (long) regs->regs[r];
+    return (int) regs->regs[r];
 }
 
 static inline int get_insn_size(PyObject *op)
@@ -283,7 +283,7 @@ static inline int get_op_mem_disp(PyObject *op)
     return py_aslong3(op, "mem", "disp");
 }
 
-static inline long get_op_imm(PyObject *op)
+static inline int get_op_imm(PyObject *op)
 {
     return py_aslong3(op, "value", "imm");
 }
@@ -302,10 +302,10 @@ static inline int get_op_mem_scale(PyObject *op)
 // return true if there is an error (example: a register is invalid or
 // not defined)
 static bool get_op_value(struct regs_context *regs, PyObject *insn, 
-                         PyObject *op, long *value, bool *is_stack)
+                         PyObject *op, int *value, bool *is_stack)
 {
     int r, base, index, scale, disp;
-    long imm;
+    int imm;
     switch (get_op_type(op)) {
         case ARM_OP_IMM:
             *value = get_op_imm(op);
@@ -453,7 +453,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
     // Save operands values and search stack variables
 
-    long values[3] = {0, 0, 0};
+    int values[3] = {0, 0, 0};
     bool is_stack[3] = {false, false, false};
     bool err[3];
 
@@ -548,7 +548,7 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 
 save_imm:
     if (!regs->is_stack[r1]) {
-        long v = get_reg_value(regs, r1);
+        int v = get_reg_value(regs, r1);
 
         PyObject *ret = PyObject_CallMethod(
                 analyzer, "analyze_imm", "OOiB", insn, ops[0], v, true);
