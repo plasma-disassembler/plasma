@@ -595,10 +595,8 @@ class Analyzer(threading.Thread):
         while stack:
             (regsctx, ad) = stack.pop()
 
-            if ad in self.db.mem.mm:
-                ty = self.db.mem.mm[ad][1]
-                if not(ty == MEM_UNK or ty == MEM_CODE or ty == MEM_FUNC):
-                    continue
+            if self.db.mem.is_data(ad):
+                continue
 
             inst = self.disasm(ad)
 

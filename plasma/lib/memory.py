@@ -202,7 +202,7 @@ class Memory():
     def is_data(self, ad):
         if ad in self.mm:
             ty = self.mm[ad][1]
-            return MEM_BYTE <= ty <= MEM_QWORD or ty == MEM_ARRAY
+            return ty >= MEM_BYTE
         return False
 
 
@@ -224,6 +224,7 @@ class Memory():
         return self.mm[ad][2]
 
 
+    # warning: if you need to check if it's MEM_UNK use is_unk instead
     def get_type(self, ad):
         if ad in self.mm:
             return self.mm[ad][1]

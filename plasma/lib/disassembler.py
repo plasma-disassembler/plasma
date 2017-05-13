@@ -757,7 +757,7 @@ class Disassembler():
                 if op.type == self.capstone.CS_OP_IMM:
                     nxt = unsigned(op.value.imm)
 
-                    if nxt in self.functions:
+                    if nxt in self.functions or self.db.mem.is_data(nxt):
                         gph.new_node(inst, prefetch, None)
                     else:
                         stack.append(nxt)
@@ -785,13 +785,22 @@ class Disassembler():
                         direct_nxt = prefetch.address + prefetch.size
 
                     nxt_jmp = unsigned(op.value.imm)
-                    stack.append(direct_nxt)
 
-                    if nxt_jmp in self.functions:
-                        gph.new_node(inst, prefetch, [direct_nxt])
-                    else:
+                    is_d1 =  direct_nxt in self.functions or self.db.mem.is_data(direct_nxt)
+                    is_d2 =  nxt_jmp in self.functions or self.db.mem.is_data(nxt_jmp)
+
+                    if is_d1 and is_d2:
+                        gph.new_node(inst, prefetch, None)
+                    elif not (is_d1 and is_d2):
+                        stack.append(direct_nxt)
                         stack.append(nxt_jmp)
                         gph.new_node(inst, prefetch, [direct_nxt, nxt_jmp])
+                    elif is_d1:
+                        stack.append(nxt_jmp)
+                        gph.new_node(inst, prefetch, [nxt_jmp])
+                    elif is_d2:
+                        stack.append(direct_nxt)
+                        gph.new_node(inst, prefetch, [direct_nxt])
                 else:
                     # Can't interpret jmp ADDR|reg
                     gph.new_node(inst, prefetch, None)
@@ -818,10 +827,13 @@ class Disassembler():
                         gph.exit_or_ret.add(ad)
                         continue
 
-
                 nxt = inst.address + inst.size
-                stack.append(nxt)
-                gph.new_node(inst, None, [nxt])
+
+                if nxt in self.functions or self.db.mem.is_data(nxt):
+                    gph.new_node(inst, None, None)
+                else:
+                    stack.append(nxt)
+                    gph.new_node(inst, None, [nxt])
 
         if len(gph.nodes) == 0:
             return None, 0
