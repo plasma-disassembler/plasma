@@ -234,6 +234,7 @@ static inline void reg_add(struct regs_context *self, int r, int v1, int v2)
     if (r == MIPS_REG_ZERO)
         return;
     *((int*) &self->regs[r]) = v1 + v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_sub(struct regs_context *self, int r, int v1, int v2)
@@ -241,6 +242,7 @@ static inline void reg_sub(struct regs_context *self, int r, int v1, int v2)
     if (r == MIPS_REG_ZERO)
         return;
     *((int*) &self->regs[r]) = v1 - v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_or(struct regs_context *self, int r, int v1, int v2)
@@ -248,6 +250,7 @@ static inline void reg_or(struct regs_context *self, int r, int v1, int v2)
     if (r == MIPS_REG_ZERO)
         return;
     *((int*) &self->regs[r]) = v1 | v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_and(struct regs_context *self, int r, int v1, int v2)
@@ -255,6 +258,7 @@ static inline void reg_and(struct regs_context *self, int r, int v1, int v2)
     if (r == MIPS_REG_ZERO)
         return;
     *((int*) &self->regs[r]) = v1 & v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_xor(struct regs_context *self, int r, int v1, int v2)
@@ -262,6 +266,7 @@ static inline void reg_xor(struct regs_context *self, int r, int v1, int v2)
     if (r == MIPS_REG_ZERO)
         return;
     *((int*) &self->regs[r]) = v1 ^ v2;
+    self->is_def[r] = true;
 }
 
 static PyObject* get_sp(PyObject *self, PyObject *args)

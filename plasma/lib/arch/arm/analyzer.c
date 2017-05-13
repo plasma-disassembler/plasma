@@ -205,16 +205,19 @@ static inline void reg_mov(struct regs_context *self, int r, long v)
 static inline void reg_add(struct regs_context *self, int r, int v1, int v2)
 {
     *((int*) &self->regs[r]) = v1 + v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_sub(struct regs_context *self, int r, int v1, int v2)
 {
     *((int*) &self->regs[r]) = v1 - v2;
+    self->is_def[r] = true;
 }
 
 static inline void reg_and(struct regs_context *self, int r, int v1, int v2)
 {
     *((int*) &self->regs[r]) = v1 & v2;
+    self->is_def[r] = true;
 }
 
 static PyObject* get_sp(PyObject *self, PyObject *args)
