@@ -111,30 +111,31 @@ class PE(Binary):
         except Exception as e:
             raise ExcPEFail(e)
 
-        for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
-            for imp in entry.imports:
-                if imp.name is None:
-                    continue
+        if hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    if imp.name is None:
+                        continue
 
-                name = imp.name
+                    name = imp.name
 
-                # erocarrera/pefile returns a bytes but mlaferrera/prefile
-                # returns a string.
-                if isinstance(name, bytes):
-                    name = name.decode()
+                    # erocarrera/pefile returns a bytes but mlaferrera/prefile
+                    # returns a string.
+                    if isinstance(name, bytes):
+                        name = name.decode()
 
-                n = name
+                    n = name
 
-                if name in self.symbols:
-                    name = self.rename_sym(name)
+                    if name in self.symbols:
+                        name = self.rename_sym(name)
 
-                self.reverse_symbols[imp.address] = name
-                self.symbols[name] = imp.address
+                    self.reverse_symbols[imp.address] = name
+                    self.symbols[name] = imp.address
 
-                # TODO: always a function ?
-                # set the index, but the object is currently None
-                self.func_add_flag(imp.address, n)
-                self.db.functions[imp.address] = None
+                    # TODO: always a function ?
+                    # set the index, but the object is currently None
+                    self.func_add_flag(imp.address, n)
+                    self.db.functions[imp.address] = None
 
 
     def reverse_stripped(self, dis, first_inst):
