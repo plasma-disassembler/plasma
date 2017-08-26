@@ -1,0 +1,64 @@
+function main (.text) {
+    0x67a: push rbp
+    0x67b: rbp = rsp
+    0x67e: rsp -= 32
+    0x682: jmp loop_0x6f3
+    loop {
+        loop_0x6f3:
+        # 0x6f3: cmp dword ptr [rbp - 0x18], 0
+        # 0x6f7: jne 0x684
+        if (*(rbp - 24) == 0)  goto ret_0x6f9
+        # 0x684: cmp dword ptr [rbp - 0x14], 0
+        # 0x688: jne 0x6ac
+        if (*(rbp - 20) == 0) {
+            0x68a: jmp loop_0x698
+            loop {
+                loop_0x698:
+                # 0x698: cmp dword ptr [rbp - 4], 0
+                # 0x69c: js 0x68c
+                if (*(rbp - 4) >= 0)  goto break_0x69e
+                0x68c: rdi = 0x784 "4"
+                0x693: call puts
+            }
+            break_0x69e:
+            0x69e: rdi = 0x786 "5"
+            0x6a5: call puts
+            0x6aa: jmp loop_0x6f3
+        } else {
+            0x6ac: rdi = 0x788 "6"
+            0x6b3: call puts
+            loop {
+                loop_0x6b8:
+                # 0x6b8: cmp dword ptr [rbp - 0x10], 0
+                # 0x6bc: js 0x6d4
+                if (*(rbp - 16) < 0)  goto break_0x6d4
+                # 0x6be: cmp dword ptr [rbp - 0xc], 0
+                # 0x6c2: jle 0x6b8
+                if (*(rbp - 12) > 0)  goto break_0x6c4
+            }
+            break_0x6c4:
+            0x6c4: jmp loop_0x6e1
+            loop {
+                loop_0x6e1:
+                # 0x6e1: cmp dword ptr [rbp - 8], 0
+                # 0x6e5: jg 0x6c6
+                if (*(rbp - 8) <= 0)  goto break_0x6e7
+                0x6c6: rdi = 0x78a "7"
+                0x6cd: call puts
+                0x6d2: jmp 0x6d5
+                0x6d5: rdi = 0x78c "10"
+                0x6dc: call puts
+            }
+            break_0x6e7:
+            0x6e7: rdi = 0x78f "8"
+            0x6ee: call puts
+        }
+    }
+    break_0x6d4:
+    0x6d4: nop
+    goto 0x6d5
+    ret_0x6f9:
+    0x6f9: eax = 0
+    0x6fe: leave
+    0x6ff: ret
+}

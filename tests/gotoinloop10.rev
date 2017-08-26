@@ -34,22 +34,21 @@ function main (.text) {
                     0x400534: edi = 0x400638 "3"
                     0x400539: call puts
                     0x40053e: jmp 0x400566
+                }
+                0x400540: eax = *(rbp - 12)
+                # 0x400543: cmp eax, dword ptr [rbp - 8]
+                # 0x400546: jne 0x400554
+                if (eax == *(rbp - 8)) {
+                    0x400548: edi = 0x40063a "4"
+                    0x40054d: call puts
+                    0x400552: jmp 0x400566
                 } else {
-                    0x400540: eax = *(rbp - 12)
-                    # 0x400543: cmp eax, dword ptr [rbp - 8]
-                    # 0x400546: jne 0x400554
+                    0x400554: eax = *(rbp - 4)
+                    # 0x400557: cmp eax, dword ptr [rbp - 8]
+                    # 0x40055a: jne 0x400566
                     if (eax == *(rbp - 8)) {
-                        0x400548: edi = 0x40063a "4"
-                        0x40054d: call puts
-                        0x400552: jmp 0x400566
-                    } else {
-                        0x400554: eax = *(rbp - 4)
-                        # 0x400557: cmp eax, dword ptr [rbp - 8]
-                        # 0x40055a: jne 0x400566
-                        if (eax == *(rbp - 8)) {
-                            0x40055c: edi = 0x40063c "5"
-                            0x400561: call puts
-                        }
+                        0x40055c: edi = 0x40063c "5"
+                        0x400561: call puts
                     }
                 }
                 0x400566: edi = 0x40063e "6"

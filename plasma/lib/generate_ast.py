@@ -198,8 +198,10 @@ def fix_non_consecutives(ctx, ast):
         fix_non_consecutives(ctx, ast.branch)
 
 
-def search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
-    endp = __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start)
+# An endpoint is the first intersection between all paths which starts
+# at entry. This is used to find the next statement just after a if-else.
+def search_endpoint(ctx, ast, entry, l_set, l_prev_loop, l_start):
+    endp = __search_endpoint(ctx, ast, entry, l_set, l_prev_loop, l_start)
 
     if endp == -1:
         return -1
@@ -228,7 +230,7 @@ def __push_empty_waiting(stack, waiting, done):
         stack.append((-1, ad))
 
 
-def __search_endpoint(ctx, stack, ast, entry, l_set, l_prev_loop, l_start):
+def __search_endpoint(ctx, ast, entry, l_set, l_prev_loop, l_start):
     waiting = {}
     visited = set()
     done = set()
@@ -461,9 +463,6 @@ def generate_ast(ctx__):
         else:
             l_start = ctx.entry
 
-        if (l_start, curr) in ctx.gph.false_loops:
-            continue
-
         blk = ctx.gph.nodes[curr]
 
         # Exit the current loop
@@ -653,8 +652,7 @@ def generate_ast(ctx__):
 
             # if-else
 
-            endpoint = search_endpoint(ctx, stack, ast, curr,
-                                       l_set, l_prev_loop, l_start)
+            endpoint = search_endpoint(ctx, ast, curr, l_set, l_prev_loop, l_start)
 
             ast_if = Ast_Branch()
             ast_if.parent = ast

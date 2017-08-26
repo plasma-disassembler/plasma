@@ -1,0 +1,64 @@
+function main (.text) {
+    0x400507: push rbp
+    0x400508: rbp = rsp
+    0x40050b: rsp -= 32
+    0x40050f: jmp loop_0x400570
+    loop {
+        loop_0x400570:
+        # 0x400570: cmp dword ptr [rbp - 4], 0
+        # 0x400574: jne 0x400511
+        if (*(rbp - 4) == 0)  goto ret_0x400576
+        # 0x400511: cmp dword ptr [rbp - 8], 0
+        # 0x400515: jne 0x40053b
+        if (*(rbp - 8) == 0) {
+            # 0x400517: cmp dword ptr [rbp - 0x18], 0
+            # 0x40051b: jne 0x40052f
+            if (*(rbp - 24) == 0) {
+                0x40051d: jmp loop_0x400529
+                loop {
+                    loop_0x400529:
+                    # 0x400529: cmp dword ptr [rbp - 0x1c], 0
+                    # 0x40052d: js 0x40051f
+                    if (*(rbp - 28) >= 0)  goto break_0x40052f
+                    0x40051f: edi = 0x400604 "4"
+                    0x400524: call puts
+                }
+            }
+            break_0x40052f:
+            0x40052f: edi = 0x400606 "5"
+            0x400534: call puts
+            0x400539: jmp loop_0x400570
+        }
+        0x40053b: edi = 0x400608 "6"
+        0x400540: call puts
+        loop {
+            loop_0x400545:
+            # 0x400545: cmp dword ptr [rbp - 0xc], 0
+            # 0x400549: js 0x40055f
+            if (*(rbp - 12) < 0)  goto break_0x40055f
+            # 0x40054b: cmp dword ptr [rbp - 0x10], 0
+            # 0x40054f: jle 0x400545
+            if (*(rbp - 16) > 0)  goto break_0x400551
+        }
+        break_0x400551:
+        0x400551: jmp loop_0x400560
+        break_0x40055f:
+        0x40055f: nop
+        loop {
+            loop_0x400560:
+            # 0x400560: cmp dword ptr [rbp - 0x14], 0
+            # 0x400564: jg 0x400553
+            if (*(rbp - 20) <= 0)  goto break_0x400566
+            0x400553: edi = 0x40060a "7"
+            0x400558: call puts
+            0x40055d: jmp loop_0x400560
+        }
+        break_0x400566:
+        0x400566: edi = 0x40060c "8"
+        0x40056b: call puts
+    }
+    ret_0x400576:
+    0x400576: eax = 0
+    0x40057b: leave
+    0x40057c: ret
+}

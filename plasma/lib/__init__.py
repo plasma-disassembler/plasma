@@ -28,6 +28,7 @@ from plasma.lib.disassembler import Disassembler, NB_LINES_TO_DISASM
 from plasma.lib.utils import die, error, debug__
 from plasma.lib.generate_ast import generate_ast
 from plasma.lib.exceptions import ExcArch, ExcFileFormat, ExcIfelse, ExcPEFail
+from plasma.lib.ast import Ast_Comment
 
 
 #
@@ -57,7 +58,7 @@ class GlobalContext():
         self.do_dump = False
         self.vim = False
         self.nb_lines = 30
-        self.graph = False # Print graph != gph -> object
+        self.graph = False # Generate dot graph
         self.interactive_mode = False
         self.debug = False
         self.raw_base = 0
@@ -325,8 +326,14 @@ class AddrContext():
             ast, correctly_ended = generate_ast(self)
             if not correctly_ended:
                 debug__("Second try...")
-                self.gph.loop_detection(self.entry, True)
+                self.gph.loop_detection(self.entry, bypass_false_search=True)
                 ast, _ = generate_ast(self)
+                ast.nodes.insert(0, Ast_Comment(""))
+                ast.nodes.insert(0, Ast_Comment(""))
+                ast.nodes.insert(0,
+                    Ast_Comment("WARNING: maybe there is a bug, a second pass was necessary"))
+                ast.nodes.insert(0, Ast_Comment(""))
+                ast.nodes.insert(0, Ast_Comment(""))
 
             self.ast = ast
         except ExcIfelse as e:
