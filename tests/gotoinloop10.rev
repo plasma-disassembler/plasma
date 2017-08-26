@@ -53,15 +53,18 @@ function main (.text) {
                 }
                 0x400566: edi = 0x40063e "6"
                 0x40056b: call puts
-            }
+            } ; loop_0x400570
+
             break_0x400579:
             0x400579: edi = 0x400640 "7"
             0x40057e: call puts
-        }
+        } ; loop_0x400583
+
         break_0x40058c:
         0x40058c: edi = 0x400642 "8"
         0x400591: call puts
-    }
+    } ; loop_0x400596
+
     ret_0x40059c:
     0x40059c: eax = 0
     0x4005a1: leave

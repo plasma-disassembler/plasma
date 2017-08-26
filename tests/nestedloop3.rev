@@ -21,9 +21,12 @@ function main (.text) {
                 # 0x4004d3: cmp dword ptr [rbp - 0xc], 3
                 # 0x4004d7: jle 0x4004d3
                 if (*(rbp - 12) > 3)  goto loop_0x4004d9
-            }
-        }
-    }
+            } ; loop_0x4004d3
+
+        } ; loop_0x4004d9
+
+    } ; loop_0x4004df
+
     ret_0x4004e5:
     0x4004e5: eax = 0
     0x4004ea: pop rbp

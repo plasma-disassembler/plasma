@@ -26,7 +26,8 @@ function main (.text) {
         # 0x4005c7: cmp dword ptr [rbp - 4], 0x28
         # 0x4005cb: jne 0x4005eb
         if (*(rbp - 4) == 40)  goto loop_0x4005cd
-    }
+    } ; loop_0x4005eb
+
     for (;;) {
         loop_0x4005cd:
         # 0x4005cd: cmp dword ptr [rbp - 0xc], 1
@@ -40,7 +41,8 @@ function main (.text) {
             0x4005e4: call puts
         }
         0x4005e9: jmp loop_0x4005cd
-    }
+    } ; loop_0x4005cd
+
     break_0x4005a3:
     # 0x4005a3: cmp dword ptr [rbp - 8], 1
     # 0x4005a7: jne 0x4005b8
@@ -110,7 +112,8 @@ function main (.text) {
             0x400608: edi = 0x400752 "loop2"
             0x40060d: call puts
             0x400612: jmp loop_0x400608
-        }
+        } ; loop_0x400608
+
     }
     # 0x400614: cmp dword ptr [rbp - 8], 1
     # 0x400618: jne 0x400626
@@ -140,7 +143,8 @@ function main (.text) {
             0x400650: call puts
         }
         0x400655: *(rbp - 4) += 1
-    }
+    } ; loop_0x400659
+
     break_0x40065f:
     # 0x40065f: cmp dword ptr [rbp - 8], 1
     # 0x400663: jne 0x400671

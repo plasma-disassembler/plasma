@@ -44,13 +44,19 @@ function main (.text) {
                                     # 0x4004de: cmp dword ptr [rbp - 0xc], 8
                                     # 0x4004e2: jle 0x4004de
                                     if (*(rbp - 12) > 8)  goto loop_0x4004e4
-                                }
-                            }
-                        }
+                                } ; loop_0x4004de
+
+                            } ; loop_0x4004e4
+
+                        } ; loop_0x4004ea
+
                     }
-                }
-            }
-        }
+                } ; loop_0x4004f0
+
+            } ; loop_0x4004f6
+
+        } ; loop_0x4004fc
+
     }
     ret_0x400502:
     0x400502: eax = 0

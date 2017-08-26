@@ -82,5 +82,6 @@ function __imp___cexit (.text) {
             0x4011a8: *(esp) = edx
             0x4011ab: call __setmode
         }
-    }
+    } ; loop_0x4011b0
+
 }

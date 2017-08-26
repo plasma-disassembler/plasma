@@ -16,7 +16,8 @@ function main (.text) {
             }
             0x40052e: *(rbp - 4) += 1
             0x400532: jmp loop_0x40051b
-        }
+        } ; loop_0x40051b
+
     }
     ret_0x400534:
     0x400534: edi = 0x4005d6 "2"

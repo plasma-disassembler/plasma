@@ -15,7 +15,8 @@ function main (.text) {
         0x40054c: eax = *(rbp - 148)
         0x400552: rax = eax
         0x400554: *(rbp + rax - 144) = 'a'
-    }
+    } ; loop_0x40055c
+
     break_0x400565:
     0x400565: eax = 0
     0x40056a: rdx = *(rbp - 8)

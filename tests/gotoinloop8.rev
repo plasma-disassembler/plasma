@@ -24,15 +24,18 @@ function main (.text) {
                 0x40052e: edi = 0x4005e8 "3"
                 0x400533: call puts
                 0x400538: *(rbp - 8) += 1
-            }
+            } ; loop_0x40053c
+
             break_0x400522:
             0x400522: edi = 0x4005e6 "2"
             0x400527: call puts
             0x40052c: jmp loop_0x40051a
-        }
+        } ; loop_0x40051a
+
         break_0x400542:
         0x400542: *(rbp - 4) += 1
-    }
+    } ; loop_0x400546
+
     ret_0x40054c:
     0x40054c: eax = 0
     0x400551: leave

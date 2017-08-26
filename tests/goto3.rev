@@ -29,7 +29,8 @@ function main (.text) {
             0x400551: *(rbp - 4) += 1
         }
         0x400555: *(rbp - 4) += 5
-    }
+    } ; loop_0x400559
+
     ret_0x40055f:
     0x40055f: eax = 0
     0x400564: leave

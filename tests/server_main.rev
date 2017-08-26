@@ -80,7 +80,8 @@ function main (.text) {
                 if (eax < 0)  goto break_0x400ac7
                 0x400ad8: edi = 0x400d40 "Handler assigned"
                 0x400add: call puts
-            }
+            } ; loop_0x400ae2
+
             break_0x400ac7:
             0x400ac7: edi = 0x400d28 "could not create thread"
             0x400acc: call perror

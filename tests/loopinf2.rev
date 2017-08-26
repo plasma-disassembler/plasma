@@ -16,7 +16,8 @@ function main (.text) {
             }
             0x40052e: *(rbp - 4) += 1
             0x400532: jmp loop_0x40051b
-        }
+        } ; loop_0x40051b
+
     }
     for (;;) {
         loop_0x400534:
@@ -28,5 +29,6 @@ function main (.text) {
         }
         0x400544: *(rbp - 4) += 1
         0x400548: jmp loop_0x400534
-    }
+    } ; loop_0x400534
+
 }

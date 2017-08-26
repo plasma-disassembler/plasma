@@ -16,8 +16,10 @@ function main (.text) {
             # 0x4004d4: jle 0x4004cc
             if (*(rbp - 4) > 4)  goto loop_0x4004d6
             0x4004cc: *(rbp - 4) += 1
-        }
-    }
+        } ; loop_0x4004d0
+
+    } ; loop_0x4004d6
+
     ret_0x4004dc:
     0x4004dc: eax = 0
     0x4004e1: pop rbp

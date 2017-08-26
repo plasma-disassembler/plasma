@@ -23,7 +23,8 @@ function main (.text) {
         0x400516: edi = 0x4005bc "789"
         0x40051b: call puts
         0x400520: jmp loop_0x4004ee
-    }
+    } ; loop_0x4004ee
+
     break_0x400525:
     0x400525: nop
     goto ret_0x400526

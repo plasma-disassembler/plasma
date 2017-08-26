@@ -16,7 +16,8 @@ function main (.text) {
             # 0x400520: cmp dword ptr [rbp - 4], 2
             # 0x400524: je 0x400539
             if (*(rbp - 4) == 2)  goto break_0x400539
-        }
+        } ; loop_0x400526
+
         break_0x400539:
         0x400539: nop
         goto 0x40053a
@@ -32,7 +33,8 @@ function main (.text) {
         if (*(rbp - 8) > 14)  goto ret_0x40054a
         0x40053a: edi = 0x4005e8 "3"
         0x40053f: call puts
-    }
+    } ; loop_0x400544
+
     ret_0x40054a:
     0x40054a: eax = 0
     0x40054f: leave

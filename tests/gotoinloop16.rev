@@ -15,7 +15,8 @@ function main (.text) {
             # 0x40051d: jne 0x40052b
             if (*(rbp - 4) == 2)  goto break_0x40051f
             0x40052b: *(rbp - 4) += 1
-        }
+        } ; loop_0x40052f
+
         break_0x40051f:
         0x40051f: edi = 0x4005e4 "1"
         0x400524: call puts
@@ -32,7 +33,8 @@ function main (.text) {
         # 0x400549: jle 0x400537
         if (*(rbp - 4) > 14)  goto ret_0x40054b
         goto 0x400537
-    }
+    } ; loop_0x400545
+
     ret_0x40054b:
     0x40054b: eax = 0
     0x400550: leave

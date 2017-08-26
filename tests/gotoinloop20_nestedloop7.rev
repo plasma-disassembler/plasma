@@ -19,7 +19,8 @@ function main (.text) {
                 if (*(rbp - 4) >= 0)  goto break_0x69e
                 0x68c: rdi = 0x784 "4"
                 0x693: call puts
-            }
+            } ; loop_0x698
+
             break_0x69e:
             0x69e: rdi = 0x786 "5"
             0x6a5: call puts
@@ -35,7 +36,8 @@ function main (.text) {
                 # 0x6be: cmp dword ptr [rbp - 0xc], 0
                 # 0x6c2: jle 0x6b8
                 if (*(rbp - 12) > 0)  goto break_0x6c4
-            }
+            } ; loop_0x6b8
+
             break_0x6c4:
             0x6c4: jmp loop_0x6e1
             loop {
@@ -48,12 +50,14 @@ function main (.text) {
                 0x6d2: jmp 0x6d5
                 0x6d5: rdi = 0x78c "10"
                 0x6dc: call puts
-            }
+            } ; loop_0x6e1
+
             break_0x6e7:
             0x6e7: rdi = 0x78f "8"
             0x6ee: call puts
         }
-    }
+    } ; loop_0x6f3
+
     break_0x6d4:
     0x6d4: nop
     goto 0x6d5

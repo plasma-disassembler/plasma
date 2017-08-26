@@ -42,15 +42,18 @@ function main (.text) {
                 # 0x4005b9: jne 0x4005c7
                 if (*(rbp - 12) == 2)  goto break_0x4005bb
                 0x4005c7: *(rbp - 8) += 1
-            }
+            } ; loop_0x4005cb
+
             break_0x4005d1:
             0x4005d1: *(rbp - 4) += 1
-        }
+        } ; loop_0x4005d5
+
         break_0x4005a9:
         0x4005a9: edi = 0x40069f "restart!"
         0x4005ae: call puts
         0x4005b3: jmp loop_0x40056b
-    }
+    } ; loop_0x40056b
+
     break_0x4005bb:
     0x4005bb: edi = 0x4006a8 "stop"
     0x4005c0: call puts

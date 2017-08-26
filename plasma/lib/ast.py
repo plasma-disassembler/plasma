@@ -273,7 +273,18 @@ class Ast_Loop:
         o._new_line()
         self.branch.dump(o, tab+1)
         o._tabs(tab)
-        o._add("}")
+        o._add("} ")
+
+        first_node = self.branch.nodes[0]
+
+        if isinstance(first_node, Ast_IfGoto):
+            ad = first_node.orig_jump.address
+        elif isinstance(first_node, list):
+            ad = first_node[0].address
+
+        o._internal_comment("; " + o.gctx.api.get_symbol(ad))
+
+        o._new_line()
         o._new_line()
 
 

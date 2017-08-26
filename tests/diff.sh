@@ -21,7 +21,7 @@ green() {
 }
 
 OPTIONS="--nocolor"
-VERBOSE=0
+VERBOSE=1
 
 __diff() {
     local name=$1

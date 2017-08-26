@@ -48,7 +48,8 @@ function connection_handler (.text) {
         0x400baa: rsi = rcx
         0x400bad: edi = eax
         0x400baf: call write
-    }
+    } ; loop_0x400bb4
+
     break_0x400bd8:
     # 0x400bd8: cmp dword ptr [rbp - 0x14], 0
     # 0x400bdc: jne 0x400bf9

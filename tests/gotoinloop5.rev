@@ -57,7 +57,8 @@ function main (.text) {
             0x40059d: call puts
         }
         0x4005a2: *(rbp - 4) += 1
-    }
+    } ; loop_0x4005a6
+
     ret_0x4005ac:
     0x4005ac: eax = 0
     0x4005b1: leave

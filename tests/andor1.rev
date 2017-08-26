@@ -30,8 +30,10 @@ function main (.text) {
             if (*(rbp - 12) > 19)  goto loop_0x400533
             0x400523: edi = 0x4005d6 "2"
             0x400528: call puts
-        }
-    }
+        } ; loop_0x40052d
+
+    } ; loop_0x400533
+
     ret_0x400547:
     0x400547: eax = 0
     0x40054c: leave

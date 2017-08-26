@@ -23,7 +23,8 @@ function _start (raw) {
         0x4041ea: push rax
         0x4041eb: call 0x4043c0
         0x4041f0: jmp _start
-    }
+    } ; _start
+
     ret_0x4041c3:
     0x4041c3: pop rbx
     0x4041c4: ret

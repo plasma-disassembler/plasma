@@ -390,7 +390,8 @@ function main (.text) {
             0x40093d: call puts
         }
         0x400942: *(rbp - 4) += 1
-    }
+    } ; loop_0x400946
+
     ret_0x400950:
     0x400950: eax = 0
     0x400955: leave

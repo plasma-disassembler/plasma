@@ -7,6 +7,7 @@ cd ..
 
 if [ "$1" == "force" ]; then
   ls tests/*.bin | while read file; do
+      echo "$file"
       name=`basename "$file" .bin`
      ./run_plasma.py --nocolor "tests/${name}.bin" >"tests/${name}.rev"
   done

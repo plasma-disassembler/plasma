@@ -20,7 +20,8 @@ function main (.text) {
                 0x400524: edi = 0x4005e4 "1"
                 0x400529: call puts
                 0x40052e: *(rbp - 4) += 1
-            }
+            } ; loop_0x400532
+
         }
         break_0x40053a:
         # 0x40053a: cmp dword ptr [rbp - 8], 2
@@ -32,7 +33,8 @@ function main (.text) {
         # 0x40054a: cmp dword ptr [rbp - 8], 3
         # 0x40054e: jne 0x400515
         if (*(rbp - 8) == 3)  goto ret_0x400550
-    }
+    } ; loop_0x400515
+
     ret_0x400550:
     0x400550: eax = 0
     0x400555: leave

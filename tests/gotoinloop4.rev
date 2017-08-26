@@ -38,5 +38,6 @@ function main (.text) {
             0x400548: edi = 0x40060f "4"
             0x40054d: call puts
         }
-    }
+    } ; loop_0x400552
+
 }

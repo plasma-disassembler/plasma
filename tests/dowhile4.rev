@@ -19,7 +19,8 @@ function main (.text) {
             # 0x400533: cmp dword ptr [rbp - 8], 9
             # 0x400537: jle 0x400525
             if (*(rbp - 8) > 9)  goto loop_0x400539
-        }
+        } ; loop_0x400525
+
         loop {
             loop_0x400539:
             0x400539: edi = 0x4005f6 "2"
@@ -28,10 +29,12 @@ function main (.text) {
             # 0x400547: cmp dword ptr [rbp - 8], 0x13
             # 0x40054b: jle 0x400539
             if (*(rbp - 8) > 19)  goto break_0x40054d
-        }
+        } ; loop_0x400539
+
         break_0x40054d:
         0x40054d: *(rbp - 4) += 1
-    }
+    } ; loop_0x400551
+
     ret_0x400557:
     0x400557: edi = 0x4005f8 "3"
     0x40055c: call puts

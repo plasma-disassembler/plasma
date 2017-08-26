@@ -24,7 +24,8 @@ function main (.text) {
         0x400542: *(rbp - 4) += 1
         0x400546: edi = 0x4005e6 "2"
         0x40054b: call puts
-    }
+    } ; loop_0x400550
+
     ret_0x400556:
     0x400556: eax = 0
     0x40055b: leave

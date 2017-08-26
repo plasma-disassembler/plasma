@@ -18,7 +18,8 @@ function main (.text) {
             if (*(rbp - 12) == 15)  goto break_0x400526
             0x400532: edi = 0x400608 "3"
             0x400537: call puts
-        }
+        } ; loop_0x40053c
+
         break_0x400526:
         0x400526: edi = 0x400606 "2"
         0x40052b: call puts

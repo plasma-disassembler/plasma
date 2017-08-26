@@ -20,7 +20,8 @@ function main (.text) {
         0x4005db: edi = 0x4006ab "5"
         0x4005e0: call puts
         0x4005e5: *(rbp - 4) += 1
-    }
+    } ; loop_0x4005e9
+
     break_0x400579:
     # 0x400579: cmp dword ptr [rbp - 4], 0x1f3
     # 0x400580: jg 0x4005cf
@@ -56,7 +57,8 @@ function main (.text) {
                 0x4005c3: edi = 0x40069c "loooop!"
                 0x4005c8: call puts
                 0x4005cd: jmp loop_0x4005c3
-            }
+            } ; loop_0x4005c3
+
         }
     }
     0x4005cf: edi = 0x4006a4 "break!"

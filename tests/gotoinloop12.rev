@@ -51,6 +51,8 @@ function main (.text) {
             }
             0x400568: edi = 0x40061e "6"
             0x40056d: call puts
-        }
-    }
+        } ; loop_0x400572
+
+    } ; loop_0x40057b
+
 }

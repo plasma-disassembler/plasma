@@ -8,7 +8,8 @@ function main (.text) {
         if >  goto ret_0x4004c1
         myloop:
         0x4004bc: rax++
-    }
+    } ; cond
+
     ret_0x4004c1:
     0x4004c1: ret
 }

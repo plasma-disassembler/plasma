@@ -22,7 +22,8 @@ function main (.text) {
                     if (*(rbp - 28) >= 0)  goto break_0x40052f
                     0x40051f: edi = 0x400604 "4"
                     0x400524: call puts
-                }
+                } ; loop_0x400529
+
             }
             break_0x40052f:
             0x40052f: edi = 0x400606 "5"
@@ -39,7 +40,8 @@ function main (.text) {
             # 0x40054b: cmp dword ptr [rbp - 0x10], 0
             # 0x40054f: jle 0x400545
             if (*(rbp - 16) > 0)  goto break_0x400551
-        }
+        } ; loop_0x400545
+
         break_0x400551:
         0x400551: jmp loop_0x400560
         break_0x40055f:
@@ -52,11 +54,13 @@ function main (.text) {
             0x400553: edi = 0x40060a "7"
             0x400558: call puts
             0x40055d: jmp loop_0x400560
-        }
+        } ; loop_0x400560
+
         break_0x400566:
         0x400566: edi = 0x40060c "8"
         0x40056b: call puts
-    }
+    } ; loop_0x400570
+
     ret_0x400576:
     0x400576: eax = 0
     0x40057b: leave

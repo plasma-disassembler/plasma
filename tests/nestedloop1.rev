@@ -28,10 +28,12 @@ function main (.text) {
                     0x40053a: call puts
                 }
                 0x40053f: *(rbp - 8) += 1
-            }
+            } ; loop_0x400543
+
             break_0x400549:
             0x400549: *(rbp - 4) += 1
-        }
+        } ; loop_0x40054d
+
         break_0x400553:
         0x400553: edi = 0x4005f6 "2"
         0x400558: call puts

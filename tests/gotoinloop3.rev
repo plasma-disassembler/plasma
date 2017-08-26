@@ -37,5 +37,6 @@ function main (.text) {
         }
         0x40056c: *(rbp - 4) += 1
         0x400570: jmp loop_0x40052a
-    }
+    } ; loop_0x40052a
+
 }

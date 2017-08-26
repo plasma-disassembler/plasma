@@ -37,7 +37,8 @@ function main (.text) {
                 0x400555: *(rbp - 4) += 1
                 0x400559: *(rbp - 8) += 1
             }
-        }
+        } ; loop_0x40055d
+
         break_0x40056d:
         # 0x40056d: cmp dword ptr [rbp - 0xc], 0xf
         # 0x400571: jne 0x40057f
@@ -50,13 +51,15 @@ function main (.text) {
             0x400584: call puts
         }
         0x400589: *(rbp - 12) += 1
-    }
+    } ; loop_0x40058d
+
     for (;;) {
         loop_0x400549:
         0x400549: edi = 0x400638 "3"
         0x40054e: call puts
         0x400553: jmp loop_0x400549
-    }
+    } ; loop_0x400549
+
     ret_0x400593:
     0x400593: edi = 0x40063e "6"
     0x400598: call puts

@@ -27,14 +27,17 @@ function main (.text) {
                     0x400530: edi = 0x4005e6 "2"
                     0x400535: call puts
                     0x40053a: *(rbp - 4) += 1
-                }
-            }
+                } ; loop_0x40053e
+
+            } ; loop_0x400544
+
         }
         break_0x40054a:
         # 0x40054a: cmp dword ptr [rbp - 8], 0x31
         # 0x40054e: jle 0x400515
         if (*(rbp - 8) > 49)  goto ret_0x400550
-    }
+    } ; loop_0x400515
+
     ret_0x400550:
     0x400550: eax = 0
     0x400555: leave
