@@ -281,6 +281,7 @@ class Console():
                 "space   highlight current word (ctrl-k to clear)",
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "U       undefine",
+                "F       list of functions",
                 "",
                 "Options:",
                 "I       switch to traditional instruction string output (3 modes)",

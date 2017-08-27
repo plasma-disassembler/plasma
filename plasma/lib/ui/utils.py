@@ -23,7 +23,7 @@ from plasma.lib.ui.window import Window
 from plasma.lib.ui.inlineed import InlineEd
 
 
-def popup_text(title, output, par_widget):
+def popup_listbox(title, output, par_widget):
     """
     It opens a centered popup. output is an instance of the class Output.
     Returns (bool, line number of the cursor)

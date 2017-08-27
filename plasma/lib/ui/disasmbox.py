@@ -27,6 +27,7 @@ from plasma.lib.consts import *
 from plasma.lib.ui.utils import *
 from plasma.lib.ui.listbox import Listbox
 from plasma.lib.ui.inlineed import InlineEd
+from plasma.lib.output import OutputAbs
 
 
 class Disasmbox(Listbox):
@@ -98,6 +99,7 @@ class Disasmbox(Listbox):
             b"n": self.main_cmd_search_forward,
             b"N": self.main_cmd_search_backward,
             b"j": self.main_cmd_jump_to,
+            b"F": self.main_cmd_functions,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -1120,7 +1122,7 @@ class Disasmbox(Listbox):
             return False
 
         o = ctx.dump_xrefs()
-        (ret, line) = popup_text("xrefs for 0x%x" % ctx.entry, o, self)
+        (ret, line) = popup_listbox("xrefs for 0x%x" % ctx.entry, o, self)
 
         if not ret:
             return True
@@ -1152,8 +1154,8 @@ class Disasmbox(Listbox):
             self.saved_stack.clear()
             self.stack.append(topush)
             self.win_y = self.dump_update_up(self.win_y)
-            self.main_cmd_line_middle()
             self.goto_address(ad)
+            self.main_cmd_line_middle()
         return ret
 
 
@@ -1218,3 +1220,50 @@ class Disasmbox(Listbox):
             self.main_cmd_line_middle()
 
         return True
+
+
+    def main_cmd_functions(self):
+        o = OutputAbs()
+        o._new_line()
+
+        lst = list(self.db.functions)
+        lst.sort()
+
+        for ad in lst:
+            sy = self.api.get_symbol(ad)
+            o.set_line(ad)
+
+            if ad in self.db.reverse_demangled:
+                o._add(self.db.reverse_demangled[ad])
+                o._add(" ")
+                o._comment(sy)
+            else:
+                o._add(sy)
+            o._new_line()
+
+        (ret, line) = popup_listbox("list of functions", o, self)
+
+        if not ret:
+            return True
+
+        # Goto the function
+
+        ad = o.line_addr[line]
+        topush = self.__compute_curr_position()
+        self.cursor_x = 0
+
+        if self.goto_address(ad):
+            self.saved_stack.clear()
+            self.stack.append(topush)
+            return True
+
+        ret = self.exec_disasm(ad)
+        if ret:
+            self.cursor_y = 0
+            self.win_y = 0
+            self.saved_stack.clear()
+            self.stack.append(topush)
+            self.win_y = self.dump_update_up(self.win_y)
+            self.goto_address(ad)
+            self.main_cmd_line_middle()
+        return ret
