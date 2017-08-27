@@ -42,17 +42,12 @@ if [ "$1" != "--update" ]; then
     fi
     ./make.sh
     sudo -H ./make.sh install
+    cd bindings/python/
+    make install3
     popd > /dev/null
 
-    # Waiting that the package pip pefile contains any errors
-    cat requirements.txt | grep -v pefile >req
-    sudo -H pip3 install -r req 
-    rm req
+    sudo -H pip3 install -r requirements.txt
     sudo -H pip3 install future
-    git clone --depth 1 https://github.com/erocarrera/pefile
-    cd pefile
-    python3 setup.py install
-    cd ..
 fi
 
 python3 setup.py build_ext --inplace
