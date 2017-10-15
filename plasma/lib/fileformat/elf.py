@@ -59,6 +59,8 @@ from plasma.lib.fileformat.relocations.generic import MipsGlobalReloc, MipsLocal
 # SHF_MASKPROC=0xf0000000
 
 
+DEBUG_PRINT_LOADED_SYMS = False
+
 
 class ELF(Binary):
     def __init__(self, db, filename):
@@ -335,34 +337,43 @@ class ELF(Binary):
                 got = rel.addr
                 # 0x6 is the size of the plt's jmpq instruction in x86_64
                 ad = self.read_addr_at(got) - 6
-                self.__save_symbol(rel, ad)
+                self.__save_symbol(rel, ad, True)
 
         elif self.arch in ('ARM', 'AARCH64', 'MIPS32', 'MIPS64'):
             for rel in self.jmprel:
                 got = rel.addr
                 ad = self.read_addr_at(got)
-                self.__save_symbol(rel, ad)
+                self.__save_symbol(rel, ad, True)
 
 
-    def __save_symbol(self, rel, ad):
-        if ad == 0:
+    def __save_symbol(self, rel, ad, from_plt=False):
+        if ad == 0 or ad in self.reverse_symbols:
             return
 
         name = rel.symbol.name
         if isinstance(name, bytes):
             name = name.decode()
 
-        n = name
+        orig_name = name
+
+        if not from_plt:
+            name = "_" + name
 
         if name in self.symbols:
+            if ad == self.symbols[name]:
+                return
             name = self.rename_sym(name)
+
+        if DEBUG_PRINT_LOADED_SYMS:
+            print("dyn", name, hex(ad), from_plt, rel.is_import)
 
         if rel.is_import:
             self.imports[ad] = 0
 
         if self.is_function(rel.symbol):
-            self.func_add_flag(ad, n)
-            self.db.functions[ad] = None
+            self.func_add_flag(ad, orig_name)
+            if from_plt:
+                self.db.functions[ad] = None
 
         self.reverse_symbols[ad] = name
         self.symbols[name] = ad
@@ -426,7 +437,7 @@ class ELF(Binary):
                 reloc = self._make_reloc(r, sym)
                 if reloc is not None:
                     relocs.append(reloc)
-                    self.__save_symbol(reloc, reloc.symbol.entry.st_value)
+                    self.__save_symbol(reloc, reloc.rebased_addr)
         return relocs
 
 
@@ -447,19 +458,29 @@ class ELF(Binary):
             if not isinstance(s, SymbolTableSection):
                 continue
 
-            for sy in s.iter_symbols():
+            # it seems it's better to start from the end, some symbols are added by
+            # gcc at the beginning
+            for sy in reversed(list(s.iter_symbols())):
                 if is_arm and sy.name in dont_save:
                     continue
 
                 ad = sy.entry.st_value
-                if ad != 0 and sy.name != b"":
+                if ad != 0 and sy.name != b"" and ad not in self.reverse_symbols:
                     name = sy.name
                     if isinstance(name, bytes):
                         name = name.decode()
 
+                    if not name or name.startswith("completed."):
+                        continue
+
                     if self.is_address(ad):
                         if name in self.symbols:
+                            if ad == self.symbols[name]:
+                                continue
                             name = self.rename_sym(name)
+
+                        if DEBUG_PRINT_LOADED_SYMS:
+                            print("static", name, hex(ad))
 
                         self.reverse_symbols[ad] = name
                         self.symbols[name] = ad
