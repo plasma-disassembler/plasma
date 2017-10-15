@@ -819,13 +819,13 @@ class Disassembler():
                             gph.exit_or_ret.add(ad)
                             continue
 
-                    if op.type == self.capstone.CS_OP_MEM and \
-                            op.mem.disp in self.binary.imports and \
-                            self.binary.imports[op.mem.disp] & FUNC_FLAG_NORETURN:
-                        prefetch = self.__add_prefetch(addresses, inst)
-                        gph.new_node(inst, prefetch, None)
-                        gph.exit_or_ret.add(ad)
-                        continue
+                    if op.type == self.capstone.CS_OP_MEM:
+                        if ad in self.db.immediates and \
+                            self.binary.imports[self.db.immediates[ad]] & FUNC_FLAG_NORETURN:
+                            prefetch = self.__add_prefetch(addresses, inst)
+                            gph.new_node(inst, prefetch, None)
+                            gph.exit_or_ret.add(ad)
+                            continue
 
                 nxt = inst.address + inst.size
 

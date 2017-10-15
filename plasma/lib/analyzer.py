@@ -279,6 +279,12 @@ class Analyzer(threading.Thread):
     # If from_save_imm is true, op is the destination where we save imm
     # -> inst op, computed_imm
     def analyze_imm(self, i, op, imm, from_save_imm, is_deref_pointer):
+        ret = self.__analyze_imm(i, op, imm, from_save_imm, is_deref_pointer)
+        if ret:
+            self.db.immediates[i.address] = imm
+
+
+    def __analyze_imm(self, i, op, imm, from_save_imm, is_deref_pointer):
         if imm <= 1024:
             return False
 

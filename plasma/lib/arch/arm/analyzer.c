@@ -413,7 +413,6 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
     struct regs_context *regs;
     PyObject *insn;
     PyObject *func_obj;
-    PyObject *tmp, *db;
 
     /* if True: stack variables will not be saved and analysis on immediates
      * will not be run. It will only simulate registers.
@@ -551,18 +550,9 @@ save_imm:
     if (!regs->is_stack[r1]) {
         int v = get_reg_value(regs, r1);
 
-        PyObject *ret = PyObject_CallMethod(
+        PyObject_CallMethod(
                 analyzer, "analyze_imm", "OOiBB",
                 insn, ops[0], v, true, is_load_insn);
-
-        if (ret == Py_True) {
-            db = PyObject_GetAttrString(analyzer, "db");
-            tmp = PyObject_GetAttrString(db, "immediates");
-            PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
-                           PyLong_FromLong(v));
-            Py_DECREF(tmp);
-            Py_DECREF(db);
-        }
     }
 
 end:

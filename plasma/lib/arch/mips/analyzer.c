@@ -666,28 +666,24 @@ static PyObject* analyze_operands(PyObject *self, PyObject *args)
 save_imm:
     if (!regs->is_stack[r1]) {
         long v = get_reg_value(regs, r1, use_real_gp);
-        bool save = false;
 
         if (use_real_gp) {
             if (id != MIPS_INS_LUI) {
-                PyObject *ret = PyObject_CallMethod(
+                PyObject_CallMethod(
                         analyzer, "analyze_imm", "OOiBB",
                         insn, ops[0], v, true, is_load_insn);
-                save = ret == Py_True;
             }
         }
         else {
             // r1 == GP
-            save = len_ops == 3;
-        }
-
-        if (save) {
-            db = PyObject_GetAttrString(analyzer, "db");
-            tmp = PyObject_GetAttrString(db, "immediates");
-            PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
-                           PyLong_FromLong(v));
-            Py_DECREF(tmp);
-            Py_DECREF(db);
+            if (len_ops == 3) {
+                db = PyObject_GetAttrString(analyzer, "db");
+                tmp = PyObject_GetAttrString(db, "immediates");
+                PyDict_SetItem(tmp, PyObject_GetAttrString(insn, "address"),
+                               PyLong_FromLong(v));
+                Py_DECREF(tmp);
+                Py_DECREF(db);
+            }
         }
     }
 

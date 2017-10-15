@@ -14,9 +14,9 @@ frame_size = 8
 0x400419: rsp &= -16
 0x40041d: push rax
 0x40041e: push rsp
-0x40041f: r8 = __libc_csu_fini
-0x400426: rcx = __libc_csu_init
-0x40042d: rdi = main
+0x40041f: !r8 = __libc_csu_fini
+0x400426: !rcx = __libc_csu_init
+0x40042d: !rdi = main
 0x400434: call __libc_start_main
 ; end function _start
 
@@ -34,9 +34,9 @@ frame_size = 8
 deregister_tm_clones:
 
 frame_size = 8
-0x400440: eax = unk_6009df
+0x400440: !eax = unk_6009df
 0x400445: push rbp
-0x400446: rax -= __TMC_END__
+0x400446: !rax = __TMC_END__
 0x40044c: rax cmp '\x0e'
 0x400450: rbp = rsp
 0x400453: jbe loc_400470
@@ -44,7 +44,7 @@ frame_size = 8
 0x40045a: test rax, rax
 0x40045d: je loc_400470
 0x40045f: pop rbp
-0x400460: edi = __TMC_END__
+0x400460: !edi = __TMC_END__
 0x400465: jmp rax
 
 0x400467: .db 66  'f'
@@ -81,9 +81,9 @@ loc_400470:
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 register_tm_clones:
-0x400480: esi = __TMC_END__
+0x400480: !esi = __TMC_END__
 0x400485: push rbp
-0x400486: rsi -= __TMC_END__
+0x400486: !rsi = __TMC_END__
 0x40048d: rsi >>= 3
 0x400491: rbp = rsp
 0x400494: rax = rsi
@@ -95,7 +95,7 @@ register_tm_clones:
 0x4004a8: test rax, rax
 0x4004ab: je loc_4004b8
 0x4004ad: pop rbp
-0x4004ae: edi = __TMC_END__
+0x4004ae: !edi = __TMC_END__
 0x4004b3: jmp rax
 
 0x4004b5: .db 0f
@@ -117,13 +117,13 @@ loc_4004b8:
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 __do_global_dtors_aux:
-0x4004c0: *(__TMC_END__) cmp '\0'
+0x4004c0: !*(__TMC_END__) = __TMC_END__
 0x4004c7: jne loc_4004da
 0x4004c9: push rbp
 0x4004ca: rbp = rsp
 0x4004cd: call deregister_tm_clones
 0x4004d2: pop rbp
-0x4004d3: *(__TMC_END__) = '\x01'
+0x4004d3: !*(__TMC_END__) = __TMC_END__
 
 loc_4004da:
 0x4004da: ret
@@ -138,8 +138,8 @@ loc_4004da:
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 frame_dummy:
-0x4004e0: edi = __JCR_END__
-0x4004e5: *(rdi) cmp 0
+0x4004e0: !edi = __JCR_END__
+0x4004e5: !*(rdi) = __JCR_END__
 0x4004e9: jne loc_4004f0
 
 loc_4004eb:
@@ -175,42 +175,42 @@ int        var_c     = -0xc
 0x400515: var_c cmp 10
 0x400519: ja loc_400564
 0x40051b: eax = var_c
-0x40051e: rax = *((rax*8) + &jmptable_400620[0])
+0x40051e: !rax = &jmptable_400620[0]
 0x400526: jmp rax ; switch statement jmptable_400620[11]
 
 ; case 2  jmptable_400620
 loc_400528:
-0x400528: edi = unk_400608 "2"
+0x400528: !edi = unk_400608 "2"
 0x40052d: call puts
 0x400532: jmp loc_40056f
 
 ; case 3  jmptable_400620
 loc_400534:
-0x400534: edi = unk_40060a "3"
+0x400534: !edi = unk_40060a "3"
 0x400539: call puts
 0x40053e: jmp loc_40056f
 
 ; case 4  jmptable_400620
 loc_400540:
-0x400540: edi = unk_40060c "4"
+0x400540: !edi = unk_40060c "4"
 0x400545: call puts
 0x40054a: jmp loc_40056f
 
 ; case 5  jmptable_400620
 loc_40054c:
-0x40054c: edi = unk_40060e "5"
+0x40054c: !edi = unk_40060e "5"
 0x400551: call puts
 0x400556: jmp loc_40056f
 
 ; case 10  jmptable_400620
 loc_400558:
-0x400558: edi = asc_400610 "10"
+0x400558: !edi = asc_400610 "10"
 0x40055d: call puts
 0x400562: jmp loc_40056f
 
 ; case 0, 1, 6, 7, 8, 9  jmptable_400620
 loc_400564:
-0x400564: edi = asc_400613 "default"
+0x400564: !edi = asc_400613 "default"
 0x400569: call puts
 0x40056e: nop
 
@@ -242,9 +242,9 @@ frame_size = 56
 0x400584: r15d = edi
 0x400587: push r13
 0x400589: push r12
-0x40058b: r12 = __init_array_start
+0x40058b: !r12 = __init_array_start
 0x400592: push rbp
-0x400593: rbp = __init_array_end
+0x400593: !rbp = __init_array_end
 0x40059a: push rbx
 0x40059b: r14 = rsi
 0x40059e: r13 = rdx
