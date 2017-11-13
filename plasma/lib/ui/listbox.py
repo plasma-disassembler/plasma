@@ -25,6 +25,17 @@ from plasma.lib.consts import *
 from plasma.lib.ui.widget import Widget
 
 
+ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def check_match_word(line, idx, word):
+    if idx != 0 and line[idx - 1] in ALPHANUM:
+        return False
+    if idx + len(word) != len(line) and line[idx + len(word)] in ALPHANUM:
+        return False
+    return True
+
+
 class Listbox(Widget):
     def __init__(self, x, y, w, h, output):
         Widget.__init__(self, x, y, w, h)
@@ -38,7 +49,7 @@ class Listbox(Widget):
             self.output = output
             self.token_lines = output.token_lines
 
-        self.search_hi = None
+        self.search_hi = []
         self.search_bin = None
         self.word_accepted_chars = ["_", "@", ".", "$", ":", "?"]
 
@@ -242,16 +253,18 @@ class Listbox(Widget):
 
 
     def highlight_search(self, i):
-        if self.search_hi is None:
+        if not self.search_hi:
             return
         num_line = self.win_y + i
         start = 0
-        while 1:
-            idx = self.output.lines[num_line].find(self.search_hi, start)
-            if idx == -1 or idx >= self.width:
-                break
-            self.screen.chgat(i, idx, len(self.search_hi), curses.color_pair(1))
-            start = idx + 1
+        for word in self.search_hi:
+            while 1:
+                idx = self.output.lines[num_line].find(word, start)
+                if idx == -1 or idx >= self.width:
+                    break
+                if check_match_word(self.output.lines[num_line], idx, word):
+                    self.screen.chgat(i, idx, len(word), curses.color_pair(1))
+                start = idx + 1
 
 
     def scroll_up(self, n, do_page_scroll):
@@ -481,10 +494,10 @@ class Listbox(Widget):
         w = self.get_word_under_cursor()
         if w is None:
             return False
-        self.search_hi = w
+        self.search_hi = [w]
         return True
 
 
     def cmd_highlight_clear(self):
-        self.search_hi = None
+        self.search_hi.clear()
         return True

@@ -30,6 +30,19 @@ from plasma.lib.ui.inlineed import InlineEd
 from plasma.lib.output import OutputAbs
 
 
+X86_REG_HIGHLIGHT_64 = ["rax", "rbx", "rcx", "rdx", "rdi", "rsi", "rsp", "rbp"]
+X86_REG_HIGHLIGHT_32 = ["eax", "ebx", "ecx", "edx", "edi", "esi", "esp", "ebp"]
+X86_REG_HIGHLIGHT_16 = ["ax", "bx", "cx", "dx", "di", "si", "sp", "bp"]
+X86_REG_HIGHLIGHT_8 = [["al", "ah"], ["bl", "bh"], ["cl", "ch"], ["dl", "dh"]]
+
+
+def myindex(L, obj):
+    try:
+        return L.index(obj)
+    except ValueError:
+        return -1
+
+
 class Disasmbox(Listbox):
     def __init__(self, x, y, w, h, gctx, ad, analyzer, api,
                  mode=MODE_DUMP, until=-1,
@@ -133,6 +146,34 @@ class Disasmbox(Listbox):
     ###############################
     # Overwrite Listbox functions #
     ###############################
+
+    def cmd_highlight_current_word(self, from_mouse_event=False):
+        r = Listbox.cmd_highlight_current_word(self, from_mouse_event)
+
+        if r and self.gctx.dis.binary.arch in ("x86", "x64"):
+            w = self.search_hi[0]
+
+            i = myindex(X86_REG_HIGHLIGHT_64, w)
+            if i == -1:
+                i = myindex(X86_REG_HIGHLIGHT_32, w)
+                if i == -1:
+                    i = myindex(X86_REG_HIGHLIGHT_16, w)
+
+                for j, lst in enumerate(X86_REG_HIGHLIGHT_8):
+                    if w in lst:
+                        i = j
+                        break
+
+            if i != -1:
+                self.search_hi.clear()
+                self.search_hi.append(X86_REG_HIGHLIGHT_64[i])
+                self.search_hi.append(X86_REG_HIGHLIGHT_32[i])
+                self.search_hi.append(X86_REG_HIGHLIGHT_16[i])
+                if i <= 3:
+                    self.search_hi += X86_REG_HIGHLIGHT_8[i]
+
+        return r
+
 
     def callback_mouse_double_left(self):
         return self.main_cmd_enter()
