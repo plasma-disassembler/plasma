@@ -773,3 +773,8 @@ class Api():
                 break
 
         func_obj[FUNC_VARS][off][VAR_NAME] = n
+
+
+    def iter_symbols(self):
+        for ad, name in self.__db.reverse_symbols.items():
+            yield (ad, name)
