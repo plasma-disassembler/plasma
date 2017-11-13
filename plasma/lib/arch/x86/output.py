@@ -250,7 +250,13 @@ class Output(OutputAbs):
 
     def _sub_asm_inst(self, i, tab=0):
         modified = False
-        is_imm = i.address in self.gctx.db.immediates
+
+        # TODO: bad hack
+        ops = i.operands
+        is_imm = i.address in self.gctx.db.immediates and len(ops) == 2 and \
+            (ops[1].type == X86_OP_MEM or \
+             ops[0].type == X86_OP_REG and ops[1].type == X86_OP_IMM) and \
+            i.id not in [X86_INS_CMP, X86_INS_TEST]
 
         if self.gctx.capstone_string == 0:
             if is_imm:

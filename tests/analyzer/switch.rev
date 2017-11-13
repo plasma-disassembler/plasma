@@ -117,13 +117,13 @@ loc_4004b8:
 ; SUBROUTINE
 ; ---------------------------------------------------------------------
 __do_global_dtors_aux:
-0x4004c0: !*(__TMC_END__) = __TMC_END__
+0x4004c0: *(__TMC_END__) cmp '\0'
 0x4004c7: jne loc_4004da
 0x4004c9: push rbp
 0x4004ca: rbp = rsp
 0x4004cd: call deregister_tm_clones
 0x4004d2: pop rbp
-0x4004d3: !*(__TMC_END__) = __TMC_END__
+0x4004d3: *(__TMC_END__) = '\x01'
 
 loc_4004da:
 0x4004da: ret
@@ -139,7 +139,7 @@ loc_4004da:
 ; ---------------------------------------------------------------------
 frame_dummy:
 0x4004e0: edi = __JCR_END__
-0x4004e5: !*(rdi) = __JCR_END__
+0x4004e5: *(rdi) cmp 0
 0x4004e9: jne loc_4004f0
 
 loc_4004eb:
