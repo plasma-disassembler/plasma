@@ -280,7 +280,7 @@ class Analyzer(threading.Thread):
     # -> inst op, computed_imm
     def analyze_imm(self, i, op, imm, from_save_imm, is_deref_pointer):
         ret = self.__analyze_imm(i, op, imm, from_save_imm, is_deref_pointer)
-        if ret:
+        if ret and op.type != self.ARCH_UTILS.OP_IMM:
             self.db.immediates[i.address] = imm
 
 
