@@ -130,6 +130,191 @@ class Disasmbox(Listbox):
             self.main_cmd_line_middle()
 
 
+    ###############################
+    # Overwrite Listbox functions #
+    ###############################
+
+    def callback_mouse_double_left(self):
+        return self.main_cmd_enter()
+
+
+    def main_k_top(self):
+        self.stack.append(self.__compute_curr_position())
+        self.saved_stack.clear()
+
+        if self.mode == MODE_DUMP:
+            top = self.dis.binary.get_first_addr()
+            if self.first_addr != top:
+                self.exec_disasm(top)
+
+        Listbox.k_top(self)
+        self.last_curr_line_ad = self.first_addr
+        return True
+
+
+    def main_k_bottom(self):
+        self.stack.append(self.__compute_curr_position())
+        self.saved_stack.clear()
+
+        self.cursor_x = 0
+
+        if self.mode == MODE_DUMP:
+            bottom = self.dis.binary.get_last_addr()
+
+            if self.last_addr - 1 != bottom:
+                self.exec_disasm(bottom)
+                self.dump_update_up(self.win_y)
+                self.win_y = 0
+                self.cursor_y = 0
+
+        Listbox.k_bottom(self)
+        self.last_curr_line_ad = self.last_addr - 1
+        return True
+
+
+    def dump_update_up(self, wy):
+        if self.mode != MODE_DUMP or wy > 10:
+            return wy
+
+        if self.first_addr == self.dis.binary.get_first_addr():
+            return wy
+
+        # Get an address 256 bytes before, we can't guess the number of lines
+        # we wan't to disassemble.
+        ad = self.first_addr
+        s = self.dis.binary.get_section(ad)
+        rest = 256
+        while rest:
+            ad -= rest
+            if ad >= s.start:
+                break
+            rest = s.start - ad
+            start = s.start
+            s = self.dis.binary.get_prev_section(start)
+            if s is None:
+                ad = start
+                break
+            ad = s.end + 1
+
+        self.ctx = self.gctx.get_addr_context(ad)
+        o = self.ctx.dump_asm(until=self.first_addr)
+
+        if o is not None:
+            nb_new_lines = len(o.lines)
+
+            if self.win_y == 0 and self.cursor_y < 3:
+                if nb_new_lines >= 3:
+                    diff = 3 - self.cursor_y
+                    self.cursor_y = 3
+                    wy -= diff
+                    self.win_y -= diff
+                else:
+                    self.cursor_y = nb_new_lines
+
+            if nb_new_lines >= 3:
+                wy += nb_new_lines
+                self.win_y += nb_new_lines
+
+            # Update line counter on each line
+
+            self.output.lines = o.lines + self.output.lines
+            self.output.token_lines = o.token_lines + self.output.token_lines
+
+            for ad, l in self.output.addr_line.items():
+                o.line_addr[nb_new_lines + l] = ad
+                o.addr_line[ad] = nb_new_lines + l
+                if l in self.output.idx_tok_inline_comm:
+                    o.idx_tok_inline_comm[nb_new_lines + l] = \
+                            self.output.idx_tok_inline_comm[l]
+
+            self.output.line_addr.clear()
+            self.output.addr_line.clear()
+            self.output.idx_tok_inline_comm.clear()
+            self.output.line_addr = o.line_addr
+            self.output.addr_line = o.addr_line
+            self.output.idx_tok_inline_comm = o.idx_tok_inline_comm
+            self.token_lines = self.output.token_lines
+            self.set_first_addr()
+
+        return wy
+
+
+    def dump_update_bottom(self, wy):
+        if wy < len(self.token_lines) - self.height - 10 or \
+                self.mode != MODE_DUMP:
+            return
+
+        if self.last_addr - 1 == self.dis.binary.get_last_addr():
+            return
+
+        ad = self.last_addr
+
+        self.ctx = self.gctx.get_addr_context(ad)
+        o = self.ctx.dump_asm()
+
+        if o is not None:
+            nb_new_lines = len(self.output.lines)
+
+            self.output.lines += o.lines
+            self.output.token_lines += o.token_lines
+
+            for l in o.line_addr:
+                self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
+                self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
+                if l in self.output.idx_tok_inline_comm:
+                    self.output.idx_tok_inline_comm[nb_new_lines + l] = \
+                            o.idx_tok_inline_comm[l]
+
+            self.set_last_addr()
+
+
+    def get_y_scroll(self):
+        if self.mode == MODE_DECOMPILE or self.last_curr_line_ad is None:
+            return Listbox.get_y_scroll(self)
+
+        h8 = self.height * 8
+        ad = self.last_curr_line_ad
+        s = self.api.get_section(ad)
+        ad_normalized = self.section_normalized[s.start] + ad - s.start
+        return ad_normalized * h8 // self.total_size
+
+
+    def draw(self):
+        # Draw the status bar
+
+        self.screen.move(self.height, 0)
+        self.screen.clrtoeol()
+
+        line = self.win_y + self.cursor_y
+        if line in self.output.line_addr:
+            ad = self.output.line_addr[line]
+            self.last_curr_line_ad = ad
+        else:
+            ad = self.last_curr_line_ad
+
+        if ad is not None:
+            s = self.dis.binary.get_section(ad)
+            self.screen.addstr(self.height, 0, s.name, curses.A_BOLD)
+
+            if self.db.mem.is_code(ad):
+                fid = self.db.mem.get_func_id(ad)
+                if fid != -1:
+                    func_ad = self.db.func_id[fid]
+                    name = self.api.get_symbol(func_ad)
+                    if self.width - len(name) - 1 < 0:
+                        self.screen.insstr(self.height, 0, name)
+                    else:
+                        self.screen.insstr(self.height,
+                                self.width - len(name) - 1, name)
+        # Draw lines
+        Listbox.draw(self)
+
+
+    ########################################
+    # End of "Overwrite Listbox functions" #
+    ########################################
+
+
     # If the address is already in the output, we only move the cursor.
     # Otherwise this address must be disassembled (it returns False).
     def goto_address(self, ad):
@@ -148,17 +333,6 @@ class Disasmbox(Listbox):
         for s in self.api.iter_sections():
             self.section_normalized[s.start] = self.total_size
             self.total_size += s.virt_size
-
-
-    def get_y_scroll(self):
-        if self.mode == MODE_DECOMPILE or self.last_curr_line_ad is None:
-            return Listbox.get_y_scroll(self)
-
-        h8 = self.height * 8
-        ad = self.last_curr_line_ad
-        s = self.api.get_section(ad)
-        ad_normalized = self.section_normalized[s.start] + ad - s.start
-        return ad_normalized * h8 // self.total_size
 
 
     def set_last_addr(self):
@@ -210,38 +384,6 @@ class Disasmbox(Listbox):
         self.screen.addstr(self.height - off, 0, s)
         if refresh:
             self.screen.refresh()
-
-
-    def draw(self):
-        # Draw the status bar
-
-        self.screen.move(self.height, 0)
-        self.screen.clrtoeol()
-
-        line = self.win_y + self.cursor_y
-        if line in self.output.line_addr:
-            ad = self.output.line_addr[line]
-            self.last_curr_line_ad = ad
-        else:
-            ad = self.last_curr_line_ad
-
-        if ad is not None:
-            s = self.dis.binary.get_section(ad)
-            self.screen.addstr(self.height, 0, s.name, curses.A_BOLD)
-
-            if self.db.mem.is_code(ad):
-                fid = self.db.mem.get_func_id(ad)
-                if fid != -1:
-                    func_ad = self.db.func_id[fid]
-                    name = self.api.get_symbol(func_ad)
-                    if self.width - len(name) - 1 < 0:
-                        self.screen.insstr(self.height, 0, name)
-                    else:
-                        self.screen.insstr(self.height,
-                                self.width - len(name) - 1, name)
-
-        # Draw lines
-        Listbox.draw(self)
 
 
     def main_cmd_rename(self):
@@ -495,105 +637,6 @@ class Disasmbox(Listbox):
         return True
 
 
-    def dump_update_up(self, wy):
-        if self.mode != MODE_DUMP or wy > 10:
-            return wy
-
-        if self.first_addr == self.dis.binary.get_first_addr():
-            return wy
-
-        # Get an address 256 bytes before, we can't guess the number of lines
-        # we wan't to disassemble.
-        ad = self.first_addr
-        s = self.dis.binary.get_section(ad)
-        rest = 256
-        while rest:
-            ad -= rest
-            if ad >= s.start:
-                break
-            rest = s.start - ad
-            start = s.start
-            s = self.dis.binary.get_prev_section(start)
-            if s is None:
-                ad = start
-                break
-            ad = s.end + 1
-
-        self.ctx = self.gctx.get_addr_context(ad)
-        o = self.ctx.dump_asm(until=self.first_addr)
-
-        if o is not None:
-            nb_new_lines = len(o.lines)
-
-            if self.win_y == 0 and self.cursor_y < 3:
-                if nb_new_lines >= 3:
-                    diff = 3 - self.cursor_y
-                    self.cursor_y = 3
-                    wy -= diff
-                    self.win_y -= diff
-                else:
-                    self.cursor_y = nb_new_lines
-
-            if nb_new_lines >= 3:
-                wy += nb_new_lines
-                self.win_y += nb_new_lines
-
-            # Update line counter on each line
-
-            self.output.lines = o.lines + self.output.lines
-            self.output.token_lines = o.token_lines + self.output.token_lines
-
-            for ad, l in self.output.addr_line.items():
-                o.line_addr[nb_new_lines + l] = ad
-                o.addr_line[ad] = nb_new_lines + l
-                if l in self.output.idx_tok_inline_comm:
-                    o.idx_tok_inline_comm[nb_new_lines + l] = \
-                            self.output.idx_tok_inline_comm[l]
-
-            self.output.line_addr.clear()
-            self.output.addr_line.clear()
-            self.output.idx_tok_inline_comm.clear()
-            self.output.line_addr = o.line_addr
-            self.output.addr_line = o.addr_line
-            self.output.idx_tok_inline_comm = o.idx_tok_inline_comm
-            self.token_lines = self.output.token_lines
-            self.set_first_addr()
-
-        return wy
-
-
-    def dump_update_bottom(self, wy):
-        if wy < len(self.token_lines) - self.height - 10 or \
-                self.mode != MODE_DUMP:
-            return
-
-        if self.last_addr - 1 == self.dis.binary.get_last_addr():
-            return
-
-        ad = self.last_addr
-
-        self.ctx = self.gctx.get_addr_context(ad)
-        o = self.ctx.dump_asm()
-
-        if o is not None:
-            nb_new_lines = len(self.output.lines)
-
-            self.output.lines += o.lines
-            self.output.token_lines += o.token_lines
-
-            for l in o.line_addr:
-                self.output.line_addr[nb_new_lines + l] = o.line_addr[l]
-                self.output.addr_line[o.line_addr[l]] = nb_new_lines + l
-                if l in self.output.idx_tok_inline_comm:
-                    self.output.idx_tok_inline_comm[nb_new_lines + l] = \
-                            o.idx_tok_inline_comm[l]
-
-            self.set_last_addr()
-
-
-    # New mappings
-
-
     def main_k_prev_paragraph(self):
         l = self.win_y + self.cursor_y - 1
         while l > 0 and len(self.output.lines[l]) != 0:
@@ -602,6 +645,7 @@ class Disasmbox(Listbox):
             self.goto_line(l)
             self.check_cursor_x()
         return True
+
 
     def main_k_next_paragraph(self):
         l = self.win_y + self.cursor_y + 1
@@ -618,40 +662,6 @@ class Disasmbox(Listbox):
         if self.cursor_y + self.win_y > mid:
             self.win_y += self.cursor_y - mid
             self.cursor_y = mid
-        return True
-
-
-    def main_k_top(self):
-        self.stack.append(self.__compute_curr_position())
-        self.saved_stack.clear()
-
-        if self.mode == MODE_DUMP:
-            top = self.dis.binary.get_first_addr()
-            if self.first_addr != top:
-                self.exec_disasm(top)
-
-        Listbox.k_top(self)
-        self.last_curr_line_ad = self.first_addr
-        return True
-
-
-    def main_k_bottom(self):
-        self.stack.append(self.__compute_curr_position())
-        self.saved_stack.clear()
-
-        self.cursor_x = 0
-
-        if self.mode == MODE_DUMP:
-            bottom = self.dis.binary.get_last_addr()
-
-            if self.last_addr - 1 != bottom:
-                self.exec_disasm(bottom)
-                self.dump_update_up(self.win_y)
-                self.win_y = 0
-                self.cursor_y = 0
-
-        Listbox.k_bottom(self)
-        self.last_curr_line_ad = self.last_addr - 1
         return True
 
 
@@ -1157,10 +1167,6 @@ class Disasmbox(Listbox):
             self.goto_address(ad)
             self.main_cmd_line_middle()
         return ret
-
-
-    def callback_mouse_double_left(self):
-        return self.main_cmd_enter()
 
 
     def main_cmd_set_frame_size(self):
