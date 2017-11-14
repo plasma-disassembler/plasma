@@ -282,6 +282,7 @@ class Console():
                 ";       edit inline comment (enter/escape to validate/cancel)",
                 "U       undefine",
                 "F       list of functions",
+                "i       decompilation: invert a conditional jump",
                 "",
                 "Options:",
                 "I       switch to traditional instruction string output (3 modes)",

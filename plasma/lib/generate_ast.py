@@ -446,6 +446,8 @@ def generate_ast(ctx__):
     fake_br = Ast_Branch()
     fake_br.level = sys.maxsize
 
+    libarch = ctx.gctx.libarch
+
     while stack or waiting:
 
         if not stack and waiting:
@@ -589,13 +591,13 @@ def generate_ast(ctx__):
                 if c1:
                     exit_loop = nxt[BRANCH_NEXT]
                     nxt_node_in_loop = nxt[BRANCH_NEXT_JUMP]
-                    cond_id = ctx.gctx.libarch.utils.invert_cond(blk[0])
+                    cond_id = libarch.utils.invert_cond(blk[0])
                     goto_set = True
 
                 if c2:
                     exit_loop = nxt[BRANCH_NEXT_JUMP]
                     nxt_node_in_loop = nxt[BRANCH_NEXT]
-                    cond_id = ctx.gctx.libarch.utils.get_cond(blk[0])
+                    cond_id = libarch.utils.get_cond(blk[0])
                     goto_set = True
 
                 # goto to exit a loop
@@ -614,7 +616,7 @@ def generate_ast(ctx__):
             # and-if
             if ctx.gctx.print_andif:
                 if else_addr == nxt[BRANCH_NEXT_JUMP]:
-                    cond_id = ctx.gctx.libarch.utils.invert_cond(blk[0])
+                    cond_id = libarch.utils.invert_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT], prefetch)
                     a.parent = ast
                     a.idx_in_parent = len(ast.nodes)
@@ -636,7 +638,7 @@ def generate_ast(ctx__):
 
                 # and-if
                 if else_addr == nxt[BRANCH_NEXT]:
-                    cond_id = ctx.gctx.libarch.utils.get_cond(blk[0])
+                    cond_id = libarch.utils.get_cond(blk[0])
                     a = Ast_AndIf(blk[0], cond_id, nxt[BRANCH_NEXT_JUMP], prefetch)
                     a.parent = ast
                     a.idx_in_parent = len(ast.nodes)
@@ -653,6 +655,11 @@ def generate_ast(ctx__):
             # if-else
 
             endpoint = search_endpoint(ctx, ast, curr, l_set, l_prev_loop, l_start)
+
+            force_inv_if = False
+            if curr in ctx.gctx.db.inverted_cond:
+                nxt = list(reversed(nxt))
+                force_inv_if = True
 
             ast_if = Ast_Branch()
             ast_if.parent = ast
@@ -706,7 +713,7 @@ def generate_ast(ctx__):
                 ast.add(Ast_Goto(else_addr))
 
             else:
-                a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch)
+                a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch, force_inv_if)
                 stack.append((ast_else, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
 
@@ -734,7 +741,7 @@ def generate_ast(ctx__):
 
     start = time()
 
-    for func in ctx.gctx.libarch.registered:
+    for func in libarch.registered:
         func(ctx, ast)
 
     elapsed = time()
@@ -742,7 +749,7 @@ def generate_ast(ctx__):
     debug__("Functions for processing ast in %fs" % elapsed)
 
     if ctx.gctx.color:
-        assign_colors(ctx.gctx.libarch, ctx, ast)
+        assign_colors(libarch, ctx, ast)
 
     if waiting:
         ast_head.nodes.insert(0, Ast_Comment(""))

@@ -1,4 +1,4 @@
-PLASMA
+PL**ASM**A
 ======
 
 The old project name was **Reverse**.
@@ -38,7 +38,7 @@ Optional :
 
     ./install.sh
 
-Or if you have already installed requirements with the previous command :
+Or if you have already installed requirements with the previous command:
 
     ./install.sh --update
 
@@ -61,10 +61,9 @@ Check tests :
 
 ![plasma](/images/visual.png?raw=true)
 
-## Qt memory map (memmap)
+Take the control of the flow graph by inverting conditional jumps:
 
-The image is actually static.
-![plasma](/images/qt_memory.png?raw=true)
+![plasma](/images/invcond.png?raw=true)
 
 
 ## Scripting (Python API)

@@ -367,6 +367,8 @@ class OutputAbs():
         self._bytes(i.bytes)
         self._comment(self.get_inst_str(i))
         self._inline_comment(i)
+        if i.address in self.gctx.db.inverted_cond:
+            self._internal_comment(" ; manually inverted")
         self._new_line()
 
 

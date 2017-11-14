@@ -34,7 +34,7 @@ from plasma.lib.utils import info, warning, die
 from plasma.lib.memory import Memory
 
 
-VERSION = 2.8
+VERSION = 2.9
 LAST_COMPATIBLE = 2.7
 
 
@@ -75,6 +75,7 @@ class Database():
         self.data_sub_xrefs = {} # data_address -> {addresses_with_xrefs: True}
         self.imports = {} # ad -> flags
         self.immediates = {} # insn_ad -> immediate result
+        self.inverted_cond = {} # addr -> arbitrary_value
 
         self.raw_base = 0
         self.raw_type = None
@@ -122,6 +123,7 @@ class Database():
             self.__load_xrefs(data)
             self.__load_imports(data)
             self.__load_immediates(data)
+            self.__load_inverted_cond(data)
 
             self.loaded = True
 
@@ -151,6 +153,7 @@ class Database():
             "raw_is_big_endian": self.raw_is_big_endian,
             "imports": self.imports,
             "immediates": self.immediates,
+            "inverted_cond": self.inverted_cond,
         }
 
         for j in self.jmptables.values():
@@ -253,3 +256,8 @@ class Database():
             self.func_id_counter = data["func_id_counter"]
         except:
             self.func_id_counter = max(self.func_id.keys()) + 1
+
+
+    def __load_inverted_cond(self, data):
+        if "inverted_cond" in data:
+            self.inverted_cond = data["inverted_cond"]

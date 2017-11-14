@@ -113,7 +113,7 @@ class Ast_If_cond:
 
 class Ast_Ifelse:
     def __init__(self, jump_inst, br_next_jump, br_next,
-                 expected_next_addr, prefetch=None):
+                 expected_next_addr, prefetch=None, force_inv_if=False):
         self.jump_inst = jump_inst
         self.br_next = br_next
         self.br_next_jump = br_next_jump
@@ -122,6 +122,7 @@ class Ast_Ifelse:
         self.parent = None
         self.level = 0
         self.expected_next_addr = expected_next_addr
+        self.force_inv_if = force_inv_if
 
     def dump(self, o, tab=0, print_else_keyword=False):
         ARCH_UTILS = o.gctx.libarch.utils
@@ -163,7 +164,7 @@ class Ast_Ifelse:
             o._keyword("if ")
 
         # jump_inst is the condition to go to the else-part
-        if inv_if:
+        if inv_if ^ self.force_inv_if:
             o._if_cond(ARCH_UTILS.get_cond(self.jump_inst),
                             self.fused_inst)
         else:
