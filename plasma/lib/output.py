@@ -209,6 +209,21 @@ class OutputAbs():
                 self._add(" " + hex(by))
 
 
+    def _flags(self, ad):
+        if ad not in self._dis.functions:
+            return
+        f = self._dis.functions[ad]
+        if f is None:
+            return
+        flags = f[FUNC_FLAGS]
+        if flags != 0:
+            self._comment("  ")
+        if flags & FUNC_FLAG_NORETURN:
+            self._comment(" __noreturn__")
+        elif flags & FUNC_FLAG_STDCALL:
+            self._comment(" __stdcall__")
+
+
     def _label(self, ad, tab=-1, print_colon=True, nocolor=False):
         # Check if ad is inside an array, in this case we should print
         # something like "((byte*) &label[idx]) + offset)".
@@ -283,13 +298,7 @@ class OutputAbs():
         self.curr_index += len(l)
 
         if tab != -1 and ty == MEM_FUNC:
-            flags = self._dis.functions[ad][FUNC_FLAGS]
-            if flags != 0:
-                self._comment("  ")
-            if flags & FUNC_FLAG_NORETURN:
-                self._comment(" __noreturn__")
-            elif flags & FUNC_FLAG_STDCALL:
-                self._comment(" __stdcall__")
+            self._flags(ad)
 
         # If it's a label
         if print_colon and ty == MEM_ARRAY:
@@ -649,6 +658,8 @@ class OutputAbs():
             self._add(") {")
         else:
             self._add(" {")
+
+        self._flags(entry)
 
         self._new_line()
 
