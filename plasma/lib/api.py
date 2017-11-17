@@ -778,3 +778,14 @@ class Api():
     def iter_symbols(self):
         for ad, name in self.__db.reverse_symbols.items():
             yield (ad, name)
+
+
+    def invert_cond(self, ad):
+        i = self.__dis.lazy_disasm(ad)
+        if i is not None and not self.__gctx.libarch.utils.is_cond_jump(i):
+            return False
+        if ad in self.__db.inverted_cond:
+            del self.__db.inverted_cond[ad]
+        else:
+            self.__db.inverted_cond[ad] = 1
+        return True

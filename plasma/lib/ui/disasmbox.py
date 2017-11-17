@@ -113,7 +113,7 @@ class Disasmbox(Listbox):
             b"N": self.main_cmd_search_backward,
             b"j": self.main_cmd_jump_to,
             b"F": self.main_cmd_functions,
-            b"i": self.main_cmd_invert_conf,
+            b"i": self.main_cmd_invert_cond,
 
             b"c": self.main_cmd_set_code,
             b"p": self.main_cmd_set_function,
@@ -1317,7 +1317,7 @@ class Disasmbox(Listbox):
         return ret
 
 
-    def main_cmd_invert_conf(self):
+    def main_cmd_invert_cond(self):
         if self.mode != MODE_DECOMPILE:
             self.status_bar_message("only if decompilation mode")
             return False
@@ -1328,16 +1328,9 @@ class Disasmbox(Listbox):
             return False
 
         ad = self.output.line_addr[line]
-
-        i = self.gctx.dis.lazy_disasm(ad)
-        if i is not None and not self.gctx.libarch.utils.is_cond_jump(i):
+        if not self.api.invert_cond(ad):
             self.status_bar_message("error: move the cursor on a conditional jump")
             return False
-
-        if ad in self.db.inverted_cond:
-            del self.db.inverted_cond[ad]
-        else:
-            self.db.inverted_cond[ad] = 1
 
         self.reload_asm()
         self.db.modified = True
