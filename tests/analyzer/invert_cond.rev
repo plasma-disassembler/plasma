@@ -1,0 +1,177 @@
+function main (.text) {
+
+    frame_size = 24
+    int        var_14    = -0x14
+    int        var_10    = -0x10
+    int        var_c     = -0xc
+
+    0x6e6: push rbp
+    0x6e7: rbp = rsp
+    0x6ea: rsp -= 16
+    # 0x6ee: cmp dword ptr [rbp - 0xc], 0
+    # 0x6f2: je 0x72a
+    if (var_14 != 0) {
+        # 0x6f4: cmp dword ptr [rbp - 8], 1
+        # 0x6f8: je 0x71c
+        if (var_10 != 1) {
+            # 0x6fa: cmp dword ptr [rbp - 4], 2
+            # 0x6fe: je 0x70e
+            if (var_c != 2) {
+                0x700: !rdi = qword_7e4
+                0x707: call puts
+                0x70c: jmp ret_0x736
+            } else {
+                0x70e: !rdi = unk_7e6 "2"
+                0x715: call puts
+                0x71a: jmp ret_0x736
+            }
+        } else {
+            0x71c: !rdi = qword_7e8
+            0x723: call puts
+            0x728: jmp ret_0x736
+        }
+    } else {
+        0x72a: !rdi = unk_7ea "4"
+        0x731: call puts
+    }
+    ret_0x736:
+    0x736: eax = 0
+    0x73b: call func1
+    0x740: eax = 0
+    0x745: call func2
+    0x74a: eax = 0
+    0x74f: leave
+    0x750: ret
+}
+function func1 (.text) {
+
+    frame_size = 24
+    int        var_c     = -0xc
+
+    0x68a: push rbp
+    0x68b: rbp = rsp
+    0x68e: rsp -= 16
+    # 0x692: cmp dword ptr [rbp - 4], 4
+    # 0x696: jg 0x6ae
+    if (var_c <= 4) {
+        0x698: !rdi = qword_7e4
+        0x69f: call puts
+        0x6a4: edi = 0
+        0x6a9: call exit
+    }
+
+    ret_0x6ae:
+    0x6ae: !rdi = unk_7e6 "2"
+    0x6b5: call puts
+    0x6ba: nop
+    0x6bb: leave
+    0x6bc: ret
+}
+function func2 (.text) {
+
+    frame_size = 24
+    int        var_c     = -0xc
+
+    0x6bd: push rbp
+    0x6be: rbp = rsp
+    0x6c1: rsp -= 16
+    # 0x6c5: cmp dword ptr [rbp - 4], 4
+    # 0x6c9: jg 0x6d7
+    if (var_c <= 4) {
+        0x6cb: !rdi = qword_7e4
+        0x6d2: call puts
+    }
+    ret_0x6d7:
+    0x6d7: !rdi = unk_7e6 "2"
+    0x6de: call puts
+    0x6e3: nop
+    0x6e4: leave
+    0x6e5: ret
+}
+function main (.text) {
+
+    frame_size = 24
+    int        var_14    = -0x14
+    int        var_10    = -0x10
+    int        var_c     = -0xc
+
+    0x6e6: push rbp
+    0x6e7: rbp = rsp
+    0x6ea: rsp -= 16
+    # 0x6ee: cmp dword ptr [rbp - 0xc], 0
+    # 0x6f2: je 0x72a ; manually inverted
+    if (var_14 == 0) {
+        0x72a: !rdi = unk_7ea "4"
+        0x731: call puts
+    }
+    # 0x6f4: cmp dword ptr [rbp - 8], 1
+    # 0x6f8: je 0x71c ; manually inverted
+    else if (var_10 == 1) {
+        0x71c: !rdi = qword_7e8
+        0x723: call puts
+        0x728: jmp ret_0x736
+    }
+    # 0x6fa: cmp dword ptr [rbp - 4], 2
+    # 0x6fe: je 0x70e ; manually inverted
+    else if (var_c == 2) {
+        0x70e: !rdi = unk_7e6 "2"
+        0x715: call puts
+        0x71a: jmp ret_0x736
+    } else {
+        0x700: !rdi = qword_7e4
+        0x707: call puts
+        0x70c: jmp ret_0x736
+    }
+    ret_0x736:
+    0x736: eax = 0
+    0x73b: call func1
+    0x740: eax = 0
+    0x745: call func2
+    0x74a: eax = 0
+    0x74f: leave
+    0x750: ret
+}
+function func1 (.text) {
+
+    frame_size = 24
+    int        var_c     = -0xc
+
+    0x68a: push rbp
+    0x68b: rbp = rsp
+    0x68e: rsp -= 16
+    # 0x692: cmp dword ptr [rbp - 4], 4
+    # 0x696: jg 0x6ae ; manually inverted
+    if (var_c > 4) {
+        ret_0x6ae:
+        0x6ae: !rdi = unk_7e6 "2"
+        0x6b5: call puts
+        0x6ba: nop
+        0x6bb: leave
+        0x6bc: ret
+    }
+    0x698: !rdi = qword_7e4
+    0x69f: call puts
+    0x6a4: edi = 0
+    0x6a9: call exit
+}
+function func2 (.text) {
+
+    frame_size = 24
+    int        var_c     = -0xc
+
+    0x6bd: push rbp
+    0x6be: rbp = rsp
+    0x6c1: rsp -= 16
+    # 0x6c5: cmp dword ptr [rbp - 4], 4
+    # 0x6c9: jg 0x6d7 ; manually inverted
+    if (var_c <= 4) {
+        0x6cb: !rdi = qword_7e4
+        0x6d2: call puts
+    }
+    ret_0x6d7:
+    0x6d7: !rdi = unk_7e6 "2"
+    0x6de: call puts
+    0x6e3: nop
+    0x6e4: leave
+    0x6e5: ret
+}

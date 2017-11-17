@@ -690,7 +690,7 @@ def generate_ast(ctx__):
             if endpoint == -1:
                 # No endpoint, so it's not useful to have an else-branch
                 # -> the stack will continue on `ast`
-                a = Ast_Ifelse(blk[0], ast_else, ast_if, else_addr, prefetch)
+                a = Ast_Ifelse(blk[0], ast_else, ast_if, else_addr, prefetch, force_inv_if)
                 stack.append((ast, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
 
@@ -703,6 +703,9 @@ def generate_ast(ctx__):
             elif endpoint == else_addr:
                 # Branch ast_else will be empty
                 a = Ast_Ifelse(blk[0], ast_else, ast_if, endpoint, prefetch)
+
+                # put the current ast instead of the ast_else
+                # -> it's not possible to invert this condition in the visual
                 stack.append((ast, list(loops_stack), curr,
                               nxt[BRANCH_NEXT_JUMP], else_addr))
 
