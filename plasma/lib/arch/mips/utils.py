@@ -18,14 +18,14 @@
 #
 
 from capstone.mips import (MIPS_INS_BEQ, MIPS_INS_BNE, MIPS_INS_BGTZ,
-        MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
-        MIPS_INS_BLTZ, MIPS_INS_B, MIPS_INS_BAL, MIPS_INS_J,
-        MIPS_INS_JAL, MIPS_INS_JALR, MIPS_INS_JR, MIPS_REG_RA,
-        MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
-        MIPS_INS_SLL, MIPS_INS_SRL, MIPS_INS_SRA, MIPS_INS_BLTZAL,
-        MIPS_INS_XOR, MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU,
-        MIPS_INS_LD, MIPS_INS_LW, MIPS_REG_T9, MIPS_OP_IMM, MIPS_OP_MEM,
-        MIPS_OP_REG, MIPS_REG_SP)
+                           MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
+                           MIPS_INS_BLTZ, MIPS_INS_B, MIPS_INS_BAL, MIPS_INS_J,
+                           MIPS_INS_JAL, MIPS_INS_JALR, MIPS_INS_JR, MIPS_REG_RA,
+                           MIPS_INS_AND, MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU,
+                           MIPS_INS_SLL, MIPS_INS_SRL, MIPS_INS_SRA, MIPS_INS_BLTZAL,
+                           MIPS_INS_XOR, MIPS_INS_XORI, MIPS_INS_SUB, MIPS_INS_SUBU,
+                           MIPS_INS_LD, MIPS_INS_LW, MIPS_REG_T9, MIPS_OP_IMM, MIPS_OP_MEM,
+                           MIPS_OP_REG, MIPS_REG_SP, MIPS_INS_ANDI, MIPS_INS_OR, MIPS_INS_ORI)
 
 # TODO
 # MIPS_INS_BEQC, MIPS_INS_BEQL, MIPS_INS_BEQZALC, MIPS_INS_BEQZC, MIPS_INS_BGEC,
@@ -54,15 +54,16 @@ OP_REG = MIPS_OP_REG
 
 # Warning: before adding new prolog check in lib.analyzer.has_prolog
 PROLOGS = [
-    [b"\x27\xbd", b"\xaf\xbf"], # addiu $sp, $sp, VALUE; sw $ra, VALUE
-    [b"\x3c\x1c", b"\x27\x9c"], # lw $gp, VALUE
-    [b"\x67\xbd", b"\xff\xbc"], # daddiu $sp, $sp, VALUE; sd $gp, VALUE
-    [b"\x67\xbd", b"\xff\xbf"], # daddiu $sp, $sp, VALUE; sd $ra, VALUE
+    [b"\x27\xbd", b"\xaf\xbf"],  # addiu $sp, $sp, VALUE; sw $ra, VALUE
+    [b"\x3c\x1c", b"\x27\x9c"],  # lw $gp, VALUE
+    [b"\x67\xbd", b"\xff\xbc"],  # daddiu $sp, $sp, VALUE; sd $gp, VALUE
+    [b"\x67\xbd", b"\xff\xbf"],  # daddiu $sp, $sp, VALUE; sd $ra, VALUE
 ]
 
 
 def is_cmp(i):
     return i.id in CMP
+
 
 def is_jump(i):
     if i.id in JUMPS_COND or i.id in JUMPS_UNCOND:
@@ -73,8 +74,10 @@ def is_jump(i):
             return True
     return False
 
+
 def is_cond_jump(i):
     return i.id in JUMPS_COND
+
 
 def is_uncond_jump(i):
     if i.id in JUMPS_UNCOND:
@@ -85,23 +88,26 @@ def is_uncond_jump(i):
             return True
     return False
 
+
 def is_ret(i):
     if i.id == MIPS_INS_JR:
         op = i.operands[0]
         return op.value.reg == MIPS_REG_RA
     return False
 
+
 def is_call(i):
     return i.id in JUMPS_LINK
 
 
 OPPOSITES = [
-        [MIPS_INS_BEQ, MIPS_INS_BNE],
-        [MIPS_INS_BNEZ, MIPS_INS_BEQZ],
-        [MIPS_INS_BGTZ, MIPS_INS_BLEZ],
-        [MIPS_INS_BGEZ, MIPS_INS_BLTZ],
-    ]
+    [MIPS_INS_BEQ, MIPS_INS_BNE],
+    [MIPS_INS_BNEZ, MIPS_INS_BEQZ],
+    [MIPS_INS_BGTZ, MIPS_INS_BLEZ],
+    [MIPS_INS_BGEZ, MIPS_INS_BLTZ],
+]
 OPPOSITES = dict(OPPOSITES + [i[::-1] for i in OPPOSITES])
+
 
 def invert_cond(i):
     return OPPOSITES.get(i.id, -1)
@@ -135,6 +141,9 @@ INST_SYMB = {
     MIPS_INS_XORI: "^",
     MIPS_INS_SUB: "-",
     MIPS_INS_SUBU: "-",
+    MIPS_INS_ANDI: "&",
+    MIPS_INS_OR: "|",
+    MIPS_INS_ORI: "|",
 }
 
 

@@ -19,22 +19,23 @@
 
 from capstone import CS_MODE_32
 from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
-        MIPS_OP_INVALID, MIPS_INS_LW, MIPS_INS_SW, MIPS_INS_AND,
-        MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
-        MIPS_INS_ADDIU, MIPS_INS_LB, MIPS_INS_LBU, MIPS_INS_SB,
-        MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_SUB,
-        MIPS_INS_SUBU, MIPS_INS_BGTZ, MIPS_INS_LH, MIPS_INS_LHU,
-        MIPS_INS_SH, MIPS_INS_SD, MIPS_INS_LD, MIPS_GRP_MIPS64,
-        MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
-        MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP, MIPS_INS_NEG)
+                           MIPS_OP_INVALID, MIPS_INS_LW, MIPS_INS_SW, MIPS_INS_AND,
+                           MIPS_INS_LUI, MIPS_INS_MOVE, MIPS_INS_ADD, MIPS_INS_ADDU,
+                           MIPS_INS_ADDIU, MIPS_INS_LB, MIPS_INS_LBU, MIPS_INS_SB,
+                           MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL, MIPS_INS_SUB,
+                           MIPS_INS_SUBU, MIPS_INS_BGTZ, MIPS_INS_LH, MIPS_INS_LHU,
+                           MIPS_INS_SH, MIPS_INS_SD, MIPS_INS_LD, MIPS_GRP_MIPS64,
+                           MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
+                           MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP, MIPS_INS_NEG)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
-    is_uncond_jump, cond_symbol)
-
+                                        is_uncond_jump, cond_symbol)
+from capstone.mips import (MIPS_INS_SLT, MIPS_INS_SLTI, MIPS_INS_SLTIU, MIPS_INS_SLTU,
+                           MIPS_INS_ANDI, MIPS_INS_OR, MIPS_INS_ORI)
 
 # ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
-ASSIGNMENT_OPS = {}
+ASSIGNMENT_OPS = {MIPS_INS_SLT, MIPS_INS_SLTI, MIPS_INS_SLTIU, MIPS_INS_SLTU}
 
 LD_TYPE = {
     MIPS_INS_LH: "halfword",
@@ -56,17 +57,19 @@ ST_TYPE = {
 # After these instructions we need to add a zero
 # example : beqz $t1, label -> if == 0
 COND_ADD_ZERO = {MIPS_INS_BGTZ, MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ,
-    MIPS_INS_BLEZ, MIPS_INS_BLTZ}
+                 MIPS_INS_BLEZ, MIPS_INS_BLTZ}
 
 LD_CHECK = {MIPS_INS_LW, MIPS_INS_LB, MIPS_INS_LBU}
 ST_CHECK = {MIPS_INS_SW, MIPS_INS_SB}
 
 INST_CHECK = {MIPS_INS_AND, MIPS_INS_SLL, MIPS_INS_SRA, MIPS_INS_SRL,
-    MIPS_INS_MOVE, MIPS_INS_LUI}
+              MIPS_INS_MOVE, MIPS_INS_LUI, MIPS_INS_ANDI, MIPS_INS_OR,
+              MIPS_INS_ORI}
 
 ADD_CHECK = {MIPS_INS_ADD, MIPS_INS_ADDU, MIPS_INS_ADDIU}
-
 SUB_CHECK = {MIPS_INS_SUB, MIPS_INS_SUBU}
+
+SLT_CHECK = ASSIGNMENT_OPS
 
 
 class Output(OutputAbs):
@@ -138,15 +141,23 @@ class Output(OutputAbs):
             if show_deref:
                 self._add(")")
 
-
     def _if_cond(self, cond, fused_inst):
         if fused_inst is None:
             self._add(cond_symbol(cond))
             if cond in COND_ADD_ZERO:
                 self._add(" 0")
             return
-        # TODO: fusion for MIPS
 
+        # TODO: fusion for MIPS
+        assignment = fused_inst.id in ASSIGNMENT_OPS
+
+        if assignment:
+            self._operand(fused_inst, 1)
+            if cond == MIPS_INS_BNEZ:
+                self._add(" < ")
+            else:
+                self._add(" >= ")
+            self._operand(fused_inst, 2)
 
     def _sub_asm_inst(self, i, tab=0):
         is_imm = i.address in self.gctx.db.immediates
@@ -174,6 +185,15 @@ class Output(OutputAbs):
                 self._type(ST_TYPE[i.id])
                 self._add(") ")
                 self._operand(i, 0)
+                return
+
+            if i.id in SLT_CHECK:
+                self._operand(i, 0)
+                self._add(" = 1 if ")
+                self._operand(i, 1)
+                self._add(" < ")
+                self._operand(i, 2)
+                self._add(" else 0")
                 return
 
             if i.id == MIPS_INS_NEG:
@@ -230,7 +250,7 @@ class Output(OutputAbs):
                     self._add(" -= ")
                 else:
                     self._add(" = ")
-                    if not (op[1].type == MIPS_OP_REG and \
+                    if not (op[1].type == MIPS_OP_REG and
                             op[1].value.reg == MIPS_REG_ZERO):
                         self._operand(i, 1)
                         self._add(" - ")
