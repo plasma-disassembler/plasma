@@ -282,8 +282,14 @@ class Ast_Loop:
             ad = first_node.orig_jump.address
         elif isinstance(first_node, list):
             ad = first_node[0].address
+        elif isinstance(first_node, Ast_Ifelse):
+            if first_node.fused_inst is None:
+                ad = first_node.jump_inst.address
+            else:
+                ad = first_node.fused_inst.address
 
-        o._internal_comment("; " + o.gctx.api.get_symbol(ad))
+        if ad is not None:
+            o._internal_comment("; " + o.gctx.api.get_symbol(ad))
 
         o._new_line()
         o._new_line()
