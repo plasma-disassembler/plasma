@@ -148,16 +148,17 @@ class Output(OutputAbs):
                 self._add(" 0")
             return
 
-        # TODO: fusion for MIPS
         assignment = fused_inst.id in ASSIGNMENT_OPS
 
         if assignment:
+            self._add("(")
             self._operand(fused_inst, 1)
             if cond == MIPS_INS_BNEZ:
                 self._add(" < ")
             else:
                 self._add(" >= ")
             self._operand(fused_inst, 2)
+            self._add(")")
 
     def _sub_asm_inst(self, i, tab=0):
         is_imm = i.address in self.gctx.db.immediates
@@ -189,11 +190,13 @@ class Output(OutputAbs):
 
             if i.id in SLT_CHECK:
                 self._operand(i, 0)
-                self._add(" = 1 if ")
+                self._add(" = 1 ")
+                self._keyword("if ")
                 self._operand(i, 1)
                 self._add(" < ")
                 self._operand(i, 2)
-                self._add(" else 0")
+                self._keyword(" else")
+                self._add(" 0")
                 return
 
             if i.id == MIPS_INS_NEG:
