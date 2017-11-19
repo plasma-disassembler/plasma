@@ -352,6 +352,18 @@ class Disasmbox(Listbox):
         Listbox.draw(self)
 
 
+    def get_current_addr(self):
+        line = self.win_y + self.cursor_y
+
+        max_lines = 10
+        while line not in self.output.line_addr:
+            if line == max_lines:
+                return None
+            line += 1
+
+        return self.output.line_addr[line]
+
+
     ########################################
     # End of "Overwrite Listbox functions" #
     ########################################

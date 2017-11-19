@@ -1,4 +1,4 @@
-PL**ASM**A
+PLASMA
 ======
 
 The old project name was **Reverse**.

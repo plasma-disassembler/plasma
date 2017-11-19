@@ -25,12 +25,13 @@ import traceback
 import readline, rlcompleter
 
 from plasma.lib.consts import *
-from plasma.lib.colors import color, bold
+from plasma.lib.colors import color, bold, color_section, color_symbol, color_addr_normal
 from plasma.lib.utils import error, print_no_end
 from plasma.lib.fileformat.binary import T_BIN_ELF, T_BIN_PE, T_BIN_RAW
 from plasma.lib.ui.visual import Visual
 from plasma.lib.api import Api
 from plasma.lib.analyzer import Analyzer
+from plasma.lib.ui.disasmbox import Disasmbox
 
 import plasma
 PLASMA_SCRIPTS_DIR = os.path.dirname(plasma.__file__) + "/scripts"
@@ -72,6 +73,7 @@ COMMANDS_ALPHA = [
     "push_analyze_symbols",
     "rename",
     "save",
+    "save_visual_0",
     "sections",
     "sym",
     "x",
@@ -154,7 +156,19 @@ class Completer():
         return self.matches[state]
 
 
-    def loop(self):
+    def loop(self, console):
+        def __print_addr(ad):
+            if console.db.mem.is_code(ad):
+                fid = console.db.mem.get_func_id(ad)
+                if fid != -1:
+                    func_ad = console.db.func_id[fid]
+                    name = console.api.get_symbol(func_ad)
+                    print(color_symbol(name), end="")
+                    return
+            s = console.gctx.dis.binary.get_section(ad)
+            print(color_section(s.name), end=".")
+            print(color_addr_normal(ad, False), end="")
+
         if sys.stdin.isatty():
             prompt = bold(color("plasma> ", 11))
         else:
@@ -164,6 +178,26 @@ class Completer():
             if SHOULD_EXIT:
                 break
             try:
+                for i, widgets in enumerate(console.visual_last_widgets):
+                    # the visual %0 can be None if we moved it
+                    # see save_visual_0
+                    if widgets is None:
+                        continue
+
+                    if i == console.visual_previous_idx:
+                        print(bold(color("%%%d" % i, 201)), end="  ")
+                    else:
+                        print(color("%%%d" % i, 118), end="  ")
+
+                    n = 0
+                    for w in widgets:
+                        if isinstance(w, Disasmbox):
+                            if n > 0:
+                                print(", ", end="")
+                            n += 1
+                            __print_addr(w.get_current_addr())
+                    print()
+
                 line = input(prompt)
                 if line:
                     self.con.exec_command(line)
@@ -183,6 +217,8 @@ class Console():
     TAB = "      "
 
     def __init__(self, gctx):
+        print("new: press i in the visual to invert some conditional jumps")
+
         self.gctx = gctx
         self.db = gctx.db
         gctx.vim = False
@@ -247,6 +283,16 @@ class Console():
                 ]
             ),
 
+            "save_visual_0": Command(
+                0, 0,
+                self.__exec_save_visual_0,
+                None,
+                [
+                "",
+                "Copy the visual %0 to a new id.",
+                ]
+            ),
+
             "x": Command(
                 1, 0,
                 self.__exec_x,
@@ -266,8 +312,8 @@ class Console():
                 [
                 "[SYMBOL|0xXXXX|EP|%VISUAL]",
                 "Visual mode: if no address is given, previous visual is",
-                "reopen. You can keep up to 3 visuals. Use %1, %2 or %3",
-                "to select the visual.",
+                "reopen. Use %VISUAL_ID to reopen a saved visual.",
+                "%0 is a temporary visual.",
                 "",
                 "Main shortcuts:",
                 "c       create code",
@@ -455,7 +501,6 @@ class Console():
                 "Change the frame size of a function, the function will be re-analyzed."
                 ]
             ),
-
         }
 
         if gctx.dis.is_x86:
@@ -489,7 +534,7 @@ class Console():
         self.comp.set_history(self.db.history)
 
         while 1:
-            self.comp.loop()
+            self.comp.loop(self)
             if SHOULD_EXIT:
                 break
             if not self.check_db_modified():
@@ -729,11 +774,18 @@ class Console():
                     print("error: bad visual number")
                     return
 
-                i = int(args[1][1]) - 1
+                i = int(args[1][1])
                 if i < 0 or i >= len(self.visual_last_widgets):
                     print("error: bad visual number, there are only %d opened visual" % len(self.visual_last_widgets))
                     return
                 wdgt = self.visual_last_widgets[i]
+
+                if i == 0 and wdgt is None:
+                    print("error: %0 has been moved")
+                    return
+
+                self.visual_previous_idx = i
+
             else:
                 ad = args[1]
                 wdgt = None
@@ -752,20 +804,23 @@ class Console():
         if v.error_occurs:
             return
 
-        # Only %1, %2, %3 actually
-
         if i is None:
-            self.visual_last_widgets.append(v.widgets)
-            n = len(self.visual_last_widgets)
-            print("visual saved to %%%d" % n)
-            self.visual_previous_idx = n - 1
-        else:
-            self.visual_last_widgets[i] = v.widgets
-            print("visual saved to %%%d" % (i + 1))
-            self.visual_previous_idx = i
+            print("visual saved to %0, run save_visual_0 if you want to save this one")
+            self.visual_previous_idx = 0
+            if len(self.visual_last_widgets) == 0:
+                self.visual_last_widgets.append(v.widgets)
+            else:
+                self.visual_last_widgets[0] = v.widgets
 
-        if len(self.visual_last_widgets) == 4:
-            self.visual_last_widgets = self.visual_last_widgets[1:]
+
+    def __exec_save_visual_0(self, args):
+        n = len(self.visual_last_widgets)
+        if n == 0 or self.visual_last_widgets[0] is None:
+            return
+        print("visual %%0 saved to %%%d" % n)
+        self.visual_previous_idx = n
+        self.visual_last_widgets.append(self.visual_last_widgets[0])
+        self.visual_last_widgets[0] = None
 
 
     def __exec_help(self, args):
