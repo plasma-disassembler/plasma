@@ -353,13 +353,22 @@ class Disasmbox(Listbox):
 
 
     def get_current_addr(self):
-        line = self.win_y + self.cursor_y
+        start = self.win_y + self.cursor_y
 
-        max_lines = 10
+        line = start
+        end = line + 10
         while line not in self.output.line_addr:
-            if line == max_lines:
-                return None
+            if line == end:
+                break
             line += 1
+
+        if line == end:
+            line = start
+            end = line - 10
+            while line not in self.output.line_addr:
+                if line == end:
+                    return None
+                line -= 1
 
         return self.output.line_addr[line]
 
