@@ -107,8 +107,10 @@ class ELF(Binary):
 
         # Load sections
         for s in self.elf.iter_sections():
+            start = s.header.sh_addr
+
             if not s.name:
-                continue
+                s.name = "unk_%x" % start
 
             # Keep only sections R|W|X
             # TODO : is it sufficiant ?
@@ -118,8 +120,6 @@ class ELF(Binary):
             name = s.name
             if isinstance(name, bytes):
                 name = name.decode()
-
-            start = s.header.sh_addr
 
             if start == 0:
                 start = reloc
