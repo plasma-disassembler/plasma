@@ -217,7 +217,7 @@ class Console():
     TAB = "      "
 
     def __init__(self, gctx):
-        print("new: press i in the visual to invert some conditional jumps")
+        print("new: press i in the visual to invert some conditional jumps", file=sys.stderr)
 
         self.gctx = gctx
         self.db = gctx.db
