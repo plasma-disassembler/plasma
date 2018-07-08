@@ -37,7 +37,7 @@ frame_size = 8
 0x400440: eax = unk_6009df
 0x400445: push rbp
 0x400446: rax -= __TMC_END__
-0x40044c: rax cmp '\x0e'
+0x40044c: rax cmp 14
 0x400450: rbp = rsp
 0x400453: jbe loc_400470
 0x400455: eax = 0
@@ -175,7 +175,7 @@ int        var_c     = -0xc
 0x400515: var_c cmp 10
 0x400519: ja loc_400564
 0x40051b: eax = var_c
-0x40051e: !rax = &jmptable_400620[0]
+0x40051e: rax = *((rax*8) + &jmptable_400620[0])
 0x400526: jmp rax ; switch statement jmptable_400620[11]
 
 ; case 2  jmptable_400620

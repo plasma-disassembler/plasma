@@ -19,7 +19,7 @@
 
 from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_IDIV, X86_INS_IMUL, X86_INS_INC, X86_INS_MOV, X86_INS_SHL,
-        X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_FP, X86_OP_IMM,
+        X86_INS_SHR, X86_INS_SUB, X86_INS_XOR, X86_OP_IMM,
         X86_OP_INVALID, X86_OP_MEM, X86_OP_REG, X86_REG_EBP, X86_REG_EIP,
         X86_REG_RBP, X86_REG_RIP, X86_INS_CDQE, X86_INS_LEA, X86_INS_MOVSX,
         X86_INS_OR, X86_INS_NOT, X86_PREFIX_REP, X86_PREFIX_REPNE,
@@ -85,8 +85,8 @@ class Output(OutputAbs):
         elif op.type == X86_OP_REG:
             self._add(i.reg_name(op.value.reg))
 
-        elif op.type == X86_OP_FP:
-            self._add("%f" % op.value.fp)
+        # elif op.type == X86_OP_FP:
+            # self._add("%f" % op.value.fp)
 
         elif op.type == X86_OP_MEM:
             mm = op.mem

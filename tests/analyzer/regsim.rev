@@ -25,7 +25,7 @@ frame_size = 8
 
 loop:
 0x4000e9: rax += 1
-0x4000ed: rax cmp '\n'
+0x4000ed: rax cmp 10
 0x4000f1: jne loop
 0x4000f3: rbx = 10
 0x4000fa: rax = rbx + 4194467

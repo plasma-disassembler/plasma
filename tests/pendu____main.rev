@@ -10,9 +10,9 @@ function ___main (.text) {
         0x4018d0: eax = *(___CTOR_LIST__)
         0x4018d5: ebx = 1
         0x4018da: *(0x404020) = ebx
-        # 0x4018e0: cmp eax, 0xff
+        # 0x4018e0: cmp eax, -1
         # 0x4018e3: je 0x40190a
-        if (eax == '\xff') {
+        if (eax == -1) {
             0x40190a: ecx = *(0x401e94)
             0x401910: eax = 0
             0x401912: test ecx, ecx

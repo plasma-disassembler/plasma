@@ -61,9 +61,9 @@ function __imp___cexit (.text) {
         0x401206: call __setmode
         0x40120b: edx = *(_iob)
         0x401211: jmp 0x40116b
-        # 0x40116b: cmp edx, 0xe0
+        # 0x40116b: cmp edx, -0x20
         # 0x40116e: je 0x401190
-        if (edx != '\xe0') {
+        if (edx != -32) {
             0x401170: eax = *(0x404010)
             0x401175: *(esp + 4) = eax
             0x401179: ebx = *(_iob)
@@ -72,9 +72,9 @@ function __imp___cexit (.text) {
             0x401185: call __setmode
             0x40118a: edx = *(_iob)
         }
-        # 0x401190: cmp edx, 0xc0
+        # 0x401190: cmp edx, -0x40
         # 0x401193: je 0x4011b0
-        if (edx != '\xc0') {
+        if (edx != -64) {
             0x401195: ebx = *(0x404010)
             0x40119b: *(esp + 4) = ebx
             0x40119f: ecx = *(_iob)

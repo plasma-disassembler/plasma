@@ -9,13 +9,13 @@ function main (.text) {
     0x4004f4: call rand
     0x4004f9: ebx = eax
     0x4004fb: call rand
-    0x400500: ebx cmp '\x01'
+    0x400500: ebx cmp 1
     0x400503: ebp = eax
     # 0x400505: je 0x400515
     if != {
         # 0x400507: cmp eax, 1
         # 0x40050a: je 0x400524
-        if (eax == '\x01') {
+        if (eax == 1) {
             goto 0x400524
         }
     } else {
@@ -23,7 +23,7 @@ function main (.text) {
         0x40051a: call puts
         # 0x40051f: cmp ebp, 2
         # 0x400522: jne 0x40050c
-        if (ebp == '\x02') {
+        if (ebp == 2) {
             0x400524: edi = 0x4006b6 "1"
             0x400529: call puts
             0x40052e: jmp ret_0x40050c

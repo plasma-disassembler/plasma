@@ -41,7 +41,7 @@ frame_size = 8
 0x400470: eax = unk_600a2f
 0x400475: push rbp
 0x400476: rax -= __TMC_END__
-0x40047c: rax cmp '\x0e'
+0x40047c: rax cmp 14
 0x400480: rbp = rsp
 0x400483: jbe loc_4004a0
 0x400485: eax = 0

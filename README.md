@@ -21,7 +21,7 @@ database compatibility could be broken.
 ## Requirements
 
 * python >= 3.4
-* [capstone](https://github.com/aquynh/capstone)
+* [capstone](https://github.com/aquynh/capstone), tested with 4.0-alpha5
 * [python-pyelftools](https://github.com/eliben/pyelftools)
 * [pefile](https://github.com/erocarrera/pefile) + python3-future
 * [python-msgpack](https://github.com/msgpack/msgpack-python) >= 0.4.6
