@@ -5,8 +5,11 @@ try:
 except ImportError:
     from distutils.core import setup
 
+try:
+    from pip._internal.req import parse_requirements
+except ImportError:
+    from pip.req import parse_requirements
 
-from pip.req import parse_requirements
 from distutils.core import Extension
 import plasma
 
