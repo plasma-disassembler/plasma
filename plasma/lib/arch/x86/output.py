@@ -30,7 +30,8 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_AND, X86_INS_CMP, X86_INS_DEC,
         X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ, X86_INS_LODSB,
         X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ, X86_INS_CMPSB,
         X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ, X86_INS_SCASB,
-        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ, X86_INS_XADD, X86_PREFIX_LOCK)
+        X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ, X86_INS_XADD, X86_PREFIX_LOCK,
+        X86_INS_MOVSS, X86_INS_MOVAPD, X86_INS_MOVAPS, X86_INS_MOVUPS, X86_INS_MOVUPD)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.x86.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -65,9 +66,12 @@ INST_LODS = {X86_INS_LODSB, X86_INS_LODSW, X86_INS_LODSD, X86_INS_LODSQ}
 INST_MOVS = {X86_INS_MOVSB, X86_INS_MOVSW, X86_INS_MOVSD, X86_INS_MOVSQ}
 INST_CMPS = {X86_INS_CMPSB, X86_INS_CMPSW, X86_INS_CMPSD, X86_INS_CMPSQ}
 INST_SCAS = {X86_INS_SCASB, X86_INS_SCASW, X86_INS_SCASD, X86_INS_SCASQ}
+INST_MOV_SSE = {X86_INS_MOVSD, X86_INS_MOVSS, X86_INS_MOVAPD, X86_INS_MOVAPS, X86_INS_MOVUPS, X86_INS_MOVUPD}
 
 REP_PREFIX = {X86_PREFIX_REPNE, X86_PREFIX_REP}
 
+def is_sse_movd(i):
+    return i.id == X86_INS_MOVSD and i.bytes[0] == 0xF2
 
 class Output(OutputAbs):
     def _operand(self, i, num_op, hexa=False, show_deref=True,
@@ -415,9 +419,10 @@ class Output(OutputAbs):
                 self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
                 return
 
-            if i.id in INST_MOVS:
+            # Be sure to differentiate between the SSE instruction MOVSD and the non SSE move string
+            if i.id in INST_MOVS and not is_sse_movd(i):
                 self._operand(i, 0)
-                self._add(" = ")
+                self._add("( = ")
                 self._operand(i, 1)
                 self._new_line()
                 self._tabs(tab)
@@ -429,6 +434,12 @@ class Output(OutputAbs):
                 self._address(i.address)
                 self._operand(i, 1, show_deref=False)
                 self._add(" += D ? -{0} : {0}".format(i.operands[0].size))
+                return
+
+            if i.id in INST_MOV_SSE:
+                self._operand(i, 0)
+                self._add(" = ")
+                self._operand(i, 1)
                 return
 
         if is_imm:
