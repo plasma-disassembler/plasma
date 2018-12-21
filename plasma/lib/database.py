@@ -92,9 +92,7 @@ class Database():
     def load(self, filename):
         gc.disable()
 
-        dirname = os.path.dirname(filename)
-        self.path = dirname + "/" if dirname != "" else ""
-        self.path +=  "." + os.path.basename(filename) + ".db"
+        self.path = filename
 
         if os.path.exists(self.path):
             info("open database %s" % self.path)
