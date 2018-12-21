@@ -17,6 +17,8 @@
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #
 
+from collections import defaultdict
+
 from capstone.x86 import (X86_REG_EBX, X86_REG_ECX, X86_REG_EDX, X86_REG_ESI,
         X86_INS_INT, X86_OP_IMM, X86_REG_AL, X86_REG_AX, X86_REG_EAX,
         X86_REG_RAX, X86_REG_BL, X86_REG_CL, X86_REG_DL, X86_REG_BX,
@@ -57,7 +59,7 @@ ARG_REG_TYPE = {
 
 # http://docs.cs.up.ac.za/programming/asm/derick_tut/syscalls.html
 
-SYSCALL = {
+SYSCALL_DATA = {
     1: {"name": "exit", "args_type": [ARG_INT]},
     # 2: {"name": "fork", "args_type": ['struct pt_regs']},
     2: {"name": "fork", "args_type": []},
@@ -241,6 +243,10 @@ SYSCALL = {
     190: {"name": "vfork", "args_type": ['struct pt_regs']},
 }
 
+def SYSCALL(no):
+  if no not in SYSCALL_DATA:
+    SYSCALL_DATA[no] = {"name": "SYS%d" % no, "args_type": []}
+  return SYSCALL_DATA[no]
 
 
 def reg_write(inst, reg_id):
@@ -292,11 +298,11 @@ def read_block(ctx, blk):
             inline_comm[inst.address] = "?"
             continue
 
-        inline_comm[inst.address] = SYSCALL[sysnum]["name"] + "("
+        inline_comm[inst.address] = SYSCALL(sysnum)["name"] + "("
 
         # Search values for each args, otherwise print the register
 
-        args_type = SYSCALL[sysnum]["args_type"]
+        args_type = SYSCALL(sysnum)["args_type"]
         for j in range(len(args_type)):
             idx_wr_reg = search_backward(blk, i, ARGS_ORDER[j])
 
