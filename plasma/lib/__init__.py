@@ -119,6 +119,7 @@ class GlobalContext():
                 help='Disable analysis on the entry point / symbols and don\'t scan memmory. You can force it with the command push_analyze_symbols.')
         parser.add_argument('--debugsp', action='store_true',
                 help="Print the stack offset on each instructions. Warning: these values will not be saved in the database.")
+        parser.add_argument('--db_path', default=None, help="Database path ('.<exe_name>.db' by default).")
 
         args = parser.parse_args()
 
@@ -140,6 +141,7 @@ class GlobalContext():
         self.list_sections   = args.sections
         self.autoanalyzer    = not args.noautoanalyzer
         self.debugsp         = args.debugsp
+        self.db_path         = args.db_path
 
         if args.nbytes == 0:
             self.nbytes = 4
@@ -157,6 +159,13 @@ class GlobalContext():
         else:
             self.raw_base = 0
 
+    def _get_database_path(self, executable_filename):
+        if self.db_path is not None:
+          return self.db_path
+        dirname = os.path.dirname(executable_filename)
+        path = dirname + "/" if dirname != "" else ""
+        path +=  "." + os.path.basename(executable_filename) + ".db"
+        return path
 
     def load_file(self, filename=None):
         if filename is None:
@@ -175,7 +184,7 @@ class GlobalContext():
             die()
 
         self.db = Database()
-        self.db.load(filename)
+        self.db.load(self._get_database_path(filename))
 
         if self.raw_base != 0:
             self.db.raw_base = self.raw_base
