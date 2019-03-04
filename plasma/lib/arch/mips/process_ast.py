@@ -21,18 +21,16 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_INS_ADDIU, MIPS_INS_ORI,
                            MIPS_INS_LUI, MIPS_OP_REG, MIPS_REG_ZERO, MipsOpValue)
 
 from plasma.lib.ast import (Ast_Branch, Ast_Loop, Ast_IfGoto, Ast_Ifelse,
-                            Ast_AndIf)
+                            Ast_AndIf, Ast_If_cond)
 from plasma.lib.arch.mips.output import ASSIGNMENT_OPS
 
 
 FUSE_OPS = set(ASSIGNMENT_OPS)
-# FUSE_OPS.add(ARM_INS_CMP)
-# FUSE_OPS.add(ARM_INS_TST)
 
 
 def fuse_inst_with_if(ctx, ast):
     if isinstance(ast, Ast_Branch):
-        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf)
+        types_ast = (Ast_Ifelse, Ast_IfGoto, Ast_AndIf, Ast_If_cond)
         for i, n in enumerate(ast.nodes):
             if isinstance(n, list):
                 if n[-1].id in FUSE_OPS and i + 1 < len(ast.nodes) \
@@ -43,8 +41,10 @@ def fuse_inst_with_if(ctx, ast):
                 fuse_inst_with_if(ctx, n)
 
     elif isinstance(ast, Ast_Ifelse):
+        ast.fused_inst = ast.jump_inst
         fuse_inst_with_if(ctx, ast.br_next)
         fuse_inst_with_if(ctx, ast.br_next_jump)
 
     elif isinstance(ast, Ast_Loop):
         fuse_inst_with_if(ctx, ast.branch)
+
