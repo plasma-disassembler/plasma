@@ -276,19 +276,20 @@ class Analyzer(threading.Thread):
 
 
     # Do an analysis if the immediate is an address
-    # If from_save_imm is true, op is the destination where we save imm
-    # -> inst op, computed_imm
-    def analyze_imm(self, i, op, imm, from_save_imm, is_deref_pointer):
-        ret = self.__analyze_imm(i, op, imm, from_save_imm, is_deref_pointer)
+    # is_written_op: if true this is the operand destination where
+    # we write the immediate value. imm is computed by arch/*/analyzer.c*
+    # -> inst op, imm
+    def analyze_imm(self, i, op, imm, is_written_op, is_deref_pointer):
+        ret = self.__analyze_imm(i, op, imm, is_written_op, is_deref_pointer)
         if ret and op.type != self.ARCH_UTILS.OP_IMM:
             self.db.immediates[i.address] = imm
 
 
-    def __analyze_imm(self, i, op, imm, from_save_imm, is_deref_pointer):
+    def __analyze_imm(self, i, op, imm, is_written_op, is_deref_pointer):
         if imm <= 1024:
             return False
 
-        if not from_save_imm and op.type == self.ARCH_UTILS.OP_REG:
+        if not is_written_op and op.type == self.ARCH_UTILS.OP_REG:
             return False
 
         # imm must be an address
