@@ -42,6 +42,7 @@ def plasma_file(filename, symbol, options):
     gctx.filename = filename
     gctx.entry = symbol
     gctx.quiet = True
+    gctx.db_path = None
 
     for o in options:
         if o == "--raw x86":
