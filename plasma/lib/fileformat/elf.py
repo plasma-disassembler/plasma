@@ -285,7 +285,6 @@ class ELF(Binary):
                 "sh_size": relsz,
                 "sh_flags":0,
                 "sh_addralign":0
-                "sh_flags": 2048,
             }
             reloc_sec = RelocationSection(
                     fakerelheader, "reloc_plasma", self.elf)
