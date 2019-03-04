@@ -26,7 +26,8 @@ from capstone.mips import (MIPS_OP_IMM, MIPS_OP_MEM, MIPS_OP_REG,
                            MIPS_INS_SUBU, MIPS_INS_BGTZ, MIPS_INS_LH, MIPS_INS_LHU,
                            MIPS_INS_SH, MIPS_INS_SD, MIPS_INS_LD, MIPS_GRP_MIPS64,
                            MIPS_INS_BGEZ, MIPS_INS_BNEZ, MIPS_INS_BEQZ, MIPS_INS_BLEZ,
-                           MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP, MIPS_INS_NEG)
+                           MIPS_INS_BLTZ, MIPS_REG_ZERO, MIPS_REG_GP, MIPS_INS_NEG,
+                           MIPS_INS_BEQ, MIPS_INS_BNE)
 
 from plasma.lib.output import OutputAbs
 from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
@@ -34,8 +35,7 @@ from plasma.lib.arch.mips.utils import (inst_symbol, is_call, is_jump, is_ret,
 from capstone.mips import (MIPS_INS_SLT, MIPS_INS_SLTI, MIPS_INS_SLTIU, MIPS_INS_SLTU,
                            MIPS_INS_ANDI, MIPS_INS_OR, MIPS_INS_ORI)
 
-# ASSIGNMENT_OPS = {ARM_INS_EOR, ARM_INS_AND, ARM_INS_ORR}
-ASSIGNMENT_OPS = {MIPS_INS_SLT, MIPS_INS_SLTI, MIPS_INS_SLTIU, MIPS_INS_SLTU}
+ASSIGNMENT_OPS = {MIPS_INS_SLT, MIPS_INS_SLTI, MIPS_INS_SLTIU, MIPS_INS_SLTU, MIPS_INS_BEQ, MIPS_INS_BNE}
 
 LD_TYPE = {
     MIPS_INS_LH: "halfword",
@@ -148,16 +148,18 @@ class Output(OutputAbs):
                 self._add(" 0")
             return
 
-        assignment = fused_inst.id in ASSIGNMENT_OPS
+        assignment = fused_inst.id in ASSIGNMENT_OPS or fused_inst.id in COND_ADD_ZERO
 
         if assignment:
             self._add("(")
-            self._operand(fused_inst, 1)
-            if cond == MIPS_INS_BNEZ:
-                self._add(" < ")
+            self._operand(fused_inst, 0)
+            self._add(" ")
+            self._add(cond_symbol(cond))
+            if cond in COND_ADD_ZERO:
+                self._add(" 0")
             else:
-                self._add(" >= ")
-            self._operand(fused_inst, 2)
+                self._add(" ")
+                self._operand(fused_inst, 1)
             self._add(")")
 
     def _sub_asm_inst(self, i, tab=0):
@@ -265,8 +267,11 @@ class Output(OutputAbs):
                 if i.id == MIPS_INS_LUI:
                     self._operand(i, 0)
                     self._add(" = ")
-                    self._operand(i, 1)
-                    self._add(" << 16")
+                    if str(i.operands[1].value.reg).isdigit:
+                        self._add(" 0x%x" % (i.operands[1].value.reg << 16))
+                    else:
+                        self._operand(i, 1)
+                        self._add(" << 16")
 
                 elif i.id == MIPS_INS_MOVE:
                     self._operand(i, 0)
