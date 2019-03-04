@@ -422,7 +422,7 @@ class Output(OutputAbs):
             # Be sure to differentiate between the SSE instruction MOVSD and the non SSE move string
             if i.id in INST_MOVS and not is_sse_movd(i):
                 self._operand(i, 0)
-                self._add("( = ")
+                self._add(" = ")
                 self._operand(i, 1)
                 self._new_line()
                 self._tabs(tab)
