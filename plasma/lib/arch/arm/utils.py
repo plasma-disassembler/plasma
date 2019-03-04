@@ -45,6 +45,8 @@ def is_cmp(i):
     return i.id == ARM_INS_CMP
 
 def is_jump(i):
+    if len(i.operands) <= 0 :
+        return False
     # Suppose that the written register is the first operand
     op = i.operands[0]
 
@@ -67,6 +69,8 @@ def is_uncond_jump(i):
     return is_jump(i) and i.cc == ARM_CC_AL
 
 def is_ret(i):
+    if len(i.operands) <= 0 :
+        return False
     op = i.operands[0]
     return i.group(CS_GRP_RET) or i.id == ARM_INS_BX and \
         op.type == ARM_OP_REG and op.value.reg == ARM_REG_LR
