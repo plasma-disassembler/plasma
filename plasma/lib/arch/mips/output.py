@@ -268,7 +268,7 @@ class Output(OutputAbs):
                     self._operand(i, 0)
                     self._add(" = ")
                     if str(i.operands[1].value.reg).isdigit:
-                        self._add(" 0x%x" % (i.operands[1].value.reg << 16))
+                        self._add("0x%x" % (i.operands[1].value.reg << 16))
                     else:
                         self._operand(i, 1)
                         self._add(" << 16")
