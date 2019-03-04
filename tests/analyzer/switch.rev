@@ -242,9 +242,9 @@ frame_size = 56
 0x400584: r15d = edi
 0x400587: push r13
 0x400589: push r12
-0x40058b: !r12 = __init_array_start
+0x40058b: r12 = __init_array_start
 0x400592: push rbp
-0x400593: !rbp = __init_array_end
+0x400593: rbp = __init_array_end
 0x40059a: push rbx
 0x40059b: r14 = rsi
 0x40059e: r13 = rdx
