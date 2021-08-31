@@ -1,4 +1,0 @@
-pefile
-pyelftools
-msgpack-python>=0.4.6
-nose
